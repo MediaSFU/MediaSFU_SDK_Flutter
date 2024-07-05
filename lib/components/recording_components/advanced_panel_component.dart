@@ -426,8 +426,8 @@ class _AdvancedPanelComponentState extends State<AdvancedPanelComponent> {
             _showColorPickerDialog(); // Show the color picker dialog
           },
           style: ButtonStyle(
-            backgroundColor: MaterialStateProperty.all<Color>(color),
-            padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+            backgroundColor: WidgetStateProperty.all<Color>(color),
+            padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
               const EdgeInsets.all(16.0), // Adjust the padding as needed
             ),
           ),

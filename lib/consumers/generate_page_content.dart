@@ -27,11 +27,17 @@ typedef DispStreamsFunction = void Function({
   dynamic forChatCard,
   dynamic forChatID,
   required Map<String, dynamic> parameters,
+  int breakRoom,
+  bool inBreakRoom,
 });
 typedef UpdateFunction<T> = void Function(T value);
 
-Future<void> generatePageContent(
-    {required int page, required Map<String, dynamic> parameters}) async {
+Future<void> generatePageContent({
+  required int page,
+  required Map<String, dynamic> parameters,
+  int breakRoom = -1,
+  bool inBreakRoom = false,
+}) async {
   try {
     // Destructure parameters
     var paginatedStreams = parameters['paginatedStreams'] as List<dynamic>;
@@ -58,11 +64,16 @@ Future<void> generatePageContent(
 
     // Display streams for the specified page
     dispStreams(
-        lStreams: paginatedStreams[page], ind: page, parameters: parameters);
+      lStreams: paginatedStreams[page],
+      ind: page,
+      parameters: parameters,
+      breakRoom: breakRoom,
+      inBreakRoom: inBreakRoom,
+    );
   } catch (error) {
     // Handle errors during content generation
     if (kDebugMode) {
-      // print('Error generating page content: ${error.toString()}');
+      print('Error generating page content: ${error.toString()}');
     }
   }
 }

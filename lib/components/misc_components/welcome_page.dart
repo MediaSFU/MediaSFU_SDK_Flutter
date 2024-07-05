@@ -15,7 +15,7 @@ import 'dart:async';
 /// The widget is used to gather the necessary information for joining an event.
 /// It utilizes various dependencies such as permission_handler, qr_code_scanner,
 /// url_launcher, shared_preferences, and flutter/foundation.
-/// The widget is part of the mediasfu_flutter project.
+/// The widget is part of the mediasfu_sdk_flutter project.
 ///
 /// The WelcomePage widget has the following parameters:
 /// - `parameters`: A map containing various callback functions and variables

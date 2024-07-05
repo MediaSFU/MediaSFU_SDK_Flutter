@@ -19,6 +19,8 @@ import 'package:flutter/foundation.dart';
 ///   forChatCard: myChatCard,
 ///   forChatID: myChatID,
 ///   parameters: myParameters,
+///   breakRoom: -1,
+///   inBreakRoom: false,
 /// );
 ///
 
@@ -35,12 +37,19 @@ typedef ProcessConsumerTransports = Future<void> Function(
     {required List<dynamic> consumerTransports,
     required List<dynamic> lStreams_,
     required Map<String, dynamic> parameters});
-typedef ResumePauseStreams = Future<void> Function(
-    {required Map<String, dynamic> parameters});
-typedef Readjust = Future<void> Function(
-    {required int n,
-    required int state,
-    required Map<String, dynamic> parameters});
+typedef ResumePauseStreams = Future<void> Function({
+  required Map<String, dynamic> parameters,
+});
+typedef ResumePauseAudioStreams = Future<void> Function({
+  required bool inBreakRoom,
+  required int breakRoom,
+  required Map<String, dynamic> parameters,
+});
+typedef Readjust = Future<void> Function({
+  required int n,
+  required int state,
+  required Map<String, dynamic> parameters,
+});
 typedef AddVideosGrid = Future<void> Function({
   required List<dynamic> mainGridStreams,
   required List<dynamic> altGridStreams,
@@ -58,8 +67,10 @@ typedef AddVideosGrid = Future<void> Function({
   String? forChatID,
   required Map<String, dynamic> parameters,
 });
-typedef GetEstimate = List<dynamic> Function(
-    {required int n, required Map<String, dynamic> parameters});
+typedef GetEstimate = List<dynamic> Function({
+  required int n,
+  required Map<String, dynamic> parameters,
+});
 typedef CheckGrid = Future<List<dynamic>> Function(
     int rows, int cols, int refLength);
 
@@ -70,7 +81,6 @@ typedef UpdateChatRefStreams = void Function(List<dynamic>);
 typedef UpdateNForReadjustRecord = void Function(int);
 typedef UpdateUpdateMainWindow = void Function(bool);
 typedef UpdateShareEnded = void Function(bool);
-typedef UpdateAddAltGrid = void Function(bool);
 typedef UpdateShowMiniView = void Function(bool);
 
 Future<void> dispStreams({
@@ -81,6 +91,8 @@ Future<void> dispStreams({
   dynamic forChatCard,
   dynamic forChatID,
   required Map<String, dynamic> parameters,
+  int breakRoom = -1,
+  bool inBreakRoom = false,
 }) async {
   // Function to display streams
 
@@ -123,6 +135,9 @@ Future<void> dispStreams({
     String islevel = parameters['islevel'] ?? '1';
     dynamic localStreamVideo = parameters['localStreamVideo'];
 
+    bool breakOutRoomStarted = parameters['breakOutRoomStarted'] ?? false;
+    bool breakOutRoomEnded = parameters['breakOutRoomEnded'] ?? false;
+
     UpdateActiveNames updateActiveNames = parameters['updateActiveNames'];
     UpdateDispActiveNames updateDispActiveNames =
         parameters['updateDispActiveNames'];
@@ -136,13 +151,14 @@ Future<void> dispStreams({
     UpdateShareEnded updateShareEnded = parameters['updateShareEnded'];
     UpdateShowMiniView updateShowMiniView = parameters['updateShowMiniView'];
 
-    // mediasfu functions
     PrepopulateUserMedia prepopulateUserMedia =
         parameters['prepopulateUserMedia'];
     RePort rePort = parameters['rePort'];
     ProcessConsumerTransports processConsumerTransports =
         parameters['processConsumerTransports'];
     ResumePauseStreams resumePauseStreams = parameters['resumePauseStreams'];
+    ResumePauseAudioStreams resumePauseAudioStreams =
+        parameters['resumePauseAudioStreams'];
     Readjust readjust = parameters['readjust'];
     AddVideosGrid addVideosGrid = parameters['addVideosGrid'];
     GetEstimate getEstimate = parameters['getEstimate'];
@@ -536,7 +552,23 @@ Future<void> dispStreams({
           parameters: parameters);
 
       try {
-        await resumePauseStreams(parameters: parameters);
+        if (breakOutRoomStarted && !breakOutRoomEnded) {
+          await resumePauseAudioStreams(
+              inBreakRoom: inBreakRoom,
+              breakRoom: breakRoom,
+              parameters: parameters);
+        }
+      } catch (error) {
+        if (kDebugMode) {
+          print('Error in resumePauseAudioStreams: $error');
+        }
+      }
+
+      try {
+        if (!breakOutRoomStarted ||
+            (breakOutRoomStarted && breakOutRoomEnded)) {
+          await resumePauseStreams(parameters: parameters);
+        }
       } catch (error) {
         if (kDebugMode) {
           print('Error in resumePauseStreams: $error');

@@ -51,6 +51,10 @@ import '../misc_components/confirm_here_modal.dart' show ConfirmHereModal;
 import '../misc_components/share_event_modal.dart' show ShareEventModal;
 import '../misc_components/welcome_page.dart' show WelcomePage;
 
+import '../polls_components/poll_modal.dart' show PollModal;
+import '../breakout_components/breakout_rooms_modal.dart'
+    show BreakoutRoomsModal;
+
 // Pagination and display of media (samples)
 import '../display_components/pagination.dart' show Pagination;
 import '../display_components/flexible_grid.dart' show FlexibleGrid;
@@ -80,6 +84,10 @@ import '../../methods/participants_methods/launch_participants.dart'
 import '../../methods/message_methods/launch_messages.dart' show launchMessages;
 import '../../methods/exit_methods/launch_confirm_exit.dart'
     show launchConfirmExit;
+
+import '../../methods/polls_methods/launch_poll.dart' show launchPoll;
+import '../../methods/breakout_rooms_methods/launch_breakout_rooms.dart'
+    show launchBreakoutRooms;
 
 // Mediasfu functions -- examples
 import '../../sockets/socket_manager.dart' show connectSocket;
@@ -166,6 +174,15 @@ import '../../consumers/receive_room_messages.dart' show receiveRoomMessages;
 import '../../methods/utils/format_number.dart' show formatNumber;
 import '../../consumers/connect_ips.dart' show connectIps;
 
+import '../../methods/polls_methods/poll_updated.dart' show pollUpdated;
+import '../../methods/polls_methods/handle_create_poll.dart'
+    show handleCreatePoll;
+import '../../methods/polls_methods/handle_vote_poll.dart' show handleVotePoll;
+import '../../methods/polls_methods/handle_end_poll.dart' show handleEndPoll;
+
+import '../../methods/breakout_rooms_methods/breakout_room_updated.dart'
+    show breakoutRoomUpdated;
+
 // Mediasfu functions
 import '../../methods/utils/meeting_timer/start_meeting_progress_timer.dart'
     show startMeetingProgressTimer;
@@ -230,6 +247,11 @@ import '../../producers/socket_receive_methods/all_members.dart'
 import '../../producers/socket_receive_methods/all_members_rest.dart'
     show allMembersRest;
 import '../../producers/socket_receive_methods/disconnect.dart' show disconnect;
+
+import '../../consumers/resume_pause_audio_streams.dart'
+    show resumePauseAudioStreams;
+import '../../consumers/process_consumer_transports_audio.dart'
+    show processConsumerTransportsAudio;
 
 class MediasfuGeneric extends StatefulWidget {
   final Widget Function({
@@ -1991,6 +2013,10 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
   final ValueNotifier<List<dynamic>> consumerTransports = ValueNotifier([]);
   final ValueNotifier<List<dynamic>> consumingTransports = ValueNotifier([]);
 
+  final ValueNotifier<List<dynamic>> polls = ValueNotifier([]);
+  final ValueNotifier<Map<String, dynamic>?> poll = ValueNotifier(null);
+  final ValueNotifier<bool> isPollModalVisible = ValueNotifier(false);
+
   // Update functions
   void updateTransportCreated(bool value) {
     transportCreated.value = value;
@@ -2038,6 +2064,70 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
 
   void updateConsumingTransports(List<dynamic> value) {
     consumingTransports.value = value;
+  }
+
+  void updatePolls(List<dynamic> value) {
+    polls.value = value;
+  }
+
+  void updatePoll(Map<String, dynamic>? value) {
+    poll.value = value;
+  }
+
+  void updateIsPollModalVisible(bool value) {
+    isPollModalVisible.value = value;
+  }
+
+// Breakout rooms related variables
+  final ValueNotifier<List<dynamic>> breakoutRooms = ValueNotifier([]);
+  final ValueNotifier<int> currentRoomIndex = ValueNotifier(0);
+  final ValueNotifier<bool> canStartBreakout = ValueNotifier(false);
+  final ValueNotifier<bool> breakOutRoomStarted = ValueNotifier(false);
+  final ValueNotifier<bool> breakOutRoomEnded = ValueNotifier(false);
+  final ValueNotifier<int> hostNewRoom = ValueNotifier(-1);
+  final ValueNotifier<List<dynamic>> limitedBreakRoom = ValueNotifier([]);
+  final ValueNotifier<int> mainRoomsLength = ValueNotifier(0);
+  final ValueNotifier<int> memberRoom = ValueNotifier(-1);
+  final ValueNotifier<bool> isBreakoutRoomsModalVisible = ValueNotifier(false);
+
+  void updateBreakoutRooms(List<dynamic> value) {
+    breakoutRooms.value = value;
+  }
+
+  void updateCurrentRoomIndex(int value) {
+    currentRoomIndex.value = value;
+  }
+
+  void updateCanStartBreakout(bool value) {
+    canStartBreakout.value = value;
+  }
+
+  void updateBreakOutRoomStarted(bool value) {
+    breakOutRoomStarted.value = value;
+  }
+
+  void updateBreakOutRoomEnded(bool value) {
+    breakOutRoomEnded.value = value;
+  }
+
+  void updateHostNewRoom(int value) {
+    hostNewRoom.value = value;
+  }
+
+  void updateLimitedBreakRoom(List<dynamic> value) {
+    limitedBreakRoom.value = value;
+  }
+
+  void updateMainRoomsLength(int value) {
+    mainRoomsLength.value = value;
+  }
+
+  void updateMemberRoom(int value) {
+    memberRoom.value = value;
+  }
+
+  void updateIsBreakoutRoomsModalVisible(bool value) {
+    isBreakoutRoomsModalVisible.value = value;
   }
 
   String checkOrientation() {
@@ -2106,6 +2196,11 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
       'formatNumber': formatNumber,
       'connectIps': connectIps,
       'createDeviceClient': createDeviceClient,
+      'handleCreatePoll': handleCreatePoll,
+      'handleVotePoll': handleVotePoll,
+      'handleEndPoll': handleEndPoll,
+      'resumePauseAudioStreams': resumePauseAudioStreams,
+      'processConsumerTransportsAudio': processConsumerTransportsAudio,
     };
   }
 
@@ -2394,6 +2489,23 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
       'audioProducer': audioProducer.value,
       'consumerTransports': consumerTransports.value,
       'consumingTransports': consumingTransports.value,
+      // Polls
+      'polls': polls.value,
+      'poll': poll.value,
+      'isPollModalVisible': isPollModalVisible.value,
+
+      // Breakout rooms
+      'breakoutRooms': breakoutRooms.value,
+      'currentRoomIndex': currentRoomIndex.value,
+      'canStartBreakout': canStartBreakout.value,
+      'breakOutRoomStarted': breakOutRoomStarted.value,
+      'breakOutRoomEnded': breakOutRoomEnded.value,
+      'hostNewRoom': hostNewRoom.value,
+      'limitedBreakRoom': limitedBreakRoom.value,
+      'mainRoomsLength': mainRoomsLength.value,
+      'memberRoom': memberRoom.value,
+      'isBreakoutRoomsModalVisible': isBreakoutRoomsModalVisible.value,
+
       'validated': validated,
       'device': device.value,
       'socket': socket.value,
@@ -2700,6 +2812,23 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
       'updateConsumerTransports': updateConsumerTransports,
       'updateConsumingTransports': updateConsumingTransports,
 
+      //polls
+      'updatePolls': updatePolls,
+      'updatePoll': updatePoll,
+      'updateIsPollModalVisible': updateIsPollModalVisible,
+
+      //breakout rooms
+      'updateBreakoutRooms': updateBreakoutRooms,
+      'updateCurrentRoomIndex': updateCurrentRoomIndex,
+      'updateCanStartBreakout': updateCanStartBreakout,
+      'updateBreakOutRoomStarted': updateBreakOutRoomStarted,
+      'updateBreakOutRoomEnded': updateBreakOutRoomEnded,
+      'updateHostNewRoom': updateHostNewRoom,
+      'updateLimitedBreakRoom': updateLimitedBreakRoom,
+      'updateMainRoomsLength': updateMainRoomsLength,
+      'updateMemberRoom': updateMemberRoom,
+      'updateIsBreakoutRoomsModalVisible': updateIsBreakoutRoomsModalVisible,
+
       'checkOrientation': checkOrientation,
 
       'updateDevice': updateDevice,
@@ -2957,6 +3086,34 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
           );
         },
         'show': true,
+      },
+      {
+        'icon': Icons.poll,
+        'text': 'Poll',
+        'modalId': 'pollModal',
+        'action': () {
+          // Action for the Poll button
+          launchPoll(parameters: {
+            'updateIsPollModalVisible': updateIsPollModalVisible,
+            'isPollModalVisible': isPollModalVisible.value,
+          });
+        },
+        'show': true,
+      },
+
+      {
+        'icon': Icons.group_outlined,
+        'text': 'Breakout Rooms',
+        'modalId': 'breakoutRoomsModal',
+        'action': () {
+          // Action for the Breakout Rooms button
+          launchBreakoutRooms(parameters: {
+            'updateIsBreakoutRoomsModalVisible':
+                updateIsBreakoutRoomsModalVisible,
+            'isBreakoutRoomsModalVisible': isBreakoutRoomsModalVisible.value,
+          });
+        },
+        'show': islevel.value == '2',
       },
     ];
   }
@@ -3622,6 +3779,8 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
         updateIsMenuModalVisible(false);
         updateIsShareEventModalVisible(false);
         updateIsConfirmExitModalVisible(false);
+        updateIsPollModalVisible(false);
+        updateIsBreakoutRoomsModalVisible(false);
       } catch (e) {}
 
       try {
@@ -4087,17 +4246,21 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
           // Handle 'RecordingNotice' event
           try {
             await RecordingNotice(
-                state: data['state'],
-                userRecordingParam: data['userRecordingParam']! &&
-                        data['userRecordingParam'].isEmpty
-                    ? {}
-                    : data['userRecordingParam'],
-                pauseCount: data['pauseCount'],
-                timeDone: data['timeDone'],
-                parameters: {
-                  ...getAllParams(),
-                  ...mediaSFUFunctions(),
-                });
+              state: data['state'],
+              userRecordingParam: (data.containsKey('userRecordingParam') &&
+                      (data['userRecordingParam'] != null &&
+                          data['userRecordingParam'].isNotEmpty))
+                  ? data['userRecordingParam']
+                  : userRecordingParams.value,
+              pauseCount:
+                  data.containsKey('pauseCount') ? data['pauseCount'] ?? 0 : 0,
+              timeDone:
+                  data.containsKey('timeDone') ? data['timeDone'] ?? 0 : 0,
+              parameters: {
+                ...getAllParams(),
+                ...mediaSFUFunctions(),
+              },
+            );
           } catch (error) {
             if (kDebugMode) {
               // print('Error handling RecordingNotice event: $error');
@@ -4145,6 +4308,38 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
           } catch (error) {
             if (kDebugMode) {
               // print('Error handling hostRequestResponse event: $error');
+            }
+          }
+        });
+
+        socket.value!.on('pollUpdated', (data) async {
+          try {
+            await pollUpdated(
+              data: data,
+              parameters: {
+                ...getAllParams(),
+                ...mediaSFUFunctions(),
+              },
+            );
+          } catch (error) {
+            if (kDebugMode) {
+              print('Error handling pollUpdated event: $error');
+            }
+          }
+        });
+
+        socket.value!.on('breakoutRoomUpdated', (data) async {
+          try {
+            await breakoutRoomUpdated(
+              data: data,
+              parameters: {
+                ...getAllParams(),
+                ...mediaSFUFunctions(),
+              },
+            );
+          } catch (error) {
+            if (kDebugMode) {
+              print('Error handling breakoutRoomUpdated event: $error');
             }
           }
         });
@@ -4656,6 +4851,8 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
         _buildCoHostModal(), // Add Co-Host Modal
         _buildParticipantsModal(), // Add Participants Modal
         _buildMessagesModal(), // Add Messages Modal
+        _buildPollModal(), // Add Polls Modal
+        _buildBreakoutRoomsModal(), // Add Breakout Rooms Modal
 
         _buildConfirmExitModal(), // Add Confirm Exit Modal
 
@@ -5020,6 +5217,66 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
           roomName: roomName.value,
           islevel: islevel.value,
           adminPasscode: adminPasscode.value,
+        );
+      },
+    );
+  }
+
+  Widget _buildPollModal() {
+    return ValueListenableBuilder<bool>(
+        valueListenable: isPollModalVisible,
+        builder: (context, isPollVisible, child) {
+          if (!isPollVisible) {
+            return const SizedBox.shrink();
+          }
+          return ValueListenableBuilder<List<dynamic>>(
+            valueListenable: polls,
+            builder: (context, polls, child) {
+              return PollModal(
+                isPollModalVisible: isPollVisible,
+                onClose: () {
+                  updateIsPollModalVisible(false);
+                },
+                parameters: {
+                  ...getAllParams(),
+                  ...mediaSFUFunctions(),
+                  'socket': socket.value,
+                  'showAlert': showAlert,
+                },
+              );
+            },
+          );
+        });
+  }
+
+  Widget _buildBreakoutRoomsModal() {
+    return ValueListenableBuilder<bool>(
+      valueListenable: isBreakoutRoomsModalVisible,
+      builder: (context, isBreakoutRoomsVisible, child) {
+        if (!isBreakoutRoomsVisible) {
+          return const SizedBox
+              .shrink(); // Return an empty widget if the modal is not visible
+        }
+        return ValueListenableBuilder<List<dynamic>>(
+          valueListenable: breakoutRooms,
+          builder: (context, breakoutRooms, child) {
+            return ValueListenableBuilder<List<dynamic>>(
+              valueListenable: filteredParticipants,
+              builder: (context, filteredParticipants, child) {
+                return BreakoutRoomsModal(
+                  backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
+                  isVisible: isBreakoutRoomsVisible,
+                  onBreakoutRoomsClose: () {
+                    updateIsBreakoutRoomsModalVisible(false);
+                  },
+                  parameters: {
+                    ...getAllParams(),
+                    ...mediaSFUFunctions(),
+                  },
+                );
+              },
+            );
+          },
         );
       },
     );

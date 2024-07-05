@@ -247,4 +247,20 @@ final Map<String, dynamic> initialValuesState = {
   'canPauseResume': false, // Indicates if pausing/resuming is allowed
   'pauseLimit': 0, // The limit for pausing
   'pauseRecordCount': 0, // The count for pausing the record
+
+  // Poll properties
+  'polls': [], // The list of polls
+  'poll': null, // The current poll
+
+  // Breakout room properties
+  'breakOutRoomStarted': false, // Indicates if the breakout room is started
+  'breakOutRoomEnded': false, // Indicates if the breakout room is ended
+  'breakOutRoomLimit': 0, // The limit of the breakout room
+  'breakoutRooms': [], // The list of breakout rooms
+  'currentRoomIndex': 0, // The current room index
+  'canStartBreakout': false, // Indicates if the breakout can be started
+  'hostNewRoom': -1, // The host for the new room
+  'limitedBreakRoom': false, // Indicates if the breakout room is limited
+  'mainRoomsLength': 0, // The length of the main rooms
+  'memberRoom': null, // The member room
 };

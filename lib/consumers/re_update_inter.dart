@@ -129,6 +129,9 @@ Future<void> reUpdateInter(
             var oldoldSounds = List<String>.from(oldSoundIds);
             for (int i = 0; i < oldSoundIds.length; i++) {
               if (newLimitedStreams.length > refLimit) {
+                if (newLimitedStreams.length < screenPageLimit) {
+                  return;
+                }
                 if (oldSoundIds[i] != screenShareNameStream ||
                     oldSoundIds[i] != adminNameStream) {
                   newLimitedStreams.removeWhere(

@@ -1,3 +1,21 @@
+### 0.0.5
+1. **Updated flutter_webrtc support**:
+   - Enhanced compatibility and performance with the latest version of `flutter_webrtc`.
+
+2. **General bug fixes**:
+   - Resolved various issues to improve overall stability and reliability.
+
+3. **Added Polls support**:
+   - Introduced functionality to conduct real-time polls during sessions, allowing for instant feedback and interaction.
+
+4. **Added Breakout rooms support**:
+   - Enabled the creation of multiple sub-meetings within a single session to facilitate focused group discussions and collaboration.
+
+
+### 0.0.4
+
+* Minor update in README.md.
+
 ### 0.0.3
 
 * Cleanup of warnings for static analysis pass.

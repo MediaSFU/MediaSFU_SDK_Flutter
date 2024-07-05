@@ -3480,28 +3480,32 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
           }
         });
 
-        socket.value!.on('RecordingNotice', (data) async {
+         socket.value!.on('RecordingNotice', (data) async {
           // Handle 'RecordingNotice' event
           try {
             await RecordingNotice(
-                state: data['state'],
-                userRecordingParam: data['userRecordingParam']! &&
-                        data['userRecordingParam'].isEmpty
-                    ? {}
-                    : data['userRecordingParam'],
-                pauseCount: data['pauseCount'],
-                timeDone: data['timeDone'],
-                parameters: {
-                  ...getAllParams(),
-                  ...mediaSFUFunctions(),
-                });
+              state: data['state'],
+              userRecordingParam: (data.containsKey('userRecordingParam') &&
+                      (data['userRecordingParam'] != null &&
+                          data['userRecordingParam'].isNotEmpty))
+                  ? data['userRecordingParam']
+                  : userRecordingParams.value,
+              pauseCount:
+                  data.containsKey('pauseCount') ? data['pauseCount'] ?? 0 : 0,
+              timeDone:
+                  data.containsKey('timeDone') ? data['timeDone'] ?? 0 : 0,
+              parameters: {
+                ...getAllParams(),
+                ...mediaSFUFunctions(),
+              },
+            );
           } catch (error) {
             if (kDebugMode) {
               // print('Error handling RecordingNotice event: $error');
             }
           }
         });
-
+        
         socket.value!.on('timeLeftRecording', (data) async {
           // Handle 'timeLeftRecording' event
           try {

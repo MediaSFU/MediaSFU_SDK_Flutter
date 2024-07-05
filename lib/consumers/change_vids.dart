@@ -23,6 +23,8 @@ typedef DispStreamsFunction = void Function({
   dynamic forChatCard,
   dynamic forChatID,
   required Map<String, dynamic> parameters,
+  int breakRoom,
+  bool inBreakRoom,
 });
 
 typedef GetUpdatedAllParams = Map<String, dynamic> Function();
@@ -67,6 +69,13 @@ Future<void> changeVids(
   bool prevDoPaginate = parameters['prevDoPaginate'];
   int currentUserPage = parameters['currentUserPage'];
 
+  List<dynamic> breakoutRooms = parameters['breakoutRooms'];
+  int hostNewRoom = parameters['hostNewRoom'];
+  bool breakOutRoomStarted = parameters['breakOutRoomStarted'];
+  bool breakOutRoomEnded = parameters['breakOutRoomEnded'];
+  int mainRoomsLength = parameters['mainRoomsLength'];
+  int memberRoom = parameters['memberRoom'];
+
   void Function(List<String> value) updatePActiveNames =
       parameters['updatePActiveNames'];
   void Function(List<String> value) updateActiveNames =
@@ -94,6 +103,10 @@ Future<void> changeVids(
       parameters['updateCurrentUserPage'];
   void Function(int value) updateNumberPages = parameters['updateNumberPages'];
 
+  void Function(int value) updateMainRoomsLength =
+      parameters['updateMainRoomsLength'];
+  void Function(int value) updateMemberRoom = parameters['updateMemberRoom'];
+
   // mediasfu functions
   MixStreamsFunction mixStreams = parameters['mixStreams'];
   DispStreamsFunction dispStreams = parameters['dispStreams'];
@@ -107,7 +120,7 @@ Future<void> changeVids(
     if (shareScreenStarted || shared) {
       allVideoStreams = List.from(newLimitedStreams);
       activeNames = [];
-    } else {}
+    }
     activeNames = [];
     dispActiveNames = [];
     refParticipants = participants;
@@ -139,7 +152,7 @@ Future<void> changeVids(
 
     if (eventType == 'broadcast' || eventType == 'chat') {
       sortAudioLoudness = false;
-    } else {}
+    }
 
     if (shareScreenStarted || shared) {
       nonAlVideoStreams = [];
@@ -296,8 +309,7 @@ Future<void> changeVids(
                 alVideoStreams.insert(0, streame);
               }
             } else {
-              // ignore: avoid_function_literals_in_foreach_calls
-              refParticipants.forEach((participant) async {
+              for (var participant in refParticipants) {
                 var stream = alVideoStreams.firstWhere(
                     (obj) =>
                         obj['producerId'] == participant['videoID'] &&
@@ -314,10 +326,10 @@ Future<void> changeVids(
                     nonAlVideoStreams
                         .removeWhere((obj) => obj['name'] == host['name']);
                     nonAlVideoStreams.insert(0, participant);
-                    return;
+                    break;
                   }
                 }
-              });
+              }
             }
           }
         }
@@ -378,6 +390,164 @@ Future<void> changeVids(
       }
     }
 
+    // Create pagination
+    bool memberInRoom = false;
+    bool filterHost = false;
+
+    if (breakOutRoomStarted && !breakOutRoomEnded) {
+      List<dynamic> tempBreakoutRooms = List.from(breakoutRooms);
+      var host = participants.firstWhere((obj) => obj['islevel'] == '2',
+          orElse: () => null);
+      for (var room in tempBreakoutRooms) {
+        try {
+          List<dynamic> currentStreams = [];
+          int roomIndex = tempBreakoutRooms.indexOf(room);
+          if (hostNewRoom != -1 && roomIndex == hostNewRoom) {
+            if (host != null) {
+              if (!room.map((obj) => obj['name']).contains(host['name'])) {
+                room = [
+                  ...room,
+                  {'name': host['name'], 'breakRoom': roomIndex}
+                ];
+                filterHost = true;
+              }
+            }
+          }
+          for (var participant in room) {
+            if (participant['name'] == member && !memberInRoom) {
+              memberInRoom = true;
+              memberRoom = participant['breakRoom'];
+              updateMemberRoom(memberRoom);
+            }
+            List<dynamic> streams = allStreamsPaged.where((stream) {
+              if ((stream.containsKey('producerId') &&
+                      (stream['producerId'] != null &&
+                          stream['producerId'] != "")) ||
+                  (stream.containsKey('audioID') &&
+                      stream['audioID'] != null &&
+                      stream['audioID'] != "")) {
+                var producerId = stream['producerId'] ?? stream['audioID'];
+                var matchingParticipant = refParticipants.firstWhere(
+                    (obj) =>
+                        obj['audioID'] == producerId ||
+                        obj['videoID'] == producerId ||
+                        ((producerId == 'youyou' ||
+                                producerId == 'youyouyou') &&
+                            member == participant['name']),
+                    orElse: () => null);
+                return (matchingParticipant != null &&
+                        matchingParticipant['name'] == participant['name']) ||
+                    (participant['name'] == member &&
+                        (producerId == 'youyou' || producerId == 'youyouyou'));
+              } else {
+                return stream.containsKey('name') &&
+                    stream['name'] == participant['name'];
+              }
+            }).toList();
+            for (var stream in streams) {
+              if (currentStreams.length < limit_) {
+                currentStreams.add(stream);
+              }
+            }
+          }
+          paginatedStreams.add(currentStreams);
+        } catch (error) {}
+      }
+
+      List<dynamic> remainingStreams = allStreamsPaged.where((stream) {
+        if ((stream.containsKey('producerId') &&
+                (stream['producerId'] != null && stream['producerId'] != "")) ||
+            (stream.containsKey('audioID') &&
+                stream['audioID'] != null &&
+                stream['audioID'] != "")) {
+          var producerId = stream['producerId'] ?? stream['audioID'];
+          var matchingParticipant = refParticipants.firstWhere(
+              (obj) =>
+                  obj['audioID'] == producerId ||
+                  obj['videoID'] == producerId ||
+                  ((producerId == 'youyou' || producerId == 'youyouyou') &&
+                      member == obj['name']),
+              orElse: () => null);
+          return matchingParticipant != null &&
+              !breakoutRooms
+                  .expand((room) => room)
+                  .map((obj) => obj['name'])
+                  .contains(matchingParticipant['name']) &&
+              (!filterHost || matchingParticipant['name'] != host['name']);
+        } else {
+          return !breakoutRooms
+                  .expand((room) => room)
+                  .map((obj) => obj['name'])
+                  .contains(stream['name']) &&
+              (!filterHost || stream['name'] != host['name']);
+        }
+      }).toList();
+
+      if (memberInRoom) {
+        var memberStream = allStreamsPaged.firstWhere(
+            (stream) =>
+                stream.containsKey('producerId') &&
+                (stream['producerId'] != null && stream['producerId'] != ""),
+            orElse: () => null);
+        if (memberStream != null && !remainingStreams.contains(memberStream)) {
+          remainingStreams.insert(0, memberStream);
+        }
+      }
+      List<dynamic> remainingPaginatedStreams = [];
+
+      if (remainingStreams.isNotEmpty) {
+        // Determine the length of the remainingStreams list
+        int listEnd = remainingStreams.length;
+
+        // Check if the length exceeds the limit
+        if (listEnd > limit) {
+          // Add the first page to remainingPaginatedStreams
+          firstPage = remainingStreams.sublist(0, limit_);
+          remainingPaginatedStreams.add(firstPage);
+
+          // Add the remaining streams to the pagination
+          for (int i = limit_; i < remainingStreams.length; i += limit) {
+            if (i + limit > listEnd) {
+              page = remainingStreams.sublist(i, listEnd);
+            } else {
+              page = remainingStreams.sublist(i, i + limit);
+            }
+            remainingPaginatedStreams.add(page);
+          }
+        } else {
+          // If the list length is within the limit, add the entire list as the first page
+          firstPage = remainingStreams;
+          remainingPaginatedStreams.add(firstPage);
+        }
+      }
+
+      mainRoomsLength = remainingPaginatedStreams.length;
+      updateMainRoomsLength(mainRoomsLength);
+
+      for (int i = remainingPaginatedStreams.length - 1; i >= 0; i--) {
+        paginatedStreams.insert(0, remainingPaginatedStreams[i]);
+      }
+    } else {
+      int listEnd = allStreamsPaged.length;
+      if (listEnd > limit) {
+        firstPage = allStreamsPaged.sublist(0, limit_);
+        paginatedStreams.add(firstPage);
+
+        // Add the remaining streams to the pagination
+        for (int i = limit_; i < allStreamsPaged.length; i += limit) {
+          if (i + limit > listEnd) {
+            page = allStreamsPaged.sublist(i, listEnd);
+          } else {
+            page = allStreamsPaged.sublist(i, i + limit);
+          }
+          paginatedStreams.add(page);
+        }
+      } else {
+        firstPage = allStreamsPaged;
+        paginatedStreams.add(firstPage);
+      }
+    }
+
     updatePActiveNames(pActiveNames);
     updateActiveNames(activeNames);
     updateDispActiveNames(dispActiveNames);
@@ -389,32 +559,10 @@ Future<void> changeVids(
     updateNonAlVideoStreamsMuted(nonAlVideoStreamsMuted);
     updatePaginatedStreams(paginatedStreams);
 
-    // Create pagination
-    // Add the first page to the pagination
-    int listEnd = allStreamsPaged.length;
-    if (listEnd > limit) {
-      firstPage = allStreamsPaged.sublist(0, limit_);
-      paginatedStreams.add(firstPage);
-
-      // Add the remaining streams to the pagination
-      for (int i = limit_; i < allStreamsPaged.length; i += limit) {
-        if (i + limit > listEnd) {
-          page = allStreamsPaged.sublist(i, listEnd);
-        } else {
-          page = allStreamsPaged.sublist(i, i + limit);
-        }
-        paginatedStreams.add(page);
-      }
-    } else {
-      firstPage = allStreamsPaged;
-      paginatedStreams.add(firstPage);
-    }
-
-    updatePaginatedStreams(paginatedStreams);
-
     prevDoPaginate = doPaginate;
     doPaginate = false;
     updatePrevDoPaginate(prevDoPaginate);
+    updateDoPaginate(doPaginate);
 
     bool isActive = false;
 
@@ -427,36 +575,47 @@ Future<void> changeVids(
       updateDoPaginate(doPaginate);
 
       if (currentUserPage > (paginatedStreams.length - 1)) {
-        currentUserPage = paginatedStreams.length - 1;
-        updateCurrentUserPage(currentUserPage);
+        if (breakOutRoomStarted && !breakOutRoomEnded) {
+          currentUserPage = 0;
+        } else {
+          currentUserPage = paginatedStreams.length - 1;
+        }
       } else {
         if (currentUserPage == 0) {
           isActive = true;
         }
       }
-
-      if (!isActive) {
-        updateNumberPages(paginatedStreams.length - 1);
-      } else {
-        updateNumberPages(paginatedStreams.length - 1);
-      }
+      updateCurrentUserPage(currentUserPage);
+      updateNumberPages(paginatedStreams.length - 1);
 
       if (screenChanged) {
         dispStreams(
-            lStreams: paginatedStreams[0], ind: 0, parameters: parameters);
+          lStreams: paginatedStreams[0],
+          ind: 0,
+          parameters: parameters,
+          breakRoom: 0,
+          inBreakRoom: false,
+        );
       } else {
         dispStreams(
-            lStreams: paginatedStreams[0],
-            ind: 0,
-            auto: true,
-            parameters: parameters);
+          lStreams: paginatedStreams[0],
+          ind: 0,
+          auto: true,
+          parameters: parameters,
+          breakRoom: 0,
+          inBreakRoom: false,
+        );
       }
 
       if (!isActive) {
+        int currentPageBreak = currentUserPage - mainRoomsLength;
         dispStreams(
-            lStreams: paginatedStreams[currentUserPage],
-            ind: currentUserPage,
-            parameters: parameters);
+          lStreams: paginatedStreams[currentUserPage],
+          ind: currentUserPage,
+          parameters: parameters,
+          breakRoom: currentPageBreak,
+          inBreakRoom: currentPageBreak >= 0,
+        );
       }
     } else {
       doPaginate = false;
@@ -466,13 +625,21 @@ Future<void> changeVids(
 
       if (screenChanged) {
         dispStreams(
-            lStreams: paginatedStreams[0], ind: 0, parameters: parameters);
+          lStreams: paginatedStreams[0],
+          ind: 0,
+          parameters: parameters,
+          breakRoom: 0,
+          inBreakRoom: false,
+        );
       } else {
         dispStreams(
-            lStreams: paginatedStreams[0],
-            ind: 0,
-            auto: true,
-            parameters: parameters);
+          lStreams: paginatedStreams[0],
+          ind: 0,
+          auto: true,
+          parameters: parameters,
+          breakRoom: 0,
+          inBreakRoom: false,
+        );
       }
     }
   } catch (error) {

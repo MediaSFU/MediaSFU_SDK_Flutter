@@ -169,12 +169,12 @@ class _ConfirmHereModalState extends State<ConfirmHereModal> {
                     },
                     style: ButtonStyle(
                       backgroundColor:
-                          MaterialStateProperty.all<Color>(Colors.red),
-                      padding: MaterialStateProperty.all<EdgeInsets>(
+                          WidgetStateProperty.all<Color>(Colors.red),
+                      padding: WidgetStateProperty.all<EdgeInsets>(
                         const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 10),
                       ),
-                      shape: MaterialStateProperty.all<OutlinedBorder>(
+                      shape: WidgetStateProperty.all<OutlinedBorder>(
                         RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5),
                         ),

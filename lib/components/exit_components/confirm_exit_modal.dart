@@ -125,7 +125,7 @@ class ConfirmExitModal extends StatelessWidget {
                           ElevatedButton(
                             onPressed: onConfirmExitClose as void Function()?,
                             style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all<Color>(
+                              backgroundColor: WidgetStateProperty.all<Color>(
                                   Colors.grey[700]!),
                             ),
                             child: const Text(
@@ -153,7 +153,7 @@ class ConfirmExitModal extends StatelessWidget {
                             },
                             style: ButtonStyle(
                               backgroundColor:
-                                  MaterialStateProperty.all<Color>(Colors.red),
+                                  WidgetStateProperty.all<Color>(Colors.red),
                             ),
                             child: Text(
                               islevel == '2' ? 'End Event' : 'Exit',

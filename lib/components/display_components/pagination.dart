@@ -56,10 +56,18 @@ import '../../consumers/generate_page_content.dart' show generatePageContent;
 /// Additional parameters to pass for page content generation.
 /// final Map<String, dynamic> parameters;
 
-typedef GeneratePageContent = Future<void> Function(
-    {required int page, required Map<String, dynamic> parameters});
+typedef GeneratePageContent = Future<void> Function({
+  required int page,
+  required Map<String, dynamic> parameters,
+  int breakRoom,
+  bool inBreakRoom,
+});
 
-typedef HandlePageChange = void Function(int page);
+typedef ShowAlert = void Function({
+  required String message,
+  required String type,
+  required int duration,
+});
 
 class Pagination extends StatelessWidget {
   final int totalPages;
@@ -97,9 +105,100 @@ class Pagination extends StatelessWidget {
     required this.parameters,
   });
 
-  void handlePageChange(int page) async {
-    // Generate the content for the current page
-    await generatePageContent(page: page, parameters: parameters);
+  void handlePageChange(int page, int offSet) async {
+    if (page == currentUserPage) {
+      return;
+    }
+
+    final updatedParameters = parameters['getUpdatedAllParams']();
+    parameters.addAll(updatedParameters);
+
+    var breakOutRoomStarted = parameters['breakOutRoomStarted'] as bool;
+    var breakOutRoomEnded = parameters['breakOutRoomEnded'] as bool;
+    var member = parameters['member'] as String;
+    var breakoutRooms = parameters['breakoutRooms'] as List<dynamic>;
+    var hostNewRoom = parameters['hostNewRoom'] as int;
+    var roomName = parameters['roomName'] as String;
+    var islevel = parameters['islevel'] as String;
+    var showAlert = parameters['showAlert'] as ShowAlert;
+    var socket = parameters['socket'];
+
+    if (breakOutRoomStarted && !breakOutRoomEnded && page != 0) {
+      final roomMember = breakoutRooms.firstWhere(
+        (r) => r.any((p) => p['name'] == member),
+        orElse: () => null,
+      );
+      final pageInt = page - offSet;
+      int memberBreakRoom = -1;
+
+      if (roomMember != null) {
+        memberBreakRoom = breakoutRooms.indexOf(roomMember);
+      }
+
+      if ((memberBreakRoom == -1 || memberBreakRoom != pageInt) &&
+          pageInt >= 0) {
+        if (islevel != '2') {
+          showAlert(
+            message: 'You are not part of the breakout room ${pageInt + 1}.',
+            type: 'danger',
+            duration: 3000,
+          );
+          return;
+
+          // if (memberBreakRoom != -1) {
+          //   page = memberBreakRoom;
+          // } else {
+          //   await generatePageContent(
+          //     page: page,
+          //     parameters: parameters,
+          //     breakRoom: pageInt,
+          //     inBreakRoom: true,
+          //   );
+          //   await onScreenChanges({'changed': true, 'parameters': parameters});
+          //   return;
+          // }
+        }
+
+        await generatePageContent(
+          page: page,
+          parameters: parameters,
+          breakRoom: pageInt,
+          inBreakRoom: true,
+        );
+
+        if (hostNewRoom != pageInt) {
+          await socket.emitWithAck(
+              'updateHostBreakout', {'newRoom': pageInt, 'roomName': roomName},
+              ack: (response) async {});
+        }
+      } else {
+        await generatePageContent(
+          page: page,
+          parameters: parameters,
+          breakRoom: pageInt,
+          inBreakRoom: pageInt >= 0,
+        );
+
+        if (islevel == '2' && hostNewRoom != -1) {
+          await socket.emitWithAck('updateHostBreakout',
+              {'prevRoom': hostNewRoom, 'newRoom': -1, 'roomName': roomName},
+              ack: (response) async {});
+        }
+      }
+    } else {
+      await generatePageContent(
+        page: page,
+        parameters: parameters,
+        breakRoom: 0,
+        inBreakRoom: false,
+      );
+
+      if (islevel == '2' && hostNewRoom != -1) {
+        await socket.emitWithAck('updateHostBreakout',
+            {'prevRoom': hostNewRoom, 'newRoom': -1, 'roomName': roomName},
+            ack: (response) async {});
+      }
+    }
   }
 
   @override
@@ -134,10 +233,33 @@ class Pagination extends StatelessWidget {
                         width: 1.0,
                       ));
 
+              String displayItem = data[index].toString();
+              final targetPage = parameters['memberRoom'] as int;
+
+              if (parameters['breakOutRoomStarted'] as bool &&
+                  !(parameters['breakOutRoomEnded'] as bool) &&
+                  data[index] >= parameters['mainRoomsLength']) {
+                final roomNumber =
+                    data[index] - (parameters['mainRoomsLength'] - 1);
+
+                if (targetPage + 1 != roomNumber) {
+                  if (parameters['islevel'] as String != '2') {
+                    displayItem = 'Room $roomNumber';
+                  } else {
+                    displayItem = 'Room $roomNumber';
+                  }
+                } else {
+                  displayItem = 'Room $roomNumber';
+                }
+              } else {
+                displayItem = data[index].toString();
+              }
+
               return GestureDetector(
                 onTap: () {
                   if (!isActive) {
-                    handlePageChange(data[index]);
+                    handlePageChange(
+                        data[index], parameters['mainRoomsLength']);
                   }
                 },
                 child: Container(
@@ -157,7 +279,7 @@ class Pagination extends StatelessWidget {
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 4.0),
                               child: Text(
-                                '${data[index]}',
+                                displayItem,
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,

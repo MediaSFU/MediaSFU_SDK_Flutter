@@ -20,7 +20,6 @@
   </a>
 </p>
 
-
 MediaSFU offers a cutting-edge streaming experience that empowers users to customize their recordings and engage their audience with high-quality streams. Whether you're a content creator, educator, or business professional, MediaSFU provides the tools you need to elevate your streaming game.
 
 ---
@@ -29,6 +28,7 @@ MediaSFU offers a cutting-edge streaming experience that empowers users to custo
 
 ## Table of Contents
 
+- [Features](#features)
 - [Getting Started](#getting-started)
 - [Basic Usage Guide](#basic-usage-guide)
 - [Intermediate Usage Guide](#intermediate-usage-guide)
@@ -37,17 +37,43 @@ MediaSFU offers a cutting-edge streaming experience that empowers users to custo
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 
+# Features <a name="features"></a>
+
+MediaSFU's Flutter SDK comes with a host of powerful features out of the box:
+
+1. **Breakout Rooms**: Create multiple sub-meetings within a single session to enhance collaboration and focus.
+2. **Pagination**: Efficiently handle large participant lists with seamless pagination.
+3. **Polls**: Conduct real-time polls to gather instant feedback from participants.
+4. **Media Access Requests Management**: Manage media access requests with ease to ensure smooth operations
+5. **Chat (Direct & Group)**: Facilitate communication with direct and group chat options.
+6. **Cloud Recording (track-based)**: Customize recordings with track-based options, including watermarks, name tags, background colors, and more.
+7. **Managed Events**: Manage events with features to handle abandoned and inactive participants, as well as enforce time and capacity limits.
+
+
 # Getting Started <a name="getting-started"></a>
 
 This section will guide users through the initial setup and installation of the Flutter package.
 
 ## Installation
 
-Instructions on how to install the package using Flutter.
+To install the package using Flutter, follow the instructions below:
 
-```bash
-flutter pub add mediasfu_sdk
-```
+1. Add the `mediasfu_sdk` package to your project by running the following command:
+
+    ```bash
+    flutter pub add mediasfu_sdk
+    ```
+
+2. **Obtain an API key from MediaSFU.** You can get your API key by signing up or logging into your account at [mediasfu.com](https://www.mediasfu.com/).
+
+    <div style="background-color:#f0f0f0; padding: 10px; border-radius: 5px;">
+      <h4 style="color:#d9534f;">Important:</h4>
+      <p style="font-size: 1.2em;">You must obtain an API key from <a href="https://www.mediasfu.com/">mediasfu.com</a> to use this package.</p>
+    </div>
+
+
+
+
 **iOS Setup:**
 
 1. **Minimum iOS Platform Version:**
@@ -174,6 +200,21 @@ This section will guide users through the initial setup and installation of the 
 
 *For the community edition, users can visit the GitHub repository at [*MediaSFU/MediaSFUOpen*](https://github.com/MediaSFU/MediaSFUOpen)*.
 
+## Predefined Interfaces
+
+For minimal configuration, MediaSFU offers five predefined interfaces:
+
+1. **Webinar**: Ideal for presentations and lectures.
+2. **Conference**: Suitable for interactive meetings and discussions.
+3. **Chat**: Focused on real-time 1-1 calls.
+4. **Broadcast**: Best for live streaming to large audiences.
+5. **Generic**: Includes all of the above four views and dynamically changes per event type. 
+
+Users can easily pick an interface and render it in their app.
+
+If no API credentials are provided, a default home page will be displayed where users can scan or manually enter the event details.
+
+
 ```dart
 import 'package:flutter/material.dart';
 // Import the prebuilt event room(s)
@@ -283,6 +324,8 @@ Alternatively, you can design your own welcome/prejoin page. The core function o
 
 MediaSFU passes relevant parameters to the custom welcome/prejoin page:
 
+See the following code for the PreJoinPage page logic:
+
 ```dart
 typedef ShowAlert = void Function({
   required String message,
@@ -293,364 +336,360 @@ typedef ShowAlert = void Function({
 typedef ConnectSocket = Future<dynamic> Function(
     String apiUserName, String apiKey, String apiToken, String link);
     
-  late final ShowAlert showAlert;
-  late final Function(bool) updateIsLoadingModalVisible;
-  late bool onWeb;
-  late final ConnectSocket connectSocket;
-  late dynamic socket;
-  late Function(dynamic) updateSocket;
-  late Function(bool) updateValidated;
-  late Function(String) updateApiUserName;
-  late Function(String) updateApiToken;
-  late Function(String) updateLink;
-  late Function(String) updateRoomName;
-  late Function(String) updateMember;
-  late bool validated;
-  ```
+    late final ShowAlert showAlert;
+    late final Function(bool) updateIsLoadingModalVisible;
+    late bool onWeb;
+    late final ConnectSocket connectSocket;
+    late dynamic socket;
+    late Function(dynamic) updateSocket;
+    late Function(bool) updateValidated;
+    late Function(String) updateApiUserName;
+    late Function(String) updateApiToken;
+    late Function(String) updateLink;
+    late Function(String) updateRoomName;
+    late Function(String) updateMember;
+    late bool validated;
 
-See the following code for the PreJoinPage page logic:
-
-```dart
-int maxAttempts =
-    20; // Maximum number of unsuccessful attempts before rate limiting
-int rateLimitDuration = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
-String apiKey = 'yourAPIKEY';
-String apiUserName = 'yourAPIUSERNAME';
-Map<String, dynamic> userCredentials = {
-  'apiUserName': apiUserName,
-  'apiKey': apiKey
-};
-
-class PreJoinPage extends StatefulWidget {
-  final Map<String, dynamic> parameters;
-  final Map<String, dynamic> credentials;
-
-  const PreJoinPage(
-      {super.key, required this.parameters, required this.credentials});
-
-  @override
-  // ignore: library_private_types_in_public_api
-  _PreJoinPageState createState() => _PreJoinPageState();
-}
-
-class _PreJoinPageState extends State<PreJoinPage> {
-
-
-  Map<String, dynamic> credentials = userCredentials;
-
-  late final ShowAlert showAlert;
-  late final Function(bool) updateIsLoadingModalVisible;
-  late bool onWeb;
-  late final ConnectSocket connectSocket;
-  late dynamic socket;
-  late Function(dynamic) updateSocket;
-  late Function(bool) updateValidated;
-  late Function(String) updateApiUserName;
-  late Function(String) updateApiToken;
-  late Function(String) updateLink;
-  late Function(String) updateRoomName;
-  late Function(String) updateMember;
-  late bool validated;
-
-  @override
-  void initState() {
-    super.initState();
-    // Extract showAlert and updateIsLoadingModalVisible from parameters
-    showAlert = widget.parameters['showAlert'];
-    updateIsLoadingModalVisible =
-        widget.parameters['updateIsLoadingModalVisible'];
-    onWeb = widget.parameters['onWeb'];
-    connectSocket = widget.parameters['connectSocket'];
-    socket = widget.parameters['socket'];
-    updateSocket = widget.parameters['updateSocket'];
-    updateValidated = widget.parameters['updateValidated'];
-    updateApiUserName = widget.parameters['updateApiUserName'];
-    updateApiToken = widget.parameters['updateApiToken'];
-    updateLink = widget.parameters['updateLink'];
-    updateRoomName = widget.parameters['updateRoomName'];
-    updateMember = widget.parameters['updateMember'];
-    validated = widget.parameters['validated'];
-  }
-
-  Future<void> _checkLimitsAndMakeRequest({
-    required String apiUserName,
-    String apiToken = "",
-    String apiKey = "",
-    required String link,
-    required String userName,
-  }) async {
-    const int duration = 20000;
-
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    int unsuccessfulAttempts = prefs.getInt('unsuccessfulAttempts') ?? 0;
-    int lastRequestTimestamp = prefs.getInt('lastRequestTimestamp') ?? 0;
-
-    if (unsuccessfulAttempts >= maxAttempts) {
-      if (DateTime.now().millisecondsSinceEpoch - lastRequestTimestamp <
-          rateLimitDuration) {
-        showAlert(
-          message: 'Too many unsuccessful attempts. Please try again later.',
-          type: 'danger',
-          duration: 3000,
-        );
-        await prefs.setInt(
-          'lastRequestTimestamp',
-          DateTime.now().millisecondsSinceEpoch,
-        );
-        return;
-      } else {
-        unsuccessfulAttempts = 0;
-        await prefs.setInt('unsuccessfulAttempts', unsuccessfulAttempts);
-        await prefs.setInt(
-          'lastRequestTimestamp',
-          DateTime.now().millisecondsSinceEpoch,
-        );
-      }
+    int maxAttempts =
+        20; // Maximum number of unsuccessful attempts before rate limiting
+    int rateLimitDuration = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
+    String apiKey = 'yourAPIKEY';
+    String apiUserName = 'yourAPIUSERNAME';
+    Map<String, dynamic> userCredentials = {
+      'apiUserName': apiUserName,
+      'apiKey': apiKey
+    };
+    
+    class PreJoinPage extends StatefulWidget {
+      final Map<String, dynamic> parameters;
+      final Map<String, dynamic> credentials;
+    
+      const PreJoinPage(
+          {super.key, required this.parameters, required this.credentials});
+    
+      @override
+      // ignore: library_private_types_in_public_api
+      _PreJoinPageState createState() => _PreJoinPageState();
     }
-
-    try {
-      updateIsLoadingModalVisible(true);
-
-      final socketPromise = connectSocket(apiUserName, apiKey, apiToken, link);
-      const timeoutDuration = Duration(milliseconds: duration);
-
-      final socketWithTimeout = await socketPromise.timeout(
-        timeoutDuration,
-        onTimeout: () {
-          throw TimeoutException('Socket connection timed out');
-        },
-      );
-
-      if (socketWithTimeout != null && socketWithTimeout.id != null) {
-        unsuccessfulAttempts = 0;
-        await prefs.setInt('unsuccessfulAttempts', unsuccessfulAttempts);
-        await prefs.setInt(
-          'lastRequestTimestamp',
-          DateTime.now().millisecondsSinceEpoch,
-        );
-        // Update state or perform other actions on successful request
-        await updateSocket(socketWithTimeout);
-        await updateApiUserName(apiUserName);
-        await updateApiToken(apiToken);
-        await updateLink(link);
-        await updateRoomName(apiUserName);
-        await updateMember(userName);
-        updateIsLoadingModalVisible(false);
-        await updateValidated(true);
-      } else {
-        updateIsLoadingModalVisible(false);
-        unsuccessfulAttempts++;
-        await prefs.setInt('unsuccessfulAttempts', unsuccessfulAttempts);
-        await prefs.setInt(
-          'lastRequestTimestamp',
-          DateTime.now().millisecondsSinceEpoch,
-        );
+    
+    class _PreJoinPageState extends State<PreJoinPage> {
+    
+    
+      Map<String, dynamic> credentials = userCredentials;
+    
+      late final ShowAlert showAlert;
+      late final Function(bool) updateIsLoadingModalVisible;
+      late bool onWeb;
+      late final ConnectSocket connectSocket;
+      late dynamic socket;
+      late Function(dynamic) updateSocket;
+      late Function(bool) updateValidated;
+      late Function(String) updateApiUserName;
+      late Function(String) updateApiToken;
+      late Function(String) updateLink;
+      late Function(String) updateRoomName;
+      late Function(String) updateMember;
+      late bool validated;
+    
+      @override
+      void initState() {
+        super.initState();
+        // Extract showAlert and updateIsLoadingModalVisible from parameters
+        showAlert = widget.parameters['showAlert'];
+        updateIsLoadingModalVisible =
+            widget.parameters['updateIsLoadingModalVisible'];
+        onWeb = widget.parameters['onWeb'];
+        connectSocket = widget.parameters['connectSocket'];
+        socket = widget.parameters['socket'];
+        updateSocket = widget.parameters['updateSocket'];
+        updateValidated = widget.parameters['updateValidated'];
+        updateApiUserName = widget.parameters['updateApiUserName'];
+        updateApiToken = widget.parameters['updateApiToken'];
+        updateLink = widget.parameters['updateLink'];
+        updateRoomName = widget.parameters['updateRoomName'];
+        updateMember = widget.parameters['updateMember'];
+        validated = widget.parameters['validated'];
+      }
+    
+      Future<void> _checkLimitsAndMakeRequest({
+        required String apiUserName,
+        String apiToken = "",
+        String apiKey = "",
+        required String link,
+        required String userName,
+      }) async {
+        const int duration = 20000;
+    
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        int unsuccessfulAttempts = prefs.getInt('unsuccessfulAttempts') ?? 0;
+        int lastRequestTimestamp = prefs.getInt('lastRequestTimestamp') ?? 0;
+    
         if (unsuccessfulAttempts >= maxAttempts) {
-          showAlert(
-            message: 'Too many unsuccessful attempts. Please try again later.',
-            type: 'danger',
-            duration: 3000,
+          if (DateTime.now().millisecondsSinceEpoch - lastRequestTimestamp <
+              rateLimitDuration) {
+            showAlert(
+              message: 'Too many unsuccessful attempts. Please try again later.',
+              type: 'danger',
+              duration: 3000,
+            );
+            await prefs.setInt(
+              'lastRequestTimestamp',
+              DateTime.now().millisecondsSinceEpoch,
+            );
+            return;
+          } else {
+            unsuccessfulAttempts = 0;
+            await prefs.setInt('unsuccessfulAttempts', unsuccessfulAttempts);
+            await prefs.setInt(
+              'lastRequestTimestamp',
+              DateTime.now().millisecondsSinceEpoch,
+            );
+          }
+        }
+    
+        try {
+          updateIsLoadingModalVisible(true);
+    
+          final socketPromise = connectSocket(apiUserName, apiKey, apiToken, link);
+          const timeoutDuration = Duration(milliseconds: duration);
+    
+          final socketWithTimeout = await socketPromise.timeout(
+            timeoutDuration,
+            onTimeout: () {
+              throw TimeoutException('Socket connection timed out');
+            },
           );
-        } else {
-          showAlert(
-            message: 'Invalid credentials. Please try again later.',
-            type: 'danger',
-            duration: 3000,
+    
+          if (socketWithTimeout != null && socketWithTimeout.id != null) {
+            unsuccessfulAttempts = 0;
+            await prefs.setInt('unsuccessfulAttempts', unsuccessfulAttempts);
+            await prefs.setInt(
+              'lastRequestTimestamp',
+              DateTime.now().millisecondsSinceEpoch,
+            );
+            // Update state or perform other actions on successful request
+            await updateSocket(socketWithTimeout);
+            await updateApiUserName(apiUserName);
+            await updateApiToken(apiToken);
+            await updateLink(link);
+            await updateRoomName(apiUserName);
+            await updateMember(userName);
+            updateIsLoadingModalVisible(false);
+            await updateValidated(true);
+          } else {
+            updateIsLoadingModalVisible(false);
+            unsuccessfulAttempts++;
+            await prefs.setInt('unsuccessfulAttempts', unsuccessfulAttempts);
+            await prefs.setInt(
+              'lastRequestTimestamp',
+              DateTime.now().millisecondsSinceEpoch,
+            );
+            if (unsuccessfulAttempts >= maxAttempts) {
+              showAlert(
+                message: 'Too many unsuccessful attempts. Please try again later.',
+                type: 'danger',
+                duration: 3000,
+              );
+            } else {
+              showAlert(
+                message: 'Invalid credentials. Please try again later.',
+                type: 'danger',
+                duration: 3000,
+              );
+            }
+          }
+        } catch (error) {
+          updateIsLoadingModalVisible(false);
+    
+          await prefs.setInt('unsuccessfulAttempts', unsuccessfulAttempts);
+          await prefs.setInt(
+            'lastRequestTimestamp',
+            DateTime.now().millisecondsSinceEpoch,
           );
+    
+          if (unsuccessfulAttempts >= maxAttempts) {
+            showAlert(
+              message: 'Too many unsuccessful attempts. Please try again later.',
+              type: 'danger',
+              duration: 3000,
+            );
+          } else {
+            showAlert(
+              message: 'Unable to connect. ${error.toString()}',
+              type: 'danger',
+              duration: 3000,
+            );
+          }
         }
       }
-    } catch (error) {
-      updateIsLoadingModalVisible(false);
-
-      await prefs.setInt('unsuccessfulAttempts', unsuccessfulAttempts);
-      await prefs.setInt(
-        'lastRequestTimestamp',
-        DateTime.now().millisecondsSinceEpoch,
-      );
-
-      if (unsuccessfulAttempts >= maxAttempts) {
-        showAlert(
-          message: 'Too many unsuccessful attempts. Please try again later.',
-          type: 'danger',
-          duration: 3000,
+    
+      Future<Map<String, dynamic>> joinRoomOnMediaSFU(
+          Map<String, dynamic> payload, String apiUserName, String apiKey) async {
+        try {
+          if (apiUserName.isEmpty ||
+              apiKey.isEmpty ||
+              apiUserName.isEmpty ||
+              apiKey.isEmpty) {
+            return {'data': null, 'success': false};
+          }
+    
+          if (apiUserName == 'yourAPIUSERNAME' || apiKey == 'yourAPIKEY') {
+            return {'data': null, 'success': false};
+          }
+    
+          if (apiKey.length != 64) {
+            return {'data': null, 'success': false};
+          }
+    
+          if (apiUserName.length < 6) {
+            return {'data': null, 'success': false};
+          }
+    
+          final url = Uri.parse('https://mediasfu.com/v1/rooms/');
+          final headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $apiUserName:$apiKey',
+          };
+    
+          final response = await http.post(
+            url,
+            headers: headers,
+            body: jsonEncode(payload),
+          );
+    
+          if (response.statusCode != 200 && response.statusCode != 201) {
+            throw Exception('HTTP error! Status: ${response.statusCode}');
+          }
+    
+          final responseData = jsonDecode(response.body);
+          return {'data': responseData, 'success': true};
+        } catch (error) {
+          return {'data': null, 'success': false};
+        }
+      }
+    
+      Future<Map<String, dynamic>> createRoomOnMediaSFU(
+          Map<String, dynamic> payload, String apiUserName, String apiKey) async {
+        try {
+    
+          final url = Uri.parse('https://mediasfu.com/v1/rooms/');
+          final headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $apiUserName:$apiKey',
+          };
+    
+          final response = await http.post(
+            url,
+            headers: headers,
+            body: jsonEncode(payload),
+          );
+    
+          if (response.statusCode != 201 && response.statusCode != 200) {
+            throw Exception('HTTP error! Status: ${response.statusCode}');
+          }
+    
+          final responseData = jsonDecode(response.body);
+          return {'data': responseData, 'success': true};
+        } catch (error) {
+          return {'data': null, 'success': false};
+        }
+      }
+    
+      @override
+      Widget build(BuildContext context) {
+        return Scaffold(
+          
         );
-      } else {
-        showAlert(
-          message: 'Unable to connect. ${error.toString()}',
-          type: 'danger',
-          duration: 3000,
-        );
+      }
+    
+    
+      void _handleCreateRoom() async {
+        try {
+    
+          // Call API to create room
+          final payload = {
+            'action': 'create',
+            'duration': int.parse(_duration),
+            'capacity': int.parse(_capacity),
+            'eventType': _eventType.toLowerCase(),
+            'userName': _name,
+          };
+    
+          updateIsLoadingModalVisible(true);
+    
+          // Perform room creation logic
+          final response = await createRoomOnMediaSFU(payload,
+              widget.credentials['apiUserName'], widget.credentials['apiKey']);
+    
+          if (response['success']) {
+            // Handle successful room creation
+            await _checkLimitsAndMakeRequest(
+                apiUserName: response['data']['roomName'],
+                apiToken: response['data']['secret'],
+                link: response['data']['link'],
+                userName: _name);
+            setState(() {
+              _error = ''; // Clear any previous error message
+            });
+          } else {
+            // Handle failed room creation
+            updateIsLoadingModalVisible(false);
+            setState(() {
+              _error =
+                  'Unable to create room. ${response['data'] != null ? response['data']['message'] : ''}';
+            });
+          }
+        } catch (error) {
+          updateIsLoadingModalVisible(false);
+          setState(() {
+            _error = 'Unable to connect. ${error.toString()}';
+          });
+        }
+      }
+    
+    
+      void _handleJoinRoom() async {
+        try {
+         
+          // Call API to join room
+          final payload = {
+            'action': 'join',
+            'meetingID': _eventID,
+            'userName': _name,
+          };
+    
+          updateIsLoadingModalVisible(true);
+    
+          // Perform room join logic
+          final response = await joinRoomOnMediaSFU(payload,
+              widget.credentials['apiUserName'], widget.credentials['apiKey']);
+    
+          if (response['success']) {
+            // Handle successful room join
+            await _checkLimitsAndMakeRequest(
+                apiUserName: response['data']['roomName'],
+                apiToken: response['data']['secret'],
+                link: response['data']['link'],
+                userName: _name);
+            setState(() {
+              _error = ''; // Clear any previous error message
+            });
+          } else {
+            updateIsLoadingModalVisible(false);
+            // Handle failed room join
+            setState(() {
+              _error =
+                  'Unable to connect to room. ${response['data'] != null ? response['data']['message'] : ''}';
+            });
+          }
+        } catch (error) {
+          updateIsLoadingModalVisible(false);
+          setState(() {
+            _error = 'Unable to connect. ${error.toString()}';
+          });
+        }
       }
     }
-  }
-
-  Future<Map<String, dynamic>> joinRoomOnMediaSFU(
-      Map<String, dynamic> payload, String apiUserName, String apiKey) async {
-    try {
-      if (apiUserName.isEmpty ||
-          apiKey.isEmpty ||
-          apiUserName.isEmpty ||
-          apiKey.isEmpty) {
-        return {'data': null, 'success': false};
-      }
-
-      if (apiUserName == 'yourAPIUSERNAME' || apiKey == 'yourAPIKEY') {
-        return {'data': null, 'success': false};
-      }
-
-      if (apiKey.length != 64) {
-        return {'data': null, 'success': false};
-      }
-
-      if (apiUserName.length < 6) {
-        return {'data': null, 'success': false};
-      }
-
-      final url = Uri.parse('https://mediasfu.com/v1/rooms/');
-      final headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $apiUserName:$apiKey',
-      };
-
-      final response = await http.post(
-        url,
-        headers: headers,
-        body: jsonEncode(payload),
-      );
-
-      if (response.statusCode != 200 && response.statusCode != 201) {
-        throw Exception('HTTP error! Status: ${response.statusCode}');
-      }
-
-      final responseData = jsonDecode(response.body);
-      return {'data': responseData, 'success': true};
-    } catch (error) {
-      return {'data': null, 'success': false};
-    }
-  }
-
-  Future<Map<String, dynamic>> createRoomOnMediaSFU(
-      Map<String, dynamic> payload, String apiUserName, String apiKey) async {
-    try {
-
-      final url = Uri.parse('https://mediasfu.com/v1/rooms/');
-      final headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $apiUserName:$apiKey',
-      };
-
-      final response = await http.post(
-        url,
-        headers: headers,
-        body: jsonEncode(payload),
-      );
-
-      if (response.statusCode != 201 && response.statusCode != 200) {
-        throw Exception('HTTP error! Status: ${response.statusCode}');
-      }
-
-      final responseData = jsonDecode(response.body);
-      return {'data': responseData, 'success': true};
-    } catch (error) {
-      return {'data': null, 'success': false};
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      
-    );
-  }
-
-
-  void _handleCreateRoom() async {
-    try {
-
-      // Call API to create room
-      final payload = {
-        'action': 'create',
-        'duration': int.parse(_duration),
-        'capacity': int.parse(_capacity),
-        'eventType': _eventType.toLowerCase(),
-        'userName': _name,
-      };
-
-      updateIsLoadingModalVisible(true);
-
-      // Perform room creation logic
-      final response = await createRoomOnMediaSFU(payload,
-          widget.credentials['apiUserName'], widget.credentials['apiKey']);
-
-      if (response['success']) {
-        // Handle successful room creation
-        await _checkLimitsAndMakeRequest(
-            apiUserName: response['data']['roomName'],
-            apiToken: response['data']['secret'],
-            link: response['data']['link'],
-            userName: _name);
-        setState(() {
-          _error = ''; // Clear any previous error message
-        });
-      } else {
-        // Handle failed room creation
-        updateIsLoadingModalVisible(false);
-        setState(() {
-          _error =
-              'Unable to create room. ${response['data'] != null ? response['data']['message'] : ''}';
-        });
-      }
-    } catch (error) {
-      updateIsLoadingModalVisible(false);
-      setState(() {
-        _error = 'Unable to connect. ${error.toString()}';
-      });
-    }
-  }
-
-
-  void _handleJoinRoom() async {
-    try {
-     
-      // Call API to join room
-      final payload = {
-        'action': 'join',
-        'meetingID': _eventID,
-        'userName': _name,
-      };
-
-      updateIsLoadingModalVisible(true);
-
-      // Perform room join logic
-      final response = await joinRoomOnMediaSFU(payload,
-          widget.credentials['apiUserName'], widget.credentials['apiKey']);
-
-      if (response['success']) {
-        // Handle successful room join
-        await _checkLimitsAndMakeRequest(
-            apiUserName: response['data']['roomName'],
-            apiToken: response['data']['secret'],
-            link: response['data']['link'],
-            userName: _name);
-        setState(() {
-          _error = ''; // Clear any previous error message
-        });
-      } else {
-        updateIsLoadingModalVisible(false);
-        // Handle failed room join
-        setState(() {
-          _error =
-              'Unable to connect to room. ${response['data'] != null ? response['data']['message'] : ''}';
-        });
-      }
-    } catch (error) {
-      updateIsLoadingModalVisible(false);
-      setState(() {
-        _error = 'Unable to connect. ${error.toString()}';
-      });
-    }
-  }
-}
 
 ```
 ### IP Blockage Warning And Local UI Development
@@ -913,6 +952,8 @@ These components collectively contribute to the overall user interface, facilita
 | ConfirmExitModal | Modal for confirming exit from the event. |
 | ConfirmHereModal | Modal for confirming certain actions or selections. |
 | ShareEventModal | Modal for sharing the event with others. |
+| PollModal | Modal for conducting polls or surveys during the event. |
+| BreakoutRoomsModal | Modal for managing breakout rooms during the event. |
                          
 
 #### Modal Interactions
@@ -932,6 +973,8 @@ Each modal has corresponding functions to trigger its usage:
 11. `launchParticipants`: Displays the participants modal for viewing and managing event participants.
 12. `launchMessages`: Opens the messages modal for communication through chat messages.
 13. `launchConfirmExit`: Prompts users to confirm before exiting the event.
+14. `launchPoll`: Opens the poll modal for conducting polls or surveys.
+15. `launchBreakoutRooms`: Initiates the breakout rooms modal for managing breakout room functionalities.
 
 
 #### Misc Pages
@@ -1664,7 +1707,12 @@ Here's a tabulated list of advanced control functions along with brief explanati
 | `connectIps`                     | Connects IPs (connect to consuming servers)
 | `startMeetingProgressTimer`      | Starts the meeting progress timer.       |
 | `updateRecording`                | Updates the recording status. |
-| `stopRecording`                  | Stops the recording process. 
+| `stopRecording`                  | Stops the recording process. |
+| `pollUpdated`                    | Handles updated poll data. |
+| `handleVotePoll`                 | Handles voting in a poll. |
+| `handleCreatePoll`               | Handles creating a poll. |
+| `handleEndPoll`                  | Handles ending a poll. |
+| `breakoutRoomUpdated`           | Handles updated breakout room data. |
 
 ### Room Socket Events
 
@@ -1703,6 +1751,8 @@ In the context of a room's real-time communication, various events occur, such a
 | `allMembers`                  | Triggered when information about all members is received.                                                 |
 | `allMembersRest`              | Triggered when information about all members is received (rest of the members).                           |
 | `disconnect`                  | Triggered when a disconnect event occurs.                                                                |
+| `pollUpdated`                 | Triggered when a poll is updated.                                                                        |
+| `breakoutRoomUpdated`         | Triggered when a breakout room is updated.                                                               |
 
 #### Sample Usage:
 
@@ -1736,6 +1786,9 @@ For detailed information on the API methods and usage, please refer to the [Medi
 
 If you need further assistance or have any questions, feel free to ask!
 
+For sample codes and practical implementations, visit the [MediaSFU Sandbox](https://www.mediasfu.com/sandbox).
+
+
 # Troubleshooting <a name="troubleshooting"></a>
    
 1. **Interactive Testing with MediaSFU's Frontend**:
@@ -1750,7 +1803,12 @@ If you need further assistance or have any questions, feel free to ask!
    
    This command will only display logs related to Flutter, excluding unnecessary logs from other sources. It helps in maintaining a cleaner terminal output for better debugging experience.
 
-These troubleshooting steps should help users address common issues and optimize their experience with MediaSFU. If the issues persist or additional assistance is needed, users can refer to the [documentation](https://mediasfu.com/docs) or reach out to the support team for further assistance.
+3. **Issues with Remote Streams on Web**:
+If you have issues seeing remote streams on the web, it might be due to problems related to localhost. Testing on localhost can sometimes lead to issues due to various factors, such as browser security settings or network configurations. To ensure a more reliable testing environment, it is recommended to:
+
+    - ***Build and Deploy***: Make a production build of your application and deploy it to a staging or live environment. This will help you test the application in a real-world scenario, bypassing potential issues related to localhost.
+    - ***Use a Different Browser***: Sometimes, different browsers handle local streams differently. Testing on multiple browsers can help identify if the issue is browser-specific.
+These troubleshooting steps should help users address common issues and optimize their experience with MediaSFU. If the issues persist or additional assistance is needed, users can refer to the [documentation](https://mediasfu.com/documentation) or reach out to the support team for further assistance.
 
 ```
 <div style="text-align: center;">

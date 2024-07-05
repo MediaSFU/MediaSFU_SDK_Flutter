@@ -57,6 +57,10 @@ export 'package:mediasfu_sdk/components/misc_components/welcome_page.dart'
     show WelcomePage;
 export 'package:mediasfu_sdk/components/misc_components/prejoin_page.dart'
     show PreJoinPage;
+export 'package:mediasfu_sdk/components/polls_components/poll_modal.dart'
+    show PollModal;
+export 'package:mediasfu_sdk/components/breakout_components/breakout_rooms_modal.dart'
+    show BreakoutRoomsModal;
 
 //pagination and display of media (samples)
 export 'package:mediasfu_sdk/components/display_components/pagination.dart'
@@ -95,6 +99,10 @@ export 'package:mediasfu_sdk/methods/message_methods/launch_messages.dart'
     show launchMessages;
 export 'package:mediasfu_sdk/methods/exit_methods/launch_confirm_exit.dart'
     show launchConfirmExit;
+export 'package:mediasfu_sdk/methods/polls_methods/launch_poll.dart'
+    show launchPoll;
+export 'package:mediasfu_sdk/methods/breakout_rooms_methods/launch_breakout_rooms.dart'
+    show launchBreakoutRooms;
 
 //mediasfu functions -- examples
 export 'package:mediasfu_sdk/sockets/socket_manager.dart'
@@ -211,6 +219,16 @@ export 'package:mediasfu_sdk/consumers/receive_room_messages.dart'
 export 'package:mediasfu_sdk/methods/utils/format_number.dart'
     show formatNumber;
 export 'package:mediasfu_sdk/consumers/connect_ips.dart' show connectIps;
+export 'package:mediasfu_sdk/methods/polls_methods/poll_updated.dart'
+    show pollUpdated;
+export 'package:mediasfu_sdk/methods/polls_methods/handle_create_poll.dart'
+    show handleCreatePoll;
+export 'package:mediasfu_sdk/methods/polls_methods/handle_vote_poll.dart'
+    show handleVotePoll;
+export 'package:mediasfu_sdk/methods/polls_methods/handle_end_poll.dart'
+    show handleEndPoll;
+export 'package:mediasfu_sdk/methods/breakout_rooms_methods/breakout_room_updated.dart'
+    show breakoutRoomUpdated;
 
 export 'package:mediasfu_sdk/methods/utils/meeting_timer/start_meeting_progress_timer.dart'
     show startMeetingProgressTimer;
@@ -277,6 +295,10 @@ export 'package:mediasfu_sdk/producers/socket_receive_methods/all_members_rest.d
     show allMembersRest;
 export 'package:mediasfu_sdk/producers/socket_receive_methods/disconnect.dart'
     show disconnect;
+export 'package:mediasfu_sdk/consumers/resume_pause_audio_streams.dart'
+    show resumePauseAudioStreams;
+export 'package:mediasfu_sdk/consumers/process_consumer_transports_audio.dart'
+    show processConsumerTransportsAudio;
 
 //Prebuilt Event Rooms
 export 'package:mediasfu_sdk/components/mediasfu_components/mediasfu_generic.dart'
@@ -299,6 +321,8 @@ export 'package:mediasfu_sdk/methods/utils/generate_random_request_list.dart'
     show generateRandomRequestList;
 export 'package:mediasfu_sdk/methods/utils/generate_random_waiting_room_list.dart'
     show generateRandomWaitingRoomList;
+export 'package:mediasfu_sdk/methods/utils/generate_random_polls.dart'
+    show generateRandomPolls;
 
 // Display Components (misc)
 export 'package:mediasfu_sdk/components/display_components/meeting_progress_timer.dart'

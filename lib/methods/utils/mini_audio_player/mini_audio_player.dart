@@ -139,9 +139,24 @@ class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
             parameters['paginatedStreams'] ?? [];
         final int currentUserPage = parameters['currentUserPage'] ?? 0;
 
+        final bool breakOutRoomStarted =
+            parameters['breakOutRoomStarted'] ?? false;
+        final bool breakOutRoomEnded = parameters['breakOutRoomEnded'] ?? false;
+        final List<dynamic> limitedBreakRoom =
+            parameters['limitedBreakRoom'] ?? [];
+
         final participant = participants.firstWhere(
             (obj) => obj['audioID'] == widget.remoteProducerId,
             orElse: () => null);
+
+        bool audioActiveInRoom = true;
+        if (participant != null && breakOutRoomStarted && !breakOutRoomEnded) {
+          if (!limitedBreakRoom
+              .map((obj) => obj['name'])
+              .contains(participant['name'])) {
+            audioActiveInRoom = false;
+          }
+        }
 
         if (meetingDisplayType != 'video') {
           autoWaveCheck = true;
@@ -185,7 +200,9 @@ class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
             autoWaveCheck = true;
           }
 
-          if (participant['videoID'].isNotEmpty || autoWaveCheck) {
+          if (participant['videoID'].isNotEmpty ||
+              autoWaveCheck ||
+              audioActiveInRoom) {
             setState(() {
               showWaveModal = false;
             });

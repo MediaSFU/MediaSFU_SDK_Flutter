@@ -77,6 +77,9 @@ void confirmRecording({required Map<String, dynamic> parameters}) {
         parameters['recordingAllParticipantsFullRoomSupport'];
     bool meetingVideoOptimized = parameters['meetingVideoOptimized'];
     String eventType = parameters['eventType'];
+    bool breakOutRoomStarted = parameters['breakOutRoomStarted'] ?? false;
+    bool breakOutRoomEnded = parameters['breakOutRoomEnded'] ?? false;
+
     // Extract variables from the parameters object
     final ShowAlert? showAlert = parameters['showAlert'];
     final UpdateRecordingDisplayType updateRecordingDisplayType =
@@ -118,15 +121,18 @@ void confirmRecording({required Map<String, dynamic> parameters}) {
           recordingVideoOptions == 'all' &&
           mediaOptions == 'video') {
         if (meetingDisplayType == 'all') {
-          if (showAlert != null) {
-            showAlert(
-              message:
-                  'You are not allowed to record videos of all participants; change the meeting display type to video or video optimized.',
-              type: 'danger',
-              duration: 3000,
-            );
+          if (breakOutRoomStarted && !breakOutRoomEnded) {
+          } else {
+            if (showAlert != null) {
+              showAlert(
+                message:
+                    'You are not allowed to record videos of all participants; change the meeting display type to video or video optimized.',
+                type: 'danger',
+                duration: 3000,
+              );
+            }
+            return;
           }
-          return;
         }
       }
 
