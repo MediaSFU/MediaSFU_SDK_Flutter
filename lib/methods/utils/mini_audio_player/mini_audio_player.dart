@@ -202,7 +202,9 @@ class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
 
           if (participant['videoID'].isNotEmpty ||
               autoWaveCheck ||
-              audioActiveInRoom) {
+              (breakOutRoomStarted &&
+                  !breakOutRoomEnded &&
+                  audioActiveInRoom)) {
             setState(() {
               showWaveModal = false;
             });

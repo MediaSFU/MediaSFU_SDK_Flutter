@@ -1,3 +1,6 @@
+### 0.0.6
+* Mini audio player bug fix.   
+
 ### 0.0.5
 1. **Updated flutter_webrtc support**:
    - Enhanced compatibility and performance with the latest version of `flutter_webrtc`.
