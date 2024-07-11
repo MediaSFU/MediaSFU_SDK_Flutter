@@ -81,6 +81,7 @@ class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
   late bool showWaveModal;
   late bool isMuted;
   late bool autoWaveCheck;
+  late bool consLow;
   late List<String> activeSounds;
   late RTCVideoRenderer _rtcVideoRenderer;
   late Timer _timer;
@@ -91,6 +92,7 @@ class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
     showWaveModal = false;
     isMuted = false;
     autoWaveCheck = false;
+    consLow = false;
     activeSounds = [];
     _rtcVideoRenderer = RTCVideoRenderer();
     _initRenderers();
@@ -113,7 +115,7 @@ class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
 
   void initializeAudioAnalysis() {
     if (widget.stream != null) {
-      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _timer = Timer.periodic(const Duration(seconds: 2), (timer) {
         const averageLoudness =
             127.75; // Get the average loudness of the audio stream
 
@@ -214,6 +216,7 @@ class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
                 setState(() {
                   activeSounds.add(participant['name']);
                 });
+                consLow = false;
                 reUpdateInter(
                   name: participant['name'],
                   add: true,
@@ -222,7 +225,7 @@ class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
                 );
               }
             } else {
-              if (activeSounds.contains(participant['name'])) {
+              if (activeSounds.contains(participant['name']) && consLow) {
                 setState(() {
                   activeSounds.remove(participant['name']);
                 });
@@ -231,6 +234,8 @@ class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
                   average: averageLoudness,
                   parameters: parameters,
                 );
+              } else {
+                consLow = true;
               }
             }
           } else {

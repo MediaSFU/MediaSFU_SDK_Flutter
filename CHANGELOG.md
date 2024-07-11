@@ -1,3 +1,6 @@
+### 0.0.7
+* Bug fix for interval updates of loudness. 
+
 ### 0.0.6
 * Mini audio player bug fix.   
 
