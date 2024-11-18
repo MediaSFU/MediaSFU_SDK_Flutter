@@ -1,0 +1,115 @@
+# dartdoc:
+#   exclude: [src/private]  # Exclude private files or directories
+#   showUndocumentedCategories: false
+#   categoryOrder:
+#     - Components
+#     - Methods
+#     - Producers
+#     - Consumers
+#     - Misc
+#   categories:
+#     Components: "lib/components"
+#     Methods: "lib/methods"
+#     Producers: "lib/producers"
+#     Consumers: "lib/consumers"
+#     Misc: "lib/misc"
+
+# dartdoc:
+  # categories:
+  #   Components:
+  #     - lib/components.dart
+  #   Methods:
+  #     - lib/methods.dart
+  #   Producers:
+  #     - lib/producers.dart
+  #   Consumers:
+  #     - lib/consumers.dart
+  #   Misc:
+  #     - lib/misc.dart
+#   categoryOrder:
+#     - Components
+#     - Methods
+#     - Producers
+#     - Consumers
+#     - Misc
+#   showUndocumentedCategories: false
+#   nodoc:
+#     - lib/components/*
+#     - lib/methods/*
+#     - lib/producers/*
+#     - lib/consumers/*
+#     - lib/sockets/*
+#     - lib/producer-client/*
+#   linkTo:
+#     url: "https://github.com/MediaSFU/MediaSFU_SDK_Flutter/blob/%v%/%f%"
+#     label: "View source"
+#   hostedBaseUrl: "https://mediasfu.com/flutter"
+#   useHostedBaseUrlForAbsoluteLinks: false
+#   ignore:
+#     - ambiguous-doc-reference
+#   errors:
+#     - unresolved-doc-reference
+#   warnings:
+#     - tool-error
+
+# dartdoc:
+#   categories:
+#     "Asset":
+#       markdown: doc/doc_assets/empty.html
+#       name: Asset
+#     "Configuration":
+#       markdown: doc/doc_assets/empty.html
+#       name: Configuration
+#     "Transformation":
+#       markdown: doc/doc_assets/empty.html
+#       name: Transformation
+#   categoryOrder: ["Api", "Asset", "Configuration", "Exception"]
+#   exclude: ['README.md']
+#   nodoc: [lib/analytics.dart, util/environment.dart, transformations/transformation_utils.dart, lib/transformation/common.dart, lib/transformation/resize/common.dart, lib/transformation/adjust/adjust_actions.dart]
+#   showUndocumentedCategories: false
+#   header: [doc/doc_assets/header.html]
+#   footer: [doc/doc_assets/footer.html]
+#   ignore:
+#     - ambiguous-doc-reference
+#   errors:
+#     - unresolved-doc-reference
+
+dartdoc:
+  categories:
+      Components:
+        - lib/components.dart
+      Methods:
+        - lib/methods.dart
+      Producers:
+        - lib/producers.dart
+      Consumers:
+        - lib/consumers.dart
+      Misc:
+        - lib/misc.dart
+  categoryOrder:
+    - Components
+    - Methods
+    - Producers
+    - Consumers
+    - Misc
+  showUndocumentedCategories: false
+  nodoc:
+    - lib/components/*
+    - lib/methods/*
+    - lib/producers/*
+    - lib/consumers/*
+    - lib/sockets/*
+    - lib/producer-client/*
+  linkTo:
+    url: "https://github.com/MediaSFU/MediaSFU_SDK_Flutter/blob/%v%/%f%"
+    label: "View source"
+  hostedBaseUrl: "https://mediasfu.com/flutter"
+  useHostedBaseUrlForAbsoluteLinks: false
+  header: [doc/doc_assets/header.html]
+  footer: [doc/doc_assets/footer.html]
+  ignore:
+    - ambiguous-doc-reference
+  errors:
+    - unresolved-doc-reference
+  warnings:
+    - tool-error

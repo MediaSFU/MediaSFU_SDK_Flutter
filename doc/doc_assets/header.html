@@ -1,0 +1,82 @@
+<style>
+    site-nav.navbar-default .navbar-brand {
+    color: #508599;
+    }
+
+    
+footer {
+    display: none;
+}
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Target the breadcrumbs and modify the text
+        const breadcrumbs = document.querySelector(".breadcrumbs a");
+        if (breadcrumbs) {
+            breadcrumbs.textContent = "MediaSFU Flutter SDK";
+            breadcrumbs.href = "https://mediasfu.com/flutter"; // Optionally update the link
+        }
+
+        // 1. Modify the package name in the header
+        const packageNameElement = document.querySelector(".package-name");
+        if (packageNameElement) {
+            packageNameElement.textContent = "MediaSFU Flutter SDK";
+        }
+
+       // 1.1 Modify the package kind in the header
+        const packageKindElement = document.querySelector(".package-kind");
+        if (packageKindElement) {
+            packageKindElement.textContent = "Documentation";
+        }
+
+        // 2. Rename the section title from "Libraries" to "Modules" (or another desired name)
+        const sectionTitleElement = document.querySelector(".section-title");
+        if (sectionTitleElement) {
+            sectionTitleElement.textContent = "Modules"; // Change "Modules" to your desired title
+        }
+
+        // 3. Filter sidebar items based on an allowed list
+        const allowedCategories = ['components', 'methods', 'producers', 'consumers', 'misc']; // Define your allowed categories here
+
+        // Ensure the sectionTitleElement exists
+        if (sectionTitleElement) {
+            // Get the parent <ol> element containing the list items
+            const sectionOl = sectionTitleElement.parentElement;
+            if (sectionOl) {
+                // Get all list items within the <ol>, excluding the section-title
+                const listItems = sectionOl.querySelectorAll("li:not(.section-title)");
+
+                listItems.forEach(function(item) {
+                    const link = item.querySelector("a");
+                    if (link) {
+                        const href = link.getAttribute("href");
+                        // Extract the first path segment, handling both with and without '../'
+                        const pathMatch = href.match(/^(?:\.\.\/)?([^\/]+)/);
+                        if (pathMatch && pathMatch[1]) {
+                            const category = pathMatch[1].toLowerCase();
+                            console.log(`Processing category: ${category}`);
+
+                            if (!allowedCategories.includes(category)) {
+                                // Hide the list item if it doesn't match allowed categories
+                                item.style.display = "none";
+                            } else {
+                                // Format the link text nicely, e.g., capitalize
+                                link.textContent = capitalizeLetter(category);
+                            }
+                        } else {
+                            // If no match, hide the item
+                            item.style.display = "none";
+                        }
+                    }
+                });
+            }
+
+            // Helper function to capitalize the first letter
+            // Improve the appearance of the category names
+            function capitalizeLetter(letter) {
+                return letter.toUpperCase();
+            }
+        }
+    });
+</script>
