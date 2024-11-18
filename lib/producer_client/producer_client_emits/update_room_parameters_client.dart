@@ -1,46 +1,34 @@
 // ignore_for_file: library_prefixes, non_constant_identifier_names, empty_catches
 
 import 'package:flutter/foundation.dart';
+import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
 import '../../methods/utils/producer/video_capture_constraints.dart'
     as constraints;
 import '../../methods/utils/producer/h_params.dart' as hostParams_;
 import '../../methods/utils/producer/v_params.dart' as videoParams_;
 import '../../methods/utils/producer/screen_params.dart' as screenParams_;
 import '../../methods/utils/producer/a_params.dart' as audioParams_;
+import '../../types/types.dart'
+    show
+        MeetingRoomParams,
+        VidCons,
+        ShowAlert,
+        ResponseJoinRoom,
+        EventType,
+        ProducerOptionsType;
 
-///
-/// This file contains the definition of the `updateRoomParametersClient` function and various typedefs used as parameters.
-///
-/// The `updateRoomParametersClient` function is responsible for updating the room parameters based on the provided `parameters` map.
-/// It takes in a `parameters` map that contains various update functions as values.
-/// The function extracts the required data from the `parameters` map and calls the corresponding update functions to update the room parameters.
-///
-/// The typedefs defined in this file represent the various update functions used by the `updateRoomParametersClient` function.
-/// Each typedef represents a specific type of update function and is used to define the type of the corresponding value in the `parameters` map.
-/// These update functions are responsible for updating specific room parameters based on the provided values.
-///
-/// Note: This file also imports various utility files and defines a `ShowAlert` typedef used for showing alerts.
-
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
-});
-
-typedef UpdateRtpCapabilities = void Function(Map<String, dynamic>);
-typedef UpdateRoomRecvIPs = void Function(List<dynamic>);
-typedef UpdateMeetingRoomParams = void Function(Map<String, dynamic>);
+/// Type definitions for update functions
+typedef UpdateRtpCapabilities = void Function(RtpCapabilities?);
+typedef UpdateRoomRecvIPs = void Function(List<String>);
+typedef UpdateMeetingRoomParams = void Function(MeetingRoomParams?);
 typedef UpdateItemPageLimit = void Function(int);
 typedef UpdateAudioOnlyRoom = void Function(bool);
 typedef UpdateAddForBasic = void Function(bool);
 typedef UpdateScreenPageLimit = void Function(int);
-typedef UpdateShareScreenStarted = void Function(bool);
-typedef UpdateShared = void Function(bool);
-typedef UpdateTargetOrientation = void Function(String);
-typedef UpdateVidCons = void Function(Map<String, dynamic>);
+typedef UpdateVidCons = void Function(VidCons);
 typedef UpdateFrameRate = void Function(int);
 typedef UpdateAdminPasscode = void Function(String);
-typedef UpdateEventType = void Function(String);
+typedef UpdateEventType = void Function(EventType);
 typedef UpdateYouAreCoHost = void Function(bool);
 typedef UpdateAutoWave = void Function(bool);
 typedef UpdateForceFullDisplay = void Function(bool);
@@ -49,10 +37,15 @@ typedef UpdateMeetingDisplayType = void Function(String);
 typedef UpdateAudioSetting = void Function(String);
 typedef UpdateVideoSetting = void Function(String);
 typedef UpdateScreenshareSetting = void Function(String);
-typedef UpdateHParams = void Function(Map<String, dynamic>);
-typedef UpdateVParams = void Function(Map<String, dynamic>);
-typedef UpdateScreenParams = void Function(Map<String, dynamic>);
-typedef UpdateAParams = void Function(Map<String, dynamic>);
+typedef UpdateHParams = void Function(ProducerOptionsType);
+typedef UpdateVParams = void Function(ProducerOptionsType);
+typedef UpdateScreenParams = void Function(ProducerOptionsType);
+typedef UpdateAParams = void Function(ProducerOptionsType);
+typedef UpdateMainHeightWidth = void Function(double);
+typedef UpdateTargetResolution = void Function(String);
+typedef UpdateTargetResolutionHost = void Function(String);
+
+// Recording-related update function typedefs
 typedef UpdateRecordingAudioPausesLimit = void Function(int);
 typedef UpdateRecordingAudioPausesCount = void Function(int);
 typedef UpdateRecordingAudioSupport = void Function(bool);
@@ -70,427 +63,473 @@ typedef UpdateRecordingVideoParticipantsFullRoomSupport = void Function(bool);
 typedef UpdateRecordingPreferredOrientation = void Function(String);
 typedef UpdateRecordingSupportForOtherOrientation = void Function(bool);
 typedef UpdateRecordingMultiFormatsSupport = void Function(bool);
-typedef UpdateMainHeightWidth = void Function(int);
+typedef UpdateRecordingVideoOptions = void Function(String);
+typedef UpdateRecordingAudioOptions = void Function(String);
+
+/// Parameters for updating room configuration
+abstract class UpdateRoomParametersClientParameters {
+  // Core properties as abstract getters
+  RtpCapabilities? get rtpCapabilities;
+  List<String> get roomRecvIPs;
+  MeetingRoomParams? get meetingRoomParams;
+  int get itemPageLimit;
+  bool get audioOnlyRoom;
+  bool get addForBasic;
+  int get screenPageLimit;
+  bool get shareScreenStarted;
+  bool get shared;
+  String get targetOrientation;
+  VidCons get vidCons;
+  bool get recordingVideoSupport;
+  int get frameRate;
+  String get adminPasscode;
+  EventType get eventType;
+  bool get youAreCoHost;
+  bool get autoWave;
+  bool get forceFullDisplay;
+  String get chatSetting;
+  String get meetingDisplayType;
+  String get audioSetting;
+  String get videoSetting;
+  String get screenshareSetting;
+  ProducerOptionsType? get hParams;
+  ProducerOptionsType? get vParams;
+  ProducerOptionsType? get screenParams;
+  ProducerOptionsType? get aParams;
+  String get islevel;
+  ShowAlert? get showAlert;
+  ResponseJoinRoom get roomData;
+
+  // Update function callbacks as abstract getters
+  UpdateRtpCapabilities get updateRtpCapabilities;
+  UpdateRoomRecvIPs get updateRoomRecvIPs;
+  UpdateMeetingRoomParams get updateMeetingRoomParams;
+  UpdateItemPageLimit get updateItemPageLimit;
+  UpdateAudioOnlyRoom get updateAudioOnlyRoom;
+  UpdateAddForBasic get updateAddForBasic;
+  UpdateScreenPageLimit get updateScreenPageLimit;
+  UpdateVidCons get updateVidCons;
+  UpdateFrameRate get updateFrameRate;
+  UpdateAdminPasscode get updateAdminPasscode;
+  UpdateEventType get updateEventType;
+  UpdateYouAreCoHost get updateYouAreCoHost;
+  UpdateAutoWave get updateAutoWave;
+  UpdateForceFullDisplay get updateForceFullDisplay;
+  UpdateChatSetting get updateChatSetting;
+  UpdateMeetingDisplayType get updateMeetingDisplayType;
+  UpdateAudioSetting get updateAudioSetting;
+  UpdateVideoSetting get updateVideoSetting;
+  UpdateScreenshareSetting get updateScreenshareSetting;
+  UpdateHParams get updateHParams;
+  UpdateVParams get updateVParams;
+  UpdateScreenParams get updateScreenParams;
+  UpdateAParams get updateAParams;
+  UpdateMainHeightWidth get updateMainHeightWidth;
+  UpdateTargetResolution get updateTargetResolution;
+  UpdateTargetResolutionHost get updateTargetResolutionHost;
+
+  // Recording-related update functions as abstract getters
+  UpdateRecordingAudioPausesLimit get updateRecordingAudioPausesLimit;
+  UpdateRecordingAudioPausesCount get updateRecordingAudioPausesCount;
+  UpdateRecordingAudioSupport get updateRecordingAudioSupport;
+  UpdateRecordingAudioPeopleLimit get updateRecordingAudioPeopleLimit;
+  UpdateRecordingAudioParticipantsTimeLimit
+      get updateRecordingAudioParticipantsTimeLimit;
+  UpdateRecordingVideoPausesCount get updateRecordingVideoPausesCount;
+  UpdateRecordingVideoPausesLimit get updateRecordingVideoPausesLimit;
+  UpdateRecordingVideoSupport get updateRecordingVideoSupport;
+  UpdateRecordingVideoPeopleLimit get updateRecordingVideoPeopleLimit;
+  UpdateRecordingVideoParticipantsTimeLimit
+      get updateRecordingVideoParticipantsTimeLimit;
+  UpdateRecordingAllParticipantsSupport
+      get updateRecordingAllParticipantsSupport;
+  UpdateRecordingVideoParticipantsSupport
+      get updateRecordingVideoParticipantsSupport;
+  UpdateRecordingAllParticipantsFullRoomSupport
+      get updateRecordingAllParticipantsFullRoomSupport;
+  UpdateRecordingVideoParticipantsFullRoomSupport
+      get updateRecordingVideoParticipantsFullRoomSupport;
+  UpdateRecordingPreferredOrientation get updateRecordingPreferredOrientation;
+  UpdateRecordingSupportForOtherOrientation
+      get updateRecordingSupportForOtherOrientation;
+  UpdateRecordingMultiFormatsSupport get updateRecordingMultiFormatsSupport;
+  UpdateRecordingVideoOptions get updateRecordingVideoOptions;
+  UpdateRecordingAudioOptions get updateRecordingAudioOptions;
+
+  UpdateRoomParametersClientParameters Function() get getUpdatedAllParams;
+  //dynamic operator [](String key);
+}
+
+/// Options class for updating room parameters
+class UpdateRoomParametersClientOptions {
+  final UpdateRoomParametersClientParameters parameters;
+
+  UpdateRoomParametersClientOptions({
+    required this.parameters,
+  });
+}
+
+typedef UpdateRoomParametersClientType = void Function(
+  UpdateRoomParametersClientOptions options,
+);
+
+/// Updates the room configuration parameters based on provided options.
+///
+/// The `updateRoomParametersClient` function allows for the flexible and dynamic
+/// updating of room parameters such as video, audio, and screen sharing configurations.
+/// It takes in an `UpdateRoomParametersClientOptions` object that contains the room parameters,
+/// along with multiple update functions used to apply changes to these parameters.
+///
+/// Key configurable parameters include:
+/// - **Video Encoding Parameters**: Bitrate, resolution, and scalability settings for video encodings.
+/// - **Audio and Video Settings**: Controls for media type (audio-only or video) and individual codec settings.
+/// - **Recording Parameters**: Settings for audio and video recording limitations, support, and orientation.
+/// - **Screen Sharing and Frame Rate**: Adjustments for screen-sharing constraints and display frame rates.
+///
+/// The function will update each parameter according to the current room configuration
+/// and level, ensuring appropriate values are applied for different event types and device constraints.
+///
+/// ## Example Usage:
+///
+/// ```dart
+/// final options = UpdateRoomParametersClientOptions(
+///   parameters: UpdateRoomParametersClientParameters(
+///     rtpCapabilities: myRtpCapabilities,
+///     roomRecvIPs: ['100.000.1.1', '100.000.1.2'],
+///     meetingRoomParams: myMeetingRoomParams,
+///     itemPageLimit: 5,
+///     audioOnlyRoom: false,
+///     addForBasic: true,
+///     screenPageLimit: 3,
+///     shareScreenStarted: false,
+///     shared: true,
+///     targetOrientation: 'landscape',
+///     vidCons: VidCons(width: 1280, height: 720),
+///     recordingVideoSupport: true,
+///     frameRate: 30,
+///     adminPasscode: 'secure123',
+///     eventType: EventType.conference,
+///     youAreCoHost: true,
+///     autoWave: true,
+///     forceFullDisplay: true,
+///     chatSetting: 'enabled',
+///     meetingDisplayType: 'gallery',
+///     audioSetting: 'allow',
+///     videoSetting: 'allow',
+///     screenshareSetting: 'approval',
+///     hParams: hostParams_.hParams,
+///     vParams: videoParams_.vParams,
+///     screenParams: screenParams_.screenParams,
+///     aParams: audioParams_.aParams,
+///     islevel: '1',
+///     showAlert: (message, type, duration) {
+///       print('$type Alert: $message (Duration: $duration ms)');
+///     },
+///     roomData: myResponseJoinRoom,
+///     updateRtpCapabilities: (capabilities) => print('Updated RTP Capabilities'),
+///     updateRoomRecvIPs: (ips) => print('Updated Room Recv IPs'),
+///     updateMeetingRoomParams: (params) => print('Updated Meeting Room Params'),
+///     updateItemPageLimit: (limit) => print('Updated Item Page Limit: $limit'),
+///     updateAudioOnlyRoom: (isAudioOnly) => print('Updated Audio Only Room: $isAudioOnly'),
+///     updateAddForBasic: (addForBasic) => print('Updated Add for Basic: $addForBasic'),
+///     updateScreenPageLimit: (limit) => print('Updated Screen Page Limit: $limit'),
+///     updateVidCons: (vidCons) => print('Updated VidCons: $vidCons'),
+///     updateFrameRate: (rate) => print('Updated Frame Rate: $rate'),
+///     updateAdminPasscode: (code) => print('Updated Admin Passcode: $code'),
+///     updateEventType: (type) => print('Updated Event Type: $type'),
+///     updateYouAreCoHost: (isCoHost) => print('Updated Co-Host Status: $isCoHost'),
+///     updateAutoWave: (autoWave) => print('Updated AutoWave: $autoWave'),
+///     updateForceFullDisplay: (fullDisplay) => print('Updated Full Display: $fullDisplay'),
+///     updateChatSetting: (chatSetting) => print('Updated Chat Setting: $chatSetting'),
+///     updateMeetingDisplayType: (displayType) => print('Updated Meeting Display Type: $displayType'),
+///     updateAudioSetting: (setting) => print('Updated Audio Setting: $setting'),
+///     updateVideoSetting: (setting) => print('Updated Video Setting: $setting'),
+///     updateScreenshareSetting: (setting) => print('Updated Screenshare Setting: $setting'),
+///     updateHParams: (params) => print('Updated Host Params: $params'),
+///     updateVParams: (params) => print('Updated Video Params: $params'),
+///     updateScreenParams: (params) => print('Updated Screen Params: $params'),
+///     updateAParams: (params) => print('Updated Audio Params: $params'),
+///     updateMainHeightWidth: (heightWidth) => print('Updated Main Height/Width: $heightWidth'),
+///     updateTargetResolution: (resolution) => print('Updated Target Resolution: $resolution'),
+///     updateTargetResolutionHost: (resolution) => print('Updated Host Target Resolution: $resolution'),
+///     updateRecordingAudioPausesLimit: (limit) => print('Updated Audio Pauses Limit: $limit'),
+///     updateRecordingAudioPausesCount: (count) => print('Updated Audio Pauses Count: $count'),
+///     updateRecordingAudioSupport: (support) => print('Updated Recording Audio Support: $support'),
+///     updateRecordingAudioPeopleLimit: (limit) => print('Updated Audio People Limit: $limit'),
+///     updateRecordingAudioParticipantsTimeLimit: (timeLimit) => print('Updated Audio Participants Time Limit: $timeLimit'),
+///     updateRecordingVideoPausesCount: (count) => print('Updated Video Pauses Count: $count'),
+///     updateRecordingVideoPausesLimit: (limit) => print('Updated Video Pauses Limit: $limit'),
+///     updateRecordingVideoSupport: (support) => print('Updated Recording Video Support: $support'),
+///     updateRecordingVideoPeopleLimit: (limit) => print('Updated Video People Limit: $limit'),
+///     updateRecordingVideoParticipantsTimeLimit: (timeLimit) => print('Updated Video Participants Time Limit: $timeLimit'),
+///     updateRecordingAllParticipantsSupport: (support) => print('Updated All Participants Recording Support: $support'),
+///     updateRecordingVideoParticipantsSupport: (support) => print('Updated Video Participants Support: $support'),
+///     updateRecordingAllParticipantsFullRoomSupport: (support) => print('Updated Full Room Recording Support for All Participants: $support'),
+///     updateRecordingVideoParticipantsFullRoomSupport: (support) => print('Updated Full Room Recording Support for Video Participants: $support'),
+///     updateRecordingPreferredOrientation: (orientation) => print('Updated Preferred Orientation: $orientation'),
+///     updateRecordingSupportForOtherOrientation: (support) => print('Updated Support for Other Orientations: $support'),
+///     updateRecordingMultiFormatsSupport: (support) => print('Updated Multi-Formats Support: $support'),
+///     updateRecordingVideoOptions: (options) => print('Updated Video Recording Options: $options'),
+///     updateRecordingAudioOptions: (options) => print('Updated Audio Recording Options: $options'),
+///   ),
+/// );
+///
+/// updateRoomParametersClient(options: options);
+/// ```
 
 void updateRoomParametersClient({
-  required Map<String, dynamic> parameters,
+  required UpdateRoomParametersClientOptions options,
 }) {
   try {
-    final Map<String, dynamic> data = parameters['data'];
-    final UpdateRtpCapabilities updateRtpCapabilities =
-        parameters['updateRtpCapabilities'];
-    final UpdateAdminPasscode updateAdminPasscode =
-        parameters['updateAdminPasscode'];
-    final UpdateRoomRecvIPs updateRoomRecvIPs = parameters['updateRoomRecvIPs'];
-    final UpdateMeetingRoomParams updateMeetingRoomParams =
-        parameters['updateMeetingRoomParams'];
-    final UpdateRecordingAudioPausesLimit updateRecordingAudioPausesLimit =
-        parameters['updateRecordingAudioPausesLimit'];
-    final UpdateRecordingAudioPausesCount updateRecordingAudioPausesCount =
-        parameters['updateRecordingAudioPausesCount'];
-    final UpdateRecordingAudioSupport updateRecordingAudioSupport =
-        parameters['updateRecordingAudioSupport'];
-    final UpdateRecordingAudioPeopleLimit updateRecordingAudioPeopleLimit =
-        parameters['updateRecordingAudioPeopleLimit'];
-    final UpdateRecordingAudioParticipantsTimeLimit
-        updateRecordingAudioParticipantsTimeLimit =
-        parameters['updateRecordingAudioParticipantsTimeLimit'];
-    final UpdateRecordingVideoPausesCount updateRecordingVideoPausesCount =
-        parameters['updateRecordingVideoPausesCount'];
-    final UpdateRecordingVideoPausesLimit updateRecordingVideoPausesLimit =
-        parameters['updateRecordingVideoPausesLimit'];
-    final UpdateRecordingVideoSupport updateRecordingVideoSupport =
-        parameters['updateRecordingVideoSupport'];
-    final UpdateRecordingVideoPeopleLimit updateRecordingVideoPeopleLimit =
-        parameters['updateRecordingVideoPeopleLimit'];
-    final UpdateRecordingVideoParticipantsTimeLimit
-        updateRecordingVideoParticipantsTimeLimit =
-        parameters['updateRecordingVideoParticipantsTimeLimit'];
-    final UpdateRecordingAllParticipantsSupport
-        updateRecordingAllParticipantsSupport =
-        parameters['updateRecordingAllParticipantsSupport'];
-    final UpdateRecordingVideoParticipantsSupport
-        updateRecordingVideoParticipantsSupport =
-        parameters['updateRecordingVideoParticipantsSupport'];
-    final UpdateRecordingAllParticipantsFullRoomSupport
-        updateRecordingAllParticipantsFullRoomSupport =
-        parameters['updateRecordingAllParticipantsFullRoomSupport'];
-    final UpdateRecordingVideoParticipantsFullRoomSupport
-        updateRecordingVideoParticipantsFullRoomSupport =
-        parameters['updateRecordingVideoParticipantsFullRoomSupport'];
-    final UpdateRecordingPreferredOrientation
-        updateRecordingPreferredOrientation =
-        parameters['updateRecordingPreferredOrientation'];
-    final UpdateRecordingSupportForOtherOrientation
-        updateRecordingSupportForOtherOrientation =
-        parameters['updateRecordingSupportForOtherOrientation'];
-    final UpdateRecordingMultiFormatsSupport
-        updateRecordingMultiFormatsSupport =
-        parameters['updateRecordingMultiFormatsSupport'];
+    final params = options.parameters.getUpdatedAllParams();
 
-    final UpdateMainHeightWidth updateMainHeightWidth =
-        parameters['updateMainHeightWidth'];
+    if (params.roomData.rtpCapabilities == null) {
+      params.showAlert?.call(
+        message:
+            'Sorry, you are not allowed to join this room. ${params.roomData.reason ?? ''}',
+        type: 'danger',
+        duration: 3000,
+      );
+      return;
+    }
 
-    final UpdateItemPageLimit updateItemPageLimit =
-        parameters['updateItemPageLimit'];
-    final UpdateEventType updateEventType = parameters['updateEventType'];
-    final UpdateYouAreCoHost updateYouAreCoHost =
-        parameters['updateYouAreCoHost'];
-    final UpdateAutoWave updateAutoWave = parameters['updateAutoWave'];
-    final UpdateForceFullDisplay updateForceFullDisplay =
-        parameters['updateForceFullDisplay'];
-    final UpdateChatSetting updateChatSetting = parameters['updateChatSetting'];
-    final UpdateMeetingDisplayType updateMeetingDisplayType =
-        parameters['updateMeetingDisplayType'];
-    final UpdateAudioSetting updateAudioSetting =
-        parameters['updateAudioSetting'];
-    final UpdateVideoSetting updateVideoSetting =
-        parameters['updateVideoSetting'];
-    final UpdateScreenshareSetting updateScreenshareSetting =
-        parameters['updateScreenshareSetting'];
-    final UpdateAudioOnlyRoom updateAudioOnlyRoom =
-        parameters['updateAudioOnlyRoom'];
-    final UpdateAddForBasic updateAddForBasic = parameters['updateAddForBasic'];
-    final UpdateScreenPageLimit updateScreenPageLimit =
-        parameters['updateScreenPageLimit'];
-    final UpdateVidCons updateVidCons = parameters['updateVidCons'];
-    final UpdateFrameRate updateFrameRate = parameters['updateFrameRate'];
-    final UpdateHParams updateHParams = parameters['updateHParams'];
-    final UpdateVParams updateVParams = parameters['updateVParams'];
-    final UpdateScreenParams updateScreenParams =
-        parameters['updateScreenParams'];
-    final UpdateAParams updateAParams = parameters['updateAParams'];
+    params.updateRtpCapabilities(params.roomData.rtpCapabilities);
+    params.updateAdminPasscode(params.roomData.secureCode ?? '');
+    params.updateRoomRecvIPs(params.roomData.roomRecvIPs ?? []);
+    params.updateMeetingRoomParams(params.roomData.meetingRoomParams);
 
-    if (data['rtpCapabilities'] == null) {
-      final ShowAlert? showAlert = parameters['showAlert'];
-      if (showAlert != null) {
-        showAlert(
-          message:
-              'Sorry, you are not allowed to join this room. ${data['reason']}',
-          type: 'danger',
-          duration: 3000,
-        );
+    final recordingParams = params.roomData.recordingParams;
+    params.updateRecordingAudioPausesLimit(
+        recordingParams?.recordingAudioPausesLimit ?? 0);
+    params.updateRecordingAudioPausesCount(
+        recordingParams?.recordingAudioPausesCount ?? 0);
+    params.updateRecordingAudioSupport(
+        recordingParams?.recordingAudioSupport ?? false);
+    params.updateRecordingAudioPeopleLimit(
+        recordingParams?.recordingAudioPeopleLimit ?? 0);
+    params.updateRecordingAudioParticipantsTimeLimit(
+        recordingParams?.recordingAudioParticipantsTimeLimit ?? 0);
+    params.updateRecordingVideoPausesCount(
+        recordingParams?.recordingVideoPausesCount ?? 0);
+    params.updateRecordingVideoPausesLimit(
+        recordingParams?.recordingVideoPausesLimit ?? 0);
+    params.updateRecordingVideoSupport(
+        recordingParams?.recordingVideoSupport ?? false);
+    params.updateRecordingVideoPeopleLimit(
+        recordingParams?.recordingVideoPeopleLimit ?? 0);
+    params.updateRecordingVideoParticipantsTimeLimit(
+        recordingParams?.recordingVideoParticipantsTimeLimit ?? 0);
+    params.updateRecordingAllParticipantsSupport(
+        recordingParams?.recordingAllParticipantsSupport ?? false);
+    params.updateRecordingVideoParticipantsSupport(
+        recordingParams?.recordingVideoParticipantsSupport ?? false);
+    params.updateRecordingAllParticipantsFullRoomSupport(
+        recordingParams?.recordingAllParticipantsFullRoomSupport ?? false);
+    params.updateRecordingVideoParticipantsFullRoomSupport(
+        recordingParams?.recordingVideoParticipantsFullRoomSupport ?? false);
+    params.updateRecordingPreferredOrientation(
+        recordingParams?.recordingPreferredOrientation ?? '');
+    params.updateRecordingSupportForOtherOrientation(
+        recordingParams?.recordingSupportForOtherOrientation ?? false);
+    params.updateRecordingMultiFormatsSupport(
+        recordingParams?.recordingMultiFormatsSupport ?? false);
+
+    final meetingParams = params.roomData.meetingRoomParams;
+    params.updateItemPageLimit(meetingParams?.itemPageLimit ?? 0);
+    final eventType_ = meetingParams?.type == 'conference'
+        ? EventType.conference
+        : meetingParams?.type == 'webinar'
+            ? EventType.webinar
+            : meetingParams?.type == 'broadcast'
+                ? EventType.broadcast
+                : EventType.chat;
+    meetingParams?.type = eventType_;
+    params.updateEventType(eventType_);
+    if (meetingParams?.type == EventType.chat && params.islevel != '2') {
+      params.updateYouAreCoHost(true);
+    }
+    if (meetingParams?.type == EventType.chat ||
+        meetingParams?.type == EventType.broadcast) {
+      params.updateAutoWave(false);
+      params.updateMeetingDisplayType('all');
+      params.updateForceFullDisplay(true);
+      params.updateChatSetting(meetingParams?.chatSetting ?? 'allow');
+
+      if (meetingParams?.type == EventType.broadcast) {
+        params.updateRecordingVideoOptions('mainScreen');
+        params.updateRecordingAudioOptions('host');
+        params.updateItemPageLimit(1);
+      }
+    }
+    params.updateAudioSetting(meetingParams?.audioSetting ?? 'allow');
+    params.updateVideoSetting(meetingParams?.videoSetting ?? 'allow');
+    params
+        .updateScreenshareSetting(meetingParams?.screenshareSetting ?? 'allow');
+    params.updateChatSetting(meetingParams?.chatSetting ?? 'allow');
+
+    params.updateAudioOnlyRoom(meetingParams?.mediaType != 'video');
+
+    if (meetingParams?.type == EventType.conference) {
+      if (params.shared || params.shareScreenStarted) {
+        params.updateMainHeightWidth(100);
+      } else {
+        params.updateMainHeightWidth(0);
+      }
+    }
+
+    params.updateScreenPageLimit(meetingParams?.itemPageLimit ?? 2);
+
+    String targetOrientation = params.islevel == '2'
+        ? meetingParams?.targetOrientationHost ?? 'neutral'
+        : meetingParams?.targetOrientation ?? 'neutral';
+    String targetResolution = params.islevel == '2'
+        ? meetingParams?.targetResolutionHost ?? 'sd'
+        : meetingParams?.targetResolution ?? 'sd';
+
+    int frameRate;
+    VidCons vdCons;
+    if (targetOrientation == 'landscape') {
+      switch (targetResolution) {
+        case 'hd':
+          vdCons = constraints.hdCons;
+          frameRate = constraints.hdFrameRate;
+          break;
+        case 'fhd':
+          vdCons = constraints.fhdCons;
+          frameRate = constraints.fhdFrameRate;
+          break;
+        case 'qhd':
+          vdCons = constraints.qhdCons;
+          frameRate = constraints.qhdFrameRate;
+          break;
+        case 'QnHD':
+          vdCons = constraints.qnHDCons;
+          frameRate = constraints.qnHDFrameRate;
+          break;
+        default:
+          vdCons = constraints.sdCons;
+          frameRate = constraints.sdFrameRate;
+      }
+    } else if (targetOrientation == 'neutral') {
+      switch (targetResolution) {
+        case 'hd':
+          vdCons = constraints.hdConsNeu;
+          frameRate = constraints.hdFrameRate;
+          break;
+        case 'fhd':
+          vdCons = constraints.fhdConsNeu;
+          frameRate = constraints.fhdFrameRate;
+          break;
+        case 'qhd':
+          vdCons = constraints.qhdConsNeu;
+          frameRate = constraints.qhdFrameRate;
+          break;
+        case 'QnHD':
+          vdCons = constraints.qnHDConsNeu;
+          frameRate = constraints.qnHDFrameRate;
+          break;
+        default:
+          vdCons = constraints.sdConsNeu;
+          frameRate = constraints.sdFrameRate;
       }
     } else {
-      updateRtpCapabilities(data['rtpCapabilities']);
-      updateAdminPasscode(data['secureCode']);
-      updateRoomRecvIPs(data['roomRecvIPs']);
-      updateMeetingRoomParams(data['meetingRoomParams']);
-
-      // Update recording values
-      updateRecordingAudioPausesLimit(
-          data['recordingParams']['recordingAudioPausesLimit']);
-      updateRecordingAudioPausesCount(
-          data['recordingParams']['recordingAudioPausesCount'] ?? 0);
-      updateRecordingAudioSupport(
-          data['recordingParams']['recordingAudioSupport']);
-      updateRecordingAudioPeopleLimit(
-          data['recordingParams']['recordingAudioPeopleLimit']);
-      updateRecordingAudioParticipantsTimeLimit(
-          data['recordingParams']['recordingAudioParticipantsTimeLimit']);
-      updateRecordingVideoPausesCount(
-          data['recordingParams']['recordingVideoPausesCount'] ?? 0);
-      updateRecordingVideoPausesLimit(
-          data['recordingParams']['recordingVideoPausesLimit']);
-      updateRecordingVideoSupport(
-          data['recordingParams']['recordingVideoSupport']);
-      updateRecordingVideoPeopleLimit(
-          data['recordingParams']['recordingVideoPeopleLimit']);
-      updateRecordingVideoParticipantsTimeLimit(
-          data['recordingParams']['recordingVideoParticipantsTimeLimit']);
-      updateRecordingAllParticipantsSupport(
-          data['recordingParams']['recordingAllParticipantsSupport']);
-      updateRecordingVideoParticipantsSupport(
-          data['recordingParams']['recordingVideoParticipantsSupport']);
-      updateRecordingAllParticipantsFullRoomSupport(
-          data['recordingParams']['recordingAllParticipantsFullRoomSupport']);
-      updateRecordingVideoParticipantsFullRoomSupport(
-          data['recordingParams']['recordingVideoParticipantsFullRoomSupport']);
-      updateRecordingPreferredOrientation(
-          data['recordingParams']['recordingPreferredOrientation']);
-      updateRecordingSupportForOtherOrientation(
-          data['recordingParams']['recordingSupportForOtherOrientation']);
-      updateRecordingMultiFormatsSupport(
-          data['recordingParams']['recordingMultiFormatsSupport']);
-
-      // Update other values
-      updateItemPageLimit(data['meetingRoomParams']['itemPageLimit']);
-      updateEventType(data['meetingRoomParams']['type']);
-
-      if (data['meetingRoomParams']['type'] == 'chat' &&
-          parameters['islevel'] != '2') {
-        updateYouAreCoHost(true);
+      switch (targetResolution) {
+        case 'hd':
+          vdCons = constraints.hdConsPort;
+          frameRate = constraints.hdFrameRate;
+          break;
+        case 'fhd':
+          vdCons = constraints.fhdConsPort;
+          frameRate = constraints.fhdFrameRate;
+          break;
+        case 'qhd':
+          vdCons = constraints.qhdConsPort;
+          frameRate = constraints.qhdFrameRate;
+          break;
+        case 'QnHD':
+          vdCons = constraints.qnHDConsPort;
+          frameRate = constraints.qnHDFrameRate;
+          break;
+        default:
+          vdCons = constraints.sdConsPort;
+          frameRate = constraints.sdFrameRate;
       }
-
-      if (data['meetingRoomParams']['type'] == 'chat' ||
-          data['meetingRoomParams']['type'] == 'broadcast') {
-        updateAutoWave(false);
-        updateMeetingDisplayType('all');
-        updateForceFullDisplay(true);
-        updateChatSetting(data['meetingRoomParams']['chatSetting']);
-      }
-
-      updateAudioSetting(data['meetingRoomParams']['audioSetting']);
-      updateVideoSetting(data['meetingRoomParams']['videoSetting']);
-      updateScreenshareSetting(data['meetingRoomParams']['screenshareSetting']);
-      updateChatSetting(data['meetingRoomParams']['chatSetting']);
-
-      if (data['meetingRoomParams']['mediaType'] == 'video') {
-        updateAudioOnlyRoom(false);
-      } else {
-        updateAudioOnlyRoom(true);
-      }
-
-      if (data['meetingRoomParams']['type'] == 'chat' ||
-          data['meetingRoomParams']['type'] == 'broadcast') {
-        if (data['meetingRoomParams']['type'] == 'broadcast') {
-          updateAddForBasic(true);
-          updateItemPageLimit(1);
-        } else {
-          updateAddForBasic(false);
-          updateItemPageLimit(2);
-        }
-      } else if (data['meetingRoomParams']['type'] == 'conference') {
-        if (parameters['shared'] || parameters['shareScreenStarted']) {
-          updateMainHeightWidth(100);
-        } else {
-          updateMainHeightWidth(0);
-        }
-      }
-
-      updateScreenPageLimit(data['meetingRoomParams']['itemPageLimit']);
-
-      // Assign resolution and orientation
-      String targetOrientation;
-      String targetResolution;
-      if (parameters['islevel'] == '2') {
-        targetOrientation = data['meetingRoomParams']['targetOrientationHost'];
-        targetResolution = data['meetingRoomParams']['targetResolutionHost'];
-      } else {
-        targetOrientation = data['meetingRoomParams']['targetOrientation'];
-        targetResolution = data['meetingRoomParams']['targetResolution'];
-      }
-
-      Map<String, int> QnHDCons = constraints.qnHDCons;
-      Map<String, int> sdCons = constraints.sdCons;
-      Map<String, int> hdCons = constraints.hdCons;
-      Map<String, int> QnHDConsPort = constraints.qnHDConsPort;
-      Map<String, int> sdConsPort = constraints.sdConsPort;
-      Map<String, int> hdConsPort = constraints.hdConsPort;
-      Map<String, int> QnHDConsNeu = constraints.qnHDConsNeu;
-      Map<String, int> sdConsNeu = constraints.sdConsNeu;
-      Map<String, int> hdConsNeu = constraints.hdConsNeu;
-      int QnHDFrameRate = constraints.qnHDFrameRate;
-      int sdFrameRate = constraints.sdFrameRate;
-      int hdFrameRate = constraints.hdFrameRate;
-
-      Map<String, dynamic> hostParams = hostParams_.hParams;
-      Map<String, dynamic> videoParams = videoParams_.vParams;
-      Map<String, dynamic> screenParams = screenParams_.screenParams;
-      Map<String, dynamic> audioParams = audioParams_.aParams;
-
-      // Assign media capture constraints
-      Map<String, int> vdCons;
-      if (targetOrientation == 'landscape') {
-        if (targetResolution == 'hd') {
-          vdCons = hdCons;
-        } else if (targetResolution == 'QnHD') {
-          vdCons = QnHDCons;
-        } else {
-          vdCons = sdCons;
-        }
-      } else if (targetOrientation == 'neutral') {
-        if (targetResolution == 'hd') {
-          vdCons = hdConsNeu;
-        } else if (targetResolution == 'QnHD') {
-          vdCons = QnHDConsNeu;
-        } else {
-          vdCons = sdConsNeu;
-        }
-      } else {
-        if (targetResolution == 'hd') {
-          vdCons = hdConsPort;
-        } else if (targetResolution == 'QnHD') {
-          vdCons = QnHDConsPort;
-        } else {
-          vdCons = sdConsPort;
-        }
-      }
-
-      // Assign frame rate
-      int frameRate = sdFrameRate;
-      Map<String, dynamic> hParams =
-          Map.of(parameters['hParams'] ?? hostParams);
-      Map<String, dynamic> vParams =
-          Map.of(parameters['vParams'] ?? videoParams);
-      screenParams = Map.of(parameters['screenParams'] ?? screenParams);
-      Map<String, dynamic> aParams =
-          Map.of(parameters['aParams'] ?? audioParams);
-
-      Map<String, dynamic> tempHParam = {};
-      Map<String, dynamic> tempVParam = {};
-
-      if (targetResolution == 'hd') {
-        frameRate = hdFrameRate;
-
-        // Create a new list to hold updated encodings
-        List<Map<String, dynamic>> updatedHEncodings = [];
-
-        hParams['encodings'].forEach((encoding) {
-          tempVParam = {...encoding};
-          if (encoding['maxBitrate'] != null) {
-            tempVParam = {
-              ...tempVParam,
-              'maxBitrate': encoding['maxBitrate'] * 4,
-              'initialAvailableBitrate':
-                  encoding['initialAvailableBitrate'] * 4,
-            };
-          }
-
-          // Add updated encoding to the new list
-          updatedHEncodings.add(tempVParam);
-        });
-
-        // Update hParams with the new list of encodings
-        hParams['encodings'] = updatedHEncodings;
-
-        // Similarly update vParams
-        List<Map<String, dynamic>> updatedVEncodings = [];
-        vParams['encodings'].forEach((encoding) {
-          tempVParam = {...encoding};
-          if (encoding['maxBitrate'] != null) {
-            tempVParam = {
-              ...tempVParam,
-              'maxBitrate': encoding['maxBitrate'] * 4,
-              'initialAvailableBitrate':
-                  encoding['initialAvailableBitrate'] * 4,
-            };
-          }
-          updatedVEncodings.add(tempVParam);
-        });
-        vParams['encodings'] = updatedVEncodings;
-      } else if (targetResolution == 'QnHD') {
-        frameRate = QnHDFrameRate;
-
-        List<Map<String, dynamic>> updatedVEncodings = [];
-        vParams['encodings'].forEach((encoding) {
-          tempVParam = {...encoding};
-          if (encoding['maxBitrate'] != null) {
-            tempVParam = {
-              ...tempVParam,
-              'maxBitrate': (encoding['maxBitrate'] * 0.25).floorToDouble(),
-              'minBitrate': (encoding['minBitrate'] * 0.25).floorToDouble(),
-              'initialAvailableBitrate':
-                  (encoding['initialAvailableBitrate'] * 0.25).floorToDouble(),
-            };
-          }
-          updatedVEncodings.add(tempVParam);
-        });
-        vParams['encodings'] = updatedVEncodings;
-
-        List<Map<String, dynamic>> updatedHEncodings = [];
-        hParams['encodings'].forEach((encoding) {
-          tempHParam = {...encoding};
-          if (encoding['maxBitrate'] != null) {
-            tempHParam = {
-              ...tempHParam,
-              'maxBitrate': (encoding['maxBitrate'] * 0.25).floorToDouble(),
-              'minBitrate': (encoding['minBitrate'] * 0.25).floorToDouble(),
-              'initialAvailableBitrate':
-                  (encoding['initialAvailableBitrate'] * 0.25).floorToDouble(),
-            };
-          }
-          updatedHEncodings.add(tempHParam);
-        });
-        hParams['encodings'] = updatedHEncodings;
-
-        // Update codecOptions directly since it's a single map
-        hParams['codecOptions'] = {
-          ...hParams['codecOptions'],
-          'videoGoogleStartBitrate':
-              (hParams['codecOptions']['videoGoogleStartBitrate'] * 0.25)
-                  .floorToDouble(),
-        };
-        vParams['codecOptions'] = {
-          ...vParams['codecOptions'],
-          'videoGoogleStartBitrate':
-              vParams['codecOptions']['videoGoogleStartBitrate'] * 0.25,
-        };
-      }
-
-      Map<String, dynamic> tempVParams = {};
-      Map<String, dynamic> tempHParams = {};
-
-      if (data['recordingParams']['recordingVideoSupport']) {
-        List<Map<String, dynamic>> updatedVEncodings = [];
-        vParams['encodings'].forEach((encoding) {
-          tempVParams = {...encoding};
-          if (encoding['maxBitrate'] != null) {
-            tempVParams = {
-              ...tempVParams,
-              'maxBitrate': encoding['maxBitrate'] * 1.2,
-              'minBitrate': encoding['minBitrate'] * 1.2,
-              'initialAvailableBitrate':
-                  encoding['initialAvailableBitrate'] * 1.2,
-            };
-          }
-          updatedVEncodings.add(tempVParams);
-        });
-        vParams['encodings'] = updatedVEncodings;
-
-        List<Map<String, dynamic>> updatedHEncodings = [];
-        hParams['encodings'].forEach((encoding) {
-          tempHParams = {...encoding};
-          if (encoding['maxBitrate'] != null) {
-            tempHParams = {
-              ...tempHParams,
-              'maxBitrate': (encoding['maxBitrate'] * 1.2).floorToDouble(),
-              'minBitrate': (encoding['minBitrate'] * 1.2).floorToDouble(),
-              'initialAvailableBitrate':
-                  (encoding['initialAvailableBitrate'] * 1.2).floorToDouble(),
-            };
-          }
-          updatedHEncodings.add(tempHParams);
-        });
-        hParams['encodings'] = updatedHEncodings;
-
-        // Update codecOptions directly since it's a single map
-        hParams['codecOptions'] = {
-          ...hParams['codecOptions'],
-          'videoGoogleStartBitrate':
-              (hParams['codecOptions']['videoGoogleStartBitrate'] * 1.2)
-                  .floorToDouble(),
-        };
-        vParams['codecOptions'] = {
-          ...vParams['codecOptions'],
-          'videoGoogleStartBitrate':
-              vParams['codecOptions']['videoGoogleStartBitrate'] * 1.2,
-        };
-      }
-
-      // Update the new parameters
-      updateVidCons(vdCons);
-      updateFrameRate(frameRate);
-      updateHParams(hParams);
-      updateVParams(vParams);
-      updateScreenParams(screenParams);
-      updateAParams(aParams);
     }
+
+    final hParams = hostParams_.hParams;
+    final vParams = videoParams_.vParams;
+
+    switch (targetResolution) {
+      case 'hd':
+        hParams.encodings = _updateEncodingBitrates(hParams.encodings, 4)
+            as List<RtpEncodingParameters>;
+        vParams.encodings = _updateEncodingBitrates(vParams.encodings, 4)
+            as List<RtpEncodingParameters>;
+        break;
+      case 'fhd':
+        hParams.encodings = _updateEncodingBitrates(hParams.encodings, 8)
+            as List<RtpEncodingParameters>;
+        vParams.encodings = _updateEncodingBitrates(vParams.encodings, 8)
+            as List<RtpEncodingParameters>;
+        break;
+      case 'qhd':
+        hParams.encodings = _updateEncodingBitrates(hParams.encodings, 16)
+            as List<RtpEncodingParameters>;
+        vParams.encodings = _updateEncodingBitrates(vParams.encodings, 16)
+            as List<RtpEncodingParameters>;
+        break;
+      case 'QnHD':
+        hParams.encodings = _updateEncodingBitrates(hParams.encodings, 0.25)
+            as List<RtpEncodingParameters>;
+        vParams.encodings = _updateEncodingBitrates(vParams.encodings, 0.25)
+            as List<RtpEncodingParameters>;
+        break;
+    }
+
+    if (recordingParams?.recordingVideoSupport == true) {
+      if (vParams.encodings.length > 1) {
+        vParams.encodings = vParams.encodings.sublist(0, 1);
+      }
+      if (hParams.encodings.length > 1) {
+        hParams.encodings = hParams.encodings.sublist(0, 1);
+      }
+    }
+
+    params.updateVidCons(vdCons);
+    params.updateFrameRate(frameRate);
+    params.updateHParams(hParams);
+    params.updateVParams(vParams);
+    params
+        .updateScreenParams(params.screenParams ?? screenParams_.screenParams);
+    params.updateAParams(params.aParams ?? audioParams_.aParams);
   } catch (error) {
     // Print the error along with the stack trace
     if (kDebugMode) {
-      // print('Update room parameters error: $error');
+      print('Update room parameters error: $error');
     }
     // print('Stack trace: $stackTrace');
     try {
-      final ShowAlert? showAlert = parameters['showAlert'];
-      if (showAlert != null) {
-        showAlert(
-          message: error.toString(),
-          type: 'danger',
-          duration: 3000,
-        );
-      }
+      final ShowAlert? showAlert = options.parameters.showAlert;
+      showAlert?.call(
+        message: error.toString(),
+        type: 'danger',
+        duration: 3000,
+      );
     } catch (error) {}
   }
+}
+
+/// Helper function to adjust bitrate for encoding configurations.
+List<Map<String, dynamic>> _updateEncodingBitrates(
+    List encodings, double factor) {
+  return encodings.map((encoding) {
+    final updatedEncoding = Map<String, dynamic>.from(encoding);
+    if (updatedEncoding['maxBitrate'] != null) {
+      updatedEncoding['maxBitrate'] =
+          (updatedEncoding['maxBitrate'] * factor).toInt();
+      updatedEncoding['initialAvailableBitrate'] =
+          (updatedEncoding['initialAvailableBitrate'] * factor).toInt();
+    }
+    return updatedEncoding;
+  }).toList();
 }

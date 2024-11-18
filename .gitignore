@@ -30,3 +30,6 @@ migrate_working_dir/
 .dart_tool/
 build/
 
+doc/doc_assets/header.html
+dartdoc_options.yaml
+doc/doc_assets/footer.html

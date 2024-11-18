@@ -1,47 +1,36 @@
-/// A map containing video parameters for encoding.
-///
-/// The `vParams` map consists of two main properties:
-/// - `encodings`: A list of encoding configurations for different video qualities.
-/// - `codecOptions`: Additional options for the video codec.
-///
-/// Each encoding configuration is represented by a map with the following properties:
-/// - `rid`: The unique identifier for the encoding.
-/// - `maxBitrate`: The maximum bitrate for the encoding in bits per second.
-/// - `initialAvailableBitrate`: The initial available bitrate for the encoding in bits per second.
-/// - `minBitrate`: The minimum bitrate for the encoding in bits per second.
-/// - `scalabilityMode`: The scalability mode for the encoding.
-/// - `scaleResolutionDownBy`: The factor by which the resolution should be scaled down.
-///
-/// The `codecOptions` map contains additional options for the video codec.
-/// Currently, it only includes the `videoGoogleStartBitrate` property, which represents
-/// the start bitrate for the video codec in bits per second.
-const Map<String, dynamic> vParams = {
-  'encodings': [
-    {
-      'rid': 'r3',
-      'maxBitrate': 200000,
-      'initialAvailableBitrate': 80000,
-      'minBitrate': 40000,
-      'scalabilityMode': 'L1T3',
-      'scaleResolutionDownBy': 4.0,
-    },
-    {
-      'rid': 'r4',
-      'maxBitrate': 400000,
-      'initialAvailableBitrate': 160000,
-      'minBitrate': 80000,
-      'scalabilityMode': 'L1T3',
-      'scaleResolutionDownBy': 2.0,
-    },
-    {
-      'rid': 'r5',
-      'maxBitrate': 800000,
-      'initialAvailableBitrate': 320000,
-      'minBitrate': 160000,
-      'scalabilityMode': 'L1T3',
-    },
+import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart'
+    show RtpEncodingParameters, ProducerCodecOptions;
+import '../../../types/types.dart' show ProducerOptionsType;
+
+/// Represents video parameters for encoding, particularly for scalable video encoding
+
+/// Constant `vParams` representing the video encoding parameters and codec options.
+final ProducerOptionsType vParams = ProducerOptionsType(
+  encodings: [
+    RtpEncodingParameters(
+      rid: 'r0',
+      maxBitrate: 800000,
+      minBitrate: 160000,
+      scalabilityMode: 'L1T3',
+    ),
+    RtpEncodingParameters(
+      rid: 'r1',
+      maxBitrate: 400000,
+      minBitrate: 80000,
+      scalabilityMode: 'L1T3',
+      scaleResolutionDownBy: 2.0,
+    ),
+    RtpEncodingParameters(
+      rid: 'r2',
+      maxBitrate: 200000,
+      minBitrate: 40000,
+      scalabilityMode: 'L1T3',
+      scaleResolutionDownBy: 4.0,
+      // Additional fields like priority, networkPriority can be added if necessary
+    ),
   ],
-  'codecOptions': {
-    'videoGoogleStartBitrate': 320,
-  },
-};
+  codecOptions: ProducerCodecOptions(
+    videoGoogleStartBitrate: 320,
+    // Add any other codec-specific options as needed
+  ),
+);

@@ -1,64 +1,65 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
+import '../../types/types.dart' show ShowAlert, EventType;
 
-/// Handles the logic when a meeting has ended.
+/// Defines options for handling the end of a meeting.
+class MeetingEndedOptions {
+  final ShowAlert? showAlert;
+  final String? redirectURL;
+  final bool onWeb;
+  final EventType eventType;
+  final void Function(bool)? updateValidated;
+
+  MeetingEndedOptions({
+    this.showAlert,
+    this.redirectURL,
+    required this.onWeb,
+    required this.eventType,
+    this.updateValidated,
+  });
+}
+
+typedef MeetingEndedType = Future<void> Function(MeetingEndedOptions options);
+
+/// Handles the end of a meeting by showing an alert and performing a redirect if necessary.
 ///
-/// This function takes a map of parameters and performs the following tasks:
-/// - Extracts the required parameters from the map.
-/// - Shows an alert message if the meeting has ended, with an optional redirect URL.
-/// - Waits for 2 seconds before redirecting to the home page or updating the validated state.
+/// This function takes an instance of [MeetingEndedOptions] which includes options for showing an
+/// alert message, redirecting to a URL, and updating the validation state.
 ///
-/// The [parameters] map should contain the following keys:
-/// - 'showAlert': A function that shows an alert message.
-/// - 'redirectURL': A string representing the URL to redirect to (optional).
-/// - 'onWeb': A boolean indicating if the app is running on the web (default is false).
-/// - 'eventType': A string representing the type of event that triggered the meeting end.
-/// - 'updateValidated': A function to update the validated state.
+/// If the event type is not 'chat', it displays an alert notifying that the event has ended.
+/// If [onWeb] is true and [redirectURL] is provided, it redirects the user to the specified URL after a 2-second delay.
+/// Otherwise, it calls [updateValidated] to update the validation state.
 ///
-/// Throws an error if any exception occurs during the execution.
+/// Example usage:
+/// ```dart
+/// final options = MeetingEndedOptions(
+///   showAlert: (message, type, duration) => print("Alert: $message"),
+///   redirectURL: "https://homepage.com",
+///   onWeb: true,
+///   eventType: "meeting",
+///   updateValidated: (isValid) => print("Validation status: $isValid"),
+/// );
+///
+/// await meetingEnded(options: options);
+/// ```
+Future<void> meetingEnded({required MeetingEndedOptions options}) async {
+  // Show an alert if the event type is not 'chat'
+  if (options.eventType != EventType.chat) {
+    options.showAlert!(
+      message: 'The meeting has ended. Redirecting to the home page...',
+      type: 'danger',
+      duration: 2000,
+    );
+  }
 
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
-});
-
-Future<void> meetingEnded({required Map<String, dynamic> parameters}) async {
-  try {
-    // Extracting parameters from the map
-    ShowAlert? showAlert = parameters['showAlert'];
-    String? redirectURL = parameters['redirectURL'];
-    bool onWeb = parameters['onWeb'] ?? false;
-    String eventType = parameters['eventType'];
-    Function updateValidated = parameters['updateValidated'];
-
-    // Show an alert that the meeting has ended and wait for 2 seconds before redirecting to the home page
-    if (eventType != 'chat') {
-      if (showAlert != null) {
-        showAlert(
-          message: 'The meeting has ended. Redirecting to the home page...',
-          type: 'danger',
-          duration: 2000,
-        );
-      }
-
-      if (onWeb && redirectURL != null && redirectURL.isNotEmpty) {
-        await Future.delayed(const Duration(seconds: 2)); // Wait for 2 seconds
-        // Redirect to the specified URL
-        // Replace this with your actual navigation logic
-        // For example, you can use Navigator.pushReplacementNamed(context, redirectURL);
-      } else {
-        await Future.delayed(const Duration(seconds: 2)); // Wait for 2 seconds
-        // Update the validated state
-        updateValidated(false);
-      }
-    }
-  } catch (error) {
-    if (kDebugMode) {
-      // print("Error in meetingEnded: $error");
-    }
-
-    // Handle error accordingly
-    rethrow;
+  // Handle redirection or validation update
+  if (options.onWeb &&
+      options.redirectURL != null &&
+      options.redirectURL!.isNotEmpty) {
+    await Future.delayed(const Duration(seconds: 2));
+    // Here you could implement the actual redirection logic
+    // For example: window.location.href = options.redirectURL
+  } else if (options.updateValidated != null) {
+    await Future.delayed(const Duration(seconds: 2));
+    options.updateValidated!(false);
   }
 }

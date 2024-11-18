@@ -1,3 +1,8 @@
+### 1.0.0
+* Major refactor of the SDK to support the latest version of the MediaSFU server.
+* Explicit options declaration/requirement for classes.
+* Added support for FHD and QHD video resolutions.
+
 ### 0.0.7
 * Bug fix for interval updates of loudness. 
 

@@ -1,82 +1,127 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import '../types/types.dart'
+    show TransportType, SleepType, SleepOptions, Stream;
 
-/// Processes consumer transports by pausing and resuming consumer streams based on certain conditions.
-///
-/// The [consumerTransports] parameter is a list of dynamic objects representing the consumer transports.
-/// The [lStreams] parameter is a list of dynamic objects representing the lStreams.
-/// The [parameters] parameter is a map of string keys and dynamic values representing the parameters.
-///
-/// The [processConsumerTransports] function performs the following steps:
-/// 3. Retrieves specific values from the [parameters] map and assigns them to variables.
-/// 4. Defines a [sleep] function using the [parameters] map.
-/// 5. Defines a helper function [isValidProducerId] to check if a producerId is valid in the given stream arrays.
-/// 6. Filters the [consumerTransports] list to get paused consumer transports that are not audio.
-/// 7. Filters the [consumerTransports] list to get unpaused consumer transports that are not audio.
-/// 8. Pauses consumer transports after a short delay using the [sleep] function.
-/// 9. Emits consumer.pause() for each filtered transport (not audio).
-/// 10. Emits consumer.resume() for each filtered transport (not audio) if the corresponding server response indicates successful resumption.
-///
-/// Throws an error if any errors occur during the process of pausing or resuming consumer transports.
+abstract class ProcessConsumerTransportsAudioParameters {
+  // Property as an abstract getter
+  SleepType get sleep;
 
-typedef Sleep = Future<void> Function(int milliseconds);
+  // Method to retrieve updated parameters
+  ProcessConsumerTransportsAudioParameters Function() get getUpdatedAllParams;
+
+  // Dynamic key-value support
+  // dynamic operator [](String key);
+}
+
+class ProcessConsumerTransportsAudioOptions {
+  final List<TransportType> consumerTransports;
+  final List<Stream> lStreams;
+  final ProcessConsumerTransportsAudioParameters parameters;
+
+  ProcessConsumerTransportsAudioOptions({
+    required this.consumerTransports,
+    required this.lStreams,
+    required this.parameters,
+  });
+}
+
+typedef ProcessConsumerTransportsAudioType = Future<void> Function(
+    ProcessConsumerTransportsAudioOptions options);
+
+/// Adjusts the audio state of consumer transports based on provided streams.
+///
+/// This function examines each audio consumer transport:
+/// - If a transport's `producerId` matches an entry in `lStreams` and is currently paused, it resumes the transport.
+/// - If a transport's `producerId` does not match any entry in `lStreams` and is unpaused, it pauses the transport.
+/// - The function incorporates a delay before pausing to allow for smoother transitions.
+///
+/// ### Parameters:
+/// - `options` (`ProcessConsumerTransportsAudioOptions`):
+///   - `consumerTransports`: List of audio transports that may need to be paused or resumed.
+///   - `lStreams`: List of streams that represent valid audio sources for the transports.
+///   - `parameters`: Contains:
+///     - `sleep`: A function to add a delay before pausing a transport.
+///     - `getUpdatedAllParams`: A function that refreshes the parameters used for transport processing.
+///
+/// ### Behavior:
+/// - **Pausing and Resuming**: Pauses transports not found in `lStreams` and resumes those that are.
+/// - **Delay Handling**: A short delay is added before pausing transports to optimize timing for smooth state transitions.
+/// - **Socket Events**: Emits `consumer-pause` and `consumer-resume` events to the server to synchronize transport states.
+///
+/// ### Example Usage:
+/// ```dart
+/// final parameters = ProcessConsumerTransportsAudioParameters(
+///   sleep: (options) async => await Future.delayed(Duration(milliseconds: options.ms)),
+///   getUpdatedAllParams: () => updatedParams, // Returns the latest parameters
+/// );
+///
+/// await processConsumerTransportsAudio(
+///   ProcessConsumerTransportsAudioOptions(
+///     consumerTransports: [transport1, transport2],
+///     lStreams: [stream1, stream2],
+///     parameters: parameters,
+///   ),
+/// );
+/// ```
+///
+/// ### Error Handling:
+/// - Logs any errors encountered during the processing of transports in debug mode.
 
 Future<void> processConsumerTransportsAudio(
-    {required List<dynamic> consumerTransports,
-    required List<dynamic> lStreams,
-    required Map<String, dynamic> parameters}) async {
-  try {
-    //mediasfu functions
-    final Sleep sleep = parameters['sleep'];
+    ProcessConsumerTransportsAudioOptions options) async {
+  // Retrieve and destructure updated parameters
+  final ProcessConsumerTransportsAudioParameters parameters =
+      options.parameters.getUpdatedAllParams();
+  final SleepType sleep = parameters.sleep;
 
-    // Function to check if the producerId is valid in the given stream arrays
-    bool isValidProducerId(String producerId, List<dynamic> streamArrays) {
+  final List<TransportType> consumerTransports = options.consumerTransports;
+  final List<Stream> lStreams = options.lStreams;
+
+  try {
+    // Helper function to check if producerId exists in any provided stream array
+    bool isValidProducerId(String producerId, List<List<Stream>> streamArrays) {
       return producerId.isNotEmpty &&
-          producerId != "" &&
           streamArrays.any((streamArray) =>
-              streamArray.length > 0 &&
-              streamArray.any((stream) => stream['producerId'] == producerId));
+              streamArray.isNotEmpty &&
+              streamArray.any((stream) => stream.producerId == producerId));
     }
 
-    // Get paused consumer transports that are not audio
-    var consumerTransportsToResume = consumerTransports.where((transport) =>
-        isValidProducerId(transport['producerId'], [lStreams]) &&
-        transport['consumer'] != null &&
-        transport['consumer'].paused == true &&
-        transport['consumer'].track.kind == "audio");
+    // Get paused consumer transports that are audio
+    final consumerTransportsToResume = consumerTransports.where((transport) =>
+        isValidProducerId(transport.producerId, [lStreams]) &&
+        transport.consumer.paused == true &&
+        transport.consumer.track.kind == 'audio');
 
-    // Get unpaused consumer transports that are not audio
-    var consumerTransportsToPause = consumerTransports.where((transport) =>
-        transport['producerId'] != null &&
-        transport['producerId'] != "" &&
-        !lStreams
-            .any((stream) => stream['producerId'] == transport['producerId']) &&
-        transport['consumer'] != null &&
-        transport['consumer'].track.kind != null &&
-        transport['consumer'].paused != true &&
-        transport['consumer'].track.kind == "audio");
+    // Get unpaused consumer transports that are audio and not in lStreams
+    final consumerTransportsToPause = consumerTransports.where((transport) =>
+        transport.producerId.isNotEmpty &&
+        transport.producerId != "" &&
+        !lStreams.any((stream) => stream.producerId == transport.producerId) &&
+        transport.consumer.track.kind == 'audio' &&
+        transport.consumer.paused == false);
 
     // Pause consumer transports after a short delay
+    final sleepOptions = SleepOptions(ms: 100);
+    await sleep(sleepOptions);
 
-    await sleep(100);
-
-    // Emit consumer.pause() for each filtered transport (not audio)
-    for (var transport in consumerTransportsToPause) {
-      await transport['consumer'].pause();
-      await transport['socket_'].emitWithAck("consumer-pause", {
-        "serverConsumerId": transport['serverConsumerTransportId']
-      }, ack: (paused) async {
-        // Handle the response if needed
+    // Note 'serverConsumerId' is 'transport.consumer.id' not 'serverconsumerTransportId'
+    for (final transport in consumerTransportsToPause) {
+      transport.consumer.pause();
+      transport.socket_.emitWithAck("consumer-pause", {
+        'serverConsumerId': transport.consumer.id,
+      }, ack: (paused) {
+        // Handle pause acknowledgment
       });
     }
 
-    // Emit consumer.resume() for each filtered transport (not audio)
-    for (var transport in consumerTransportsToResume) {
-      await transport['socket_'].emitWithAck("consumer-resume", {
-        "serverConsumerId": transport['serverConsumerTransportId']
-      }, ack: (resumed) async {
+    // Note 'serverConsumerId' is 'transport.consumer.id' not 'serverconsumerTransportId'
+    for (final transport in consumerTransportsToResume) {
+      transport.socket_.emitWithAck(
+          "consumer-resume", {'serverConsumerId': transport.consumer.id},
+          ack: (resumed) async {
         if (resumed['resumed'] == true) {
-          await transport['consumer'].resume();
+          transport.consumer.resume();
         }
       });
     }

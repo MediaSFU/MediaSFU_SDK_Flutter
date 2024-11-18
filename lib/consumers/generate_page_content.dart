@@ -1,77 +1,104 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import '../types/types.dart'
+    show DispStreamsType, DispStreamsParameters, DispStreamsOptions, Stream;
 
-/// Generates the content for a specific page.
-///
-/// This function takes in the [page] number and [parameters] map as required
-/// parameters. It generates the content for the specified page by updating
-/// various variables and calling the [dispStreams] function to display the
-/// streams for the page.
-///
-/// The [parameters] map should contain the following keys:
-/// - 'paginatedStreams': A list of dynamic objects representing the paginated streams.
-/// - 'currentUserPage': An integer representing the current user page.
-/// - 'updateMainWindow': A boolean flag indicating whether to update the main window.
-/// - 'updateCurrentUserPage': A function that updates the current user page.
-/// - 'updateUpdateMainWindow': A function that updates the main window flag.
-/// - 'dispStreams': A function that displays the streams.
-///
-/// This function returns a [Future] that completes when the content generation is
-/// finished.
+/// Parameters used for generating page content for a specific user interface page.
+abstract class GeneratePageContentParameters implements DispStreamsParameters {
+  // Properties as abstract getters
+  List<List<Stream>> get paginatedStreams;
+  int get currentUserPage;
+  bool get updateMainWindow;
 
-typedef DispStreamsFunction = void Function({
-  required List<dynamic> lStreams,
-  required int ind,
-  bool auto,
-  bool chatSkip,
-  dynamic forChatCard,
-  dynamic forChatID,
-  required Map<String, dynamic> parameters,
-  int breakRoom,
-  bool inBreakRoom,
-});
-typedef UpdateFunction<T> = void Function(T value);
+  // Update functions as abstract getters
+  void Function(int) get updateCurrentUserPage;
+  void Function(bool) get updateUpdateMainWindow;
 
-Future<void> generatePageContent({
-  required int page,
-  required Map<String, dynamic> parameters,
-  int breakRoom = -1,
-  bool inBreakRoom = false,
-}) async {
+  // Mediasfu function as an abstract getter
+  DispStreamsType get dispStreams;
+
+  // Method to retrieve updated parameters
+  GeneratePageContentParameters Function() get getUpdatedAllParams;
+
+  // Dynamic key-value support
+  // dynamic operator [](String key);
+}
+
+/// Options for generating page content.
+class GeneratePageContentOptions {
+  int page;
+  GeneratePageContentParameters parameters;
+  int breakRoom;
+  bool inBreakRoom;
+
+  GeneratePageContentOptions({
+    required this.page,
+    required this.parameters,
+    this.breakRoom = -1,
+    this.inBreakRoom = false,
+  });
+}
+
+typedef GeneratePageContentType = Future<void> Function(
+    GeneratePageContentOptions options);
+
+/// Generates the content for a specific page based on the provided options.
+///
+/// This function updates the page content for the given page in [options],
+/// which includes updating the main window and setting the current page.
+///
+/// Example usage:
+/// ```dart
+/// final options = GeneratePageContentOptions(
+///   page: 1,
+///   parameters: GeneratePageContentParameters(
+///     paginatedStreams: [[stream1, stream2], [stream3, stream4]],
+///     currentUserPage: 0,
+///     updateMainWindow: true,
+///     updateCurrentUserPage: (page) => print('Current user page updated to: $page'),
+///     updateUpdateMainWindow: (flag) => print('Main window update flag: $flag'),
+///     dispStreams: (lStreams, ind, {parameters, breakRoom = -1, inBreakRoom = false}) async {
+///       print('Displaying streams for page $ind');
+///     },
+///     getUpdatedAllParams: () => updatedParameters,
+///   ),
+/// );
+/// await generatePageContent(options);
+/// ```
+///
+/// Returns a [Future<void>] that completes when the page content is generated.
+Future<void> generatePageContent(GeneratePageContentOptions options) async {
   try {
-    // Destructure parameters
-    var paginatedStreams = parameters['paginatedStreams'] as List<dynamic>;
-    var currentUserPage = parameters['currentUserPage'] as int;
-    var updateMainWindow = parameters['updateMainWindow'] as bool;
-    var updateCurrentUserPage =
-        parameters['updateCurrentUserPage'] as UpdateFunction<int>;
-    var updateUpdateMainWindow =
-        parameters['updateUpdateMainWindow'] as UpdateFunction<bool>;
+    List<List<Stream>> paginatedStreams = options.parameters.paginatedStreams;
+    var currentUserPage = options.parameters.currentUserPage;
+    var updateMainWindow = options.parameters.updateMainWindow;
+    var updateCurrentUserPage = options.parameters.updateCurrentUserPage;
+    var updateUpdateMainWindow = options.parameters.updateUpdateMainWindow;
+    var dispStreams = options.parameters.dispStreams;
 
-    // mediasfu functions
-    DispStreamsFunction dispStreams = parameters['dispStreams'];
+    // Convert page to an integer if passed as a string.
+    var page = options.page;
 
-    // Convert page to an integer
-    page = int.parse(page.toString());
-
-    // Update current user page
+    // Update current user page.
     currentUserPage = page;
     updateCurrentUserPage(currentUserPage);
 
-    // Update main window flag
+    // Update main window flag.
     updateMainWindow = true;
     updateUpdateMainWindow(updateMainWindow);
 
-    // Display streams for the specified page
-    dispStreams(
+    // Display streams for the specified page.
+    final dispOptions = DispStreamsOptions(
       lStreams: paginatedStreams[page],
       ind: page,
-      parameters: parameters,
-      breakRoom: breakRoom,
-      inBreakRoom: inBreakRoom,
+      parameters: options.parameters,
+      breakRoom: options.breakRoom,
+      inBreakRoom: options.inBreakRoom,
+    );
+    await dispStreams(
+      dispOptions,
     );
   } catch (error) {
-    // Handle errors during content generation
     if (kDebugMode) {
       print('Error generating page content: ${error.toString()}');
     }

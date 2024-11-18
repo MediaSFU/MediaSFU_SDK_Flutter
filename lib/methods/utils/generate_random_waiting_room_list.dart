@@ -1,34 +1,35 @@
-import 'dart:math';
+import '../../types/types.dart' show WaitingRoomParticipant;
 
-/// Generates a random waiting room list with assigned names and mute statuses.
+typedef GenerateRandomWaitingRoomListType = List<WaitingRoomParticipant>
+    Function();
+
+/// Generates a random list of participants for a waiting room.
 ///
-/// Given a list of participants, this function generates a waiting room list
-/// with randomly assigned names and mute statuses for each participant.
-/// The generated waiting room list is a list of maps, where each map contains
-/// the participant's name, mute status, and an ID.
+/// Each participant is given a unique name from a predefined list and a unique ID.
 ///
 /// Example usage:
 /// ```dart
-/// List<dynamic> participants = [...];
-/// List<Map<String, dynamic>> waitingRoomList = generateRandomWaitingRoomList(participants);
+/// List<WaitingRoomParticipant> waitingRoomList = generateRandomWaitingRoomList();
 /// print(waitingRoomList);
-///
-
-List<Map<String, dynamic>> generateRandomWaitingRoomList(
-    List<dynamic> participants) {
+/// // Output:
+/// // [
+/// //   WaitingRoomParticipant(name: "Dimen", id: "0"),
+/// //   WaitingRoomParticipant(name: "Nore", id: "1"),
+/// //   WaitingRoomParticipant(name: "Ker", id: "2"),
+/// //   WaitingRoomParticipant(name: "Lor", id: "3"),
+/// //   WaitingRoomParticipant(name: "Mik", id: "4")
+/// // ]
+/// ```
+List<WaitingRoomParticipant> generateRandomWaitingRoomList() {
   // Array of random names to assign to participants in the waiting room
   List<String> names = ['Dimen', 'Nore', 'Ker', 'Lor', 'Mik'];
 
-  // Generate waiting room list with randomly assigned names and mute statuses
-  List<Map<String, dynamic>> waitingRoomList = [];
+  // Generate the waiting room list
+  List<WaitingRoomParticipant> waitingRoomList = [];
   for (int i = 0; i < names.length; i++) {
     String randomName = names[i];
-    bool randomMuted = Random().nextBool(); // Randomly assign mute status
-    waitingRoomList.add({
-      'name': randomName,
-      'muted': randomMuted,
-      'id': i.toString(),
-    });
+    waitingRoomList
+        .add(WaitingRoomParticipant(name: randomName, id: i.toString()));
   }
 
   return waitingRoomList;

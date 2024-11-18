@@ -1,170 +1,201 @@
 import 'package:flutter/foundation.dart';
-import 'dart:async';
+import '../../types/types.dart'
+    show
+        OnScreenChangesParameters,
+        OnScreenChangesType,
+        ShowAlert,
+        OnScreenChangesOptions;
 
-/// Modifies the display settings based on the provided parameters.
+/// Parameters for modifying display settings, including functions and states.
+abstract class ModifyDisplaySettingsParameters
+    implements OnScreenChangesParameters {
+  // Properties as abstract getters
+  ShowAlert? get showAlert;
+  String get meetingDisplayType;
+  bool get autoWave;
+  bool get forceFullDisplay;
+  bool get meetingVideoOptimized;
+  String get islevel;
+  bool get recordStarted;
+  bool get recordResumed;
+  bool get recordStopped;
+  bool get recordPaused;
+  String get recordingDisplayType;
+  bool get recordingVideoOptimized;
+  bool get prevForceFullDisplay;
+  String get prevMeetingDisplayType;
+  bool get breakOutRoomStarted;
+  bool get breakOutRoomEnded;
+
+  // Update functions as abstract getters
+  void Function(String) get updateMeetingDisplayType;
+  void Function(bool) get updateAutoWave;
+  void Function(bool) get updateForceFullDisplay;
+  void Function(bool) get updateMeetingVideoOptimized;
+  void Function(bool) get updatePrevForceFullDisplay;
+  void Function(String) get updatePrevMeetingDisplayType;
+  void Function(bool) get updateIsDisplaySettingsModalVisible;
+  void Function(bool) get updateFirstAll;
+  void Function(bool) get updateUpdateMainWindow;
+
+  // Mediasfu function as an abstract getter
+  OnScreenChangesType get onScreenChanges;
+
+  // dynamic operator [](String key);
+  // void operator []=(String key, dynamic value);
+}
+
+class ModifyDisplaySettingsOptions {
+  final ModifyDisplaySettingsParameters parameters;
+
+  ModifyDisplaySettingsOptions({
+    required this.parameters,
+  });
+}
+
+typedef ModifyDisplaySettingsType = Future<void> Function(
+    ModifyDisplaySettingsOptions options);
+
+/// Adjusts meeting display settings, updating state variables and handling alerts.
 ///
-/// The [parameters] map contains the following keys:
-/// - showAlert: A function that shows an alert with the specified message, type, and duration.
-/// - meetingDisplayType: The current meeting display type.
-/// - autoWave: A boolean indicating whether auto wave is enabled.
-/// - forceFullDisplay: A boolean indicating whether force full display is enabled.
-/// - meetingVideoOptimized: A boolean indicating whether meeting video is optimized.
-/// - islevel: The current level.
-/// - recordStarted: A boolean indicating whether recording has started.
-/// - recordResumed: A boolean indicating whether recording has resumed.
-/// - recordStopped: A boolean indicating whether recording has stopped.
-/// - recordPaused: A boolean indicating whether recording has paused.
-/// - recordingDisplayType: The current recording display type.
-/// - recordingVideoOptimized: A boolean indicating whether recording video is optimized.
-/// - prevForceFullDisplay: The previous force full display value.
-/// - prevMeetingDisplayType: The previous meeting display type.
-/// - updateMeetingDisplayType: A function to update the meeting display type.
-/// - updateAutoWave: A function to update the auto wave value.
-/// - updateForceFullDisplay: A function to update the force full display value.
-/// - updateMeetingVideoOptimized: A function to update the meeting video optimized value.
-/// - updatePrevForceFullDisplay: A function to update the previous force full display value.
-/// - updatePrevMeetingDisplayType: A function to update the previous meeting display type.
-/// - updateIsDisplaySettingsModalVisible: A function to update the visibility of the display settings modal.
-/// - updateFirstAll: A function to update the first all value.
-/// - updateUpdateMainWindow: A function to update the main window update value.
-/// - onScreenChanges: A function that handles on-screen changes.
+/// ### Parameters:
+/// - `options` (`ModifyDisplaySettingsOptions`): Contains:
+///   - `parameters`: Settings and functions, including:
+///     - Display settings (`meetingDisplayType`, `autoWave`, etc.)
+///     - Recording status flags (`recordStarted`, `recordResumed`, etc.)
+///     - Update functions for changing settings.
 ///
-/// The function checks and updates the state variables based on the provided logic.
-/// It also shows alerts and performs additional actions based on the logic.
-/// If an error occurs, it prints the error message in debug mode.
+/// ### Workflow:
+/// 1. **Auto-Wave and Force Display Settings**:
+///    - Sets `autoWave` and `forceFullDisplay` as configured in `parameters`.
+///
+/// 2. **Recording-Dependent Display Adjustments**:
+///    - If recording is active, validates compatible display types:
+///      - `meetingDisplayType` changes based on `recordingDisplayType` to ensure compatible display settings for recording sessions.
+///
+/// 3. **Breakout Room Display Restriction**:
+///    - If a breakout room is active, restricts display type to "all."
+///
+/// 4. **Display Update with On-Screen Changes**:
+///    - If the display settings or breakout room requirements change, triggers `onScreenChanges` to apply them to the UI.
+///
+/// ### Example Usage:
+/// ```dart
+/// final parameters = ModifyDisplaySettingsParameters(
+///   meetingDisplayType: 'video',
+///   forceFullDisplay: true,
+///   recordStarted: true,
+///   recordingDisplayType: 'media',
+///   updateMeetingDisplayType: (type) => print("Updated meeting display type: $type"),
+///   updateForceFullDisplay: (forced) => print("Force full display: $forced"),
+///   onScreenChanges: (options) async => print("Screen updated"),
+///   // Additional parameter implementations...
+/// );
+///
+/// await modifyDisplaySettings(
+///   ModifyDisplaySettingsOptions(parameters: parameters),
+/// );
+/// ```
+///
+/// ### Error Handling:
+/// - Prints error messages to the console in debug mode if an error occurs during settings modification.
 
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
-});
-
-typedef UpdateFunction = void Function(dynamic);
-
-typedef OnScreenChanges = Future<void> Function({
-  required bool changed,
-  required Map<String, dynamic> parameters,
-});
-
-typedef UpdateBoolFunction = void Function(bool);
-
-typedef UpdateStringFunction = void Function(String);
-
-Future<void> modifyDisplaySettings(
-    {required Map<String, dynamic> parameters}) async {
+Future<void> modifyDisplaySettings(ModifyDisplaySettingsOptions options) async {
   try {
-    ShowAlert? showAlert = parameters['showAlert'];
-    String meetingDisplayType = parameters['meetingDisplayType'];
-    bool autoWave = parameters['autoWave'] ?? false;
-    bool forceFullDisplay = parameters['forceFullDisplay'] ?? false;
-    bool meetingVideoOptimized = parameters['meetingVideoOptimized'] ?? false;
-    String islevel = parameters['islevel'] ?? '1';
-    bool recordStarted = parameters['recordStarted'] ?? false;
-    bool recordResumed = parameters['recordResumed'] ?? false;
-    bool recordStopped = parameters['recordStopped'] ?? false;
-    bool recordPaused = parameters['recordPaused'] ?? false;
-    String recordingDisplayType = parameters['recordingDisplayType'];
-    bool recordingVideoOptimized = parameters['recordingVideoOptimized'];
-    bool prevForceFullDisplay = parameters['prevForceFullDisplay'];
-    String prevMeetingDisplayType = parameters['prevMeetingDisplayType'];
-    UpdateStringFunction updateMeetingDisplayType =
-        parameters['updateMeetingDisplayType'];
-    UpdateBoolFunction updateAutoWave = parameters['updateAutoWave'];
-    UpdateBoolFunction updateForceFullDisplay =
-        parameters['updateForceFullDisplay'];
-    UpdateBoolFunction updateMeetingVideoOptimized =
-        parameters['updateMeetingVideoOptimized'];
-    UpdateBoolFunction updatePrevForceFullDisplay =
-        parameters['updatePrevForceFullDisplay'];
-    UpdateStringFunction updatePrevMeetingDisplayType =
-        parameters['updatePrevMeetingDisplayType'];
-    UpdateBoolFunction updateIsDisplaySettingsModalVisible =
-        parameters['updateIsDisplaySettingsModalVisible'];
-    UpdateBoolFunction updateFirstAll = parameters['updateFirstAll'];
-    UpdateBoolFunction updateUpdateMainWindow =
-        parameters['updateUpdateMainWindow'];
+    final parameters = options.parameters;
+    var showAlert = parameters.showAlert;
+    var meetingDisplayType = parameters.meetingDisplayType;
+    var autoWave = parameters.autoWave;
+    var forceFullDisplay = parameters.forceFullDisplay;
+    var meetingVideoOptimized = parameters.meetingVideoOptimized;
+    var islevel = parameters.islevel;
+    var recordStarted = parameters.recordStarted;
+    var recordResumed = parameters.recordResumed;
+    var recordStopped = parameters.recordStopped;
+    var recordPaused = parameters.recordPaused;
+    var recordingDisplayType = parameters.recordingDisplayType;
+    var recordingVideoOptimized = parameters.recordingVideoOptimized;
+    var prevForceFullDisplay = parameters.prevForceFullDisplay;
+    var prevMeetingDisplayType = parameters.prevMeetingDisplayType;
 
-    //mediasfu functions
-    OnScreenChanges onScreenChanges = parameters['onScreenChanges'];
+    parameters.updateAutoWave(autoWave);
+    parameters.updateForceFullDisplay(forceFullDisplay);
 
-    // Update previous states
-    updateAutoWave(autoWave);
-    updateForceFullDisplay(forceFullDisplay);
-
-    // Check and update state variables based on the provided logic
     if (islevel == '2' &&
         (recordStarted || recordResumed) &&
-        (!recordStopped && !recordPaused)) {
-      if (recordingDisplayType == 'video') {
-        if (meetingDisplayType == 'video' &&
-            meetingVideoOptimized &&
-            !recordingVideoOptimized) {
-          if (showAlert != null) {
-            showAlert(
-              message:
-                  'Meeting display type can be either video, media, or all when recording display type is non-optimized video.',
-              type: 'danger',
-              duration: 3000,
-            );
-          }
-          // Reset to previous values or handle as needed
-          meetingDisplayType = recordingDisplayType;
-          updateMeetingDisplayType(meetingDisplayType);
-          meetingVideoOptimized = recordingVideoOptimized;
-          updateMeetingVideoOptimized(meetingVideoOptimized);
-          return;
-        }
-      } else if (recordingDisplayType == 'media') {
-        if (meetingDisplayType == 'video') {
-          if (showAlert != null) {
-            showAlert(
-              message:
-                  'Meeting display type can be either media or all when recording display type is media.',
-              type: 'danger',
-              duration: 3000,
-            );
-          }
-          // Reset to previous values or handle as needed
-          meetingDisplayType = recordingDisplayType;
-          updateMeetingDisplayType(meetingDisplayType);
-          return;
-        }
-      } else if (recordingDisplayType == 'all') {
-        if (meetingDisplayType == 'video' || meetingDisplayType == 'media') {
-          if (showAlert != null) {
-            showAlert(
-              message:
-                  'Meeting display type can be only all when recording display type is all.',
-              type: 'danger',
-              duration: 3000,
-            );
-          }
-          // Reset to previous values or handle as needed
-          meetingDisplayType = recordingDisplayType;
-          updateMeetingDisplayType(meetingDisplayType);
-          return;
-        }
+        !recordStopped &&
+        !recordPaused) {
+      if (recordingDisplayType == 'video' &&
+          meetingDisplayType == 'video' &&
+          meetingVideoOptimized &&
+          !recordingVideoOptimized) {
+        showAlert?.call(
+          message:
+              "Meeting display type can be either video, media, or all when recording display type is non-optimized video.",
+          type: "danger",
+          duration: 3000,
+        );
+        meetingDisplayType = recordingDisplayType;
+        parameters.updateMeetingDisplayType(meetingDisplayType);
+        meetingVideoOptimized = recordingVideoOptimized;
+        parameters.updateMeetingVideoOptimized(meetingVideoOptimized);
+        return;
+      } else if (recordingDisplayType == 'media' &&
+          meetingDisplayType == 'video') {
+        showAlert?.call(
+          message:
+              "Meeting display type can be either media or all when recording display type is media.",
+          type: "danger",
+          duration: 3000,
+        );
+        meetingDisplayType = recordingDisplayType;
+        parameters.updateMeetingDisplayType(meetingDisplayType);
+        return;
+      } else if (recordingDisplayType == 'all' &&
+          (meetingDisplayType == 'video' || meetingDisplayType == 'media')) {
+        showAlert?.call(
+          message:
+              "Meeting display type can be only all when recording display type is all.",
+          type: "danger",
+          duration: 3000,
+        );
+        meetingDisplayType = recordingDisplayType;
+        parameters.updateMeetingDisplayType(meetingDisplayType);
+        return;
       }
     }
 
-    // Update state variables based on logic
-    updateMeetingDisplayType(meetingDisplayType);
-    updateMeetingVideoOptimized(meetingVideoOptimized);
+    parameters.updateMeetingDisplayType(meetingDisplayType);
+    parameters.updateMeetingVideoOptimized(meetingVideoOptimized);
+    parameters.updateIsDisplaySettingsModalVisible(false);
 
-    // Close the modal or perform additional actions
-    updateIsDisplaySettingsModalVisible(false);
     if (prevMeetingDisplayType != meetingDisplayType ||
         prevForceFullDisplay != forceFullDisplay) {
-      if (meetingDisplayType != 'all') {
-        updateFirstAll(true);
-      } else {
-        updateFirstAll(false);
+      if (parameters.breakOutRoomStarted &&
+          !parameters.breakOutRoomEnded &&
+          meetingDisplayType != 'all') {
+        showAlert?.call(
+          message: "Breakout room is active. Display type can only be all.",
+          type: "danger",
+          duration: 3000,
+        );
+        meetingDisplayType = prevMeetingDisplayType;
+        parameters.updateMeetingDisplayType(prevMeetingDisplayType);
+        return;
       }
-      updateUpdateMainWindow(true);
-      // Handle on-screen changes
-      await onScreenChanges(changed: true, parameters: parameters);
-      updatePrevForceFullDisplay(forceFullDisplay);
-      updatePrevMeetingDisplayType(meetingDisplayType);
+
+      parameters.updateFirstAll(meetingDisplayType != 'all');
+      parameters.updateUpdateMainWindow(true);
+      parameters.updateMeetingDisplayType(meetingDisplayType);
+      parameters.updateForceFullDisplay(forceFullDisplay);
+      await parameters.onScreenChanges(
+        OnScreenChangesOptions(
+          changed: true,
+          parameters: parameters,
+        ),
+      );
+      parameters.updatePrevForceFullDisplay(forceFullDisplay);
+      parameters.updatePrevMeetingDisplayType(meetingDisplayType);
     }
   } catch (error) {
     if (kDebugMode) {

@@ -1,133 +1,166 @@
-import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'dart:async';
+import '../types/types.dart'
+    show
+        ScreenState,
+        CompareScreenStatesParameters,
+        CompareScreenStatesType,
+        CompareActiveNamesParameters,
+        CompareActiveNamesType,
+        CompareScreenStatesOptions,
+        CompareActiveNamesOptions;
 
-/// Re-ports the screen states based on the provided parameters.
+// Define RePortParameters class
+abstract class RePortParameters
+    implements CompareScreenStatesParameters, CompareActiveNamesParameters {
+  // Properties as abstract getters
+  String get islevel;
+  String get mainScreenPerson;
+  bool get adminOnMainScreen;
+  bool get mainScreenFilled;
+  bool get recordStarted;
+  bool get recordStopped;
+  bool get recordPaused;
+  bool get recordResumed;
+  List<ScreenState> get screenStates;
+  List<ScreenState> get prevScreenStates;
+
+  // Update functions as abstract getters
+  void Function(List<ScreenState>) get updateScreenStates;
+  void Function(List<ScreenState>) get updatePrevScreenStates;
+
+  // Mediasfu functions as abstract getters
+  CompareActiveNamesType get compareActiveNames;
+  CompareScreenStatesType get compareScreenStates;
+
+  // Method to get updated parameters
+  RePortParameters Function() get getUpdatedAllParams;
+
+  // Dynamic key-value support
+  // dynamic operator [](String key);
+}
+
+// Define RePortOptions class
+class RePortOptions {
+  final bool restart;
+  final RePortParameters parameters;
+
+  RePortOptions({
+    this.restart = false,
+    required this.parameters,
+  });
+}
+
+typedef RePortType = Future<void> Function(RePortOptions options);
+
+/// Re-ports the screen states and active names for the main screen in a conference or event session.
 ///
-/// The [restart] parameter determines whether to restart the comparison process.
-/// The [parameters] parameter is a map containing various parameters needed for the re-porting process.
+/// This function updates the current and previous screen states, compares active names and screen states,
+/// and adds a timestamp. If recording is started or resumed, it performs the re-porting operations.
+/// If `restart` is true, it only re-compares active names.
 ///
-/// The [rePort] function performs the following steps:
-/// 1. Destructures the parameters to extract necessary values.
-/// 2. Calls the [getUpdatedAllParams] function to update the parameters.
-/// 3. Checks the conditions and performs operations based on the values of [recordStarted] and [recordResumed].
-///    - If [recordStarted] or [recordResumed] is true:
-///      - If [recordStopped] or [recordPaused] is true, the recording is stopped or paused, and no further action is taken.
-///      - If [islevel] is '2', the screen states are updated and the [compareActiveNames] and [compareScreenStates] functions are called.
-///        - The [prevScreenStates] are updated with the current [screenStates].
-///        - The [screenStates] are updated with a new map containing [mainScreenPerson], [adminOnMainScreen], and [mainScreenFilled].
-///        - The [updateScreenStates] function is called with the updated [screenStates].
-///        - The current timestamp is generated and stored in [tStamp].
-///        - If [restart] is true, the [compareActiveNames] function is called with the provided parameters.
-///        - The [compareScreenStates] function is called with the provided parameters.
+/// Parameters:
+/// - [options] (`RePortOptions`): Contains a flag to restart comparisons and parameters for re-porting.
 ///
-/// If any error occurs during the re-porting process, it is caught and handled, and the error message is printed in debug mode.
+/// If the user level is "2", it updates the current and previous screen states and timestamps the operation.
 ///
-/// Example usage:
+/// Example:
 /// ```dart
-/// rePort(restart: true, parameters: {
-///   'getUpdatedAllParams': getUpdatedAllParams,
-///   'islevel': '2',
-///   'mainScreenPerson': 'John Doe',
-///   'adminOnMainScreen': true,
-///   'mainScreenFilled': true,
-///   'recordStarted': true,
-///   'recordStopped': false,
-///   'recordPaused': false,
-///   'recordResumed': false,
-///   'screenStates': [],
-///   'prevScreenStates': [],
-///   'updateScreenStates': updateScreenStates,
-///   'updatePrevScreenStates': updatePrevScreenStates,
-///   'compareActiveNames': compareActiveNames,
-///   'compareScreenStates': compareScreenStates,
-/// });
+/// final rePortOptions = RePortOptions(
+///   restart: true,
+///   parameters: RePortParameters(
+///     islevel: '2',
+///     mainScreenPerson: 'Admin',
+///     adminOnMainScreen: true,
+///     mainScreenFilled: true,
+///     recordStarted: true,
+///     recordStopped: false,
+///     recordPaused: false,
+///     recordResumed: false,
+///     screenStates: [/* existing screen states */],
+///     prevScreenStates: [/* previous screen states */],
+///     updateScreenStates: (List<ScreenState> newStates) => print("Updated screen states."),
+///     updatePrevScreenStates: (List<ScreenState> prevStates) => print("Updated previous screen states."),
+///     compareActiveNames: (CompareActiveNamesOptions options) async => /* function logic */,
+///     compareScreenStates: (CompareScreenStatesOptions options) async => /* function logic */,
+///     getUpdatedAllParams: () => /* function to get updated parameters */,
+///   ),
+/// );
 ///
-
-typedef UpdateScreenStates = void Function(List<Map<String, dynamic>>);
-typedef UpdatePrevScreenStates = void Function(List<Map<String, dynamic>>);
-typedef GetUpdatedAllParams = Map<String, dynamic> Function();
-
-typedef TriggerFunction = void Function(
-    {List<String> refActiveNames,
-    String tStamp,
-    Map<String, dynamic> parameters});
-
-typedef CompareActiveNames = Future<void> Function({
-  required String tStamp,
-  bool restart,
-  required Map<String, dynamic> parameters,
-});
-
-typedef CompareScreenStates = Future<void> Function({
-  required String tStamp,
-  bool restart,
-  required Map<String, dynamic> parameters,
-});
+/// await rePort(rePortOptions);
+/// ```
 
 Future<void> rePort(
-    {restart = false, required Map<String, dynamic> parameters}) async {
+  RePortOptions options,
+) async {
+  var parameters = options.parameters.getUpdatedAllParams();
+  final bool restart = options.restart;
+
+  final String islevel = parameters.islevel;
+  final String mainScreenPerson = parameters.mainScreenPerson;
+  final bool adminOnMainScreen = parameters.adminOnMainScreen;
+  final bool mainScreenFilled = parameters.mainScreenFilled;
+  final bool recordStarted = parameters.recordStarted;
+  final bool recordStopped = parameters.recordStopped;
+  final bool recordPaused = parameters.recordPaused;
+  final bool recordResumed = parameters.recordResumed;
+  List<ScreenState> screenStates = parameters.screenStates;
+  List<ScreenState> prevScreenStates = parameters.prevScreenStates;
+
+  final void Function(List<ScreenState>) updateScreenStates =
+      parameters.updateScreenStates;
+  final void Function(List<ScreenState>) updatePrevScreenStates =
+      parameters.updatePrevScreenStates;
+  final CompareActiveNamesType compareActiveNames =
+      parameters.compareActiveNames;
+  final CompareScreenStatesType compareScreenStates =
+      parameters.compareScreenStates;
+
   try {
-    // Destructure parameters
-    GetUpdatedAllParams getUpdatedAllParams = parameters['getUpdatedAllParams'];
-    parameters = getUpdatedAllParams();
-    String islevel = parameters['islevel'];
-    String mainScreenPerson = parameters['mainScreenPerson'];
-    bool adminOnMainScreen = parameters['adminOnMainScreen'];
-    bool mainScreenFilled = parameters['mainScreenFilled'];
-    bool recordStarted = parameters['recordStarted'];
-    bool recordStopped = parameters['recordStopped'];
-    bool recordPaused = parameters['recordPaused'];
-    bool recordResumed = parameters['recordResumed'];
-    List<Map<String, dynamic>>? screenStates = parameters['screenStates'];
-    List<Map<String, dynamic>>? prevScreenStates =
-        parameters['prevScreenStates'];
-
-    UpdateScreenStates updateScreenStates = parameters['updateScreenStates'];
-    UpdatePrevScreenStates updatePrevScreenStates =
-        parameters['updatePrevScreenStates'];
-
-    //mediasfu functions
-    CompareActiveNames compareActiveNames = parameters['compareActiveNames'];
-    CompareScreenStates compareScreenStates = parameters['compareScreenStates'];
-
-    // Check conditions and perform operations
     if (recordStarted || recordResumed) {
       if (recordStopped || recordPaused) {
         // Recording stopped or paused, do nothing
-      } else {
-        if (islevel == '2') {
-          prevScreenStates = [...screenStates!];
-          updatePrevScreenStates(prevScreenStates);
+        return;
+      }
+      if (islevel == '2') {
+        prevScreenStates = List.from(screenStates);
+        updatePrevScreenStates(prevScreenStates);
 
-          screenStates = [
-            {
-              'mainScreenPerson': mainScreenPerson,
-              'adminOnMainScreen': adminOnMainScreen,
-              'mainScreenFilled': mainScreenFilled
-            }
-          ];
-          updateScreenStates(screenStates);
+        screenStates = [
+          ScreenState(
+            mainScreenPerson: mainScreenPerson,
+            adminOnMainScreen: adminOnMainScreen,
+            mainScreenFilled: mainScreenFilled,
+          )
+        ];
 
-          var now = DateTime.now();
-          var tStamp =
-              '${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}';
+        updateScreenStates(screenStates);
 
-          if (restart == true) {
-            await compareActiveNames(
-                tStamp: tStamp, restart: restart, parameters: parameters);
-            return;
-          }
-          await compareActiveNames(
-              tStamp: tStamp, restart: restart, parameters: parameters);
-          await compareScreenStates(
-              tStamp: tStamp, restart: restart, parameters: parameters);
+        // Timestamp generation
+        // final now = DateTime.now();
+        // final tStamp =
+        //     '${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}';
+
+        final optionsCompareActive = CompareActiveNamesOptions(
+          restart: restart,
+          parameters: parameters,
+        );
+        if (restart) {
+          await compareActiveNames(optionsCompareActive);
+          return;
         }
+
+        final optionsCompareScreen = CompareScreenStatesOptions(
+          restart: restart,
+          parameters: parameters,
+        );
+        await compareActiveNames(optionsCompareActive);
+        await compareScreenStates(optionsCompareScreen);
       }
     }
   } catch (error) {
-    // Handle errors during the process of rePorting
     if (kDebugMode) {
-      // print('Error during rePorting: $error');
+      print('Error during rePorting: $error');
     }
   }
 }

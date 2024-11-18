@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
 
-/// A container component with customizable dimensions and background color.
+/// `MainContainerComponentOptions` - Configuration options for `MainContainerComponent`.
 ///
-/// Parameters:
-/// - backgroundColor: The background color of the container.
-/// - children: The widgets to be displayed inside the container.
-/// - containerWidthFraction: The width fraction of the container.
-/// - containerHeightFraction: The height fraction of the container.
-/// - marginLeft: The margin from the left side of the container.
-/// - marginRight: The margin from the right side of the container.
-/// - marginTop: The margin from the top of the container.
-/// - marginBottom: The margin from the bottom of the container.
+/// ### Properties:
+/// - `backgroundColor` (`Color`): Background color of the container.
+/// - `children` (`List<Widget>`): List of child widgets to be displayed inside the container.
+/// - `containerWidthFraction` (`double`): Fraction of the screen width that the container should occupy (default is 1.0).
+/// - `containerHeightFraction` (`double`): Fraction of the screen height that the container should occupy (default is 1.0).
+/// - `marginLeft` (`double`): Left margin of the container (default is 0.0).
+/// - `marginRight` (`double`): Right margin of the container (default is 0.0).
+/// - `marginTop` (`double`): Top margin of the container (default is 0.0).
+/// - `marginBottom` (`double`): Bottom margin of the container (default is 0.0).
 ///
-/// Example:
+/// ### Example Usage:
 /// ```dart
-/// MainContainerComponent(
+/// MainContainerComponentOptions(
 ///   backgroundColor: Colors.blue,
 ///   children: [
-///     // Your widgets here
+///     Text("Child 1"),
+///     Text("Child 2"),
 ///   ],
 ///   containerWidthFraction: 0.8,
 ///   containerHeightFraction: 0.6,
@@ -25,65 +26,104 @@ import 'package:flutter/material.dart';
 ///   marginRight: 10,
 ///   marginTop: 20,
 ///   marginBottom: 20,
-/// )
+/// );
 /// ```
-
-class MainContainerComponent extends StatefulWidget {
+class MainContainerComponentOptions {
+  /// The background color of the container.
   final Color backgroundColor;
+
+  /// The list of child widgets to be displayed inside the container.
   final List<Widget> children;
-  final double? containerWidthFraction;
-  final double? containerHeightFraction;
+
+  /// The fraction of the screen width that the container should occupy.
+  final double containerWidthFraction;
+
+  /// The fraction of the screen height that the container should occupy.
+  final double containerHeightFraction;
+
+  /// The left margin of the container.
   final double marginLeft;
+
+  /// The right margin of the container.
   final double marginRight;
+
+  /// The top margin of the container.
   final double marginTop;
+
+  /// The bottom margin of the container.
   final double marginBottom;
 
-  const MainContainerComponent({
-    super.key,
+  /// Constructs a MainContainerComponentOptions object.
+  const MainContainerComponentOptions({
     required this.backgroundColor,
     required this.children,
-    this.containerWidthFraction,
-    this.containerHeightFraction,
-    this.marginLeft = 0,
-    this.marginRight = 0,
-    this.marginTop = 0,
-    this.marginBottom = 0,
+    this.containerWidthFraction = 1.0,
+    this.containerHeightFraction = 1.0,
+    this.marginLeft = 0.0,
+    this.marginRight = 0.0,
+    this.marginTop = 0.0,
+    this.marginBottom = 0.0,
   });
-
-  @override
-  // ignore: library_private_types_in_public_api
-  _MainContainerComponentState createState() => _MainContainerComponentState();
 }
 
-class _MainContainerComponentState extends State<MainContainerComponent> {
-  late double _height;
-  late double _width;
+typedef MainContainerComponentType = Widget Function(
+    {required MainContainerComponentOptions options});
+
+/// `MainContainerComponent` - A container widget with customizable dimensions, margins, and background color.
+///
+/// This component adapts its width and height based on the specified fractions of the screen size.
+/// It also allows for custom margins and provides a background color for the container.
+///
+/// ### Parameters:
+/// - `options` (`MainContainerComponentOptions`): Configuration options to customize the container.
+///
+/// ### Example Usage:
+/// ```dart
+/// MainContainerComponent(
+///   options: MainContainerComponentOptions(
+///     backgroundColor: Colors.blue,
+///     children: [
+///       Text("Sample Text"),
+///     ],
+///     containerWidthFraction: 0.9,
+///     containerHeightFraction: 0.5,
+///     marginLeft: 15,
+///     marginRight: 15,
+///     marginTop: 10,
+///     marginBottom: 10,
+///   ),
+/// );
+/// ```
+///
+/// ### Notes:
+/// - `MainContainerComponent` uses the `Stack` widget to allow layered child widgets.
+/// - The component adjusts to screen size changes by recalculating width and height based on the fractions provided.
+class MainContainerComponent extends StatelessWidget {
+  final MainContainerComponentOptions options;
+
+  const MainContainerComponent({super.key, required this.options});
 
   @override
   Widget build(BuildContext context) {
-    final double windowHeight = MediaQuery.of(context).size.height - 0.0;
-    final double windowWidth = MediaQuery.of(context).size.width;
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double screenHeight = MediaQuery.of(context).size.height;
 
-    _height = widget.containerHeightFraction != null
-        ? widget.containerHeightFraction! * windowHeight
-        : windowHeight;
-
-    _width = widget.containerWidthFraction != null
-        ? widget.containerWidthFraction! * windowWidth
-        : windowWidth;
+    final double containerWidth = options.containerWidthFraction * screenWidth;
+    final double containerHeight =
+        options.containerHeightFraction * screenHeight;
 
     return Container(
-      width: _width,
-      height: _height,
+      width: containerWidth,
+      height: containerHeight,
       margin: EdgeInsets.fromLTRB(
-        widget.marginLeft,
-        widget.marginTop,
-        widget.marginRight,
-        widget.marginBottom,
+        options.marginLeft,
+        options.marginTop,
+        options.marginRight,
+        options.marginBottom,
       ),
-      color: widget.backgroundColor,
+      color: options.backgroundColor,
       child: Stack(
-        children: widget.children,
+        children: options.children,
       ),
     );
   }

@@ -1,39 +1,57 @@
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
-});
+import 'dart:async';
+import '../../types/types.dart' show ShowAlert;
+
+/// Options for disconnecting the user from the session.
+class DisconnectOptions {
+  final ShowAlert? showAlert;
+  final String? redirectURL;
+  final bool onWeb;
+  final void Function(bool)? updateValidated;
+
+  DisconnectOptions({
+    this.showAlert,
+    this.redirectURL,
+    required this.onWeb,
+    this.updateValidated,
+  });
+}
+
+typedef DisconnectType = void Function(DisconnectOptions options);
 
 /// Disconnects the user from the session, updating the necessary state and triggering alerts if needed.
 ///
-/// The [disconnect] function takes a map of parameters as input. The parameters include:
-/// - [showAlert]: A function that displays an alert to the user. It takes a [message] (required), [type] (required), and [duration] (required) as arguments.
-/// - [redirectURL]: A string representing the URL to redirect to on the web. Defaults to an empty string if not provided.
-/// - [onWeb]: A boolean indicating whether the user is on the web. Defaults to false if not provided.
-/// - [updateValidated]: A function that updates the validated state.
+/// If [onWeb] is true and [redirectURL] is provided, the function performs a redirect.
+/// Otherwise, it shows an alert indicating the user has been disconnected, and after a delay,
+/// updates the validation state to false if [updateValidated] is provided.
 ///
-/// If the user is on the web and a [redirectURL] is provided, the function redirects the user to the specified URL.
-/// Otherwise, it displays an alert to the user with a message indicating that they have been disconnected from the session.
-/// After a delay of 2 seconds, it calls the [updateValidated] function with a value of false to update the validated state.
-void disconnect({required Map<String, dynamic> parameters}) {
-  final ShowAlert? showAlert = parameters['showAlert'];
-  final String? redirectURL = parameters['redirectURL'] ?? '';
-  final bool onWeb = parameters['onWeb'] ?? false;
-  final Function updateValidated = parameters['updateValidated'];
-
-  if (onWeb && (redirectURL != null && redirectURL.isNotEmpty)) {
+/// Example:
+/// ```dart
+/// disconnect(DisconnectOptions(
+///   showAlert: (message, type, duration) => print('$message ($type) for $duration ms'),
+///   redirectURL: 'https://example.com',
+///   onWeb: true,
+///   updateValidated: (isValid) => print('Validated: $isValid'),
+/// ));
+/// ```
+void disconnect(DisconnectOptions options) {
+  if (options.onWeb &&
+      options.redirectURL != null &&
+      options.redirectURL!.isNotEmpty) {
     // Redirect to the specified URL on the web
+    // Replace with your web navigation logic as needed
   } else {
-    if (showAlert != null) {
-      showAlert(
-        message: 'You have been disconnected from the session.',
-        type: 'danger',
-        duration: 3000,
-      );
-    }
+    // Display an alert if `showAlert` is provided
+    options.showAlert?.call(
+      message: 'You have been disconnected from the session.',
+      type: 'danger',
+      duration: 3000,
+    );
 
-    Future.delayed(const Duration(seconds: 2), () {
-      updateValidated(false);
-    });
+    // Delay and update the validation state if `updateValidated` is provided
+    if (options.updateValidated != null) {
+      Future.delayed(const Duration(seconds: 2), () {
+        options.updateValidated!(false);
+      });
+    }
   }
 }

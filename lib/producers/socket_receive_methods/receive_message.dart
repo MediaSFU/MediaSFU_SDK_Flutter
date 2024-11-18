@@ -1,173 +1,148 @@
 import 'dart:async';
+import '../../types/types.dart' show Participant, EventType, Message;
 
-/// Receives a message and updates the messages array based on the received message and parameters.
-///
-/// The [message] parameter is a map containing the details of the received message, including the sender, receivers, content, timestamp, and group status.
-/// The [parameters] parameter is a map containing various parameters needed for processing the message, including the getUpdatedAllParams function, participantsAll list, member name, event type, islevel, coHost, updateMessages function, and updateShowMessagesBadge function.
-/// The [messages] parameter is a list of previously received messages.
-///
-/// This function adds the received message to the messages array and performs filtering and updating based on the event type and participant status.
-/// It separates group and direct messages, updates counts for group and direct messages, and triggers the updateShowMessagesBadge function to show the message count if necessary.
+/// Represents options for receiving and processing a message.
+class ReceiveMessageOptions {
+  final Message message;
+  final List<Message> messages;
+  final List<Participant> participantsAll;
+  final String member;
+  final EventType eventType;
+  final String islevel;
+  final String coHost;
+  final void Function(List<Message>) updateMessages;
+  final void Function(bool) updateShowMessagesBadge;
+
+  ReceiveMessageOptions({
+    required this.message,
+    required this.messages,
+    required this.participantsAll,
+    required this.member,
+    required this.eventType,
+    required this.islevel,
+    required this.coHost,
+    required this.updateMessages,
+    required this.updateShowMessagesBadge,
+  });
+}
+
+typedef ReceiveMessageType = Future<void> Function(
+    ReceiveMessageOptions options);
+
+/// Processes an incoming message and updates the message list and badge display based on specified rules.
+/// Filters out messages from banned participants and categorizes messages into group and direct.
+/// Displays a badge for new messages if certain conditions are met.
 ///
 /// Example usage:
 /// ```dart
-/// receiveMessage(
-///   message: {
-///     'sender': 'John',
-///     'receivers': ['Alice', 'Bob'],
-///     'message': 'Hello',
-///     'timestamp': '2022-01-01 12:00:00',
-///     'group': false,
-///   },
-///   parameters: {
-///     'getUpdatedAllParams': () => {
-///       'participantsAll': [
-///         {'name': 'Alice', 'isBanned': false},
-///         {'name': 'Bob', 'isBanned': true},
-///       ],
-///       'member': 'Alice',
-///       'eventType': 'chat',
-///       'islevel': '1',
-///       'coHost': '',
-///       'updateMessages': (messages) => print(messages),
-///       'updateShowMessagesBadge': (showBadge) => print(showBadge),
-///     },
-///   },
+/// final receiveOptions = ReceiveMessageOptions(
+///   message: Message(sender: 'Alice', receivers: ['Bob'], content: 'Hello, Bob!', timestamp: DateTime.now(), group: false),
 ///   messages: [],
+///   participantsAll: [Participant(name: 'Alice', isBanned: false)],
+///   member: 'Bob',
+///   eventType: EventType.direct,
+///   islevel: '2',
+///   coHost: 'Alice',
+///   updateMessages: (updatedMessages) {
+///     print("Updated messages: $updatedMessages");
+///   },
+///   updateShowMessagesBadge: (showBadge) {
+///     print("Show message badge: $showBadge");
+///   },
 /// );
+/// await receiveMessage(receiveOptions);
 /// ```
+///
+/// This function adds new messages, filters banned participants, and updates the badge visibility.
+Future<void> receiveMessage(ReceiveMessageOptions options) async {
+  final message = options.message;
+  final sender = message.sender;
+  final receivers = message.receivers;
+  final content = message.message;
+  final timestamp = message.timestamp;
+  final group = message.group;
 
-typedef GetUpdatedAllParams = Map<String, dynamic> Function();
+  List<Message> messages = List.from(options.messages);
+  messages.add(Message(
+      sender: sender,
+      receivers: receivers,
+      message: content,
+      timestamp: timestamp,
+      group: group));
 
-Future<void> receiveMessage({
-  required Map<String, dynamic> message,
-  required Map<String, dynamic> parameters,
-  required List<dynamic> messages,
-}) async {
-  GetUpdatedAllParams getUpdatedAllParams = parameters['getUpdatedAllParams'];
-  parameters = getUpdatedAllParams();
-
-  List<dynamic> participantsAll = parameters['participantsAll'] ?? [];
-  String member = parameters['member'] ?? '';
-  String eventType = parameters['eventType'] ?? '';
-  String islevel = parameters['islevel'] ?? '1';
-  String coHost = parameters['coHost'] ?? '';
-  Function updateMessages = parameters['updateMessages'];
-  Function updateShowMessagesBadge = parameters['updateShowMessagesBadge'];
-
-  // Add the received message to the messages array
-  String sender = message['sender'];
-  List<dynamic> receivers = message['receivers'];
-  String content = message['message'];
-  String timestamp = message['timestamp'];
-  bool group = message['group'];
-  List<dynamic> oldMessages = List.from(messages);
-  messages.add({
-    'sender': sender,
-    'receivers': receivers,
-    'message': content,
-    'timestamp': timestamp,
-    'group': group
-  });
-
-  // Filter out messages with banned senders in the participants array; keep others that are not banned and not in the participants array
-  if (eventType != 'broadcast' && eventType != 'chat') {
+  // Filter out messages with banned senders
+  if (options.eventType != EventType.broadcast &&
+      options.eventType != EventType.chat) {
     messages = messages
-        .where((message) => participantsAll.any((participant) =>
-            participant['name'] == message['sender'] &&
-            !participant['isBanned']))
+        .where((msg) => options.participantsAll.any((participant) =>
+            participant.name == msg.sender && !participant.isBanned!))
         .toList();
-    updateMessages(messages);
   } else {
-    messages = messages.where((message) {
-      var participant = participantsAll.firstWhere(
-          (participant) => participant['name'] == message['sender'],
-          orElse: () => <String, dynamic>{});
-      return participant.isEmpty || (!participant['isBanned']);
+    messages = messages.where((msg) {
+      final participant = options.participantsAll.firstWhere(
+          (p) => p.name == msg.sender,
+          orElse: () =>
+              Participant(name: '', isBanned: true, videoID: '', audioID: ''));
+      return !participant.isBanned!;
     }).toList();
-    updateMessages(messages);
   }
+  options.updateMessages(messages);
 
   // Separate group and direct messages
-  List<dynamic> oldGroupMessages =
-      oldMessages.where((message) => message['group'] == true).toList();
-  List<dynamic> oldDirectMessages =
-      oldMessages.where((message) => message['group'] == false).toList();
+  final oldGroupMessages = options.messages.where((msg) => msg.group).toList();
+  final oldDirectMessages =
+      options.messages.where((msg) => !msg.group).toList();
+  final groupMessages = messages.where((msg) => msg.group).toList();
+  final directMessages = messages.where((msg) => !msg.group).toList();
 
-  // Render and update counts for group messages
-  List<dynamic> groupMessages =
-      messages.where((message) => message['group'] == true).toList();
-
-  if (eventType != 'broadcast' && eventType != 'chat') {
-    // Check if oldGroupMessages length is different from groupMessages length
+  // Group messages logic
+  if (options.eventType != EventType.broadcast &&
+      options.eventType != EventType.chat) {
     if (oldGroupMessages.length != groupMessages.length) {
-      // Identify new messages
-      List<dynamic> newGroupMessages = groupMessages
-          .where((message) => !oldGroupMessages.any(
-              (oldMessage) => oldMessage['timestamp'] == message['timestamp']))
+      final newGroupMessages = groupMessages
+          .where((msg) => !oldGroupMessages
+              .any((oldMsg) => oldMsg.timestamp == msg.timestamp))
           .toList();
 
-      // Check if newGroupMessages sender is the member or receivers include the member
-      List<dynamic> newGroupMessages2 = newGroupMessages
-          .where((message) =>
-              message['sender'] == member ||
-              message['receivers'].contains(member))
+      final relevantNewGroupMessages = newGroupMessages
+          .where((msg) =>
+              msg.sender == options.member ||
+              msg.receivers.contains(options.member))
           .toList();
 
-      // Check if member is the sender of any newGroupMessages
-      List<dynamic> newGroupMessages3 = newGroupMessages2
-          .where((message) => message['sender'] == member)
-          .toList();
-
-      // Check if member is the receiver of any newGroupMessages
-      if (newGroupMessages.isNotEmpty) {
-        if (newGroupMessages.length != newGroupMessages3.length) {
-          // Show the message-count
-          updateShowMessagesBadge(true);
-        }
+      if (newGroupMessages.isNotEmpty &&
+          newGroupMessages.length != relevantNewGroupMessages.length) {
+        options.updateShowMessagesBadge(true);
       }
     }
   }
 
-  // Render and update counts for direct messages
-  List<dynamic> directMessages =
-      messages.where((message) => message['group'] == false).toList();
-
-  if (eventType != 'broadcast' && eventType != 'chat') {
-    // Check if oldDirectMessages length is different from directMessages length
+  // Direct messages logic
+  if (options.eventType != EventType.broadcast &&
+      options.eventType != EventType.chat) {
     if (oldDirectMessages.length != directMessages.length) {
-      // Identify new direct messages
-      List<dynamic> newDirectMessages = directMessages
-          .where((message) => !oldDirectMessages.any(
-              (oldMessage) => oldMessage['timestamp'] == message['timestamp']))
+      final newDirectMessages = directMessages
+          .where((msg) => !oldDirectMessages
+              .any((oldMsg) => oldMsg.timestamp == msg.timestamp))
           .toList();
 
-      // Check if newDirectMessages sender is the member or receivers include the member
-      List<dynamic> newDirectMessages2 = newDirectMessages
-          .where((message) =>
-              message['sender'] == member ||
-              message['receivers'].contains(member))
+      final relevantNewDirectMessages = newDirectMessages
+          .where((msg) =>
+              msg.sender == options.member ||
+              msg.receivers.contains(options.member))
           .toList();
 
-      // Check if member is the sender of any newDirectMessages
-      List<dynamic> newDirectMessages3 = newDirectMessages2
-          .where((message) => message['sender'] == member)
-          .toList();
-
-      if ((newDirectMessages.isNotEmpty && newDirectMessages2.isNotEmpty) ||
-          (newDirectMessages.isNotEmpty && (islevel == '2') ||
-              coHost == member)) {
-        if ((islevel == '2') || coHost == member) {
-          if (newDirectMessages.length != newDirectMessages3.length) {
-            // Show the message-count
-            updateShowMessagesBadge(true);
+      if ((newDirectMessages.isNotEmpty &&
+              relevantNewDirectMessages.isNotEmpty) ||
+          (newDirectMessages.isNotEmpty &&
+              (options.islevel == '2' || options.coHost == options.member))) {
+        if (options.islevel == '2' || options.coHost == options.member) {
+          if (newDirectMessages.length != relevantNewDirectMessages.length) {
+            options.updateShowMessagesBadge(true);
           }
-        } else {
-          if (newDirectMessages2.isNotEmpty) {
-            if (newDirectMessages.length != newDirectMessages3.length) {
-              // Show the message-count
-              updateShowMessagesBadge(true);
-            }
+        } else if (relevantNewDirectMessages.isNotEmpty) {
+          if (newDirectMessages.length != relevantNewDirectMessages.length) {
+            options.updateShowMessagesBadge(true);
           }
         }
       }

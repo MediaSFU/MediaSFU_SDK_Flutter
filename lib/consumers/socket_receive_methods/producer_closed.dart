@@ -1,89 +1,125 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:collection/collection.dart';
+import '../../types/types.dart'
+    show
+        TransportType,
+        CloseAndResizeParameters,
+        CloseAndResizeType,
+        CloseAndResizeOptions;
 
-/// Handles the case when a producer is closed.
+/// Abstract class representing the parameters needed for the [producerClosed] function.
 ///
-/// This function is responsible for closing the consumer transport and consumer
-/// associated with the closed producer. It also updates the list of consumer
-/// transports and triggers a close and resize operation for the videos.
+/// Contains consumer transports, screen ID, and functions for updating consumer transports,
+/// closing, and resizing.
+abstract class ProducerClosedParameters extends CloseAndResizeParameters {
+  List<TransportType> get consumerTransports;
+  String get screenId;
+  void Function(List<TransportType> transports) get updateConsumerTransports;
+
+  // Mediasfu functions
+  CloseAndResizeType get closeAndResize;
+  ProducerClosedParameters Function() get getUpdatedAllParams;
+
+  // dynamic operator [](String key);
+}
+
+/// Options for the [producerClosed] function.
 ///
-/// Parameters:
-/// - `remoteProducerId`: The ID of the remote producer that was closed.
-/// - `parameters`: A map of parameters containing callback functions and other data.
+/// Holds the remote producer ID and the parameters required to handle the closure.
+class ProducerClosedOptions {
+  final String remoteProducerId;
+  final ProducerClosedParameters parameters;
+
+  ProducerClosedOptions({
+    required this.remoteProducerId,
+    required this.parameters,
+  });
+}
+
+/// Type definition for the `producerClosed` function.
 ///
-/// Throws:
-/// - Any error that occurs during the process.
+/// Represents a function that takes in [ProducerClosedOptions] and returns `Future<void>`.
+typedef ProducerClosedType = Future<void> Function(
+    ProducerClosedOptions options);
 
-typedef CloseAndResize = Future<void> Function({
-  required String producerId,
-  required String kind,
-  required Map<String, dynamic> parameters,
-});
+/// Handles the closure of a producer identified by its remote producer ID.
+/// This function updates the consumer transports and triggers close-and-resize operations.
+///
+/// ### Parameters:
+/// - `options` (ProducerClosedOptions): The options containing the producer ID and necessary parameters.
+/// - `remoteProducerId` (String): The ID of the remote producer to be closed.
+/// - `parameters` (ProducerClosedParameters): Additional parameters including consumer transports and close-and-resize logic.
+///
+/// ### Example:
+/// ```dart
+/// final parameters = MockProducerClosedParameters(); // Your implementation of ProducerClosedParameters
+/// final options = ProducerClosedOptions(remoteProducerId: 'producerId', parameters: parameters);
+///
+/// producerClosed(options).then((_) {
+///   print('Producer closed successfully');
+/// }).catchError((error) {
+///   print('Error closing producer: $error');
+/// });
+/// ```
+Future<void> producerClosed(ProducerClosedOptions options) async {
+  final remoteProducerId = options.remoteProducerId;
+  var parameters = options.parameters.getUpdatedAllParams();
 
-typedef UpdateConsumerTransports = void Function(
-    List<dynamic> consumerTransports);
+  List<TransportType> consumerTransports = parameters.consumerTransports;
+  final String screenId = parameters.screenId;
+  final updateConsumerTransports = parameters.updateConsumerTransports;
+  final closeAndResize = parameters.closeAndResize;
 
-typedef GetUpdatedAllParams = Map<String, dynamic> Function();
+  // Find the producer to close based on the provided ID
+  TransportType? producerToClose = consumerTransports.firstWhereOrNull(
+      (transportData) => transportData.producerId == remoteProducerId);
 
-Future<void> producerClosed({
-  required String remoteProducerId,
-  required Map<String, dynamic> parameters,
-}) async {
+  if (producerToClose == null) {
+    return;
+  }
+
+  if (producerToClose.producerId.isEmpty) {
+    return;
+  }
+
+  // Check if the producer ID matches the screen ID and determine the kind
+  String kind = producerToClose.consumer.track.kind!;
+  if (producerToClose.producerId == screenId) {
+    kind = 'screenshare';
+  }
+
   try {
-    GetUpdatedAllParams getUpdatedAllParams = parameters['getUpdatedAllParams'];
-    parameters = getUpdatedAllParams();
-
-    List<dynamic> consumerTransports = parameters['consumerTransports'];
-    String? screenId = parameters['screenId'];
-    UpdateConsumerTransports updateConsumerTransports =
-        parameters['updateConsumerTransports'];
-
-    //mediasfu functions
-    CloseAndResize closeAndResize = parameters['closeAndResize'];
-
-    // Handle producer closed
-    dynamic producerToClose = consumerTransports.firstWhere(
-      (transportData) => transportData['producerId'] == remoteProducerId,
-      orElse: () => null,
-    );
-
-    if (producerToClose == null) {
-      return;
-    }
-
-    // Check if the ID of the producer to close is equal to screenId
-    String kind = producerToClose['consumer'].track.kind;
-
-    if (producerToClose['producerId'] == screenId) {
-      kind = 'screenshare';
-    }
-
-    try {
-      await producerToClose['consumerTransport'].close();
-      // ignore: empty_catches
-    } catch (error) {}
-
-    try {
-      await producerToClose['consumer'].close();
-      // ignore: empty_catches
-    } catch (error) {}
-
-    consumerTransports = consumerTransports
-        .where(
-            (transportData) => transportData['producerId'] != remoteProducerId)
-        .toList();
-    updateConsumerTransports(consumerTransports);
-
-    // Close and resize the videos
-    await closeAndResize(
-      producerId: remoteProducerId,
-      kind: kind,
-      parameters: parameters,
-    );
+    // Close the consumer transport if possible
+    await producerToClose.consumerTransport.close();
   } catch (error) {
-    // Handle error if needed
     if (kDebugMode) {
-      print('Error in producerClosed: $error');
+      //print('Error closing consumer transport: $error');
     }
   }
+
+  try {
+    // Close the consumer
+    await producerToClose.consumer.close();
+  } catch (error) {
+    if (kDebugMode) {
+      // print('Error closing consumer: $error');
+    }
+  }
+
+  // Remove the closed producer from the list
+  consumerTransports = consumerTransports
+      .where((transportData) => transportData.producerId != remoteProducerId)
+      .toList();
+  updateConsumerTransports(consumerTransports);
+
+  // Close and resize video outputs as needed
+  final optionsCloseAndResize = CloseAndResizeOptions(
+    producerId: remoteProducerId,
+    kind: kind,
+    parameters: parameters,
+  );
+  await closeAndResize(
+    optionsCloseAndResize,
+  );
 }

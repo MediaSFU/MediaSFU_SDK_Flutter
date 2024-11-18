@@ -1,75 +1,104 @@
-// ignore_for_file: non_constant_identifier_names
+// lib/widgets/mini_audio_player.dart
 
+import 'dart:async';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
-import 'dart:async';
+import '../../../types/types.dart'
+    show
+        AudioDecibels,
+        BreakoutParticipant,
+        EventType,
+        Participant,
+        ReUpdateInterOptions,
+        ReUpdateInterParameters,
+        ReUpdateInterType,
+        UpdateParticipantAudioDecibelsOptions,
+        UpdateParticipantAudioDecibelsType;
 
-/// A widget that displays a mini audio player with video and audio streams.
-///
-/// The [MiniAudioPlayer] widget is used to render a mini audio player in a Flutter application.
-/// It supports displaying a video stream using the [RTCVideoRenderer] and an audio waveform using
-/// a custom [MiniAudioComponent]. The widget also provides functionality for muting/unmuting the audio,
-/// updating the active sounds, and updating the participant audio decibels.
-///
-/// The [MiniAudioPlayer] widget requires a [MediaStream] for the video stream, a [remoteProducerId]
-/// for identifying the remote producer, a [parameters] map for passing additional parameters,
-/// a [MiniAudioComponent] function for rendering the audio waveform, and optional [miniAudioProps]
-/// for passing additional props to the [MiniAudioComponent].
-///
-/// Example usage:
-///
-/// ```dart
-/// MiniAudioPlayer(
-///   stream: mediaStream,
-///   remoteProducerId: 'remoteProducerId',
-///   parameters: {
-///     'reUpdateInter': reUpdateInter,
-///     'getUpdatedAllParams': getUpdatedAllParams,
-///     'meetingDisplayType': 'video',
-///     // Add other parameters as needed
-///   },
-///   MiniAudioComponent: (props) {
-///     return CustomMiniAudioComponent(
-///       showWaveform: props['showWaveform'],
-///       visible: props['visible'],
-///       // Add other props as needed
-///     );
-///   },
-///   miniAudioProps: {
-///     'customProp': 'value',
-///   },
-/// )
-/// ```
+/// Parameters for `MiniAudioPlayer`.
+abstract class MiniAudioPlayerParameters implements ReUpdateInterParameters {
+  // Properties as abstract getters
+  bool get breakOutRoomStarted;
+  bool get breakOutRoomEnded;
+  List<BreakoutParticipant> get limitedBreakRoom;
+  bool get autoWave;
 
-typedef UpdateActiveSounds = void Function(List<String> activeSounds);
-typedef ReUpdateInter = Future<void> Function({
-  required String name,
-  bool add,
-  bool force,
-  double average,
-  required Map<String, dynamic> parameters,
-});
-typedef UpdateParticipantAudioDecibels = void Function({
-  required String name,
-  required double averageLoudness,
-  required Map<String, dynamic> parameters,
-});
-typedef GetUpdatedAllParams = Map<String, dynamic> Function();
+  ReUpdateInterType get reUpdateInter;
+  UpdateParticipantAudioDecibelsType get updateParticipantAudioDecibels;
+  void Function(List<AudioDecibels>) get updateAudioDecibels;
 
-class MiniAudioPlayer extends StatefulWidget {
+  // Method to retrieve updated parameters
+  MiniAudioPlayerParameters Function() get getUpdatedAllParams;
+
+  // Dynamic properties map for additional parameters
+  // dynamic operator [](String key);
+}
+
+/// Options for `MiniAudioPlayer`.
+class MiniAudioPlayerOptions {
   final MediaStream? stream;
-  final String? remoteProducerId;
-  final Map<String, dynamic> parameters;
-  final Function(dynamic)? MiniAudioComponent; // Update to accept a function
+  final String remoteProducerId;
+  final MiniAudioPlayerParameters parameters;
+  final Widget Function(Map<String, dynamic>)? miniAudioComponent;
   final Map<String, dynamic>? miniAudioProps;
 
-  const MiniAudioPlayer({
-    super.key,
+  MiniAudioPlayerOptions({
     required this.stream,
     required this.remoteProducerId,
     required this.parameters,
-    required this.MiniAudioComponent,
-    required this.miniAudioProps,
+    this.miniAudioComponent,
+    this.miniAudioProps,
+  });
+}
+
+/// Typedef for `MiniAudioPlayerType`.
+typedef MiniAudioPlayerType = Widget Function(MiniAudioPlayerOptions options);
+
+/// A Flutter widget for playing audio streams with optional waveform visualization.
+///
+/// The `MiniAudioPlayer` widget plays an audio stream and can display visual audio waveforms
+/// to indicate active audio levels. It monitors audio decibels, participant status, and room
+/// configurations, providing real-time visual feedback based on audio activity.
+///
+/// This widget supports functionalities such as muting/unmuting, waveform display toggling,
+/// updating audio decibels, and managing audio activity for participants in breakout rooms.
+///
+/// ## Parameters:
+/// - `options`: An instance of `MiniAudioPlayerOptions` containing:
+///   - `stream`: A `MediaStream` object representing the audio stream.
+///   - `remoteProducerId`: The ID of the audio producer.
+///   - `parameters`: An instance of `MiniAudioPlayerParameters` with participant and room data.
+///   - `miniAudioComponent`: A function that returns a widget for audio visualization (e.g., a waveform).
+///   - `miniAudioProps`: Additional properties for customizing the audio component.
+///
+/// ## Example Usage:
+///
+/// ```dart
+/// // Define options for MiniAudioPlayer
+/// final miniAudioPlayerOptions = MiniAudioPlayerOptions(
+///   stream: myMediaStream,
+///   remoteProducerId: 'audio123',
+///   parameters: myAudioPlayerParameters,
+///   miniAudioComponent: (props) => MyWaveformWidget(props),
+///   miniAudioProps: {
+///     'waveColor': Colors.blue,
+///     'backgroundColor': Colors.grey[200],
+///   },
+/// );
+///
+/// // Use MiniAudioPlayer widget in the UI
+/// MiniAudioPlayer(options: miniAudioPlayerOptions);
+/// ```
+///
+/// This example sets up `MiniAudioPlayer` with an audio stream, participant details, and a custom
+/// `miniAudioComponent` to display waveforms based on the audio activity.
+class MiniAudioPlayer extends StatefulWidget {
+  final MiniAudioPlayerOptions options;
+
+  const MiniAudioPlayer({
+    super.key,
+    required this.options,
   });
 
   @override
@@ -78,25 +107,20 @@ class MiniAudioPlayer extends StatefulWidget {
 }
 
 class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
-  late bool showWaveModal;
-  late bool isMuted;
-  late bool autoWaveCheck;
-  late bool consLow;
-  late List<String> activeSounds;
+  bool showWaveModal = false;
+  bool isMuted = true;
+  bool autoWaveCheck = false;
+  bool consLow = false;
+  List<String> activeSounds = [];
   late RTCVideoRenderer _rtcVideoRenderer;
   late Timer _timer;
 
   @override
   void initState() {
     super.initState();
-    showWaveModal = false;
-    isMuted = false;
-    autoWaveCheck = false;
-    consLow = false;
-    activeSounds = [];
     _rtcVideoRenderer = RTCVideoRenderer();
-    _initRenderers();
-    initializeAudioAnalysis();
+    _initializeRenderer();
+    _startAudioAnalysis();
   }
 
   @override
@@ -106,95 +130,96 @@ class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
     super.dispose();
   }
 
-  void _initRenderers() async {
+  void _initializeRenderer() async {
     await _rtcVideoRenderer.initialize();
-    if (widget.stream != null) {
-      _rtcVideoRenderer.srcObject = widget.stream!;
+    if (widget.options.stream != null) {
+      _rtcVideoRenderer.srcObject = widget.options.stream!;
     }
+    setState(() {});
   }
 
-  void initializeAudioAnalysis() {
-    if (widget.stream != null) {
-      _timer = Timer.periodic(const Duration(seconds: 2), (timer) {
-        const averageLoudness =
-            127.75; // Get the average loudness of the audio stream
+  void _startAudioAnalysis() {
+    if (widget.options.stream != null) {
+      _timer = Timer.periodic(const Duration(seconds: 2), (timer) async {
+        const averageLoudness = 127.75;
 
-        ReUpdateInter reUpdateInter = widget.parameters['reUpdateInter'];
+        // Retrieve updated parameters
+        final parameters = widget.options.parameters.getUpdatedAllParams();
 
-        GetUpdatedAllParams getUpdatedAllParams =
-            widget.parameters['getUpdatedAllParams'];
-        final parameters = getUpdatedAllParams();
-
-        final String meetingDisplayType =
-            parameters['meetingDisplayType'] ?? '';
-        final bool shared = parameters['shared'] ?? false;
-        final bool shareScreenStarted =
-            parameters['shareScreenStarted'] ?? false;
+        // Destructure parameters
+        final String meetingDisplayType = parameters.meetingDisplayType;
+        final bool shared = parameters.shared;
+        final bool shareScreenStarted = parameters.shareScreenStarted;
         final List<String> dispActiveNames =
-            parameters['dispActiveNames'] ?? [];
-        String adminNameStream = parameters['adminNameStream'] ?? '';
-        final List<dynamic> participants = parameters['participants'] ?? [];
-        final bool autoWave = parameters['autoWave'] ?? false;
-        final UpdateActiveSounds updateActiveSounds =
-            parameters['updateActiveSounds'];
-        final List<dynamic> paginatedStreams =
-            parameters['paginatedStreams'] ?? [];
-        final int currentUserPage = parameters['currentUserPage'] ?? 0;
+            List<String>.from(parameters.dispActiveNames);
+        String adminNameStream = parameters.adminNameStream;
+        final List<Participant> participants = parameters.participants;
+        final bool autoWave = parameters.autoWave;
+        final void Function(List<String>) updateActiveSounds =
+            parameters.updateActiveSounds;
+        final List<List<dynamic>> paginatedStreams =
+            parameters.paginatedStreams;
+        final int currentUserPage = parameters.currentUserPage;
+        final bool breakOutRoomStarted = parameters.breakOutRoomStarted;
+        final bool breakOutRoomEnded = parameters.breakOutRoomEnded;
+        final List<BreakoutParticipant> limitedBreakRoom =
+            parameters.limitedBreakRoom;
 
-        final bool breakOutRoomStarted =
-            parameters['breakOutRoomStarted'] ?? false;
-        final bool breakOutRoomEnded = parameters['breakOutRoomEnded'] ?? false;
-        final List<dynamic> limitedBreakRoom =
-            parameters['limitedBreakRoom'] ?? [];
-
-        final participant = participants.firstWhere(
-            (obj) => obj['audioID'] == widget.remoteProducerId,
-            orElse: () => null);
+        // Find the participant by remoteProducerId
+        Participant? participant = participants.firstWhereOrNull(
+            (obj) => obj.audioID == widget.options.remoteProducerId);
 
         bool audioActiveInRoom = true;
-        if (participant != null && breakOutRoomStarted && !breakOutRoomEnded) {
-          if (!limitedBreakRoom
-              .map((obj) => obj['name'])
-              .contains(participant['name'])) {
-            audioActiveInRoom = false;
+        if (participant != null) {
+          if (breakOutRoomStarted && !breakOutRoomEnded) {
+            if (participant.name.isNotEmpty &&
+                !limitedBreakRoom
+                    .map((obj) => obj.name)
+                    .contains(participant.name)) {
+              audioActiveInRoom = false;
+            }
           }
         }
 
-        if (meetingDisplayType != 'video') {
-          autoWaveCheck = true;
-        }
+        bool autoWaveCheck = meetingDisplayType != 'video';
         if (shared || shareScreenStarted) {
           autoWaveCheck = false;
         }
 
         if (participant != null) {
-          if (!participant['muted']) {
-            isMuted = false;
-          } else {
-            isMuted = true;
+          setState(() {
+            isMuted = participant.muted ?? false;
+          });
+
+          // Update participant audio decibels
+          if (parameters.eventType != EventType.chat &&
+              parameters.eventType != EventType.broadcast) {
+            parameters.updateParticipantAudioDecibels(
+              UpdateParticipantAudioDecibelsOptions(
+                name: participant.name,
+                averageLoudness: averageLoudness,
+                audioDecibels: parameters.audioDecibels,
+                updateAudioDecibels: parameters.updateAudioDecibels,
+              ),
+            );
           }
 
-          UpdateParticipantAudioDecibels updateParticipantAudioDecibels =
-              parameters['updateParticipantAudioDecibels'];
+          // Check if participant is on the current page
+          final inPage = paginatedStreams.length > currentUserPage
+              ? paginatedStreams[currentUserPage]
+                  .indexWhere((obj) => obj.name == participant.name)
+              : -1;
 
-          updateParticipantAudioDecibels(
-            name: participant['name'],
-            averageLoudness: averageLoudness,
-            parameters: parameters,
-          );
-          final inPage = paginatedStreams[currentUserPage]
-              .indexWhere((obj) => obj['name'] == participant['name']);
-
-          if (!dispActiveNames.contains(participant['name']) && inPage == -1) {
+          if (!dispActiveNames.contains(participant.name) && inPage == -1) {
             autoWaveCheck = false;
-
             if (adminNameStream.isEmpty) {
-              adminNameStream = participants
-                      .firstWhere((obj) => obj['islevel'] == '2')['name'] ??
-                  '';
+              final adminParticipant =
+                  participants.firstWhereOrNull((obj) => obj.islevel == '2');
+              adminNameStream =
+                  adminParticipant != null ? adminParticipant.name : '';
             }
 
-            if (participant['name'] == adminNameStream &&
+            if (participant.name == adminNameStream &&
                 adminNameStream.isNotEmpty) {
               autoWaveCheck = true;
             }
@@ -202,7 +227,7 @@ class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
             autoWaveCheck = true;
           }
 
-          if (participant['videoID'].isNotEmpty ||
+          if (participant.videoID.isNotEmpty ||
               autoWaveCheck ||
               (breakOutRoomStarted &&
                   !breakOutRoomEnded &&
@@ -212,108 +237,149 @@ class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
             });
 
             if (averageLoudness > 127.5) {
-              if (!activeSounds.contains(participant['name'])) {
+              if (participant.name.isNotEmpty &&
+                  !activeSounds.contains(participant.name)) {
                 setState(() {
-                  activeSounds.add(participant['name']);
+                  activeSounds.add(participant.name);
                 });
                 consLow = false;
-                reUpdateInter(
-                  name: participant['name'],
-                  add: true,
-                  average: averageLoudness,
-                  parameters: parameters,
-                );
+
+                if (!(shared || shareScreenStarted) ||
+                    participant.videoID.isNotEmpty) {
+                  if (parameters.eventType != EventType.chat &&
+                      parameters.eventType != EventType.broadcast &&
+                      participant.name.isNotEmpty) {
+                    final optionsReUpdate = ReUpdateInterOptions(
+                      name: participant.name,
+                      add: true,
+                      average: averageLoudness,
+                      parameters: parameters,
+                    );
+                    widget.options.parameters.reUpdateInter(
+                      optionsReUpdate,
+                    );
+                  }
+                }
               }
             } else {
-              if (activeSounds.contains(participant['name']) && consLow) {
+              if (participant.name.isNotEmpty &&
+                  activeSounds.contains(participant.name) &&
+                  consLow) {
                 setState(() {
-                  activeSounds.remove(participant['name']);
+                  activeSounds.remove(participant.name);
                 });
-                reUpdateInter(
-                  name: participant['name'],
-                  average: averageLoudness,
-                  parameters: parameters,
-                );
+                if (parameters.eventType != EventType.chat &&
+                    parameters.eventType != EventType.broadcast &&
+                    participant.name.isNotEmpty) {
+                  final optionsReUpdate = ReUpdateInterOptions(
+                    name: participant.name,
+                    average: averageLoudness,
+                    parameters: parameters,
+                  );
+                  widget.options.parameters.reUpdateInter(
+                    optionsReUpdate,
+                  );
+                }
               } else {
                 consLow = true;
               }
             }
           } else {
             if (averageLoudness > 127.5) {
-              if (!autoWave) {
-                setState(() {
-                  showWaveModal = false;
-                });
-              } else {
-                setState(() {
-                  showWaveModal = true;
-                });
+              setState(() {
+                showWaveModal = autoWave;
+              });
+
+              if (!activeSounds.contains(participant.name)) {
+                activeSounds.add(participant.name);
               }
-              if (!activeSounds.contains(participant['name'])) {
-                activeSounds.add(participant['name']);
-                reUpdateInter(
-                  name: participant['name'],
-                  add: true,
-                  average: averageLoudness,
-                  parameters: parameters,
-                );
+
+              if ((shareScreenStarted || shared) &&
+                  participant.videoID.isEmpty) {
+                /* empty */
+              } else {
+                if (parameters.eventType != EventType.chat &&
+                    parameters.eventType != EventType.broadcast &&
+                    participant.name.isNotEmpty) {
+                  final optionsReUpdate = ReUpdateInterOptions(
+                    name: participant.name,
+                    add: true,
+                    average: averageLoudness,
+                    parameters: parameters,
+                  );
+                  widget.options.parameters.reUpdateInter(
+                    optionsReUpdate,
+                  );
+                }
               }
             } else {
               setState(() {
                 showWaveModal = false;
               });
-              if (activeSounds.contains(participant['name'])) {
-                activeSounds.remove(participant['name']);
-                reUpdateInter(
-                  name: participant['name'],
-                  average: averageLoudness,
-                  parameters: parameters,
-                );
+              if (participant.name.isNotEmpty &&
+                  activeSounds.contains(participant.name)) {
+                activeSounds.remove(participant.name);
+              }
+
+              if ((shareScreenStarted || shared) &&
+                  participant.videoID.isEmpty) {
+                /* empty */
+              } else {
+                if (parameters.eventType != EventType.chat &&
+                    parameters.eventType != EventType.broadcast &&
+                    participant.name.isNotEmpty) {
+                  final optionsReUpdate = ReUpdateInterOptions(
+                    name: participant.name,
+                    average: averageLoudness,
+                    parameters: parameters,
+                  );
+                  widget.options.parameters.reUpdateInter(
+                    optionsReUpdate,
+                  );
+                }
               }
             }
           }
 
+          // Update active sounds
           updateActiveSounds(activeSounds);
         } else {
-          showWaveModal = false;
-          isMuted = true;
+          setState(() {
+            showWaveModal = false;
+            isMuted = true;
+          });
         }
-
-        setState(() {}); // Update UI
       });
     }
+  }
+
+  Widget? renderMiniAudioComponent() {
+    if (widget.options.miniAudioComponent != null) {
+      return widget.options.miniAudioComponent!({
+        'showWaveform': showWaveModal,
+        'visible': showWaveModal && !isMuted,
+        ...?widget.options.miniAudioProps,
+      });
+    }
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // Display RTCVideoView with RTCVideoRenderer
-            !isMuted && widget.stream != null
-                ? RTCVideoView(_rtcVideoRenderer)
-                : const SizedBox(),
-            // Render MiniAudioComponent
-            widget.MiniAudioComponent != null && showWaveModal && !isMuted
-                ? renderMiniAudioComponent() ?? const SizedBox()
-                : const SizedBox(),
-          ],
-        ),
+    return Center(
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Display RTCVideoView with RTCVideoRenderer
+          !isMuted && widget.options.stream != null
+              ? RTCVideoView(_rtcVideoRenderer)
+              : const SizedBox(),
+          if (widget.options.miniAudioComponent != null &&
+              showWaveModal &&
+              !isMuted)
+            renderMiniAudioComponent() ?? const SizedBox(),
+        ],
       ),
     );
-  }
-
-  Widget? renderMiniAudioComponent() {
-    if (widget.MiniAudioComponent != null) {
-      return widget.MiniAudioComponent!({
-        'showWaveform': showWaveModal,
-        'visible': showWaveModal == true && !isMuted ? true : false,
-        // Pass other MiniAudioComponent props as needed
-        ...(widget.miniAudioProps ?? {}),
-      });
-    }
-    return null;
   }
 }

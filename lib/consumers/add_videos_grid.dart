@@ -1,359 +1,448 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import '../components/display_components/mini_card.dart' show MiniCard;
-import '../components/display_components/video_card.dart' show VideoCard;
-import '../components/display_components/audio_card.dart' show AudioCard;
+import 'package:flutter_webrtc/flutter_webrtc.dart';
+import '../components/display_components/mini_card.dart';
+import '../components/display_components/video_card.dart';
+import '../components/display_components/audio_card.dart';
+import '../types/types.dart'
+    show
+        Participant,
+        Stream,
+        UpdateMiniCardsGridType,
+        EventType,
+        UpdateMiniCardsGridOptions,
+        UpdateMiniCardsGridParameters;
 
-/// Adds video components to the main and alternate video grids based on the provided parameters.
-/// Returns a Future that completes once the operation is complete.
+typedef UpdateOtherGridStreams = void Function(List<List<Widget>>);
+typedef UpdateAddAltGrid = void Function(bool);
+
+/// Parameters for adding videos to the grid, extending functionality from update mini-cards and audio card parameters.
 ///
-/// Parameters:
-/// - mainGridStreams: A list of dynamic objects representing the main video grid streams.
-/// - altGridStreams: A list of dynamic objects representing the alternate video grid streams.
-/// - numtoadd: The number of videos to add.
-/// - numRows: The number of rows in the grid.
-/// - numCols: The number of columns in the grid.
-/// - remainingVideos: The number of remaining videos.
-/// - actualRows: The actual number of rows in the grid.
-/// - lastrowcols: The number of columns in the last row of the grid.
-/// - removeAltGrid: A boolean value indicating whether to remove the alternate video grid.
-/// - ind: The index of the grid.
-/// - forChat: A boolean value indicating whether the videos are for chat.
-/// - forChatMini: A boolean value indicating whether the videos are for mini chat.
-/// - forChatCard: A dynamic object representing the chat card.
-/// - forChatID: The ID of the chat.
-/// - parameters: A map of additional parameters.
+/// This class defines the necessary parameters required to manage the addition of participant video, audio,
+/// and mini-cards to the video grid, incorporating audio and video display options.
+abstract class AddVideosGridParameters
+    implements
+        AudioCardParameters,
+        VideoCardParameters,
+        UpdateMiniCardsGridParameters {
+  EventType get eventType;
+  UpdateAddAltGrid get updateAddAltGrid;
+  List<Participant> get refParticipants;
+  String get islevel;
+  bool get videoAlreadyOn;
+  MediaStream? get localStreamVideo;
+  bool get keepBackground;
+  MediaStream? get virtualStream;
+  bool get forceFullDisplay;
+  String get member;
+  List<List<Widget>> get otherGridStreams;
+  UpdateOtherGridStreams get updateOtherGridStreams;
+  UpdateMiniCardsGridType get updateMiniCardsGrid;
+
+  // Method to retrieve updated parameters
+  AddVideosGridParameters Function() get getUpdatedAllParams;
+
+  // Dynamic access operator for additional properties
+  // dynamic operator [](String key);
+}
+
+/// Options for adding participants and streams to the video grid.
 ///
-/// Throws:
-/// - Exception: If an error occurs during the operation.
+/// `AddVideosGridOptions` provides configuration for managing the display of participants in both
+/// the main and alternate grids, including the structure of the grid layout, participant streams,
+/// and visibility of the alternate grid.
 ///
-/// Example usage:
+/// ### Example:
 /// ```dart
-/// await addVideosGrid(
-///   mainGridStreams: mainGridStreams,
-///   altGridStreams: altGridStreams,
-///   numtoadd: 4,
+/// final options = AddVideosGridOptions(
+///   mainGridStreams: mainStreams,
+///   altGridStreams: altStreams,
+///   numRows: 3,
+///   numCols: 2,
+///   actualRows: 3,
+///   lastRowCols: 1,
+///   removeAltGrid: false,
+///   parameters: gridParameters,
+/// );
+///
+/// await addVideosGrid(options);
+/// ```
+class AddVideosGridOptions {
+  final List<Stream> mainGridStreams;
+  final List<Stream> altGridStreams;
+  final int numRows;
+  final int numCols;
+  final int actualRows;
+  final int lastRowCols;
+  final bool removeAltGrid;
+  final AddVideosGridParameters parameters;
+
+  AddVideosGridOptions({
+    required this.mainGridStreams,
+    required this.altGridStreams,
+    required this.numRows,
+    required this.numCols,
+    required this.actualRows,
+    required this.lastRowCols,
+    required this.removeAltGrid,
+    required this.parameters,
+  });
+}
+
+typedef AddVideosGridType = Future<void> Function(AddVideosGridOptions options);
+
+/// Adds video and audio streams of participants to the main and alternate grids based on specified options.
+///
+/// This function manages the layout and styling of participant video, audio, and mini-cards in the main and alternate grids,
+/// with customizations based on event type, background, and layout settings. It dynamically updates the UI by adding or removing
+/// components in real-time, handling both the main and alternate grids.
+///
+/// - The function creates `VideoCard` widgets for participants with active video streams and `AudioCard` widgets for participants
+///   with audio streams but without video.
+/// - For participants who don’t have active audio or video, a `MiniCard` is generated, displaying participant initials.
+///
+/// This function is typically called when the user joins or leaves the room, changes display settings, or new streams become available.
+///
+/// ### Parameters:
+/// - `options`: `AddVideosGridOptions` containing layout details like the number of rows and columns, lists of main and alternate
+///   grid streams, flags for removing alternate grids, and other stream-related parameters.
+///
+/// ### Example:
+/// ```dart
+/// await addVideosGrid(AddVideosGridOptions(
+///   mainGridStreams: [/* main stream participants */],
+///   altGridStreams: [/* alternate stream participants */],
 ///   numRows: 2,
 ///   numCols: 2,
-///   remainingVideos: 0,
 ///   actualRows: 2,
-///   lastrowcols: 2,
-///   removeAltGrid: false,
-///   ind: 0,
-///   forChat: false,
-///   forChatMini: false,
-///   forChatCard: null,
-///   forChatID: null,
-///   parameters: {},
-/// );
+///   lastRowCols: 1,
+///   removeAltGrid: true,
+///   parameters: gridParams,
+/// ));
 /// ```
 
-typedef GetUpdatedAllParams = Map<String, dynamic> Function();
-
-typedef UpdateMiniCardsGrid = Future<void> Function(
-    {required int rows,
-    required int cols,
-    bool defal,
-    int actualRows,
-    int ind,
-    required Map<String, dynamic> parameters});
-
-/// Adds video components to the main and alternate video grids based on the provided parameters.
-/// Returns a Future that completes once the operation is complete.
-Future<void> addVideosGrid({
-  required List<dynamic> mainGridStreams,
-  required List<dynamic> altGridStreams,
-  required int numtoadd,
-  required int numRows,
-  required int numCols,
-  required int remainingVideos,
-  required int actualRows,
-  required int lastrowcols,
-  required bool removeAltGrid,
-  required int ind,
-  bool forChat = false,
-  bool forChatMini = false,
-  dynamic forChatCard,
-  String? forChatID,
-  required Map<String, dynamic> parameters,
-}) async {
+Future<void> addVideosGrid(AddVideosGridOptions options) async {
   try {
-    // Destructure parameters
-    GetUpdatedAllParams getUpdatedAllParams = parameters['getUpdatedAllParams'];
-    parameters = getUpdatedAllParams();
+    // Retrieve updated parameters
+    AddVideosGridParameters parameters =
+        options.parameters.getUpdatedAllParams();
 
-    List<dynamic> refParticipants = parameters['refParticipants'];
-    dynamic localStreamVideo = parameters['localStreamVideo'];
-    String eventType = parameters['eventType'];
-    String islevel = parameters['islevel'];
-    bool videoAlreadyOn = parameters['videoAlreadyOn'];
-    bool forceFullDisplay = parameters['forceFullDisplay'];
-    List<dynamic> otherGridStreams = parameters['otherGridStreams'];
+    // Extract all necessary properties from parameters
+    final eventType = parameters.eventType;
+    final updateAddAltGrid = parameters.updateAddAltGrid;
+    List<Participant> refParticipants = List.from(parameters.refParticipants);
+    final islevel = parameters.islevel;
+    final videoAlreadyOn = parameters.videoAlreadyOn;
+    final localStreamVideo = parameters.localStreamVideo;
+    final keepBackground = parameters.keepBackground;
+    final virtualStream = parameters.virtualStream;
+    final forceFullDisplay = parameters.forceFullDisplay;
+    final member = parameters.member;
+    List<List<Widget>> otherGridStreams =
+        List.from(parameters.otherGridStreams);
+    final updateOtherGridStreams = parameters.updateOtherGridStreams;
+    final updateMiniCardsGrid = parameters.updateMiniCardsGrid;
 
-    // Functions update
-    void Function(List<dynamic>) updateOtherGridStreams =
-        parameters['updateOtherGridStreams'];
-    void Function(bool) updateAddAltGrid = parameters['updateAddAltGrid'];
-
-    // mediasfu functions
-    UpdateMiniCardsGrid updateMiniCardsGrid = parameters['updateMiniCardsGrid'];
-
-    String name;
-
-    // Function to add videos to the grid
+    // Initialize new components
     List<List<Widget>> newComponents = [[], []];
+    Stream participant;
+    String remoteProducerId = "";
 
-    if (removeAltGrid) {
+    // Update number to add based on mainGridStreams length
+    int numToAdd = options.mainGridStreams.length;
+
+    if (options.removeAltGrid) {
       updateAddAltGrid(false);
     }
 
-    // Take the first numtoadd participants with video on - perfect fit
-    for (int i = 0; i < numtoadd; i++) {
-      dynamic participant = mainGridStreams[i];
-      String? remoteProducerId = participant['producerId'];
+    // Add participants to the main grid
+    for (int i = 0; i < numToAdd; i++) {
+      participant = options.mainGridStreams[i];
+      remoteProducerId = participant.producerId;
 
-      bool pseudoName;
-
-      // Check if there is a 'name' property in the participant object and if it is null
-      if (participant.containsKey('producerId') &&
-          participant['producerId'] != null &&
-          participant['producerId'] != "") {
-        // Actual video
-        pseudoName = false;
-      } else {
-        pseudoName = true;
-      }
+      bool pseudoName = remoteProducerId.isEmpty;
 
       if (pseudoName) {
-        // Pseudo name
-        remoteProducerId = participant['name'];
+        remoteProducerId = participant.name ?? '';
 
-        if (participant.containsKey('audioID') &&
-            participant['audioID'] != null &&
-            participant['audioID'] != "") {
+        if (participant.audioID != null && participant.audioID!.isNotEmpty) {
+          final actualParticipant = refParticipants.firstWhere(
+            (obj) => obj.audioID == participant.audioID,
+            orElse: () =>
+                Participant(id: '', name: '', videoID: '', audioID: ''),
+          );
           newComponents[0].add(AudioCard(
-            name: participant['name'],
-            barColor: const Color.fromARGB(255, 248, 13, 13),
-            textColor: const Color.fromARGB(255, 15, 14, 14),
-            customStyle: const BoxDecoration(
-                // backgroundColor: Colors.transparent,
-                ),
+              options: AudioCardOptions(
+            name: participant.name ?? "",
+            barColor: Colors.red,
+            textColor: Colors.white,
+            customStyle: BoxDecoration(
+              color: Colors.transparent,
+              border: Border.all(
+                color: eventType != EventType.broadcast
+                    ? Colors.black
+                    : Colors.transparent,
+                width: eventType != EventType.broadcast ? 2.0 : 0.0,
+              ),
+            ),
             controlsPosition: 'topLeft',
             infoPosition: 'topRight',
             roundedImage: true,
             parameters: parameters,
-            participant: participant,
-          ));
+            backgroundColor: Colors.transparent,
+            showControls: eventType != EventType.chat,
+            participant: actualParticipant,
+          )));
         } else {
-          newComponents[0].add(MiniCard(
-            initials: participant['name'],
-            fontSize: 18,
-            customStyle: BoxDecoration(
-              border: Border.all(color: Colors.black, width: 2),
-            ),
-          ));
+          newComponents[0].add(
+            MiniCard(
+                options: MiniCardOptions(
+              initials: participant.name ?? "",
+              fontSize: 20,
+              customStyle: BoxDecoration(
+                color: Colors.transparent,
+                border: Border.all(
+                  color: eventType != EventType.broadcast
+                      ? Colors.black
+                      : Colors.transparent,
+                  width: eventType != EventType.broadcast ? 2.0 : 0.0,
+                ),
+              ),
+            )),
+          );
         }
       } else {
-        // Actual video
-        dynamic participant_;
         if (remoteProducerId == 'youyou' || remoteProducerId == 'youyouyou') {
-          if (!videoAlreadyOn) {
-            name = 'You';
-            if (islevel == '2' && eventType != 'chat') {
-              name = 'You (Host)';
-            }
-            newComponents[0].add(MiniCard(
-              initials: name,
-              fontSize: 18,
-              customStyle: BoxDecoration(
-                border: Border.all(color: Colors.black, width: 2),
-              ),
-            ));
-          } else {
-            participant = {
-              'id': 'youyouyou',
-              'stream': localStreamVideo,
-              'name': 'youyouyou'
-            };
-            participant_ = {
-              'id': 'youyou',
-              'videoID': 'youyou',
-              'name': 'youyouyou',
-              'stream': localStreamVideo
-            };
+          String name = 'You';
+          if (islevel == '2' && eventType != EventType.chat) {
+            name = 'You (Host)';
+          }
 
-            participant['muted'] = true;
-            remoteProducerId = 'youyouyou';
-            newComponents[0].add(VideoCard(
-              videoStream: localStreamVideo,
-              remoteProducerId:
-                  localStreamVideo != null ? localStreamVideo!.id : 'youyou',
-              eventType: eventType,
-              forceFullDisplay:
-                  eventType == 'webinar' ? false : forceFullDisplay,
-              participant: participant,
-              backgroundColor: Colors.transparent,
-              showControls: false,
-              showInfo: false,
-              name: participant['name'],
-              doMirror: true,
-              parameters: parameters,
-            ));
+          if (!videoAlreadyOn) {
+            newComponents[0].add(
+              MiniCard(
+                  options: MiniCardOptions(
+                initials: name,
+                fontSize: 20,
+                customStyle: BoxDecoration(
+                  color: Colors.transparent,
+                  border: Border.all(
+                    color: eventType != EventType.broadcast
+                        ? Colors.black
+                        : Colors.transparent,
+                    width: eventType != EventType.broadcast ? 2.0 : 0.0,
+                  ),
+                ),
+              )),
+            );
+          } else {
+            participant = Stream(
+              id: 'youyouyou',
+              stream: keepBackground && virtualStream != null
+                  ? virtualStream
+                  : localStreamVideo,
+              name: 'youyouyou',
+              producerId: 'youyouyou',
+            );
+
+            final actualParticipant = refParticipants.firstWhere(
+              (obj) => obj.name == member,
+              orElse: () =>
+                  Participant(id: '', name: '', videoID: '', audioID: ''),
+            );
+
+            newComponents[0].add(
+              VideoCard(
+                  options: VideoCardOptions(
+                videoStream: participant.stream,
+                remoteProducerId: participant.stream?.id ?? '',
+                eventType: eventType,
+                forceFullDisplay:
+                    eventType == EventType.webinar ? false : forceFullDisplay,
+                participant: actualParticipant,
+                backgroundColor: Colors.transparent,
+                showControls: false,
+                showInfo: false,
+                name: participant.name ?? '',
+                doMirror: true,
+                parameters: parameters,
+              )),
+            );
           }
         } else {
-          participant_ = refParticipants.firstWhere(
-              (obj) => obj['videoID'] == remoteProducerId,
-              orElse: () => null);
-          if (participant_ != null) {
+          Participant? participant_ = refParticipants.firstWhere(
+            (obj) => obj.videoID == remoteProducerId,
+            orElse: () =>
+                Participant(id: '', name: '', videoID: '', audioID: ''),
+          );
+
+          if (participant_.name.isNotEmpty) {
             newComponents[0].add(VideoCard(
-              videoStream: participant['stream'],
-              remoteProducerId: remoteProducerId,
-              eventType: eventType,
-              forceFullDisplay: forceFullDisplay,
-              participant: participant_,
-              backgroundColor: Colors.transparent,
-              showControls: true,
-              showInfo: true,
-              name: participant_['name'],
-              doMirror: false,
-              parameters: parameters,
+              options: VideoCardOptions(
+                videoStream: participant.stream,
+                remoteProducerId: remoteProducerId,
+                eventType: eventType,
+                forceFullDisplay: forceFullDisplay,
+                participant: participant_,
+                backgroundColor: Colors.transparent,
+                showControls: eventType != EventType.chat,
+                showInfo: true,
+                name: participant_.name,
+                doMirror: false,
+                parameters: parameters,
+              ),
             ));
           }
         }
       }
 
-      if (i == numtoadd - 1) {
+      // Update grids at the end of the loop
+      if (i == numToAdd - 1) {
         otherGridStreams[0] = List<Widget>.from(newComponents[0]);
-        await updateMiniCardsGrid(
-            rows: numRows,
-            cols: numCols,
+        final optionsUpdate = UpdateMiniCardsGridOptions(
+            rows: options.numRows,
+            cols: options.numCols,
             defal: true,
-            actualRows: actualRows,
-            ind: ind,
+            actualRows: options.actualRows,
             parameters: parameters);
+        await updateMiniCardsGrid(
+          optionsUpdate,
+        );
         updateOtherGridStreams(otherGridStreams);
         await updateMiniCardsGrid(
-            rows: numRows,
-            cols: numCols,
-            defal: true,
-            actualRows: actualRows,
-            ind: ind,
-            parameters: parameters);
+          optionsUpdate,
+        );
       }
     }
 
-    // If we have more than 4 videos, we need to add a new row
-    numtoadd = altGridStreams.length;
+    // Handle the alternate grid streams
+    if (!options.removeAltGrid) {
+      for (int i = 0; i < options.altGridStreams.length; i++) {
+        participant = options.altGridStreams[i];
+        remoteProducerId = participant.producerId;
 
-    if (!removeAltGrid) {
-      for (int i = 0; i < numtoadd; i++) {
-        dynamic participant = altGridStreams[i];
-        String? remoteProducerId = participant['producerId'];
-        bool pseudoName;
-        dynamic participant_;
-
-        // Check if there is a 'name' property in the participant object and if it is null
-        if (participant.containsKey('producerId') &&
-            participant['producerId'] != null &&
-            participant['producerId'] != "") {
-          // Actual video
-          pseudoName = false;
-        } else {
-          pseudoName = true;
-        }
+        bool pseudoName = remoteProducerId.isEmpty;
 
         if (pseudoName) {
-          // Pseudo name
-          participant_ = participant;
-          remoteProducerId = participant['name'];
+          remoteProducerId = participant.name ?? '';
 
-          if (participant.containsKey('audioID') &&
-              participant['audioID'] != null &&
-              participant['audioID'] != "") {
-            newComponents[1].add(AudioCard(
-              name: participant['name'],
-              barColor: const Color.fromARGB(255, 247, 17, 17),
-              textColor: const Color.fromARGB(255, 11, 11, 11),
-              customStyle: const BoxDecoration(),
-              controlsPosition: 'topLeft',
-              infoPosition: 'topRight',
-              roundedImage: true,
-              parameters: parameters,
-              participant: participant,
-            ));
+          if (participant.audioID != null && participant.audioID!.isNotEmpty) {
+            final actualParticipant = refParticipants.firstWhere(
+              (obj) => obj.audioID == participant.audioID,
+              orElse: () =>
+                  Participant(id: '', name: '', videoID: '', audioID: ''),
+            );
+            newComponents[1].add(
+              AudioCard(
+                  options: AudioCardOptions(
+                name: participant.name ?? "",
+                barColor: Colors.red,
+                textColor: Colors.white,
+                customStyle: BoxDecoration(
+                  color: Colors.transparent,
+                  border: Border.all(
+                    color: eventType != EventType.broadcast
+                        ? Colors.black
+                        : Colors.transparent,
+                    width: eventType != EventType.broadcast ? 2.0 : 0.0,
+                  ),
+                ),
+                controlsPosition: 'topLeft',
+                infoPosition: 'topRight',
+                roundedImage: true,
+                parameters: parameters,
+                backgroundColor: Colors.transparent,
+                showControls: eventType != EventType.chat,
+                participant: actualParticipant,
+              )),
+            );
           } else {
-            newComponents[1].add(MiniCard(
-              initials: participant['name'],
-              fontSize: 18,
-              customStyle: BoxDecoration(
-                border: Border.all(color: Colors.black, width: 2),
-              ),
-            ));
+            newComponents[1].add(
+              MiniCard(
+                  options: MiniCardOptions(
+                initials: participant.name ?? "",
+                fontSize: 20,
+                customStyle: BoxDecoration(
+                  color: Colors.transparent,
+                  border: Border.all(
+                    color: eventType != EventType.broadcast
+                        ? Colors.black
+                        : Colors.transparent,
+                    width: eventType != EventType.broadcast ? 2.0 : 0.0,
+                  ),
+                ),
+              )),
+            );
           }
         } else {
-          // Actual video
-          participant_ = refParticipants.firstWhere(
-              (obj) => obj['videoID'] == remoteProducerId,
-              orElse: () => null);
-          if (participant_ != null) {
-            newComponents[1].add(VideoCard(
-              videoStream: participant['stream'],
-              remoteProducerId: remoteProducerId,
-              eventType: eventType,
-              forceFullDisplay: forceFullDisplay,
-              participant: participant_,
-              backgroundColor: Colors.transparent,
-              showControls: true,
-              showInfo: true,
-              name: participant_['name'],
-              doMirror: false,
-              parameters: parameters,
-            ));
+          Participant? participant_ = refParticipants.firstWhere(
+            (obj) => obj.videoID == remoteProducerId,
+            orElse: () =>
+                Participant(id: '', name: '', videoID: '', audioID: ''),
+          );
+
+          if (participant_.name.isNotEmpty) {
+            newComponents[1].add(
+              VideoCard(
+                  options: VideoCardOptions(
+                videoStream: participant.stream,
+                remoteProducerId: remoteProducerId,
+                eventType: eventType,
+                forceFullDisplay: forceFullDisplay,
+                participant: participant_,
+                backgroundColor: Colors.transparent,
+                showControls: eventType != EventType.chat,
+                showInfo: true,
+                name: participant_.name,
+                doMirror: false,
+                parameters: parameters,
+              )),
+            );
           }
         }
 
-        // If is the last one, updateMiniCardsGrid(activeVideos); compare with actives-numtoadd
-        if (i == numtoadd - 1) {
+        // Update alternate grid at the end of the loop
+        if (i == options.altGridStreams.length - 1) {
           otherGridStreams[1] = List<Widget>.from(newComponents[1]);
-          await updateMiniCardsGrid(
-              rows: 1,
-              cols: lastrowcols,
+
+          final optionsUpdate = UpdateMiniCardsGridOptions(
+              rows: options.numRows,
+              cols: options.numCols,
               defal: false,
-              actualRows: actualRows,
-              ind: ind,
+              actualRows: options.actualRows,
               parameters: parameters);
+
+          await updateMiniCardsGrid(
+            optionsUpdate,
+          );
           updateOtherGridStreams(otherGridStreams);
           await updateMiniCardsGrid(
-              rows: 1,
-              cols: lastrowcols,
-              defal: false,
-              actualRows: actualRows,
-              ind: ind,
-              parameters: parameters);
+            optionsUpdate,
+          );
         }
       }
     } else {
-      updateAddAltGrid(false);
+      // Remove alternate grid
+      parameters.updateAddAltGrid(false);
       otherGridStreams[1] = <Widget>[]; // Clear the alternate grid
-      await updateMiniCardsGrid(
+
+      final optionsUpdate = UpdateMiniCardsGridOptions(
           rows: 0,
           cols: 0,
           defal: false,
-          actualRows: actualRows,
-          ind: ind,
+          actualRows: options.actualRows,
           parameters: parameters);
+      await updateMiniCardsGrid(
+        optionsUpdate,
+      );
       updateOtherGridStreams(otherGridStreams);
       await updateMiniCardsGrid(
-          rows: 0,
-          cols: 0,
-          defal: false,
-          actualRows: actualRows,
-          ind: ind,
-          parameters: parameters);
+        optionsUpdate,
+      );
     }
   } catch (error) {
     if (kDebugMode) {
-      // print('Error in addVideosGrid: $error');
+      print('Error in addVideosGrid: $error');
     }
   }
 }

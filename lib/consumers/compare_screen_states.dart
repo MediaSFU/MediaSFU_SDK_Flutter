@@ -1,110 +1,126 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import '../types/types.dart'
+    show TriggerParameters, TriggerType, ScreenState, TriggerOptions;
 
-/// Compares the screen states and triggers events based on changes.
+/// Parameters for comparing screen states.
+abstract class CompareScreenStatesParameters extends TriggerParameters {
+  String get recordingDisplayType;
+  bool get recordingVideoOptimized;
+  List<ScreenState> get screenStates;
+  List<ScreenState> get prevScreenStates;
+  List<String> get activeNames;
+
+  // Mediasfu functions
+  TriggerType get trigger;
+  CompareScreenStatesParameters Function() get getUpdatedAllParams;
+}
+
+/// Options for comparing screen states.
+class CompareScreenStatesOptions {
+  final bool restart;
+  final CompareScreenStatesParameters parameters;
+
+  CompareScreenStatesOptions({
+    this.restart = false,
+    required this.parameters,
+  });
+}
+
+/// Type definition for the [compareScreenStates] function.
+typedef CompareScreenStatesType = Future<void> Function(
+    CompareScreenStatesOptions options);
+
+/// Compares the current `screenStates` list with the `prevScreenStates` list and triggers actions if there are differences.
+/// This is useful for detecting changes in screen states and responding accordingly in a real-time application.
 ///
-/// The [compareScreenStates] function compares the screen states provided in the [screenStates] list with the previous screen states provided in the [prevScreenStates] list.
-/// It checks if any value has changed in each key-value pair of the screen states objects.
-/// If a change is detected, it performs actions or triggers events based on the change.
+/// The function performs the following steps:
+/// 1. If the `restart` flag is true, it skips the comparison and exits early.
+/// 2. Iterates through each pair of `screenStates` and `prevScreenStates`, comparing key-value pairs.
+/// 3. If any differences are detected between a current and previous screen state, it triggers an action.
+/// 4. The trigger action is based on the `recordingDisplayType` and `recordingVideoOptimized` flags.
 ///
-/// The [tStamp] parameter is a required string that represents the timestamp of the screen states.
-/// The [restart] parameter is an optional boolean that indicates whether to restart the comparison. By default, it is set to false.
-/// The [parameters] parameter is a required map that contains the necessary parameters for the comparison and triggering events.
-/// The [parameters] map should include the following keys:
-///   - 'getUpdatedAllParams': A function that returns a map of updated parameters.
-///   - 'recordingDisplayType': A string that represents the type of recording display.
-///   - 'recordingVideoOptimized': A boolean that indicates whether the recording video is optimized.
-///   - 'screenStates': A list of dynamic objects representing the current screen states.
-///   - 'prevScreenStates': A list of dynamic objects representing the previous screen states.
-///   - 'activeNames': A list of strings representing the active names.
-///   - 'trigger': A function that triggers events based on the change in screen states.
+/// ### Parameters:
+/// - `options` (`CompareScreenStatesOptions`): Configuration options for the function:
+///   - `restart` (`bool`): When true, the function exits without performing comparisons.
+///   - `parameters` (`CompareScreenStatesParameters`): Provides the lists of `screenStates` and `prevScreenStates`
+///     for comparison, as well as the `activeNames` for triggering events when changes are detected.
 ///
-/// Example usage:
+/// ### Returns:
+/// A `Future<void>` that completes when the comparison and possible trigger actions are finished.
+///
+/// ### Example Usage:
 /// ```dart
-/// await compareScreenStates(
-///   tStamp: '2022-01-01 12:00:00',
+/// final options = CompareScreenStatesOptions(
 ///   restart: false,
-///   parameters: {
-///     'getUpdatedAllParams': () => {
-///       // updated parameters
-///     },
-///     'recordingDisplayType': 'video',
-///     'recordingVideoOptimized': true,
-///     'screenStates': [
-///       // current screen states
-///     ],
-///     'prevScreenStates': [
-///       // previous screen states
-///     ],
-///     'activeNames': [
-///       // active names
-///     ],
-///     'trigger': ({required List<String> refActiveNames, required Map<String, dynamic> parameters}) {
-///       // trigger events based on the change
-///     },
-///   },
+///   parameters: MyCompareScreenStatesParameters(
+///     recordingDisplayType: 'video',
+///     recordingVideoOptimized: true,
+///     screenStates: [ScreenState(...), ScreenState(...)],
+///     prevScreenStates: [ScreenState(...), ScreenState(...)],
+///     activeNames: ['name1', 'name2'],
+///     trigger: (TriggerOptions options) => print('Triggered with ${options.refActiveNames}'),
+///   ),
 /// );
+///
+/// compareScreenStates(options).then((_) {
+///   print('Screen states compared successfully');
+/// });
 /// ```
+///
+/// ### Error Handling:
+/// If an error occurs during the comparison or triggering process, it is caught and logged in debug mode without being rethrown.
 
-typedef GetUpdatedAllParams = Map<String, dynamic> Function();
-typedef TriggerFunction = void Function(
-    {required List<String> refActiveNames,
-    required Map<String, dynamic> parameters});
+Future<void> compareScreenStates(CompareScreenStatesOptions options) async {
+  var parameters = options.parameters.getUpdatedAllParams();
 
-typedef CompareScreenStates = Future<void> Function({
-  required String tStamp,
-  bool restart,
-  required Map<String, dynamic> parameters,
-});
+  // Extract parameters
+  String recordingDisplayType = parameters.recordingDisplayType;
+  bool recordingVideoOptimized = parameters.recordingVideoOptimized;
+  List<ScreenState> screenStates = parameters.screenStates;
+  List<ScreenState> prevScreenStates = parameters.prevScreenStates;
+  List<String> activeNames = parameters.activeNames;
+  var trigger = parameters.trigger;
 
-Future<void> compareScreenStates({
-  required String tStamp,
-  bool restart = false,
-  required Map<String, dynamic> parameters,
-}) async {
   try {
-    GetUpdatedAllParams getUpdatedAllParams = parameters['getUpdatedAllParams'];
-    parameters = getUpdatedAllParams();
-
-    String recordingDisplayType = parameters['recordingDisplayType'];
-    bool recordingVideoOptimized = parameters['recordingVideoOptimized'];
-    List<dynamic> screenStates = parameters['screenStates'];
-    List<dynamic> prevScreenStates = parameters['prevScreenStates'];
-    List<String> activeNames = parameters['activeNames'];
-    TriggerFunction trigger = parameters['trigger'];
-
     // Restart the comparison if needed
-    if (restart) {
-      // Perform necessary actions on restart
+    if (options.restart) {
+      // Perform necessary actions on restart if specified
       return;
     }
 
-    // Compare each key-value pair in the screenStates objects
+    // Compare each key-value pair in screenStates objects
     for (int i = 0; i < screenStates.length; i++) {
-      final currentScreenState = screenStates[i];
-      final prevScreenState = prevScreenStates[i];
+      final currentScreenState = screenStates[i].toMap();
+      final prevScreenState = prevScreenStates[i].toMap();
 
       // Check if any value has changed
-      final hasChanged = currentScreenState.keys
-          .any((key) => currentScreenState[key] != prevScreenState[key]);
+      final hasChanged = currentScreenState.keys.any(
+        (key) => currentScreenState[key] != prevScreenState[key],
+      );
 
       // Signal change if any value has changed
       if (hasChanged) {
         // Perform actions or trigger events based on the change
-        if (recordingDisplayType == 'video') {
-          if (recordingVideoOptimized) {
-            trigger(refActiveNames: activeNames, parameters: parameters);
-            break;
-          }
+        if (recordingDisplayType == 'video' && recordingVideoOptimized) {
+          final optionsTrigger = TriggerOptions(
+            parameters: parameters,
+            refActiveNames: activeNames,
+          );
+          trigger(optionsTrigger);
+          break;
         }
-        trigger(refActiveNames: activeNames, parameters: parameters);
+        final optionsTrigger = TriggerOptions(
+          parameters: parameters,
+          refActiveNames: activeNames,
+        );
+        trigger(optionsTrigger);
         break;
       }
     }
   } catch (error) {
     if (kDebugMode) {
-      // print('compareScreenStates error: $error');
+      print('compareScreenStates error: $error');
     }
-    // throw error;
   }
 }

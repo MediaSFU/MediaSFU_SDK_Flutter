@@ -1,235 +1,192 @@
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
-});
+import 'dart:async';
+import '../../types/types.dart' show ShowAlert, Request, RequestResponse;
 
-/// Handles the response of a host to a request made by a participant.
+/// Defines options for handling a host's response to a participant request.
+class HostRequestResponseOptions {
+  final RequestResponse requestResponse;
+  final ShowAlert? showAlert;
+  final List<Request> requestList;
+  final void Function(List<Request>) updateRequestList;
+  final void Function(bool) updateMicAction;
+  final void Function(bool) updateVideoAction;
+  final void Function(bool) updateScreenAction;
+  final void Function(bool) updateChatAction;
+  final void Function(String) updateAudioRequestState;
+  final void Function(String) updateVideoRequestState;
+  final void Function(String) updateScreenRequestState;
+  final void Function(String) updateChatRequestState;
+  final void Function(int?) updateAudioRequestTime;
+  final void Function(int?) updateVideoRequestTime;
+  final void Function(int?) updateScreenRequestTime;
+  final void Function(int?) updateChatRequestTime;
+  final int updateRequestIntervalSeconds;
+
+  HostRequestResponseOptions({
+    required this.requestResponse,
+    this.showAlert,
+    required this.requestList,
+    required this.updateRequestList,
+    required this.updateMicAction,
+    required this.updateVideoAction,
+    required this.updateScreenAction,
+    required this.updateChatAction,
+    required this.updateAudioRequestState,
+    required this.updateVideoRequestState,
+    required this.updateScreenRequestState,
+    required this.updateChatRequestState,
+    required this.updateAudioRequestTime,
+    required this.updateVideoRequestTime,
+    required this.updateScreenRequestTime,
+    required this.updateChatRequestTime,
+    required this.updateRequestIntervalSeconds,
+  });
+}
+
+typedef HostRequestResponseType = Future<void> Function(
+    HostRequestResponseOptions options);
+
+/// Handles the response of a host to a participant's request.
 ///
-/// The [requestResponse] parameter is the response of the host to the request of the participant.
-/// The [parameters] parameter is a map containing various parameters used in the function.
-/// The [showAlert] function is used to show an alert to the user.
-/// The [requestList] is a list of requests made by participants.
-/// The [updateRequestList] function is used to update the request list.
-/// The [micAction], [videoAction], [screenAction], and [chatAction] parameters indicate whether the corresponding actions are enabled or not.
-/// The [updateMicAction], [updateVideoAction], [updateScreenAction], and [updateChatAction] functions are used to update the action states.
-/// The [audioRequestState], [videoRequestState], [screenRequestState], and [chatRequestState] parameters indicate the state of the corresponding requests.
-/// The [updateAudioRequestState], [updateVideoRequestState], [updateScreenRequestState], and [updateChatRequestState] functions are used to update the request states.
-/// The [audioRequestTime], [videoRequestTime], [screenRequestTime], and [chatRequestTime] parameters indicate the time when the corresponding requests were made.
-/// The [updateAudioRequestTime], [updateVideoRequestTime], [updateScreenRequestTime], and [updateChatRequestTime] functions are used to update the request times.
-/// The [updateRequestIntervalSeconds] parameter specifies the interval in seconds for updating the requests.
+/// This function processes the host's response to a participant request for
+/// various actions (e.g., microphone, video, screenshare, chat) and updates
+/// the corresponding action states, request statuses, and times.
+///
+/// - [options] The options used to handle the host's response.
+///   - `requestResponse`: A map containing details of the request and the host's response.
+///     - `type`: The type of the request, such as `fa-microphone`, `fa-video`, `fa-desktop`, or `fa-comments`.
+///     - `action`: The response of the host, such as `accepted` or `rejected`.
+///   - `showAlert`: A callback function to display an alert message to the user.
+///   - `requestList`: The current list of active requests made by participants.
+///   - `updateRequestList`: Callback function to update the request list.
+///   - `updateMicAction`, `updateVideoAction`, `updateScreenAction`, `updateChatAction`: Functions to update the state of the actions.
+///   - `updateAudioRequestState`, `updateVideoRequestState`, `updateScreenRequestState`, `updateChatRequestState`: Functions to update the request states.
+///   - `updateAudioRequestTime`, `updateVideoRequestTime`, `updateScreenRequestTime`, `updateChatRequestTime`: Functions to update the time of each request.
+///   - `updateRequestIntervalSeconds`: The interval in seconds to delay further requests after a rejection.
+///
+/// If the request is accepted, it updates the respective action's state to `true`,
+/// updates the request state to `'accepted'`, and calls an alert to inform the user.
+/// If the request is rejected, it sets the request state to `'rejected'`, displays an alert,
+/// and sets a cooldown time for retrying based on the `updateRequestIntervalSeconds`.
+///
+/// ### Example Usage:
+/// ```dart
+/// final options = HostRequestResponseOptions(
+///   requestResponse: {
+///     'id': 'request123',
+///     'type': 'fa-microphone',
+///     'action': 'accepted',
+///   },
+///   showAlert: (message, type, duration) {
+///     print('$type: $message for $duration ms');
+///   },
+///   requestList: [
+///     {'id': 'request123', 'type': 'fa-microphone', 'name': 'Participant1'},
+///   ],
+///   updateRequestList: (updatedList) {
+///     print('Updated request list: $updatedList');
+///   },
+///   updateMicAction: (status) {
+///     print('Mic action updated: $status');
+///   },
+///   updateVideoAction: (status) {},
+///   updateScreenAction: (status) {},
+///   updateChatAction: (status) {},
+///   updateAudioRequestState: (state) {
+///     print('Audio request state updated: $state');
+///   },
+///   updateVideoRequestState: (state) {},
+///   updateScreenRequestState: (state) {},
+///   updateChatRequestState: (state) {},
+///   updateAudioRequestTime: (time) {
+///     print('Audio request time updated to: $time');
+///   },
+///   updateVideoRequestTime: (time) {},
+///   updateScreenRequestTime: (time) {},
+///   updateChatRequestTime: (time) {},
+///   updateRequestIntervalSeconds: 240,
+/// );
+///
+/// await hostRequestResponse(options);
+/// ```
+///
+/// In this example, the host accepts a microphone request. The function updates
+/// the microphone action state, sets the audio request state to `'accepted'`,
+/// and calls `showAlert` to notify the user. If the request had been rejected,
+/// it would set the audio request state to `'rejected'`, show an alert, and set
+/// a cooldown time before the next request.
+///
 
-void hostRequestResponse(
-    {required Map<String, dynamic> requestResponse,
-    required Map<String, dynamic> parameters}) async {
-  // Extracting parameters from the map
-  ShowAlert? showAlert = parameters['showAlert'];
-  List<dynamic> requestList = parameters['requestList'] ?? [];
-  void Function(List<dynamic>) updateRequestList =
-      parameters['updateRequestList'];
-  bool micAction = parameters['micAction'] ?? false;
-  void Function(bool) updateMicAction = parameters['updateMicAction'];
-  bool videoAction = parameters['videoAction'] ?? false;
-  void Function(bool) updateVideoAction = parameters['updateVideoAction'];
-  bool screenAction = parameters['screenAction'] ?? false;
-  void Function(bool) updateScreenAction = parameters['updateScreenAction'];
-  bool chatAction = parameters['chatAction'] ?? false;
-  void Function(bool) updateChatAction = parameters['updateChatAction'];
-  String audioRequestState = parameters['audioRequestState'] ?? '';
-  void Function(String) updateAudioRequestState =
-      parameters['updateAudioRequestState'];
-  String videoRequestState = parameters['videoRequestState'] ?? '';
-  void Function(String) updateVideoRequestState =
-      parameters['updateVideoRequestState'];
-  String screenRequestState = parameters['screenRequestState'] ?? '';
-  void Function(String) updateScreenRequestState =
-      parameters['updateScreenRequestState'];
-  String chatRequestState = parameters['chatRequestState'] ?? '';
-  void Function(String) updateChatRequestState =
-      parameters['updateChatRequestState'];
-  DateTime? audioRequestTime = parameters['audioRequestTime'];
-  void Function(DateTime) updateAudioRequestTime =
-      parameters['updateAudioRequestTime'];
-  DateTime? videoRequestTime = parameters['videoRequestTime'];
-  void Function(DateTime) updateVideoRequestTime =
-      parameters['updateVideoRequestTime'];
-  DateTime? screenRequestTime = parameters['screenRequestTime'];
-  void Function(DateTime) updateScreenRequestTime =
-      parameters['updateScreenRequestTime'];
-  DateTime? chatRequestTime = parameters['chatRequestTime'];
-  void Function(DateTime) updateChatRequestTime =
-      parameters['updateChatRequestTime'];
-  int updateRequestIntervalSeconds =
-      parameters['updateRequestIntervalSeconds'] ?? 240;
+/// Display names for the request types.
+const requestDisplayNames = {
+  'fa-microphone': 'Audio',
+  'fa-video': 'Video',
+  'fa-desktop': 'Screen share',
+  'fa-comments': 'Chat',
+};
 
-  // requestResponse is the response of the host to the request of the participant
+Future<void> hostRequestResponse(HostRequestResponseOptions options) async {
+  // Extract parameters
+  final showAlert = options.showAlert;
+  var requestList = options.requestList;
+  final requestResponse = options.requestResponse;
+  final requestType = requestResponse.type;
+  final isAccepted = requestResponse.action == 'accepted';
+  const int alertDuration = 10000;
 
-  // Check the action of the admin and if accept, allow the action
-  // Notify the user if the action was accepted or not
-  List<dynamic> requests = requestList;
-  requestList = requests
-      .where((request) =>
-          request['id'] != requestResponse['id'] &&
-          request['icon'] != requestResponse['type'] &&
-          request['name'] != requestResponse['name'] &&
-          request['username'] != requestResponse['username'])
-      .toList();
-  updateRequestList(requestList);
-  String requestType = requestResponse['type'];
+  // Filter out the request from the list
+  requestList =
+      requestList.where((request) => request.id != requestResponse.id).toList();
+  options.updateRequestList(requestList);
 
-  if (requestResponse['action'] == 'accepted') {
-    if (requestType == 'fa-microphone') {
-      // Tell the user that the unmute request was accepted
-      if (showAlert != null) {
-        showAlert(
-          message:
-              'Unmute request was accepted; click the mic button again to begin.',
-          type: 'success',
-          duration: 10000,
-        );
-      }
+  void showRequestAlert(String action, String message) {
+    showAlert?.call(
+      message: '$action $message',
+      type: isAccepted ? 'success' : 'danger',
+      duration: alertDuration,
+    );
+  }
 
-      micAction = true;
-      updateMicAction(micAction);
-      audioRequestState = 'accepted';
-      updateAudioRequestState(audioRequestState);
-    } else if (requestType == 'fa-video') {
-      // Tell the user that the video request was accepted
-      if (showAlert != null) {
-        showAlert(
-          message:
-              'Video request was accepted; click the video button again to begin.',
-          type: 'success',
-          duration: 10000,
-        );
-      }
-
-      videoAction = true;
-      updateVideoAction(videoAction);
-      videoRequestState = 'accepted';
-      updateVideoRequestState(videoRequestState);
-    } else if (requestType == 'fa-desktop') {
-      // Tell the user that the screenshare request was accepted
-      if (showAlert != null) {
-        showAlert(
-          message:
-              'Screenshare request was accepted; click the screen button again to begin.',
-          type: 'success',
-          duration: 10000,
-        );
-      }
-
-      screenAction = true;
-      updateScreenAction(screenAction);
-      screenRequestState = 'accepted';
-      updateScreenRequestState(screenRequestState);
-    } else if (requestType == 'fa-comments') {
-      // Tell the user that the chat request was accepted
-      if (showAlert != null) {
-        showAlert(
-          message:
-              'Chat request was accepted; click the chat button again to begin.',
-          type: 'success',
-          duration: 10000,
-        );
-      }
-
-      chatAction = true;
-      updateChatAction(chatAction);
-      chatRequestState = 'accepted';
-      updateChatRequestState(chatRequestState);
+  final requestTypeMap = {
+    'fa-microphone': {
+      'action': options.updateMicAction,
+      'state': options.updateAudioRequestState,
+      'time': options.updateAudioRequestTime,
+    },
+    'fa-video': {
+      'action': options.updateVideoAction,
+      'state': options.updateVideoRequestState,
+      'time': options.updateVideoRequestTime,
+    },
+    'fa-desktop': {
+      'action': options.updateScreenAction,
+      'state': options.updateScreenRequestState,
+      'time': options.updateScreenRequestTime,
+    },
+    'fa-comments': {
+      'action': options.updateChatAction,
+      'state': options.updateChatRequestState,
+      'time': options.updateChatRequestTime,
     }
-  } else {
-    // Notify the user that the action was not accepted, get the type of request and tell the user that the action was not accepted
-    requestType = requestResponse['type'];
-    if (requestType == 'fa-microphone') {
-      // Tell the user that the unmute request was not accepted
-      if (showAlert != null) {
-        showAlert(
-          message: 'Unmute request was not accepted',
-          type: 'danger',
-          duration: 10000,
-        );
-      }
+  };
 
-      audioRequestState = 'rejected';
-      updateAudioRequestState(audioRequestState);
-      // Set audioRequestTimer to make user wait for updateRequestIntervalSeconds seconds before requesting again
-      int audioRequestTimer = updateRequestIntervalSeconds;
-      // Set datetimenow to current time
-      DateTime audioRequestTimeNow = DateTime.now();
-      // Add updateRequestIntervalSeconds seconds to datetimenow
-      audioRequestTimeNow =
-          audioRequestTimeNow.add(Duration(seconds: audioRequestTimer));
-      // Set audioRequestTime to the new time
-      audioRequestTime = audioRequestTimeNow;
-      updateAudioRequestTime(audioRequestTime);
-    } else if (requestType == 'fa-video') {
-      // Tell the user that the video request was not accepted
-      if (showAlert != null) {
-        showAlert(
-          message: 'Video request was not accepted',
-          type: 'danger',
-          duration: 10000,
-        );
-      }
+  if (requestTypeMap.containsKey(requestType)) {
+    final requestActions = requestTypeMap[requestType]!;
+    final requestName = requestDisplayNames[requestType]!;
 
-      videoRequestState = 'rejected';
-      updateVideoRequestState(videoRequestState);
-      // Set videoRequestTimer to make user wait for updateRequestIntervalSeconds seconds before requesting again from UTC time now
-      int videoRequestTimer = updateRequestIntervalSeconds;
-      // Set datetimenow to current time
-      DateTime videoRequestTimeNow = DateTime.now();
-      // Add updateRequestIntervalSeconds seconds to datetimenow
-      videoRequestTimeNow =
-          videoRequestTimeNow.add(Duration(seconds: videoRequestTimer));
-      // Set videoRequestTime to the new time
-      videoRequestTime = videoRequestTimeNow;
-      updateVideoRequestTime(videoRequestTime);
-    } else if (requestType == 'fa-desktop') {
-      // Tell the user that the screenshare request was not accepted
-      if (showAlert != null) {
-        showAlert(
-          message: 'Screenshare request was not accepted',
-          type: 'danger',
-          duration: 10000,
-        );
-      }
+    if (isAccepted) {
+      showRequestAlert(requestName,
+          'request was accepted; click the button again to begin.');
+      (requestActions['action'] as void Function(bool))(true);
+      (requestActions['state'] as void Function(String))('accepted');
+    } else {
+      showRequestAlert(requestName, 'request was not accepted');
+      (requestActions['state'] as void Function(String))('rejected');
 
-      screenRequestState = 'rejected';
-      updateScreenRequestState(screenRequestState);
-      // Set screenRequestTimer to make user wait for updateRequestIntervalSeconds seconds before requesting again
-      int screenRequestTimer = updateRequestIntervalSeconds;
-      // Set datetimenow to current time
-      DateTime screenRequestTimeNow = DateTime.now();
-      // Add updateRequestIntervalSeconds seconds to datetimenow
-      screenRequestTimeNow =
-          screenRequestTimeNow.add(Duration(seconds: screenRequestTimer));
-      // Set screenRequestTime to the new time
-      screenRequestTime = screenRequestTimeNow;
-      updateScreenRequestTime(screenRequestTime);
-    } else if (requestType == 'fa-comments') {
-      // Tell the user that the chat request was not accepted
-      if (showAlert != null) {
-        showAlert(
-          message: 'Chat request was not accepted',
-          type: 'danger',
-          duration: 10000,
-        );
-      }
-
-      chatRequestState = 'rejected';
-      updateChatRequestState(chatRequestState);
-      // Set chatRequestTimer to make user wait for updateRequestIntervalSeconds seconds before requesting again
-      int chatRequestTimer = updateRequestIntervalSeconds;
-      // Set datetimenow to current time
-      DateTime chatRequestTimeNow = DateTime.now();
-      // Add updateRequestIntervalSeconds seconds to datetimenow
-      chatRequestTimeNow =
-          chatRequestTimeNow.add(Duration(seconds: chatRequestTimer));
-      // Set chatRequestTime to the new time
-      chatRequestTime = chatRequestTimeNow;
-      updateChatRequestTime(chatRequestTime);
+      final nextRequestTime = DateTime.now().add(
+        Duration(seconds: options.updateRequestIntervalSeconds),
+      );
+      (requestActions['time'] as void Function(
+          int?))(nextRequestTime.millisecondsSinceEpoch);
     }
   }
 }

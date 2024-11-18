@@ -1,22 +1,37 @@
-typedef UpdateIsBreakoutRoomsModalVisible = void Function(bool isVisible);
+/// Defines options for launching breakout rooms, including the function to
+/// update visibility and the current modal visibility state.
+class LaunchBreakoutRoomsOptions {
+  final void Function(bool isVisible) updateIsBreakoutRoomsModalVisible;
+  final bool isBreakoutRoomsModalVisible;
 
-/// Launches the breakoutrooms with the given parameters.
+  LaunchBreakoutRoomsOptions({
+    required this.updateIsBreakoutRoomsModalVisible,
+    required this.isBreakoutRoomsModalVisible,
+  });
+}
+
+/// Type definition for the function that launches breakout rooms.
+typedef LaunchBreakoutRoomsType = void Function(
+    LaunchBreakoutRoomsOptions options);
+
+/// Launches the breakout rooms by toggling the visibility of the breakout rooms modal.
 ///
-/// The [parameters] map should contain the following keys:
-/// - 'updateIsBreakoutRoomsModalVisible': A function that updates the visibility state of the breakoutrooms modal.
-/// - 'isBreakoutRoomsModalVisible': A boolean indicating the current visibility state of the breakoutrooms modal.
+/// This function calls `updateIsBreakoutRoomsModalVisible` with the negated value of
+/// `isBreakoutRoomsModalVisible` to toggle the modal's visibility.
 ///
-/// This function toggles the visibility state of the breakoutrooms modal by calling the [updateIsBreakoutRoomsModalVisible]
-/// function with the negation of the current visibility state.
-
-void launchBreakoutRooms({
-  required Map<String, dynamic> parameters,
-}) {
-  final UpdateIsBreakoutRoomsModalVisible updateIsBreakoutRoomsModalVisible =
-      parameters['updateIsBreakoutRoomsModalVisible'];
-  final bool isBreakoutRoomsModalVisible =
-      parameters['isBreakoutRoomsModalVisible'];
-
-  // Toggle the visibility state of the breakoutrooms modal
-  updateIsBreakoutRoomsModalVisible(!isBreakoutRoomsModalVisible);
+/// Example:
+/// ```dart
+/// final options = LaunchBreakoutRoomsOptions(
+///   updateIsBreakoutRoomsModalVisible: (bool isVisible) {
+///     // Update visibility here
+///   },
+///   isBreakoutRoomsModalVisible: false,
+/// );
+///
+/// launchBreakoutRooms(options);
+/// // Toggles the breakout rooms modal to visible.
+/// ```
+void launchBreakoutRooms(LaunchBreakoutRoomsOptions options) {
+  options
+      .updateIsBreakoutRoomsModalVisible(!options.isBreakoutRoomsModalVisible);
 }

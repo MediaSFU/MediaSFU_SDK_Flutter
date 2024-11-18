@@ -1,73 +1,80 @@
 import 'dart:async';
-import './record_update_timer.dart' show recordUpdateTimer;
+import './record_update_timer.dart'
+    show recordUpdateTimer, RecordUpdateTimerOptions;
+import '../../types/types.dart' show ShowAlert;
 
-/// Resumes the recording timer.
+/// Parameters for resuming the recording timer.
+abstract class RecordResumeTimerParameters {
+  // Core properties as abstract getters
+  bool get isTimerRunning;
+  bool get canPauseResume;
+  int get recordElapsedTime;
+  int? get recordStartTime;
+  Timer? get recordTimerInterval;
+  ShowAlert? get showAlert;
+  bool get recordPaused;
+  bool get recordStopped;
+  String? get roomName;
+
+  // Update functions as abstract getters returning functions
+  void Function(int) get updateRecordStartTime;
+  void Function(Timer?) get updateRecordTimerInterval;
+  void Function(bool) get updateIsTimerRunning;
+  void Function(bool) get updateCanPauseResume;
+  void Function(int) get updateRecordElapsedTime;
+  void Function(String) get updateRecordingProgressTime;
+
+  // Mediasfu function to get updated parameters as an abstract getter
+  RecordResumeTimerParameters Function() get getUpdatedAllParams;
+
+  // Allows dynamic property access if needed
+  // dynamic operator [](String key);
+}
+
+/// Options for the recordResumeTimer function.
+class RecordResumeTimerOptions {
+  final RecordResumeTimerParameters parameters;
+
+  RecordResumeTimerOptions({
+    required this.parameters,
+  });
+}
+
+typedef RecordResumeTimerType = Future<bool> Function(
+    {required RecordResumeTimerOptions options});
+
+/// Resumes the recording timer if it is not already running and can be paused/resumed.
 ///
-/// This function is responsible for resuming the recording timer. It takes a map of parameters as input, which includes the necessary data for the timer. The parameters map should contain the following keys:
-/// - `getUpdatedAllParams`: A function that returns the updated parameters map.
-/// - `isTimerRunning`: A boolean indicating whether the timer is currently running.
-/// - `canPauseResume`: A boolean indicating whether the timer can be paused or resumed.
-/// - `recordElapsedTime`: An integer representing the elapsed time of the recording.
-/// - `recordStartTime`: An integer representing the start time of the recording.
-/// - `recordTimerInterval`: A Timer object representing the current timer interval.
-/// - `showAlert`: An optional function that shows an alert message.
-/// - `updateRecordStartTime`: A function that updates the record start time.
-/// - `updateRecordTimerInterval`: A function that updates the record timer interval.
-/// - `updateIsTimerRunning`: A function that updates the isTimerRunning flag.
-/// - `updateCanPauseResume`: A function that updates the canPauseResume flag.
-///
-/// If the timer is not currently running and can be paused or resumed, the function resumes the timer by updating the record start time, starting a new timer interval, and updating the necessary flags. It returns `true` to indicate a successful resume.
-///
-/// If the timer cannot be resumed, the function shows an alert message indicating the reason and returns `false`.
+/// Returns `true` if the timer was successfully resumed, otherwise `false`.
 ///
 /// Example usage:
 /// ```dart
-/// recordResumeTimer(parameters: {
-///   'getUpdatedAllParams': getUpdatedAllParams,
-///   'isTimerRunning': isTimerRunning,
-///   'canPauseResume': canPauseResume,
-///   'recordElapsedTime': recordElapsedTime,
-///   'recordStartTime': recordStartTime,
-///   'recordTimerInterval': recordTimerInterval,
-///   'showAlert': showAlert,
-///   'updateRecordStartTime': updateRecordStartTime,
-///   'updateRecordTimerInterval': updateRecordTimerInterval,
-///   'updateIsTimerRunning': updateIsTimerRunning,
-///   'updateCanPauseResume': updateCanPauseResume,
-/// });
-///
-
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
-});
-
+/// recordResumeTimer(RecordResumeTimerOptions(
+///   parameters: RecordResumeTimerParameters(
+///     isTimerRunning: false,
+///     canPauseResume: true,
+///     recordElapsedTime: 60,
+///     recordStartTime: DateTime.now().millisecondsSinceEpoch,
+///     showAlert: (alert) => print(alert.message),
+///     updateRecordStartTime: (time) => print("New start time: $time"),
+///     updateRecordTimerInterval: (interval) => print("New interval: $interval"),
+///     updateIsTimerRunning: (isRunning) => print("Is timer running: $isRunning"),
+///     updateCanPauseResume: (canPause) => print("Can pause/resume: $canPause"),
+///     getUpdatedAllParams: () => updatedParameters,
+///   ),
+/// ));
+/// ```
 Future<bool> recordResumeTimer(
-    {required Map<String, dynamic> parameters}) async {
-  // Extracting parameters from the map
-  var getUpdatedAllParams = parameters['getUpdatedAllParams'];
-  parameters = await getUpdatedAllParams();
-
-  var isTimerRunning = parameters['isTimerRunning'] as bool;
-  var canPauseResume = parameters['canPauseResume'] as bool;
-  var recordElapsedTime = parameters['recordElapsedTime'] as int;
-  var recordStartTime = parameters['recordStartTime'] as int;
-  var recordTimerInterval = parameters['recordTimerInterval'] as Timer?;
-  final ShowAlert? showAlert = parameters['showAlert'];
-  var updateRecordStartTime =
-      parameters['updateRecordStartTime'] as Function(int);
-  var updateRecordTimerInterval =
-      parameters['updateRecordTimerInterval'] as Function(Timer?);
-  var updateIsTimerRunning =
-      parameters['updateIsTimerRunning'] as Function(bool);
-  var updateCanPauseResume =
-      parameters['updateCanPauseResume'] as Function(bool);
+    {required RecordResumeTimerOptions options}) async {
+  var parameters = options.parameters.getUpdatedAllParams();
+  var recordStartTime = parameters.recordStartTime;
+  var recordTimerInterval = parameters.recordTimerInterval;
+  var isTimerRunning = parameters.isTimerRunning;
 
   // Utility function to show an alert message
   void showAlertMessage(String message) {
-    if (showAlert != null) {
-      showAlert(
+    if (parameters.showAlert != null) {
+      parameters.showAlert!(
         message: message,
         type: 'danger',
         duration: 3000,
@@ -75,32 +82,40 @@ Future<bool> recordResumeTimer(
     }
   }
 
-  if (!isTimerRunning && canPauseResume) {
-    recordStartTime =
-        DateTime.now().millisecondsSinceEpoch - (recordElapsedTime * 1000);
-    updateRecordStartTime(recordStartTime);
+  // Logic to resume the timer
+  if (!parameters.isTimerRunning && parameters.canPauseResume) {
+    recordStartTime = DateTime.now().millisecondsSinceEpoch -
+        (parameters.recordElapsedTime * 1000);
+    parameters.updateRecordStartTime(recordStartTime);
 
-    recordTimerInterval = Timer.periodic(const Duration(seconds: 1), (timer) {
-      recordUpdateTimer(parameters: parameters);
-      parameters = getUpdatedAllParams();
+    recordTimerInterval =
+        Timer.periodic(const Duration(seconds: 1), (timer) async {
+      final optionsUpdate = RecordUpdateTimerOptions(
+          recordElapsedTime: parameters.recordElapsedTime,
+          recordStartTime: parameters.recordStartTime!,
+          updateRecordElapsedTime: parameters.updateRecordElapsedTime,
+          updateRecordingProgressTime: parameters.updateRecordingProgressTime);
 
-      if (parameters['recordPaused'] ||
-          parameters['recordStopped'] ||
-          (parameters['roomName'] == "" || parameters['roomName'] == null)) {
+      recordUpdateTimer(options: optionsUpdate);
+      parameters = parameters.getUpdatedAllParams();
+
+      if (parameters.recordPaused ||
+          parameters.recordStopped ||
+          parameters.roomName == '' ||
+          parameters.roomName == null) {
         timer.cancel();
-        updateRecordTimerInterval(null);
+        parameters.updateRecordTimerInterval(null);
         isTimerRunning = false;
-        updateIsTimerRunning(isTimerRunning);
-        canPauseResume = false;
-        updateCanPauseResume(canPauseResume);
+        parameters.updateIsTimerRunning(isTimerRunning);
+        parameters.updateCanPauseResume(false);
       }
     });
 
-    updateRecordTimerInterval(recordTimerInterval);
+    parameters.updateRecordTimerInterval(recordTimerInterval);
     isTimerRunning = true;
-    updateIsTimerRunning(isTimerRunning);
-    canPauseResume = false;
-    updateCanPauseResume(canPauseResume);
+    parameters.updateIsTimerRunning(isTimerRunning);
+    parameters.updateIsTimerRunning(true);
+    parameters.updateCanPauseResume(false);
     return true;
   } else {
     showAlertMessage(

@@ -1,85 +1,123 @@
 import 'package:flutter/material.dart';
 
-/// A widget to display meeting progress time with customizable style and position.
+/// MeetingProgressTimerOptions - Configuration options for the `MeetingProgressTimer`.
 ///
-/// This widget allows you to display meeting progress time with customizable
-/// background color, text style, and position on the screen. It provides options
-/// to control the visibility of the timer.
+/// /// `MeetingProgressTimerOptions` - Configuration options for the `MeetingProgressTimer` widget.
 ///
-/// /// The meeting progress time to display.
-///final String meetingProgressTime;
+/// ### Properties:
+/// - `meetingProgressTime` (`String`): The time to display as the meeting progress (required).
+/// - `initialBackgroundColor` (`Color`): Background color for the timer (default is `Colors.green`).
+/// - `position` (`String`): Position of the timer on the screen. Can be `'topLeft'`, `'topRight'`, `'bottomLeft'`, or `'bottomRight'`.
+/// - `textStyle` (`TextStyle?`): Custom text style for the timer (optional).
+/// - `showTimer` (`bool`): Controls the visibility of the timer (default is `true`).
+///
+/// ### Example Usage:
+/// ```dart
+/// MeetingProgressTimerOptions(
+///   meetingProgressTime: "10:00",
+///   initialBackgroundColor: Colors.green,
+///   position: "topLeft",
+///   textStyle: TextStyle(fontSize: 16, color: Colors.white),
+///   showTimer: true,
+/// );
+/// ```
 
-/// The initial background color of the timer container.
-///
-/// Defaults to [Colors.green] if not provided.
-/// final Color initialBackgroundColor;
-
-/// The position of the timer on the screen.
-///
-/// The position can be specified as a combination of 'top'/'bottom' and
-/// 'left'/'right'. For example, 'topLeft', 'bottomRight', etc.
-/// Defaults to 'topLeft' if not provided.
-// final String position;
-
-/// The text style of the timer text.
-///
-/// If not provided, the default text color is white.
-//final TextStyle? textStyle;
-
-/// A flag indicating whether to show the timer.
-///
-/// If set to false, the timer will be hidden.
-///final bool showTimer;
-
-/// Creates a meeting progress timer with the specified parameters.
-///
-/// The [meetingProgressTime] parameter is required. The [initialBackgroundColor]
-/// parameter defaults to [Colors.green], the [position] parameter defaults to
-/// 'topLeft', and the [showTimer] parameter defaults to true if not provided.
-
-class MeetingProgressTimer extends StatelessWidget {
+class MeetingProgressTimerOptions {
   final String meetingProgressTime;
   final Color initialBackgroundColor;
   final String position;
   final TextStyle? textStyle;
   final bool showTimer;
 
-  const MeetingProgressTimer({
-    super.key,
+  MeetingProgressTimerOptions({
     required this.meetingProgressTime,
     this.initialBackgroundColor = Colors.green,
     this.position = 'topLeft',
     this.textStyle,
     this.showTimer = true,
   });
+}
+
+typedef MeetingProgressTimerType = Widget Function(
+    {required MeetingProgressTimerOptions options});
+
+/// `MeetingProgressTimer` - A widget that displays the meeting progress time with customizable style and position.
+///
+/// This widget can be positioned in any corner of the screen and is useful for displaying the ongoing
+/// meeting time, with customizable options such as background color, text style, and visibility.
+///
+/// ### Parameters:
+/// - `options` (`MeetingProgressTimerOptions`): Configuration options for the widget.
+///
+/// ### Example Usage:
+/// ```dart
+/// MeetingProgressTimer(
+///   options: MeetingProgressTimerOptions(
+///     meetingProgressTime: "10:00",
+///     initialBackgroundColor: Colors.blue,
+///     position: "bottomRight",
+///     textStyle: TextStyle(fontSize: 16, color: Colors.white),
+///     showTimer: true,
+///   ),
+/// );
+/// ```
+///
+/// ### Notes:
+/// - The timer visibility can be controlled with the `showTimer` property.
+/// - Positioning is handled based on the `position` option.
+
+class MeetingProgressTimer extends StatelessWidget {
+  final MeetingProgressTimerOptions options;
+
+  const MeetingProgressTimer({super.key, required this.options});
 
   @override
   Widget build(BuildContext context) {
-    // Convert the initialBackgroundColor to a Color object
-    Color backgroundColor = initialBackgroundColor;
+    // Set positioning values based on the position option
+    double? top, bottom, left, right;
+    switch (options.position) {
+      case 'topLeft':
+        top = 0;
+        left = 0;
+        break;
+      case 'topRight':
+        top = 0;
+        right = 0;
+        break;
+      case 'bottomLeft':
+        bottom = 0;
+        left = 0;
+        break;
+      case 'bottomRight':
+        bottom = 0;
+        right = 0;
+        break;
+      default:
+        top = 0;
+        left = 0;
+    }
 
     return Visibility(
-      visible: showTimer,
+      visible: options.showTimer,
       child: Positioned(
-        // Position based on provided position parameter
-        top: position.contains('top') ? 0 : null,
-        bottom: position.contains('bottom') ? 0 : null,
-        left: position.contains('left') ? 0 : null,
-        right: position.contains('Right') ? 0 : null,
+        top: top,
+        bottom: bottom,
+        left: left,
+        right: right,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
+            color: options.initialBackgroundColor,
             borderRadius: BorderRadius.circular(10),
-            color: backgroundColor,
           ),
           child: Text(
-            meetingProgressTime,
-            style: (textStyle?.merge(const TextStyle(color: Colors.white)) ??
-                    const TextStyle(color: Colors.white))
-                .copyWith(
-                    fontSize: 18,
-                    decoration:
-                        TextDecoration.none), // Remove text decoration here
+            options.meetingProgressTime,
+            style: options.textStyle ??
+                const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  decoration: TextDecoration.none,
+                ),
           ),
         ),
       ),

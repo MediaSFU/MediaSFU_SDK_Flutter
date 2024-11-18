@@ -1,53 +1,131 @@
 import 'package:flutter/material.dart';
 
-/// ControlButtonsComponentTouch is a widget used to display a set of touch-sensitive control buttons.
+/// ButtonTouch - Represents a control button with customizable style and behavior.
 ///
-/// It takes in a list of [buttons] to be displayed, where each button is represented by a map containing
-/// properties such as icon, name, onPressed callback, etc. The [position] parameter determines the alignment
-/// of the buttons (left, right, or center). The [location] parameter specifies whether the buttons are placed
-/// at the top or bottom. The [direction] parameter defines the layout direction of the buttons (horizontal or vertical).
-/// The [alternateIconComponent] and [iconComponent] parameters allow customization of the icons displayed for each button.
-/// The [showAspect] parameter controls the visibility of the widget.
+/// ### Example Usage:
+/// ```dart
+/// ButtonTouch(
+///   name: 'Play',
+///   icon: Icons.play_arrow,
+///   alternateIcon: Icons.pause,
+///   onPress: () => print('Button pressed'),
+///   active: true,
+///   show: true,
+///   backgroundColor: {
+///     'default': Colors.blue,
+///     'pressed': Colors.green,
+///   },
+/// );
+/// ```
+class ButtonTouch {
+  final String? name;
+  final IconData? icon;
+  final IconData? alternateIcon;
+  final VoidCallback? onPress;
+  final Color? color;
+  final Color? activeColor;
+  final Color? inActiveColor;
+  final bool active;
+  final bool show;
+  final Widget? customComponent;
+  final bool disabled;
+  final int? size;
+  final Map<String, Color>? backgroundColor;
 
-class ControlButtonsComponentTouch extends StatelessWidget {
-  final List<Map<String, dynamic>> buttons;
+  ButtonTouch({
+    this.name,
+    this.icon,
+    this.alternateIcon,
+    this.onPress,
+    this.color = Colors.white,
+    this.activeColor,
+    this.inActiveColor,
+    this.active = false,
+    this.show = true,
+    this.customComponent,
+    this.disabled = false,
+    this.backgroundColor,
+    this.size = 16,
+  });
+}
+
+/// ControlButtonsComponentTouchOptions - Configuration options for `ControlButtonsComponentTouch`.
+///
+/// ### Example Usage:
+/// ```dart
+/// ControlButtonsComponentTouchOptions(
+///   buttons: [
+///     ButtonTouch(name: 'Play', icon: Icons.play_arrow, onPress: () {} ),
+///     ButtonTouch(name: 'Stop', icon: Icons.stop, onPress: () {}, disabled: true ),
+///   ],
+///   position: 'right',
+///   location: 'bottom',
+///   direction: 'horizontal',
+///   containerDecoration: BoxDecoration(
+///     color: Colors.grey,
+///     borderRadius: BorderRadius.circular(8),
+///   ),
+/// );
+/// ```
+class ControlButtonsComponentTouchOptions {
+  final List<ButtonTouch> buttons;
   final String position;
   final String location;
   final String direction;
-  final Widget? alternateIconComponent;
-  final Widget? iconComponent;
+  final BoxDecoration? containerDecoration;
   final bool showAspect;
 
-  const ControlButtonsComponentTouch({
-    super.key,
+  ControlButtonsComponentTouchOptions({
     required this.buttons,
     this.position = 'left',
     this.location = 'top',
     this.direction = 'horizontal',
-    this.alternateIconComponent,
-    this.iconComponent,
-    this.showAspect = false,
+    this.containerDecoration,
+    this.showAspect = true,
   });
+}
+
+typedef ControlButtonsComponentTouchType = Widget Function(
+    ControlButtonsComponentTouchOptions options);
+
+/// ControlButtonsComponentTouch - Renders a customizable set of control buttons.
+///
+/// ### Example Usage:
+/// ```dart
+/// ControlButtonsComponentTouch(
+///   options: ControlButtonsComponentTouchOptions(
+///     buttons: [
+///       ButtonTouch(name: 'Play', icon: Icons.play_arrow, onPress: () {} ),
+///       ButtonTouch(name: 'Pause', icon: Icons.pause, onPress: () {} ),
+///     ],
+///   ),
+/// );
+/// ```
+class ControlButtonsComponentTouch extends StatelessWidget {
+  final ControlButtonsComponentTouchOptions options;
+
+  const ControlButtonsComponentTouch({super.key, required this.options});
 
   @override
   Widget build(BuildContext context) {
     return Visibility(
-      visible: showAspect,
+      visible: options.showAspect,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
-        child: direction == 'horizontal' // Check direction to decide layout
+        child: options.direction ==
+                'horizontal' // Check direction to decide layout
             ? Column(
                 // horizontal layout
-                mainAxisAlignment: location == 'top'
+                mainAxisAlignment: options.location == 'top'
                     ? MainAxisAlignment.start
-                    : location == 'bottom'
+                    : options.location == 'bottom'
                         ? MainAxisAlignment.end
                         : MainAxisAlignment.center,
                 children: [
                     Row(
-                      mainAxisAlignment: position == 'left'
+                      mainAxisAlignment: options.position == 'left'
                           ? MainAxisAlignment.start
-                          : position == 'right'
+                          : options.position == 'right'
                               ? MainAxisAlignment.end
                               : MainAxisAlignment.center,
                       children: _buildButtons(),
@@ -55,16 +133,16 @@ class ControlButtonsComponentTouch extends StatelessWidget {
                   ])
             : Row(
                 //Vertical layout
-                mainAxisAlignment: position == 'left'
+                mainAxisAlignment: options.position == 'left'
                     ? MainAxisAlignment.start
-                    : position == 'right'
+                    : options.position == 'right'
                         ? MainAxisAlignment.end
                         : MainAxisAlignment.center,
                 children: [
                   Column(
-                    mainAxisAlignment: location == 'top'
+                    mainAxisAlignment: options.location == 'top'
                         ? MainAxisAlignment.start
-                        : location == 'bottom'
+                        : options.location == 'bottom'
                             ? MainAxisAlignment.end
                             : MainAxisAlignment.center,
                     children: _buildButtons(),
@@ -75,48 +153,41 @@ class ControlButtonsComponentTouch extends StatelessWidget {
     );
   }
 
+  /// Builds the button widgets based on configuration.
   List<Widget> _buildButtons() {
-    return buttons.map((button) {
+    return options.buttons.where((button) => button.show).map((button) {
       return Visibility(
-          visible: button['show'] ?? false,
+          visible: button.show,
           child: GestureDetector(
-            onTap: button['onPress'] as void Function()?,
+            onTap: button.disabled ? null : button.onPress,
             child: Container(
               padding: const EdgeInsets.all(8),
               margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
               decoration: BoxDecoration(
-                color: button['active'] != null && button['active']
-                    ? button['backgroundColor'] != null
-                        ? button['backgroundColor']!['pressed'] ??
-                            const Color(0xFF444444)
-                        : const Color.fromRGBO(255, 255, 255, 0.25)
-                    : button['backgroundColor'] != null
-                        ? button['backgroundColor']!['default'] ??
-                            const Color.fromRGBO(255, 255, 255, 0.25)
-                        : const Color.fromRGBO(255, 255, 255, 0.25),
+                color: button.active
+                    ? (button.backgroundColor?['pressed'] != null
+                        ? button.backgroundColor!['pressed']!
+                        : const Color(0xFF444444))
+                    : button.backgroundColor?['default'] ?? Colors.transparent,
                 borderRadius: BorderRadius.circular(5),
               ),
               child: Column(
                 children: [
-                  if (button['customComponent'] != null)
-                    button['customComponent']!,
-                  if (button['icon'] != null)
+                  if (button.customComponent != null) button.customComponent!,
+                  if (button.icon != null)
                     Icon(
-                      button['active']
-                          ? button['alternateIcon']
-                          : button['icon'],
-                      size: 16,
-                      color: button['active']
-                          ? button['activeColor'] ?? Colors.transparent
-                          : button['inActiveColor'] ?? Colors.transparent,
+                      button.active
+                          ? button.alternateIcon ?? button.icon
+                          : button.icon,
+                      color: button.active
+                          ? button.activeColor
+                          : button.inActiveColor,
+                      size: button.size!.toDouble(),
                     ),
-                  if (button['name'] != null)
+                  if (button.name != null)
                     Text(
-                      button['name'],
-                      style: TextStyle(
-                        color: button['color'] ?? Colors.transparent,
-                        fontSize: 12,
-                      ),
+                      button.name!,
+                      style: TextStyle(color: button.color, fontSize: 12),
                     ),
                 ],
               ),

@@ -1,96 +1,82 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import '../../types/types.dart' show EventType;
 
-/// AdvancedPanelComponent is a StatefulWidget that represents an advanced panel component.
-///
-/// `parameters`: A map containing parameters for the advanced panel.
-///
-/// State:
-///   `_AdvancedPanelComponentState`: The state class for AdvancedPanelComponent.
-///
-/// Internal State Variables:
-///   - `updateRecordingVideoType`: Function to update the recording video type.
-///   - `updateRecordingDisplayType`: Function to update the recording display type.
-///   - `updateRecordingBackgroundColor`: Function to update the recording background color.
-///   - `updateRecordingNameTagsColor`: Function to update the recording name tags color.
-///   - `updateRecordingOrientationVideo`: Function to update the recording orientation video.
-///   - `updateRecordingNameTags`: Function to update whether to display name tags.
-///   - `updateRecordingAddText`: Function to update whether to add text.
-///   - `updateRecordingCustomText`: Function to update the custom text.
-///   - `updateRecordingCustomTextPosition`: Function to update the custom text position.
-///   - `updateRecordingCustomTextColor`: Function to update the custom text color.
-///   - `recordingVideoType`: The current recording video type.
-///   - `recordingDisplayType`: The current recording display type.
-///   - `recordingBackgroundColor`: The current recording background color.
-///   - `recordingNameTagsColor`: The current recording name tags color.
-///   - `recordingOrientationVideo`: The current recording orientation video.
-///   - `recordingNameTags`: Indicates whether name tags are enabled.
-///   - `recordingAddText`: Indicates whether additional text is added.
-///   - `recordingCustomText`: The current custom text.
-///   - `recordingCustomTextPosition`: The current position of the custom text.
-///   - `recordingCustomTextColor`: The current color of the custom text.
-///   - `eventType`: The type of event.
-///   - `showBackgroundColorModal`: Indicates whether the background color modal is visible.
-///   - `showNameTagsColorModal`: Indicates whether the name tags color modal is visible.
-///   - `showCustomTextColorModal`: Indicates whether the custom text color modal is visible.
-///   - `selectedColorType`: The currently selected color type.
-///   - `recordingText`: Indicates whether text is being recorded.
-///   - `customText`: The current custom text value.
-///   - `selectedOrientationVideo`: The currently selected orientation video.
-///   - `customTextController`: Controller for the custom text field.
-///   - `parsedColors`: Map to store parsed colors.
-///
-/// Methods:
-///   - `initState`: Initializes the state of the widget.
-///   - `_parseColor`: Parses color from a string.
-///   - `didUpdateWidget`: Handles updates to the widget.
-///   - `dispose`: Disposes of resources when the widget is removed.
-///   - `_showColorPickerDialog`: Shows the color picker dialog.
-///   - `_updateParameters`: Updates parameters based on input.
-///   - `toggleColorPicker`: Toggles the color picker based on color type.
-///   - `onSelectColor`: Handles color selection from the color picker.
-///   - `validateTextInput`: Validates text input.
-///   - `onChangeTextHandler`: Handles changes to the custom text.
-///   - `build`: Builds the widget.
-///   - `buildPicker`: Builds a dropdown picker.
-///   - `buildColorPicker`: Builds a color picker.
-///   - `buildCustomText`: Builds the custom text field.
+// Abstract class for AdvancedPanel parameters
+abstract class AdvancedPanelComponentParameters {
+  String get recordingVideoType;
+  String get recordingDisplayType;
+  String get recordingBackgroundColor;
+  String get recordingNameTagsColor;
+  String get recordingOrientationVideo;
+  bool get recordingNameTags;
+  bool get recordingAddText;
+  String get recordingCustomText;
+  String get recordingCustomTextPosition;
+  String get recordingCustomTextColor;
+  EventType get eventType;
 
+  void Function(String) get updateRecordingVideoType;
+  void Function(String) get updateRecordingDisplayType;
+  void Function(String) get updateRecordingBackgroundColor;
+  void Function(String) get updateRecordingNameTagsColor;
+  void Function(String) get updateRecordingOrientationVideo;
+  void Function(bool) get updateRecordingNameTags;
+  void Function(bool) get updateRecordingAddText;
+  void Function(String) get updateRecordingCustomText;
+  void Function(String) get updateRecordingCustomTextPosition;
+  void Function(String) get updateRecordingCustomTextColor;
+}
+
+// Options class to contain AdvancedPanelComponentParameters
+class AdvancedPanelComponentOptions {
+  final AdvancedPanelComponentParameters parameters;
+
+  AdvancedPanelComponentOptions({required this.parameters});
+}
+
+typedef AdvancedPanelType = Widget Function(
+    {required AdvancedPanelComponentOptions options});
+
+/// `AdvancedPanelComponent` displays an advanced configuration panel for recording options.
+///
+/// ### Parameters:
+/// - [options] (`AdvancedPanelComponentOptions`): Contains configuration parameters:
+///   - `recordingVideoType` (String): Type of video recording (e.g., "fullDisplay").
+///   - `recordingDisplayType` (String): Display type for recording.
+///   - `recordingBackgroundColor` (String): Background color for the recording.
+///   - `recordingNameTagsColor` (String): Color for name tags.
+///   - `recordingOrientationVideo` (String): Video orientation.
+///   - `recordingNameTags` (bool): Enable name tags.
+///   - `recordingAddText` (bool): Add custom text.
+///   - `recordingCustomText` (String): Custom text for recording.
+///   - `recordingCustomTextPosition` (String): Position of custom text.
+///   - `recordingCustomTextColor` (String): Custom text color.
+///
+/// ### Example:
+/// ```dart
+/// AdvancedPanelComponent(
+///   options: AdvancedPanelComponentOptions(
+///     parameters: MyAdvancedPanelComponentParameters(
+///       recordingVideoType: "fullDisplay",
+///       recordingDisplayType: "video",
+///       recordingBackgroundColor: "#000000",
+///       // other parameters...
+///     ),
+///   ),
+/// );
+/// ```
 class AdvancedPanelComponent extends StatefulWidget {
-  final Map<String, dynamic> parameters;
+  final AdvancedPanelComponentOptions options;
 
-  const AdvancedPanelComponent({super.key, required this.parameters});
+  const AdvancedPanelComponent({super.key, required this.options});
 
   @override
-  // ignore: library_private_types_in_public_api
   _AdvancedPanelComponentState createState() => _AdvancedPanelComponentState();
 }
 
 class _AdvancedPanelComponentState extends State<AdvancedPanelComponent> {
-  late Function updateRecordingVideoType;
-  late Function updateRecordingDisplayType;
-  late Function updateRecordingBackgroundColor;
-  late Function updateRecordingNameTagsColor;
-  late Function updateRecordingOrientationVideo;
-  late Function updateRecordingNameTags;
-  late Function updateRecordingAddText;
-  late Function updateRecordingCustomText;
-  late Function updateRecordingCustomTextPosition;
-  late Function updateRecordingCustomTextColor;
-
-  late String recordingVideoType;
-  late String recordingDisplayType;
-  late String recordingBackgroundColor;
-  late String recordingNameTagsColor;
-  late String recordingOrientationVideo;
-  late bool recordingNameTags;
-  late bool recordingAddText;
-  late String recordingCustomText;
-  late String recordingCustomTextPosition;
-  late String recordingCustomTextColor;
-
-  late String eventType;
-
+  late AdvancedPanelComponentParameters parameters;
   late bool showBackgroundColorModal;
   late bool showNameTagsColorModal;
   late bool showCustomTextColorModal;
@@ -106,17 +92,22 @@ class _AdvancedPanelComponentState extends State<AdvancedPanelComponent> {
   @override
   void initState() {
     super.initState();
-    _updateParameters(widget.parameters);
+    parameters = widget.options.parameters;
     customTextController =
-        TextEditingController(text: widget.parameters['recordingCustomText']);
+        TextEditingController(text: parameters.recordingCustomText);
     // Initialize parsedColors with the initial colors
     parsedColors = {
-      'backgroundColor':
-          _parseColor(widget.parameters['recordingBackgroundColor']),
-      'customTextColor':
-          _parseColor(widget.parameters['recordingCustomTextColor']),
-      'nameTagsColor': _parseColor(widget.parameters['recordingNameTagsColor']),
+      'backgroundColor': _parseColor(parameters.recordingBackgroundColor),
+      'customTextColor': _parseColor(parameters.recordingCustomTextColor),
+      'nameTagsColor': _parseColor(parameters.recordingNameTagsColor),
     };
+    showBackgroundColorModal = false;
+    showNameTagsColorModal = false;
+    showCustomTextColorModal = false;
+    selectedColorType = '';
+    recordingText = parameters.recordingAddText.toString();
+    customText = parameters.recordingCustomText;
+    selectedOrientationVideo = parameters.recordingOrientationVideo;
   }
 
   Color _parseColor(String colorString) {
@@ -128,11 +119,8 @@ class _AdvancedPanelComponentState extends State<AdvancedPanelComponent> {
   @override
   void didUpdateWidget(AdvancedPanelComponent oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.parameters != oldWidget.parameters) {
-      _updateParameters(widget.parameters);
-    }
-    if (widget.parameters['recordingCustomText'] != customTextController.text) {
-      customTextController.text = widget.parameters['recordingCustomText'];
+    if (parameters.recordingCustomText != customTextController.text) {
+      customTextController.text = parameters.recordingCustomText;
     }
   }
 
@@ -182,47 +170,6 @@ class _AdvancedPanelComponentState extends State<AdvancedPanelComponent> {
     );
   }
 
-  void _updateParameters(Map<String, dynamic> parameters) {
-    setState(() {
-      recordingVideoType = parameters['recordingVideoType'];
-      recordingDisplayType = parameters['recordingDisplayType'];
-      recordingBackgroundColor = parameters['recordingBackgroundColor'];
-      recordingNameTagsColor = parameters['recordingNameTagsColor'];
-      recordingOrientationVideo = parameters['recordingOrientationVideo'];
-      recordingNameTags = parameters['recordingNameTags'];
-      recordingAddText = parameters['recordingAddText'];
-      recordingCustomText = parameters['recordingCustomText'];
-      recordingCustomTextPosition = parameters['recordingCustomTextPosition'];
-      recordingCustomTextColor = parameters['recordingCustomTextColor'];
-
-      updateRecordingVideoType = parameters['updateRecordingVideoType'];
-      updateRecordingDisplayType = parameters['updateRecordingDisplayType'];
-      updateRecordingBackgroundColor =
-          parameters['updateRecordingBackgroundColor'];
-      updateRecordingNameTagsColor = parameters['updateRecordingNameTagsColor'];
-      updateRecordingOrientationVideo =
-          parameters['updateRecordingOrientationVideo'];
-      updateRecordingNameTags = parameters['updateRecordingNameTags'];
-      updateRecordingAddText = parameters['updateRecordingAddText'];
-      updateRecordingCustomText = parameters['updateRecordingCustomText'];
-      updateRecordingCustomTextPosition =
-          parameters['updateRecordingCustomTextPosition'];
-      updateRecordingCustomTextColor =
-          parameters['updateRecordingCustomTextColor'];
-
-      eventType = parameters['eventType'];
-
-      showBackgroundColorModal = false;
-      showNameTagsColorModal = false;
-      showCustomTextColorModal = false;
-
-      selectedColorType = '';
-      recordingText = recordingAddText.toString();
-      customText = recordingCustomText;
-      selectedOrientationVideo = recordingOrientationVideo;
-    });
-  }
-
   void toggleColorPicker(String colorType) {
     setState(() {
       selectedColorType = colorType;
@@ -238,11 +185,11 @@ class _AdvancedPanelComponentState extends State<AdvancedPanelComponent> {
     String colorString = '#$colorHex';
 
     if (showBackgroundColorModal) {
-      updateRecordingBackgroundColor(colorString);
+      parameters.updateRecordingBackgroundColor(colorString);
     } else if (showCustomTextColorModal) {
-      updateRecordingCustomTextColor(colorString);
+      parameters.updateRecordingCustomTextColor(colorString);
     } else if (showNameTagsColorModal) {
-      updateRecordingNameTagsColor(colorString);
+      parameters.updateRecordingNameTagsColor(colorString);
     }
   }
 
@@ -256,10 +203,10 @@ class _AdvancedPanelComponentState extends State<AdvancedPanelComponent> {
 
   void onChangeTextHandler(String text) {
     if (text.isNotEmpty && !validateTextInput(text)) {
-      customTextController.text = recordingCustomText;
+      customTextController.text = parameters.recordingCustomText;
       return;
     }
-    updateRecordingCustomText(text);
+    parameters.updateRecordingCustomText(text);
   }
 
   @override
@@ -270,8 +217,8 @@ class _AdvancedPanelComponentState extends State<AdvancedPanelComponent> {
         // Video Type
         buildPicker(
           label: 'Video Type:',
-          value: recordingVideoType,
-          onValueChanged: (value) => updateRecordingVideoType(value),
+          value: parameters.recordingVideoType,
+          onValueChanged: (value) => parameters.updateRecordingVideoType(value),
           items: [
             {'label': 'Full Display (no background)', 'value': 'fullDisplay'},
             {'label': 'Full Video', 'value': 'bestDisplay'},
@@ -280,11 +227,12 @@ class _AdvancedPanelComponentState extends State<AdvancedPanelComponent> {
         ),
         const SizedBox(height: 15),
         // Display Type
-        if (eventType != 'broadcast')
+        if (parameters.eventType != EventType.broadcast)
           buildPicker(
             label: 'Display Type:',
-            value: recordingDisplayType,
-            onValueChanged: (value) => updateRecordingDisplayType(value),
+            value: parameters.recordingDisplayType,
+            onValueChanged: (value) =>
+                parameters.updateRecordingDisplayType(value),
             items: [
               {'label': 'Only Video Participants', 'value': 'video'},
               {
@@ -306,9 +254,12 @@ class _AdvancedPanelComponentState extends State<AdvancedPanelComponent> {
         // Add Text or not
         buildPicker(
           label: 'Add Text:',
-          value: recordingAddText.toString(),
-          onValueChanged: (value) =>
-              updateRecordingAddText(value == 'true' || value == true),
+          value: parameters.recordingAddText.toString(),
+          onValueChanged: (value) {
+            final isTrue = value == 'true' || value == true;
+            parameters.updateRecordingAddText(isTrue);
+            recordingText = isTrue.toString();
+          },
           items: [
             {'label': 'True', 'value': 'true'},
             {'label': 'False', 'value': 'false'},
@@ -321,8 +272,9 @@ class _AdvancedPanelComponentState extends State<AdvancedPanelComponent> {
         if (recordingText == 'true')
           buildPicker(
             label: 'Custom Text Position:',
-            value: recordingCustomTextPosition,
-            onValueChanged: (value) => updateRecordingCustomTextPosition(value),
+            value: parameters.recordingCustomTextPosition,
+            onValueChanged: (value) =>
+                parameters.updateRecordingCustomTextPosition(value),
             items: [
               {'label': 'Top', 'value': 'top'},
               {'label': 'Middle', 'value': 'middle'},
@@ -340,9 +292,9 @@ class _AdvancedPanelComponentState extends State<AdvancedPanelComponent> {
         // Add name tags or not
         buildPicker(
           label: 'Add Name Tags:',
-          value: recordingNameTags.toString(),
-          onValueChanged: (value) =>
-              updateRecordingNameTags(value == 'true' || value == true),
+          value: parameters.recordingNameTags.toString(),
+          onValueChanged: (value) => parameters
+              .updateRecordingNameTags(value == 'true' || value == true),
           items: [
             {'label': 'True', 'value': 'true'},
             {'label': 'False', 'value': 'false'},
@@ -361,7 +313,7 @@ class _AdvancedPanelComponentState extends State<AdvancedPanelComponent> {
           label: 'Orientation (Video):',
           value: selectedOrientationVideo,
           onValueChanged: (value) {
-            updateRecordingOrientationVideo(value);
+            parameters.updateRecordingOrientationVideo(value);
             setState(() {
               selectedOrientationVideo = value;
             });

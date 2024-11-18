@@ -1,30 +1,45 @@
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
-/// Confirms the exit of a user from a room.
+/// Defines the options for confirming the exit of a member from a room.
+class ConfirmExitOptions {
+  final io.Socket? socket;
+  final String member;
+  final String roomName;
+  final bool ban;
+
+  ConfirmExitOptions({
+    this.socket,
+    required this.member,
+    required this.roomName,
+    this.ban = false,
+  });
+}
+
+/// Type definition for the function that confirms a member's exit.
+typedef ConfirmExitType = Future<void> Function(ConfirmExitOptions options);
+
+/// Confirms the exit of a member from a room and optionally bans them.
 ///
-/// This function emits a socket event to disconnect the user from the specified room.
-/// The [socket] parameter is the socket connection to the server.
-/// The [member] parameter is the name of the member who wants to exit the room.
-/// The [roomName] parameter is the name of the room the member wants to exit from.
-/// The [ban] parameter indicates whether the member should be banned from the room.
+/// This function emits a socket event to disconnect the user from the specified room
+/// and optionally bans them if [ban] is set to true.
 ///
-/// Example usage:
+/// Example:
 /// ```dart
-/// await confirmExit(
-///   socket: socket,
-///   member: 'John',
-///   roomName: 'Room 1',
+/// final options = ConfirmExitOptions(
+///   socket: socketInstance,
+///   member: "JohnDoe",
+///   roomName: "Room123",
 ///   ban: true,
 /// );
 ///
-
-Future<void> confirmExit({
-  required io.Socket socket,
-  required String member,
-  required String roomName,
-  bool ban = false,
-}) async {
+/// await confirmExit(options);
+/// // Disconnects "JohnDoe" from "Room123" and bans them if specified.
+/// ```
+Future<void> confirmExit(ConfirmExitOptions options) async {
   // Emit a socket event to disconnect the user from the room
-  socket.emit(
-      'disconnectUser', {'member': member, 'roomName': roomName, 'ban': ban});
+  options.socket!.emit('disconnectUser', {
+    'member': options.member,
+    'roomName': options.roomName,
+    'ban': options.ban,
+  });
 }

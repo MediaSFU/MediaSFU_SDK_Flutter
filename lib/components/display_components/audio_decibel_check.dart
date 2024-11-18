@@ -1,45 +1,42 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import '../../types/types.dart' show AudioDecibels, Participant;
 
-/// AudioDecibelCheck - A widget for periodically checking audio decibel levels and updating UI.
-///
-/// This widget periodically checks the audio decibel levels and updates the UI accordingly,
-/// such as animating or resetting the waveform display based on the audio intensity.
-///
-/// Required parameters:
-/// - [animateWaveform]: A function to animate the audio waveform display.
-/// - [resetWaveform]: A function to reset the audio waveform display.
-/// - [name]: The name of the participant associated with the audio.
-/// - [participant]: Information about the participant associated with the audio.
-/// - [parameters]: Additional parameters for customizing the audio check behavior.
-/// - [onShowWaveformChanged]: A callback function to handle changes in the waveform display state.
+/// Abstract class for audio decibel check parameters.
+abstract class AudioDecibelCheckParameters {
+  List<AudioDecibels> get audioDecibels;
+  List<Participant> get participants;
+
+  AudioDecibelCheckParameters Function() get getUpdatedAllParams;
+
+  // dynamic operator [](String key);
+}
+
+/// Configuration options for the `AudioDecibelCheck` widget.
 ///
 /// Example:
 /// ```dart
 /// AudioDecibelCheck(
-///   animateWaveform: animateWaveformFunction,
-///   resetWaveform: resetWaveformFunction,
-///   name: 'John Doe',
-///   participant: participantData,
-///   parameters: additionalParameters,
-///   onShowWaveformChanged: (showWaveform) {
-///     // Logic to handle changes in waveform display state
-///   },
+///   options: AudioDecibelCheckOptions(
+///     animateWaveform: () => print("Animate waveform"),
+///     resetWaveform: () => print("Reset waveform"),
+///     name: "John Doe",
+///     participant: participant,
+///     parameters: parameters,
+///     onShowWaveformChanged: (isVisible) => print("Show waveform: $isVisible"),
+///   ),
 /// );
 /// ```
 
-typedef GetUpdatedAllParams = Map<String, dynamic> Function();
-
-class AudioDecibelCheck extends StatefulWidget {
+class AudioDecibelCheckOptions {
   final Function animateWaveform;
   final Function resetWaveform;
   final String name;
-  final Map<String, dynamic> participant;
-  final Map<String, dynamic> parameters;
+  final Participant participant;
+  final AudioDecibelCheckParameters parameters;
   final Function onShowWaveformChanged;
 
-  const AudioDecibelCheck({
-    super.key,
+  const AudioDecibelCheckOptions({
     required this.animateWaveform,
     required this.resetWaveform,
     required this.name,
@@ -47,6 +44,31 @@ class AudioDecibelCheck extends StatefulWidget {
     required this.parameters,
     required this.onShowWaveformChanged,
   });
+}
+
+typedef AudioDecibelCheckType = Future<void> Function({
+  required AudioDecibelCheckOptions options,
+});
+
+/// AudioDecibelCheck - A widget that periodically checks audio decibel levels and adjusts waveform visibility.
+///
+/// Example:
+/// ```dart
+/// AudioDecibelCheck(
+///   options: AudioDecibelCheckOptions(
+///     animateWaveform: () => print("Waveform animation triggered"),
+///     resetWaveform: () => print("Waveform animation reset"),
+///     name: "ParticipantName",
+///     participant: myParticipant,
+///     parameters: myParameters,
+///     onShowWaveformChanged: (visible) => print("Waveform visibility: $visible"),
+///   ),
+/// );
+/// ```
+class AudioDecibelCheck extends StatefulWidget {
+  final AudioDecibelCheckOptions options;
+
+  const AudioDecibelCheck({super.key, required this.options});
 
   @override
   // ignore: library_private_types_in_public_api
@@ -76,37 +98,37 @@ class _AudioDecibelCheckState extends State<AudioDecibelCheck> {
 
   void _checkAudioDecibels() {
     // Get the updated parameters from the widget.
-    var parameters = widget.parameters;
-    GetUpdatedAllParams getUpdatedAllParams = parameters['getUpdatedAllParams'];
+    var parameters = widget.options.parameters;
 
-    parameters = getUpdatedAllParams();
+    parameters = parameters.getUpdatedAllParams();
     // final Function animateWaveform = widget.animateWaveform;
     // final Function resetWaveform = widget.resetWaveform;
 
     // Get the updated parameters from the getUpdatedAllParams function.
-    final updatedParams = getUpdatedAllParams();
+    final updatedParams = parameters.getUpdatedAllParams();
 
-    final audioDecibels = updatedParams['audioDecibels'];
-    final participants = updatedParams['participants'];
+    final audioDecibels = updatedParams.audioDecibels;
+    final participants = updatedParams.participants;
 
     // Find the existing audio entry and participant based on the name.
-    final existingEntry = audioDecibels?.firstWhere(
-      (entry) => entry['name'] == widget.name,
-      orElse: () => null,
+    final existingEntry = audioDecibels.firstWhere(
+      (entry) => entry.name == widget.options.name,
+      orElse: () => AudioDecibels(name: '', averageLoudness: 0),
     );
-    final participant = participants?.firstWhere(
-      (participant) => participant['name'] == widget.name,
-      orElse: () => null,
+    final participant = participants.firstWhere(
+      (participant) => participant.name == widget.options.name,
+      orElse: () =>
+          Participant(name: '', audioID: '', videoID: '', isBanned: false),
     );
 
     // Check conditions and animate/reset the waveform accordingly.
-    if (existingEntry != null &&
-        existingEntry['averageLoudness'] > 127.5 &&
-        participant != null &&
-        !participant['muted']) {
-      widget.onShowWaveformChanged(true);
+    if (existingEntry.name.isNotEmpty &&
+        existingEntry.averageLoudness > 127.5 &&
+        participant.name.isNotEmpty &&
+        !participant.muted!) {
+      widget.options.onShowWaveformChanged(true);
     } else {
-      widget.onShowWaveformChanged(false);
+      widget.options.onShowWaveformChanged(false);
     }
   }
 

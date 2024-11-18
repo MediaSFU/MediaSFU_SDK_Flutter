@@ -1,34 +1,22 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-/// AlertComponent - A component for displaying alerts with customizable styles.
-///
-/// This widget displays an alert message with customizable styles such as
-/// background color, text color, and duration of visibility. It can be used
-/// to show success or error messages to the user.
-///
-/// Required parameters:
-/// - [visible]: A boolean indicating whether the alert should be visible or hidden.
-/// - [message]: The message to be displayed in the alert.
-/// - [onHide]: A function to handle hiding the alert.
-///
-/// Optional parameters:
-/// - [type]: The type of alert, either 'success' or 'error'. Defaults to 'success'.
-/// - [duration]: The duration in milliseconds for which the alert will be visible. Defaults to 3000 milliseconds.
-/// - [textColor]: The color of the text in the alert message. Defaults to black.
+/// AlertComponentOptions - Configuration options for the `AlertComponent` widget.
 ///
 /// Example:
 /// ```dart
 /// AlertComponent(
-///   visible: true,
-///   message: 'Alert message',
-///   onHide: () {
-///     // Logic to hide the alert
-///   },
+///   options: AlertComponentOptions(
+///     visible: true,
+///     message: "Operation successful!",
+///     type: "success",
+///     duration: 3000,
+///     onHide: () => print("Alert hidden"),
+///     textColor: Colors.white,
+///   ),
 /// );
 /// ```
-
-class AlertComponent extends StatefulWidget {
+class AlertComponentOptions {
   final bool visible;
   final String message;
   final String type;
@@ -36,8 +24,7 @@ class AlertComponent extends StatefulWidget {
   final Function onHide;
   final Color textColor;
 
-  const AlertComponent({
-    super.key,
+  AlertComponentOptions({
     required this.visible,
     required this.message,
     this.type = 'success',
@@ -45,9 +32,35 @@ class AlertComponent extends StatefulWidget {
     required this.onHide,
     this.textColor = Colors.black,
   });
+}
+
+typedef AlertComponentType = Widget Function(
+    {required AlertComponentOptions options});
+
+/// AlertComponent - A widget for displaying alerts with customizable options.
+///
+/// Example:
+/// ```dart
+/// AlertComponent(
+///   options: AlertComponentOptions(
+///     visible: true,
+///     message: "An error occurred",
+///     type: "error",
+///     duration: 3000,
+///     onHide: () => print("Alert hidden"),
+///     textColor: Colors.white,
+///   ),
+/// );
+/// ```
+class AlertComponent extends StatefulWidget {
+  final AlertComponentOptions options;
+
+  const AlertComponent({
+    super.key,
+    required this.options,
+  });
 
   @override
-  // ignore: library_private_types_in_public_api
   _AlertComponentState createState() => _AlertComponentState();
 }
 
@@ -63,30 +76,30 @@ class _AlertComponentState extends State<AlertComponent> {
   @override
   void didUpdateWidget(covariant AlertComponent oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.type != oldWidget.type) {
+    if (widget.options.type != oldWidget.options.type) {
       _updateAlertType();
     }
   }
 
   void _updateAlertType() {
     setState(() {
-      _alertType = widget.type;
+      _alertType = widget.options.type;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.visible) {
+    if (widget.options.visible) {
       // Start a timer to hide the alert after duration
-      Timer(Duration(milliseconds: widget.duration), () {
-        widget.onHide();
+      Timer(Duration(milliseconds: widget.options.duration), () {
+        widget.options.onHide();
       });
     }
 
     return Visibility(
-      visible: widget.visible,
+      visible: widget.options.visible,
       child: GestureDetector(
-        onTap: () => widget.onHide(),
+        onTap: () => widget.options.onHide(),
         child: Center(
           child: Container(
             decoration: BoxDecoration(
@@ -96,8 +109,8 @@ class _AlertComponentState extends State<AlertComponent> {
             ),
             padding: const EdgeInsets.all(20),
             child: Text(
-              widget.message,
-              style: TextStyle(color: widget.textColor, fontSize: 16),
+              widget.options.message,
+              style: TextStyle(color: widget.options.textColor, fontSize: 16),
             ),
           ),
         ),

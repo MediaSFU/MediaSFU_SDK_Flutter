@@ -1,155 +1,228 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../sockets/socket_manager.dart' show connectSocket;
 import './socket_receive_methods/new_pipe_producer.dart' show newPipeProducer;
 import './socket_receive_methods/producer_closed.dart' show producerClosed;
 import './socket_receive_methods/join_consume_room.dart' show joinConsumeRoom;
+import '../types/types.dart'
+    show
+        ConnectSocketOptions,
+        JoinConsumeRoomOptions,
+        JoinConsumeRoomParameters,
+        JoinConsumeRoomType,
+        NewPipeProducerOptions,
+        NewPipeProducerParameters,
+        NewPipeProducerType,
+        ProducerClosedOptions,
+        ProducerClosedParameters,
+        ProducerClosedType,
+        ReorderStreamsParameters,
+        ReorderStreamsType,
+        ResponseJoinRoom;
 
-/// Connects to the specified IP addresses (subdomains) and performs various operations.
+/// Parameters interface for connecting IPs and managing socket connections.
+abstract class ConnectIpsParameters
+    implements
+        ReorderStreamsParameters,
+        JoinConsumeRoomParameters,
+        ProducerClosedParameters,
+        NewPipeProducerParameters {
+  Device? get device;
+  List<String> get roomRecvIPs;
+  void Function(List<String> roomRecvIPs) get updateRoomRecvIPs;
+  void Function(List<Map<String, io.Socket>> consumeSockets)
+      get updateConsumeSockets;
+
+  // mediasfu functions
+  ReorderStreamsType get reorderStreams;
+  ConnectIpsParameters Function() get getUpdatedAllParams;
+}
+
+/// Options for connecting IPs and managing socket connections.
+class ConnectIpsOptions {
+  final List<Map<String, io.Socket>> consumeSockets;
+  final List<String> remIP;
+  final String apiUserName;
+  final String? apiKey;
+  final String apiToken;
+  final NewPipeProducerType? newProducerMethod;
+  final ProducerClosedType? closedProducerMethod;
+  final JoinConsumeRoomType? joinConsumeRoomMethod;
+  final ConnectIpsParameters parameters;
+
+  ConnectIpsOptions({
+    required this.consumeSockets,
+    required this.remIP,
+    required this.apiUserName,
+    this.apiKey,
+    required this.apiToken,
+    this.newProducerMethod,
+    this.closedProducerMethod,
+    this.joinConsumeRoomMethod,
+    required this.parameters,
+  });
+}
+
+/// Type definition for the [connectIps] function.
+typedef ConnectIpsType = Future<List<dynamic>> Function(
+    ConnectIpsOptions options);
+
+/// Connects to multiple remote IPs to manage socket connections for media consumption.
 ///
-/// The [consumeSockets] parameter is a list of maps containing socket objects.
-/// The [remIP] parameter is a list of dynamic values representing remote IP addresses.
-/// The [apiUserName] parameter is a required string representing the API username.
-/// The [apiKey] parameter is an optional string representing the API key.
-/// The [apiToken] parameter is an optional string representing the API token.
-/// The [newProducerMethod] parameter is a function that takes in producer details and returns a future.
-/// The [closedProducerMethod] parameter is a function that takes in producer details and returns a future.
-/// The [joinConsumeRoomMethod] parameter is a function that takes in socket details and returns a future.
-/// The [parameters] parameter is a map containing additional parameters.
+/// This function iterates over a list of remote IPs, attempting to establish socket connections
+/// and manage events for new media producers and closed producers in the connected rooms. If successful,
+/// it updates the `consumeSockets` list with each connected socket and tracks connected IPs in `roomRecvIPs`.
 ///
-/// Returns a future that completes with a list containing the updated [consumeSockets] and [roomRecvIPs].
-/// If an error occurs, the original [consumeSockets] and [roomRecvIPs] are returned.
+/// ### Parameters:
+/// - `options` (`ConnectIpsOptions`): Configuration options for establishing connections and managing sockets:
+///   - `consumeSockets` (`List<Map<String, io.Socket>>`): A list of socket connections for each IP.
+///   - `remIP` (`List<String>`): A list of remote IPs to connect to.
+///   - `apiUserName` (`String`): API username for authentication.
+///   - `apiKey` (`String?`): Optional API key for authentication.
+///   - `apiToken` (`String`): API token for authentication.
+///   - `newProducerMethod` (`NewPipeProducerType?`): Optional function to handle new producer events.
+///   - `closedProducerMethod` (`ProducerClosedType?`): Optional function to handle closed producer events.
+///   - `joinConsumeRoomMethod` (`JoinConsumeRoomType?`): Optional function to handle joining a room.
+///   - `parameters` (`ConnectIpsParameters`): Parameters object to handle state updates and manage dependencies.
+///
+/// ### Returns:
+/// - A `Future<List<dynamic>>` containing:
+///   - Updated list of `consumeSockets` with newly connected sockets.
+///   - Updated list of `roomRecvIPs` with connected IP addresses.
+///
+/// ### Example Usage:
+/// ```dart
+/// final options = ConnectIpsOptions(
+///   consumeSockets: [],
+///   remIP: ['100.122.1.1', '100.122.1.2'],
+///   apiUserName: 'myUserName',
+///   apiToken: 'myToken',
+///   parameters: myConnectIpsParametersInstance,
+/// );
+///
+/// connectIps(options).then(([consumeSockets, roomRecvIPs]) {
+///   print('Successfully connected to IPs: $roomRecvIPs');
+///   print('Active consume sockets: $consumeSockets');
+/// });
+/// ```
+///
+/// ### Error Handling:
+/// Logs errors in debug mode if connection or socket events fail, without throwing exceptions.
 
-typedef NewProducerMethod = Future<void> Function({
-  required String producerId,
-  required String islevel,
-  required io.Socket nsock,
-  required Map<String, dynamic> parameters,
-});
+Future<List<dynamic>> connectIps(ConnectIpsOptions options) async {
+  var parameters = options.parameters.getUpdatedAllParams();
 
-typedef ClosedProducerMethod = Future<void> Function({
-  required String remoteProducerId,
-  required Map<String, dynamic> parameters,
-});
+  // Extract parameters
+  List<Map<String, io.Socket>> consumeSockets = options.consumeSockets;
+  List<String> roomRecvIPs = parameters.roomRecvIPs;
+  final updateRoomRecvIPs = parameters.updateRoomRecvIPs;
+  final updateConsumeSockets = parameters.updateConsumeSockets;
 
-typedef JoinConsumeRoomMethod = Future<Map<String, dynamic>> Function({
-  required io.Socket remoteSock,
-  required String apiToken,
-  required String apiUserName,
-  required Map<String, dynamic> parameters,
-});
-
-typedef UpdateConsumeSockets = void Function(List<Map<String, io.Socket>>);
-
-Future<List<dynamic>> connectIps({
-  required List<Map<String, io.Socket>> consumeSockets,
-  required List<dynamic> remIP,
-  required String apiUserName,
-  String? apiKey,
-  String? apiToken,
-  NewProducerMethod? newProducerMethod,
-  ClosedProducerMethod? closedProducerMethod,
-  JoinConsumeRoomMethod? joinConsumeRoomMethod,
-  required Map<String, dynamic> parameters,
-}) async {
-  newProducerMethod ??= newPipeProducer;
-  closedProducerMethod ??= producerClosed;
-  joinConsumeRoomMethod ??= joinConsumeRoom;
-
-  apiKey ??= parameters['apiKey'];
-  apiToken ??= parameters['apiToken'];
+  final newProducerMethod = options.newProducerMethod ?? newPipeProducer;
+  final closedProducerMethod = options.closedProducerMethod ?? producerClosed;
+  final joinConsumeRoomMethod =
+      options.joinConsumeRoomMethod ?? joinConsumeRoom;
 
   try {
-    final List<dynamic> roomRecvIPs = parameters['roomRecvIPs'];
-
-    UpdateConsumeSockets updateConsumeSockets =
-        parameters['updateConsumeSockets'];
-
-    if ((apiKey == null && apiToken == null)) {
+    // Check for required parameters
+    if (options.apiKey == null && options.apiToken.isEmpty) {
+      if (kDebugMode) {
+        print('Missing required parameters for authentication');
+      }
       return [consumeSockets, roomRecvIPs];
     }
 
-    await Future.forEach(remIP, (ip) async {
+    for (final ip in options.remIP) {
       try {
-        final matching = consumeSockets.firstWhere(
-            (socketObj) => socketObj.keys.first == ip,
-            orElse: () => <String, io.Socket>{});
+        // Check if the IP is already connected
+        final existingSocket = consumeSockets.firstWhere(
+          (socketObj) => socketObj.keys.first == ip,
+          orElse: () => {},
+        );
 
-        if (matching.isEmpty && ip != null && ip.isNotEmpty) {
-          io.Socket remoteSock = await connectSocket(
-              apiUserName, apiKey!, apiToken!, 'https://$ip.mediasfu.com');
+        if (existingSocket.isNotEmpty || ip.isEmpty) {
+          continue;
+        }
 
-          if (remoteSock.id != null && remoteSock.id != '') {
-            if (!roomRecvIPs.contains(ip)) {
-              roomRecvIPs.add(ip);
-              parameters['updateRoomRecvIPs'](roomRecvIPs);
+        // Connect to the remote socket using SocketManager
+        final optionsConnect = ConnectSocketOptions(
+          apiUserName: options.apiUserName,
+          apiKey: options.apiKey ?? '',
+          apiToken: options.apiToken,
+          link: 'https://$ip.mediasfu.com',
+        );
+        io.Socket remoteSock = await connectSocket(
+          optionsConnect,
+        );
+
+        if (remoteSock.id != null && remoteSock.id!.isNotEmpty) {
+          if (!roomRecvIPs.contains(ip)) {
+            roomRecvIPs.add(ip);
+            updateRoomRecvIPs(roomRecvIPs);
+          }
+
+          // Event handler for 'new-pipe-producer'
+          remoteSock.on('new-pipe-producer', (data) async {
+            final optionsNewPipeProducer = NewPipeProducerOptions(
+              producerId: data['producerId'],
+              islevel: data['islevel'],
+              nsock: remoteSock,
+              parameters: parameters,
+            );
+            await newProducerMethod(
+              optionsNewPipeProducer,
+            );
+          });
+
+          // Event handler for 'producer-closed'
+          remoteSock.on('producer-closed', (data) async {
+            final optionsProducerClosed = ProducerClosedOptions(
+              remoteProducerId: data['remoteProducerId'],
+              parameters: parameters,
+            );
+            await closedProducerMethod(
+              optionsProducerClosed,
+            );
+          });
+
+          // Join the consumption room if required
+          final optionsJoinConsume = JoinConsumeRoomOptions(
+            remoteSock: remoteSock,
+            apiToken: options.apiToken,
+            apiUserName: options.apiUserName,
+            parameters: parameters,
+          );
+
+          final dataJSON = await joinConsumeRoomMethod(
+            optionsJoinConsume,
+          );
+
+          if (dataJSON is Map<String, dynamic>) {
+            final data = ResponseJoinRoom.fromJson(dataJSON);
+
+            if (data.rtpCapabilities == null) {
+              return [consumeSockets, roomRecvIPs];
             }
 
-            remoteSock.on('new-pipe-producer', (data) async {
-              if (newProducerMethod != null) {
-                await newProducerMethod(
-                    producerId: data['producerId'],
-                    islevel: data['islevel'],
-                    nsock: remoteSock,
-                    parameters: parameters);
-              }
-            });
-
-            remoteSock.on('producer-closed', (data) async {
-              if (closedProducerMethod != null) {
-                await closedProducerMethod(
-                    remoteProducerId: data['remoteProducerId'],
-                    parameters: parameters);
-              }
-            });
-
-            if (joinConsumeRoomMethod != null) {
-              final data = await joinConsumeRoomMethod(
-                  remoteSock: remoteSock,
-                  apiToken: apiToken,
-                  apiUserName: apiUserName,
-                  parameters: parameters);
-              if (data.isNotEmpty && data['rtpCapabilities'] == null) {
-                return;
-              }
-            } else {
-              try {
-                final data = await joinConsumeRoomMethod!(
-                    remoteSock: remoteSock,
-                    apiToken: apiToken,
-                    apiUserName: apiUserName,
-                    parameters: parameters);
-                if (data.isNotEmpty && data['rtpCapabilities'] == null) {
-                  return;
-                }
-              } catch (error) {
-                if (parameters['showAlert'] != null) {
-                  parameters['showAlert']({
-                    'message': error.toString(),
-                    'type': 'danger',
-                    'duration': 3000,
-                  });
-                }
-              }
-            }
-
+            // Add the remote socket to the consumeSockets array
             consumeSockets.add({ip: remoteSock});
             updateConsumeSockets(consumeSockets);
           }
         }
       } catch (error) {
         if (kDebugMode) {
-          print('MediaSFU - connectIps error: $error');
+          print('connectIps error with IP $ip: $error');
         }
       }
-    });
+    }
 
     return [consumeSockets, roomRecvIPs];
   } catch (error) {
     if (kDebugMode) {
-      print('MediaSFU - connectIps error: $error');
+      print('connectIps error: $error');
     }
-    return [consumeSockets, parameters['roomRecvIPs']];
+    return [consumeSockets, parameters.roomRecvIPs];
   }
 }

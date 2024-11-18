@@ -1,99 +1,136 @@
-/// Updates the recording parameters for the room based on the provided recordParams.
-///
-/// This function updates the recording parameters for the room based on the provided recordParams.
-///
-/// Parameters:
-/// - [recordParams]: Object containing recording parameters for the room.
-/// - [parameters]: Object containing various update functions for recording parameters.
-/// - [parameters.updateRecordingAudioPausesLimit]: Function to update recording audio pauses limit.
-/// - [parameters.updateRecordingAudioPausesCount]: Function to update recording audio pauses count.
-/// - [parameters.updateRecordingAudioSupport]: Function to update recording audio support.
-/// - [parameters.updateRecordingAudioPeopleLimit]: Function to update recording audio people limit.
-/// - [parameters.updateRecordingAudioParticipantsTimeLimit]: Function to update recording audio participants time limit.
-/// - [parameters.updateRecordingVideoPausesCount]: Function to update recording video pauses count.
-/// - [parameters.updateRecordingVideoPausesLimit]: Function to update recording video pauses limit.
-/// - [parameters.updateRecordingVideoSupport]: Function to update recording video support.
-/// - [parameters.updateRecordingVideoPeopleLimit]: Function to update recording video people limit.
-/// - [parameters.updateRecordingVideoParticipantsTimeLimit]: Function to update recording video participants time limit.
-/// - [parameters.updateRecordingAllParticipantsSupport]: Function to update recording support for all participants.
-/// - [parameters.updateRecordingVideoParticipantsSupport]: Function to update recording support for video participants.
-/// - [parameters.updateRecordingAllParticipantsFullRoomSupport]: Function to update recording full room support for all participants.
-/// - [parameters.updateRecordingVideoParticipantsFullRoomSupport]: Function to update recording full room support for video participants.
-/// - [parameters.updateRecordingPreferredOrientation]: Function to update recording preferred orientation.
-/// - [parameters.updateRecordingSupportForOtherOrientation]: Function to update recording support for other orientations.
-/// - [parameters.updateRecordingMultiFormatsSupport]: Function to update recording multi-formats support.
-///
-/// Returns:
-/// void
-void roomRecordParams({
-  required Map<String, dynamic> recordParams,
-  required Map<String, Function(dynamic)> parameters,
-}) {
-  void Function(dynamic)? updateRecordingAudioPausesLimit =
-      parameters['updateRecordingAudioPausesLimit'];
-  void Function(dynamic)? updateRecordingAudioPausesCount =
-      parameters['updateRecordingAudioPausesCount'];
-  void Function(dynamic)? updateRecordingAudioSupport =
-      parameters['updateRecordingAudioSupport'];
-  void Function(dynamic)? updateRecordingAudioPeopleLimit =
-      parameters['updateRecordingAudioPeopleLimit'];
-  void Function(dynamic)? updateRecordingAudioParticipantsTimeLimit =
-      parameters['updateRecordingAudioParticipantsTimeLimit'];
-  void Function(dynamic)? updateRecordingVideoPausesCount =
-      parameters['updateRecordingVideoPausesCount'];
-  void Function(dynamic)? updateRecordingVideoPausesLimit =
-      parameters['updateRecordingVideoPausesLimit'];
-  void Function(dynamic)? updateRecordingVideoSupport =
-      parameters['updateRecordingVideoSupport'];
-  void Function(dynamic)? updateRecordingVideoPeopleLimit =
-      parameters['updateRecordingVideoPeopleLimit'];
-  void Function(dynamic)? updateRecordingVideoParticipantsTimeLimit =
-      parameters['updateRecordingVideoParticipantsTimeLimit'];
-  void Function(dynamic)? updateRecordingAllParticipantsSupport =
-      parameters['updateRecordingAllParticipantsSupport'];
-  void Function(dynamic)? updateRecordingVideoParticipantsSupport =
-      parameters['updateRecordingVideoParticipantsSupport'];
-  void Function(dynamic)? updateRecordingAllParticipantsFullRoomSupport =
-      parameters['updateRecordingAllParticipantsFullRoomSupport'];
-  void Function(dynamic)? updateRecordingVideoParticipantsFullRoomSupport =
-      parameters['updateRecordingVideoParticipantsFullRoomSupport'];
-  void Function(dynamic)? updateRecordingPreferredOrientation =
-      parameters['updateRecordingPreferredOrientation'];
-  void Function(dynamic)? updateRecordingSupportForOtherOrientation =
-      parameters['updateRecordingSupportForOtherOrientation'];
-  void Function(dynamic)? updateRecordingMultiFormatsSupport =
-      parameters['updateRecordingMultiFormatsSupport'];
+/// Represents the recording parameters to be updated.
+abstract class RecordParams {
+  int get recordingAudioPausesLimit;
+  int get recordingAudioPausesCount;
+  bool get recordingAudioSupport;
+  int get recordingAudioPeopleLimit;
+  int get recordingAudioParticipantsTimeLimit;
+  int get recordingVideoPausesCount;
+  int get recordingVideoPausesLimit;
+  bool get recordingVideoSupport;
+  int get recordingVideoPeopleLimit;
+  int get recordingVideoParticipantsTimeLimit;
+  bool get recordingAllParticipantsSupport;
+  bool get recordingVideoParticipantsSupport;
+  bool get recordingAllParticipantsFullRoomSupport;
+  bool get recordingVideoParticipantsFullRoomSupport;
+  String get recordingPreferredOrientation;
+  bool get recordingSupportForOtherOrientation;
+  bool get recordingMultiFormatsSupport;
+}
 
-  updateRecordingAudioPausesLimit
-      ?.call(recordParams['recordingAudioPausesLimit']);
-  updateRecordingAudioPausesCount
-      ?.call(recordParams['recordingAudioPausesCount']);
-  updateRecordingAudioSupport?.call(recordParams['recordingAudioSupport']);
-  updateRecordingAudioPeopleLimit
-      ?.call(recordParams['recordingAudioPeopleLimit']);
-  updateRecordingAudioParticipantsTimeLimit
-      ?.call(recordParams['recordingAudioParticipantsTimeLimit']);
-  updateRecordingVideoPausesCount
-      ?.call(recordParams['recordingVideoPausesCount']);
-  updateRecordingVideoPausesLimit
-      ?.call(recordParams['recordingVideoPausesLimit']);
-  updateRecordingVideoSupport?.call(recordParams['recordingVideoSupport']);
-  updateRecordingVideoPeopleLimit
-      ?.call(recordParams['recordingVideoPeopleLimit']);
-  updateRecordingVideoParticipantsTimeLimit
-      ?.call(recordParams['recordingVideoParticipantsTimeLimit']);
-  updateRecordingAllParticipantsSupport
-      ?.call(recordParams['recordingAllParticipantsSupport']);
-  updateRecordingVideoParticipantsSupport
-      ?.call(recordParams['recordingVideoParticipantsSupport']);
-  updateRecordingAllParticipantsFullRoomSupport
-      ?.call(recordParams['recordingAllParticipantsFullRoomSupport']);
-  updateRecordingVideoParticipantsFullRoomSupport
-      ?.call(recordParams['recordingVideoParticipantsFullRoomSupport']);
-  updateRecordingPreferredOrientation
-      ?.call(recordParams['recordingPreferredOrientation']);
-  updateRecordingSupportForOtherOrientation
-      ?.call(recordParams['recordingSupportForOtherOrientation']);
-  updateRecordingMultiFormatsSupport
-      ?.call(recordParams['recordingMultiFormatsSupport']);
+/// Defines update functions for each recording parameter.
+abstract class RoomRecordParamsParameters {
+  // Update functions as abstract getters returning function types
+  void Function(int) get updateRecordingAudioPausesLimit;
+  void Function(int) get updateRecordingAudioPausesCount;
+  void Function(bool) get updateRecordingAudioSupport;
+  void Function(int) get updateRecordingAudioPeopleLimit;
+  void Function(int) get updateRecordingAudioParticipantsTimeLimit;
+  void Function(int) get updateRecordingVideoPausesCount;
+  void Function(int) get updateRecordingVideoPausesLimit;
+  void Function(bool) get updateRecordingVideoSupport;
+  void Function(int) get updateRecordingVideoPeopleLimit;
+  void Function(int) get updateRecordingVideoParticipantsTimeLimit;
+  void Function(bool) get updateRecordingAllParticipantsSupport;
+  void Function(bool) get updateRecordingVideoParticipantsSupport;
+  void Function(bool) get updateRecordingAllParticipantsFullRoomSupport;
+  void Function(bool) get updateRecordingVideoParticipantsFullRoomSupport;
+  void Function(String) get updateRecordingPreferredOrientation;
+  void Function(bool) get updateRecordingSupportForOtherOrientation;
+  void Function(bool) get updateRecordingMultiFormatsSupport;
+}
+
+/// Options to configure the recording parameter updates.
+class RoomRecordParamsOptions {
+  final RecordParams recordParams;
+  final RoomRecordParamsParameters parameters;
+
+  RoomRecordParamsOptions({
+    required this.recordParams,
+    required this.parameters,
+  });
+}
+
+typedef RoomRecordParamsType = void Function(RoomRecordParamsOptions options);
+
+/// Updates various recording parameters based on the provided [recordParams].
+///
+/// Example usage:
+/// ```dart
+/// final recordParams = RecordParams(
+///   recordingAudioPausesLimit: 3,
+///   recordingAudioPausesCount: 1,
+///   recordingAudioSupport: true,
+///   recordingAudioPeopleLimit: 10,
+///   recordingAudioParticipantsTimeLimit: 60,
+///   recordingVideoPausesCount: 1,
+///   recordingVideoPausesLimit: 3,
+///   recordingVideoSupport: true,
+///   recordingVideoPeopleLimit: 10,
+///   recordingVideoParticipantsTimeLimit: 60,
+///   recordingAllParticipantsSupport: true,
+///   recordingVideoParticipantsSupport: false,
+///   recordingAllParticipantsFullRoomSupport: true,
+///   recordingVideoParticipantsFullRoomSupport: false,
+///   recordingPreferredOrientation: "landscape",
+///   recordingSupportForOtherOrientation: true,
+///   recordingMultiFormatsSupport: false,
+/// );
+///
+/// final parameters = RoomRecordParamsParameters(
+///   updateRecordingAudioPausesLimit: (value) => print("Audio Pauses Limit: $value"),
+///   updateRecordingAudioPausesCount: (value) => print("Audio Pauses Count: $value"),
+///   updateRecordingAudioSupport: (value) => print("Audio Support: $value"),
+///   // Other parameters...
+/// );
+///
+/// roomRecordParams(RoomRecordParamsOptions(
+///   recordParams: recordParams,
+///   parameters: parameters,
+/// ));
+/// ```
+void roomRecordParams(RoomRecordParamsOptions options) {
+  final recordParams = options.recordParams;
+  final params = options.parameters;
+
+  params
+      .updateRecordingAudioPausesLimit(recordParams.recordingAudioPausesLimit);
+  params
+      .updateRecordingAudioPausesCount(recordParams.recordingAudioPausesCount);
+  params.updateRecordingAudioSupport(recordParams.recordingAudioSupport);
+  params
+      .updateRecordingAudioPeopleLimit(recordParams.recordingAudioPeopleLimit);
+  params.updateRecordingAudioParticipantsTimeLimit(
+    recordParams.recordingAudioParticipantsTimeLimit,
+  );
+  params
+      .updateRecordingVideoPausesCount(recordParams.recordingVideoPausesCount);
+  params
+      .updateRecordingVideoPausesLimit(recordParams.recordingVideoPausesLimit);
+  params.updateRecordingVideoSupport(recordParams.recordingVideoSupport);
+  params
+      .updateRecordingVideoPeopleLimit(recordParams.recordingVideoPeopleLimit);
+  params.updateRecordingVideoParticipantsTimeLimit(
+    recordParams.recordingVideoParticipantsTimeLimit,
+  );
+  params.updateRecordingAllParticipantsSupport(
+    recordParams.recordingAllParticipantsSupport,
+  );
+  params.updateRecordingVideoParticipantsSupport(
+    recordParams.recordingVideoParticipantsSupport,
+  );
+  params.updateRecordingAllParticipantsFullRoomSupport(
+    recordParams.recordingAllParticipantsFullRoomSupport,
+  );
+  params.updateRecordingVideoParticipantsFullRoomSupport(
+    recordParams.recordingVideoParticipantsFullRoomSupport,
+  );
+  params.updateRecordingPreferredOrientation(
+      recordParams.recordingPreferredOrientation);
+  params.updateRecordingSupportForOtherOrientation(
+    recordParams.recordingSupportForOtherOrientation,
+  );
+  params.updateRecordingMultiFormatsSupport(
+      recordParams.recordingMultiFormatsSupport);
 }

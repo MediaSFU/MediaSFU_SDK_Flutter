@@ -1,102 +1,129 @@
-// ignore_for_file: unused_local_variable
-
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:socket_io_client/socket_io_client.dart' as io;
+import '../../types/types.dart'
+    show
+        ConnectIpsType,
+        ConnectIpsParameters,
+        AltDomains,
+        ConsumeSocket,
+        ConnectIpsOptions;
 
-/// Retrieves domains based on the provided parameters.
+/// Parameters required for the getDomains function.
+abstract class GetDomainsParameters implements ConnectIpsParameters {
+  // Core properties as abstract getters
+  List<String> get roomRecvIPs;
+  dynamic get rtpCapabilities; // Placeholder for RtpCapabilities type
+  List<ConsumeSocket> get consumeSockets;
+
+  // Mediasfu function as an abstract getter
+  ConnectIpsType get connectIps;
+
+  // Method to retrieve updated parameters as an abstract getter
+  GetDomainsParameters Function() get getUpdatedAllParams;
+
+  // Dynamic key-value support
+  // dynamic operator [](String key);
+}
+
+/// Options for retrieving domains and processing connections.
+class GetDomainsOptions {
+  final List<String> domains;
+  final AltDomains altDomains;
+  final String apiUserName;
+  final String apiKey;
+  final String apiToken;
+  final GetDomainsParameters parameters;
+
+  GetDomainsOptions({
+    required this.domains,
+    required this.altDomains,
+    required this.apiUserName,
+    required this.apiKey,
+    required this.apiToken,
+    required this.parameters,
+  });
+}
+
+typedef GetDomainsType = Future<void> Function(GetDomainsOptions options);
+
+/// Connects to specified domains, processes IPs, and handles domain-related connections.
 ///
-/// This function connects to the specified domains and retrieves the IP addresses
-/// associated with them. It checks if the IP addresses are already present in the
-/// `roomRecvIPs` list and adds the ones that are not. Then, it calls the `connectIps`
-/// function to establish connections to the new IP addresses.
+/// The function iterates over a list of domains to verify IP connections, connects to
+/// any new IPs, and uses the provided `connectIps` function to handle connection processes.
 ///
-/// The function takes the following parameters:
-/// - `domains`: A list of domain names to retrieve IP addresses for.
-/// - `altDomains`: A map of alternative domain names and their corresponding IP addresses.
-/// - `parameters`: A map of additional parameters required for the function.
+/// - [options] contains the configuration and parameters needed for processing connections:
+///   - `domains`: List of domains to be processed for IP connections.
+///   - `altDomains`: Alternative IP mappings for specific domains.
+///   - `apiUserName`: Username for API authentication.
+///   - `apiKey`: API key for authentication.
+///   - `apiToken`: API token for secure access.
+///   - `parameters`: An instance of `GetDomainsParameters` that contains IPs to be processed
+///     and necessary configurations.
 ///
-/// The `parameters` map should contain the following keys:
-/// - `roomRecvIPs`: A list of IP addresses already present in the room.
-/// - `apiUserName`: The API username for authentication.
-/// - `apiKey`: (Optional) The API key for authentication.
-/// - `apiToken`: The API token for authentication.
-/// - `consumeSockets`: A list of consume sockets.
-/// - `connectIps`: A function to connect to IP addresses.
+/// The function performs the following actions:
+/// - Checks each domain in `options.domains` to determine if it has an alternative IP in `altDomains`.
+/// - For each domain, if the IP is not already in `roomRecvIPs`, it is added to a list of IPs to connect.
+/// - Uses `connectIps` to initiate the connection to each new IP address in `ipsToConnect`.
 ///
-/// This function does not return any value. If an error occurs during the process,
-/// it will be printed to the console in debug mode.
+/// ### Example Usage:
+/// ```dart
+/// final options = GetDomainsOptions(
+///   domains: ['domain1.com', 'domain2.com'],
+///   altDomains: AltDomains(domains: {
+///     'domain1.com': 'alt1.domain.com',
+///     'domain2.com': 'alt2.domain.com',
+///   }),
+///   apiUserName: 'myUsername',
+///   apiKey: 'myApiKey',
+///   apiToken: 'myApiToken',
+///   parameters: GetDomainsParameters(
+///     roomRecvIPs: ['100.122.1.1'],
+///     consumeSockets: [ConsumeSocket(id: 'socket1')],
+///     rtpCapabilities: null,
+///     connectIps: (connectOptions) async {
+///       print('Connecting to IPs: ${connectOptions.remIP}');
+///     },
+///   ),
+/// );
+///
+/// await getDomains(options);
+/// ```
+///
+/// In this example:
+/// - The function checks each domain in the `domains` list and replaces it with an alternative IP from `altDomains` if available.
+/// - It verifies if each IP is already connected by checking against `roomRecvIPs`.
+/// - Finally, it calls `connectIps` for each new IP not already connected.
 
-typedef NewProducerMethod = Future<void> Function({
-  required String producerId,
-  required String islevel,
-  required dynamic nsock,
-  required Map<String, dynamic> parameters,
-});
-
-typedef ClosedProducerMethod = Future<void> Function({
-  required String remoteProducerId,
-  required Map<String, dynamic> parameters,
-});
-
-typedef JoinConsumeRoomMethod = Future<Map<String, dynamic>> Function({
-  required io.Socket remoteSock,
-  required String apiToken,
-  required String apiUserName,
-  required Map<String, dynamic> parameters,
-});
-
-typedef ConnectIps = Future<List<dynamic>> Function({
-  required List<Map<String, io.Socket>> consumeSockets,
-  required List<dynamic> remIP,
-  required String apiUserName,
-  String? apiKey,
-  String? apiToken,
-  NewProducerMethod? newProducerMethod,
-  ClosedProducerMethod? closedProducerMethod,
-  JoinConsumeRoomMethod? joinConsumeRoomMethod,
-  required Map<String, dynamic> parameters,
-});
-
-/// Retrieves domains based on the provided parameters.
-Future<void> getDomains({
-  required List<String> domains,
-  required Map<String, String> altDomains,
-  required Map<String, dynamic> parameters,
-}) async {
-  // Function to retrieve domains
-
-  List<dynamic> roomRecvIPs = parameters['roomRecvIPs'];
-  String apiUserName = parameters['apiUserName'];
-  String apiKey = parameters['apiKey'] ?? '';
-  String apiToken = parameters['apiToken'];
-  List<Map<String, io.Socket>> consumeSockets = parameters['consumeSockets'];
-
-  //mediasfu functions
-  ConnectIps connectIps = parameters['connectIps'];
-
+Future<void> getDomains(GetDomainsOptions options) async {
+  final updatedParams = options.parameters.getUpdatedAllParams();
   List<String> ipsToConnect = [];
 
   try {
-    for (String domain in domains) {
-      String ipToCheck = altDomains[domain] ?? domain;
-      // Check if the IP is already in roomRecvIPs
-      if (!roomRecvIPs.contains(ipToCheck)) {
+    // Process each domain and check if IP is already connected
+    for (String domain in options.domains) {
+      String ipToCheck = options.altDomains.altDomains[domain] ?? domain;
+
+      // Add IP if not already connected
+      if (!updatedParams.roomRecvIPs.contains(ipToCheck)) {
         ipsToConnect.add(ipToCheck);
       }
     }
-    final List<dynamic> result = await connectIps(
-      consumeSockets: consumeSockets,
+
+    // Connect to IPs
+    final optionsConnect = ConnectIpsOptions(
+      consumeSockets: updatedParams.consumeSockets,
       remIP: ipsToConnect,
-      parameters: parameters,
-      apiUserName: apiUserName,
-      apiKey: apiKey,
-      apiToken: apiToken,
+      apiUserName: options.apiUserName,
+      apiKey: options.apiKey,
+      apiToken: options.apiToken,
+      parameters: updatedParams,
+    );
+    await updatedParams.connectIps(
+      optionsConnect,
     );
   } catch (error) {
     if (kDebugMode) {
       print("MediaSFU - Error in getDomains: $error");
     }
-    // throw new Error("Failed to retrieve domains.");
   }
 }

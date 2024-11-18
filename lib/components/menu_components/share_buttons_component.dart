@@ -1,142 +1,144 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:clipboard/clipboard.dart'; // Import the clipboard package
+import 'package:clipboard/clipboard.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../types/types.dart' show EventType;
 
-/// ShareButtonsComponent - A component for displaying share buttons.
-///
-/// This component displays a row of share buttons for various social media platforms
-/// like email, Facebook, WhatsApp, and Telegram. It allows users to share the meeting
-/// link through different channels.
-///
-/// The meeting ID to be shared.
-/// final String meetingID;
-///
-/// The type of event, e.g., 'chat', 'broadcast', or 'meeting'.
-/// final String eventType;
-///
-/// A list of custom share buttons to be displayed instead of the default ones.
-/// final List<Map<String, dynamic>> shareButtons;
+/// ShareButtonOptions - Defines options for each share button in the ShareButtonsComponent widget.
+class ShareButtonOptions {
+  final IconData? icon;
+  final VoidCallback action;
+  final bool show;
+  final Color? backgroundColor;
+  final Color? iconColor;
 
-class ShareButtonsComponent extends StatelessWidget {
+  ShareButtonOptions({
+    required this.action,
+    this.icon,
+    this.show = true,
+    this.backgroundColor = Colors.blue,
+    this.iconColor = Colors.white,
+  });
+}
+
+/// ShareButtonsComponentOptions - Configures the ShareButtonsComponent with meeting details and custom buttons.
+class ShareButtonsComponentOptions {
   final String meetingID;
-  final String eventType;
-  final List<Map<String, dynamic>> shareButtons;
+  final EventType eventType;
+  final List<ShareButtonOptions>? customButtons;
 
-  const ShareButtonsComponent({
-    super.key,
+  ShareButtonsComponentOptions({
     required this.meetingID,
     required this.eventType,
-    this.shareButtons = const [],
+    this.customButtons,
   });
+}
+
+/// ShareButtonsComponent - A widget that displays a row of customizable share buttons for sharing a meeting link.
+///
+/// This component provides default share buttons for copying to clipboard, email, Facebook, WhatsApp, and Telegram,
+/// and allows additional custom buttons to be provided.
+///
+/// ### Parameters:
+/// - `options`: An instance of `ShareButtonsComponentOptions` containing meeting details and optional custom buttons.
+///
+/// ### Example Usage:
+/// ```dart
+/// ShareButtonsComponent(
+///   options: ShareButtonsComponentOptions(
+///     meetingID: "123456",
+///     eventType: "meeting",
+///     customButtons: [
+///       ShareButtonOptions(
+///         icon: FontAwesomeIcons.twitter,
+///         action: () => print("Sharing to Twitter"),
+///         backgroundColor: Colors.blue,
+///         iconColor: Colors.white,
+///       ),
+///     ],
+///   ),
+/// );
+/// ```
+class ShareButtonsComponent extends StatelessWidget {
+  final ShareButtonsComponentOptions options;
+
+  const ShareButtonsComponent({super.key, required this.options});
 
   @override
   Widget build(BuildContext context) {
-    final shareName = eventType == 'chat'
+    final shareName = options.eventType == EventType.chat
         ? 'chat'
-        : eventType == 'broadcast'
+        : options.eventType == EventType.broadcast
             ? 'broadcast'
             : 'meeting';
 
-    final defaultShareButtons = [
-      {
-        'icon': Icons.copy,
-        'action': () async {
-          // Action for the copy button
+    final defaultButtons = [
+      ShareButtonOptions(
+        icon: Icons.copy,
+        action: () async {
           await FlutterClipboard.copy(
-              'https://$shareName.mediasfu.com/$shareName/$meetingID');
+              'https://$shareName.mediasfu.com/$shareName/${options.meetingID}');
         },
-        'show': true,
-      },
-      {
-        'icon': Icons.email,
-        'action': () {
-          // Action for the email button
+      ),
+      ShareButtonOptions(
+        icon: Icons.email,
+        action: () {
           final emailUrl =
-              'mailto:?subject=Join my meeting&body=Here\'s the link to the meeting: https://$shareName.mediasfu.com/$shareName/$meetingID';
+              'mailto:?subject=Join my meeting&body=Here\'s the link: https://$shareName.mediasfu.com/$shareName/${options.meetingID}';
           launchUrl(Uri.parse(emailUrl));
         },
-        'show': true,
-      },
-      {
-        'icon': Icons.facebook,
-        'action': () {
-          // Action for the Facebook button
+      ),
+      ShareButtonOptions(
+        icon: Icons.facebook,
+        action: () {
           final facebookUrl =
-              'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent('https://$shareName.mediasfu.com/$shareName/$meetingID')}';
+              'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent('https://$shareName.mediasfu.com/$shareName/${options.meetingID}')}';
           launchUrl(Uri.parse(facebookUrl));
         },
-        'show': true,
-      },
-      {
-        'icon': FontAwesomeIcons.whatsapp,
-        'action': () {
-          // Action for the WhatsApp button
+      ),
+      ShareButtonOptions(
+        icon: FontAwesomeIcons.whatsapp,
+        action: () {
           final whatsappUrl =
-              'https://wa.me/?text=${Uri.encodeComponent('https://$shareName.mediasfu.com/$shareName/$meetingID')}';
+              'https://wa.me/?text=${Uri.encodeComponent('https://$shareName.mediasfu.com/$shareName/${options.meetingID}')}';
           launchUrl(Uri.parse(whatsappUrl));
         },
-        'show': true,
-      },
-      {
-        'icon': Icons.send,
-        'action': () {
-          // Action for the Telegram button
+      ),
+      ShareButtonOptions(
+        icon: Icons.send,
+        action: () {
           final telegramUrl =
-              'https://t.me/share/url?url=${Uri.encodeComponent('https://$shareName.mediasfu.com/$shareName/$meetingID')}';
+              'https://t.me/share/url?url=${Uri.encodeComponent('https://$shareName.mediasfu.com/$shareName/${options.meetingID}')}';
           launchUrl(Uri.parse(telegramUrl));
         },
-        'show': true,
-      },
+      ),
     ];
 
-    final filteredShareButtons = shareButtons.isNotEmpty
-        ? shareButtons.where((button) => button['show']).toList()
-        : defaultShareButtons
-            .where((button) => button['show'] as bool)
-            .toList();
+    final buttonsToShow = options.customButtons ?? defaultButtons;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: filteredShareButtons.map<Widget>((button) {
-        Widget iconWidget;
-
-        // Check if the icon is FontAwesomeIcon
-        if (button['icon'] is IconData) {
-          iconWidget = Icon(
-            button['icon'],
-            color: Colors.white,
-            size: 24,
-          );
-        } else if (button['icon'] is IconData) {
-          // Render Font Awesome icon
-          iconWidget = FaIcon(
-            button['icon'],
-            color: Colors.white,
-            size: 24,
-          );
-        } else {
-          // Fallback to default icon
-          iconWidget = const Icon(
-            Icons.error_outline,
-            color: Colors.white,
-            size: 24,
-          );
-        }
-
-        return GestureDetector(
-          onTap: button['action'],
-          child: Container(
-            padding: const EdgeInsets.all(5),
-            margin: const EdgeInsets.symmetric(horizontal: 10),
-            decoration: BoxDecoration(
-              color: Colors.blue,
-              borderRadius: BorderRadius.circular(5),
+      children: buttonsToShow
+          .where((button) => button.show)
+          .map<Widget>(
+            (button) => GestureDetector(
+              onTap: button.action,
+              child: Container(
+                padding: const EdgeInsets.all(5),
+                margin: const EdgeInsets.symmetric(horizontal: 8),
+                decoration: BoxDecoration(
+                  color: button.backgroundColor ?? Colors.blue,
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Icon(
+                  button.icon ?? Icons.error_outline,
+                  color: button.iconColor ?? Colors.white,
+                  size: 24,
+                ),
+              ),
             ),
-            child: iconWidget,
-          ),
-        );
-      }).toList(),
+          )
+          .toList(),
     );
   }
 }

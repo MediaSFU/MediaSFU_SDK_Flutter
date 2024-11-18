@@ -1,98 +1,119 @@
 import 'package:socket_io_client/socket_io_client.dart' as io;
-
-/// Modifies the settings based on the provided parameters.
-///
-/// The [parameters] map should contain the following keys:
-/// - 'showAlert': A function to show an alert message.
-/// - 'roomName': The name of the room.
-/// - 'audioSet': The audio setting.
-/// - 'videoSet': The video setting.
-/// - 'screenshareSet': The screenshare setting.
-/// - 'chatSet': The chat setting.
-/// - 'socket': The socket for communication.
-///
-/// The [showAlert] function is used to display an alert message with the specified [message],
-/// [type], and [duration].
-///
-/// The [updateAudioSetting], [updateVideoSetting], [updateScreenshareSetting], [updateChatSetting],
-/// and [updateIsSettingsModalVisible] functions are used to update the corresponding settings and
-/// visibility of the settings modal.
-///
-/// If the [roomName] starts with the letter 'd', none of the settings should be set to 'approval'.
-///
-/// The [updateAudioSetting], [updateVideoSetting], [updateScreenshareSetting], and [updateChatSetting]
-/// functions are called to update the state variables based on the provided logic.
-///
-/// The [settings] list is created with the provided audio, video, screenshare, and chat settings.
-///
-/// The 'updateSettingsForRequests' event is emitted to the [socket] with the updated settings and room name.
-///
-/// Finally, the [updateIsSettingsModalVisible] function is called to close the settings modal.
-
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
-});
+import '../../types/types.dart' show ShowAlert;
 
 typedef UpdateSetting = void Function(String value);
 typedef UpdateIsSettingsModalVisible = void Function(bool value);
 
-void modifySettings({
-  required Map<String, dynamic> parameters,
-}) async {
-  final ShowAlert? showAlert = parameters['showAlert'];
-  final String roomName = parameters['roomName'];
-  final String audioSet = parameters['audioSet'];
-  final String videoSet = parameters['videoSet'];
-  final String screenshareSet = parameters['screenshareSet'];
-  final String chatSet = parameters['chatSet'];
-  final io.Socket socket = parameters['socket'];
+/// Options for modifying room settings.
+class ModifySettingsOptions {
+  final ShowAlert? showAlert;
+  final String roomName;
+  final String audioSet;
+  final String videoSet;
+  final String screenshareSet;
+  final String chatSet;
+  final io.Socket? socket;
+  final UpdateSetting updateAudioSetting;
+  final UpdateSetting updateVideoSetting;
+  final UpdateSetting updateScreenshareSetting;
+  final UpdateSetting updateChatSetting;
+  final UpdateIsSettingsModalVisible updateIsSettingsModalVisible;
 
-  final UpdateSetting updateAudioSetting = parameters['updateAudioSetting'];
-  final UpdateSetting updateVideoSetting = parameters['updateVideoSetting'];
-  final UpdateSetting updateScreenshareSetting =
-      parameters['updateScreenshareSetting'];
-  final UpdateSetting updateChatSetting = parameters['updateChatSetting'];
-  final UpdateIsSettingsModalVisible updateIsSettingsModalVisible =
-      parameters['updateIsSettingsModalVisible'];
+  ModifySettingsOptions({
+    this.showAlert,
+    required this.roomName,
+    required this.audioSet,
+    required this.videoSet,
+    required this.screenshareSet,
+    required this.chatSet,
+    this.socket,
+    required this.updateAudioSetting,
+    required this.updateVideoSetting,
+    required this.updateScreenshareSetting,
+    required this.updateChatSetting,
+    required this.updateIsSettingsModalVisible,
+  });
+}
 
-  if (roomName.toLowerCase().startsWith('d')) {
-    //none should be approval
-    if (audioSet == 'approval' ||
-        videoSet == 'approval' ||
-        screenshareSet == 'approval' ||
-        chatSet == 'approval') {
-      if (showAlert != null) {
-        showAlert(
-          message: 'You cannot set approval for demo mode.',
-          type: 'danger',
-          duration: 3000,
-        );
-      }
+/// Type definition for the modifySettings function.
+typedef ModifySettingsType = Future<void> Function(
+    ModifySettingsOptions options);
+
+/// Modifies settings for a given room and updates the state accordingly.
+///
+/// - `options`: Options for modifying settings, including:
+///   - `showAlert`: Function to show alert messages (optional).
+///   - `roomName`: The name of the room.
+///   - `audioSet`: The audio setting to be applied.
+///   - `videoSet`: The video setting to be applied.
+///   - `screenshareSet`: The screenshare setting to be applied.
+///   - `chatSet`: The chat setting to be applied.
+///   - `socket`: The socket instance for emitting events.
+///   - `updateAudioSetting`: Function to update the audio setting state.
+///   - `updateVideoSetting`: Function to update the video setting state.
+///   - `updateScreenshareSetting`: Function to update the screenshare setting state.
+///   - `updateChatSetting`: Function to update the chat setting state.
+///   - `updateIsSettingsModalVisible`: Function to update the visibility of the settings modal.
+///
+/// Throws an alert if any setting is set to "approval" in demo mode (room name starts with "d").
+///
+/// Example usage:
+/// ```dart
+/// modifySettings(
+///   ModifySettingsOptions(
+///     roomName: "d123",
+///     audioSet: "allow",
+///     videoSet: "allow",
+///     screenshareSet: "deny",
+///     chatSet: "allow",
+///     socket: mySocketInstance,
+///     updateAudioSetting: setAudioSetting,
+///     updateVideoSetting: setVideoSetting,
+///     updateScreenshareSetting: setScreenshareSetting,
+///     updateChatSetting: setChatSetting,
+///     updateIsSettingsModalVisible: setIsSettingsModalVisible,
+///     showAlert: (options) => alertUser(options),
+///   ),
+/// );
+/// ```
+///
+
+Future<void> modifySettings(ModifySettingsOptions options) async {
+  if (options.roomName.toLowerCase().startsWith('d')) {
+    // None of the settings should be set to 'approval' in demo mode
+    if (options.audioSet == 'approval' ||
+        options.videoSet == 'approval' ||
+        options.screenshareSet == 'approval' ||
+        options.chatSet == 'approval') {
+      options.showAlert?.call(
+        message: 'You cannot set approval for demo mode.',
+        type: 'danger',
+        duration: 3000,
+      );
       return;
     }
   }
 
-  // Check and update state variables based on the provided logic
-  if (audioSet.isNotEmpty) {
-    updateAudioSetting(audioSet);
+  // Update settings based on the provided options
+  if (options.audioSet.isNotEmpty) options.updateAudioSetting(options.audioSet);
+  if (options.videoSet.isNotEmpty) options.updateVideoSetting(options.videoSet);
+  if (options.screenshareSet.isNotEmpty) {
+    options.updateScreenshareSetting(options.screenshareSet);
   }
-  if (videoSet.isNotEmpty) {
-    updateVideoSetting(videoSet);
-  }
-  if (screenshareSet.isNotEmpty) {
-    updateScreenshareSetting(screenshareSet);
-  }
-  if (chatSet.isNotEmpty) {
-    updateChatSetting(chatSet);
-  }
+  if (options.chatSet.isNotEmpty) options.updateChatSetting(options.chatSet);
 
-  List<String?> settings = [audioSet, videoSet, screenshareSet, chatSet];
-
-  socket.emit('updateSettingsForRequests',
-      {'settings': settings, 'roomName': roomName});
+  // Emit updated settings
+  final settings = [
+    options.audioSet,
+    options.videoSet,
+    options.screenshareSet,
+    options.chatSet
+  ];
+  options.socket!.emit('updateSettingsForRequests', {
+    'settings': settings,
+    'roomName': options.roomName,
+  });
 
   // Close modal
-  updateIsSettingsModalVisible(false);
+  options.updateIsSettingsModalVisible(false);
 }

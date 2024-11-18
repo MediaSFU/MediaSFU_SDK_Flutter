@@ -1,77 +1,152 @@
 import 'package:flutter/foundation.dart';
+import '../../../types/types.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'dart:async';
 
-/// Joins a room on the socket server.
+/// Validates if a string is alphanumeric.
+bool _validateAlphanumeric(String value) {
+  final alphanumericRegex = RegExp(r'^[a-zA-Z0-9]+$');
+  return alphanumericRegex.hasMatch(value);
+}
+
+/// Options for joining a room.
+class JoinRoomOptions {
+  final io.Socket? socket;
+  final String roomName;
+  final String islevel;
+  final String member;
+  final String sec;
+  final String apiUserName;
+
+  JoinRoomOptions({
+    this.socket,
+    required this.roomName,
+    required this.islevel,
+    required this.member,
+    required this.sec,
+    required this.apiUserName,
+  });
+}
+
+typedef JoinRoomType = Future<ResponseJoinRoom> Function(
+    JoinRoomOptions options);
+
+/// Joins a room on the socket server with specified options.
 ///
-/// This function takes in the necessary parameters to join a room on the socket server.
-/// It performs input validation and emits the 'joinRoom' event to the server.
-/// It returns a Future that completes with a Map containing the response data from the server.
-Future<Map<String, dynamic>> joinRoom(
-  io.Socket socket,
-  String roomName,
-  String islevel,
-  String member,
-  String sec,
-  String apiUserName,
-) async {
-  try {
-    // Validate inputs
-    if (!(sec.isNotEmpty &&
-        roomName.isNotEmpty &&
-        islevel.isNotEmpty &&
-        apiUserName.isNotEmpty &&
-        member.isNotEmpty)) {
-      throw Exception('Missing required parameters');
-    }
+/// This function validates the input parameters, then emits a `joinRoom` event to the server.
+/// It returns a `Future` that completes with the server’s response data or an error if validation fails
+/// or if the server returns a specific status.
+///
+/// - Throws: `Exception` if input validation fails or if the user is banned, suspended, or if
+///           the host has not joined the room yet.
+///
+/// - Returns: A `Future<Map<String, dynamic>>` containing the server's response data on success.
+///
+/// Example usage:
+/// ```dart
+/// final socket = io.io('https://your-socket-server.com', <String, dynamic>{
+///   'transports': ['websocket'],
+///   'autoConnect': false,
+/// });
+/// socket.connect();
+///
+/// final options = JoinRoomOptions(
+///   socket: socket,
+///   roomName: 's12345678',
+///   islevel: '1',
+///   member: 'User123',
+///   sec: 'your-secure-key-here-64-characters-long',
+///   apiUserName: 'apiUser',
+/// );
+///
+/// try {
+///   final response = await joinRoom(options);
+///   print('Successfully joined room: $response');
+/// } catch (e) {
+///   print('Error joining room: $e');
+/// }
+/// ```
+///
+/// Parameters:
+/// - [options] (`JoinRoomOptions`): The options for joining the room, including socket and user details.
 
-    // Validate alphanumeric for roomName, apiUserName, and member
-    if (!_validateAlphanumeric(roomName) ||
-        !_validateAlphanumeric(apiUserName) ||
-        !_validateAlphanumeric(member)) {
-      throw Exception('Invalid roomName, apiUserName, or member');
-    }
-
-    // Validate roomName starts with 's' or 'p'
-    if (!(roomName.startsWith('s') || roomName.startsWith('p'))) {
-      throw Exception('Invalid roomName, must start with s or p');
-    }
-
-    // Validate other conditions for sec, roomName, islevel, apiUserName
-    if (!(sec.length == 64 &&
-        roomName.length >= 8 &&
-        islevel.length == 1 &&
-        apiUserName.length >= 6 &&
-        (islevel == '0' || islevel == '1' || islevel == '2'))) {
-      throw Exception('Invalid roomName, islevel, apiUserName, or secret');
-    }
-
-    // Emit the 'joinRoom' event and handle the acknowledgment
-    return await _emitJoinRoom(
-        socket, roomName, islevel, member, sec, apiUserName);
-  } catch (error) {
-    if (kDebugMode) {
-      print('Error joining room: $error');
-    }
-    rethrow;
+Future<ResponseJoinRoom> joinRoom(JoinRoomOptions options) async {
+  // Validate inputs
+  if (!_validateInputs(options)) {
+    throw Exception('Validation failed for input parameters.');
   }
+
+  // Emit the 'joinRoom' event and return the response
+  return await _emitJoinRoom(
+    options.socket,
+    options.roomName,
+    options.islevel,
+    options.member,
+    options.sec,
+    options.apiUserName,
+  );
+}
+
+/// Validates the inputs for joining a room.
+bool _validateInputs(JoinRoomOptions options) {
+  // Check that required fields are non-empty
+  if (options.sec.isEmpty ||
+      options.roomName.isEmpty ||
+      options.islevel.isEmpty ||
+      options.apiUserName.isEmpty ||
+      options.member.isEmpty) {
+    if (kDebugMode) {
+      print('Missing required parameters');
+    }
+    return false;
+  }
+
+  // Validate alphanumeric fields
+  if (!_validateAlphanumeric(options.roomName) ||
+      !_validateAlphanumeric(options.apiUserName) ||
+      !_validateAlphanumeric(options.member)) {
+    if (kDebugMode) {
+      print('Invalid roomName, apiUserName, or member');
+    }
+    return false;
+  }
+
+  // Validate specific conditions for the inputs
+  if (!(options.roomName.startsWith('s') || options.roomName.startsWith('p'))) {
+    if (kDebugMode) {
+      print('Invalid roomName, must start with "s" or "p"');
+    }
+    return false;
+  }
+
+  if (!(options.sec.length == 64 &&
+      options.roomName.length >= 8 &&
+      options.islevel.length == 1 &&
+      options.apiUserName.length >= 6 &&
+      ['0', '1', '2'].contains(options.islevel))) {
+    if (kDebugMode) {
+      print('Invalid roomName, islevel, apiUserName, or secret');
+    }
+    return false;
+  }
+
+  return true;
 }
 
 /// Emits the 'joinRoom' event to the socket server and handles the acknowledgment.
 ///
-/// This function is called by the [joinRoom] function to emit the 'joinRoom' event
-/// to the socket server with the provided parameters. It returns a Future that
-/// completes with a Map containing the response data from the server.
-Future<Map<String, dynamic>> _emitJoinRoom(
-  io.Socket socket,
+/// This function returns a Future that completes with a Map containing the server's response data.
+Future<ResponseJoinRoom> _emitJoinRoom(
+  io.Socket? socket,
   String roomName,
   String islevel,
   String member,
   String sec,
   String apiUserName,
 ) {
-  final completer = Completer<Map<String, dynamic>>();
-  socket.emitWithAck('joinRoom', [
+  final completer = Completer<ResponseJoinRoom>();
+
+  socket!.emitWithAck('joinRoom', [
     {
       'roomName': roomName,
       'islevel': islevel,
@@ -82,29 +157,21 @@ Future<Map<String, dynamic>> _emitJoinRoom(
   ], ack: (data) {
     try {
       if (data['rtpCapabilities'] == null) {
-        if (data['banned']) {
+        if (data['banned'] == true) {
           throw Exception('User is banned.');
         }
-        if (data['suspended']) {
+        if (data['suspended'] == true) {
           throw Exception('User is suspended.');
         }
-        if (data['noAdmin']) {
+        if (data['noAdmin'] == true) {
           throw Exception('Host has not joined the room yet.');
         }
       }
-      completer.complete(data);
+      completer.complete(ResponseJoinRoom.fromJson(data));
     } catch (error) {
       completer.completeError(error);
     }
   });
-  return completer.future;
-}
 
-/// Validates that a string contains only alphanumeric characters.
-///
-/// This function takes in a string and checks if it contains only alphanumeric characters.
-/// It returns true if the string is alphanumeric, and false otherwise.
-bool _validateAlphanumeric(String value) {
-  final alphanumericRegex = RegExp(r'^[a-zA-Z0-9]+$');
-  return alphanumericRegex.hasMatch(value);
+  return completer.future;
 }

@@ -1,17 +1,36 @@
 typedef UpdateIsSettingsModalVisible = void Function(bool isVisible);
 
-/// Launches the settings modal and updates its visibility.
-///
-/// The [updateIsSettingsModalVisible] parameter is a required callback function
-/// that updates the visibility of the settings modal. It takes a boolean value
-/// [isVisible] as a parameter, indicating whether the modal should be visible or not.
-///
-/// The [isSettingsModalVisible] parameter is a required boolean value that
-/// represents the current visibility state of the settings modal.
+/// Options for launching the settings modal.
+class LaunchSettingsOptions {
+  final UpdateIsSettingsModalVisible updateIsSettingsModalVisible;
+  final bool isSettingsModalVisible;
 
-void launchSettings(
-    {required UpdateIsSettingsModalVisible updateIsSettingsModalVisible,
-    required bool isSettingsModalVisible}) {
-  // Toggles the visibility of the settings modal
-  updateIsSettingsModalVisible(!isSettingsModalVisible);
+  LaunchSettingsOptions({
+    required this.updateIsSettingsModalVisible,
+    required this.isSettingsModalVisible,
+  });
+}
+
+/// Type definition for the launchSettings function.
+typedef LaunchSettingsType = void Function(LaunchSettingsOptions options);
+
+/// Toggles the visibility state of the settings modal.
+///
+/// The [options] parameter should include:
+/// - `updateIsSettingsModalVisible`: A function to update the visibility state of the settings modal.
+/// - `isSettingsModalVisible`: The current visibility state of the settings modal.
+///
+/// Example usage:
+/// ```dart
+/// launchSettings(
+///   LaunchSettingsOptions(
+///     updateIsSettingsModalVisible: (visible) => setModalVisible(visible),
+///     isSettingsModalVisible: false,
+///   ),
+/// );
+/// ```
+
+void launchSettings(LaunchSettingsOptions options) {
+  // Toggle the visibility of the settings modal
+  options.updateIsSettingsModalVisible(!options.isSettingsModalVisible);
 }

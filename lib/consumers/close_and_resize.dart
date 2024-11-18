@@ -1,243 +1,310 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 
-/// Closes and resizes the media streams based on the provided parameters.
+import '../types/types.dart'
+    show
+        EventType,
+        Participant,
+        Stream,
+        ReorderStreamsType,
+        PrepopulateUserMediaType,
+        GetVideosType,
+        RePortType,
+        ReorderStreamsParameters,
+        PrepopulateUserMediaParameters,
+        RePortParameters,
+        ReorderStreamsOptions,
+        RePortOptions,
+        PrepopulateUserMediaOptions,
+        GetVideosOptions;
+
+// Parameters Interface
+abstract class CloseAndResizeParameters
+    implements
+        ReorderStreamsParameters,
+        PrepopulateUserMediaParameters,
+        RePortParameters {
+  List<Stream> get allAudioStreams;
+  List<Stream> get allVideoStreams;
+  List<String> get activeNames;
+  List<Participant> get participants;
+  List<Stream> get streamNames;
+  String get recordingDisplayType;
+  bool get recordingVideoOptimized;
+  String get adminIDStream;
+  List<Stream> get newLimitedStreams;
+  List<String> get newLimitedStreamsIDs;
+  List<Stream> get oldAllStreams;
+  bool get shareScreenStarted;
+  bool get shared;
+  String get meetingDisplayType;
+  bool get deferReceive;
+  bool get lockScreen;
+  bool get firstAll;
+  bool get firstRound;
+  bool get gotAllVids;
+  EventType get eventType;
+  String get hostLabel;
+  bool get shareEnded;
+  bool get updateMainWindow;
+
+  void Function(List<String> activeNames) get updateActiveNames;
+  void Function(List<Stream> allVideoStreams) get updateAllVideoStreams;
+  void Function(List<Stream> allAudioStreams) get updateAllAudioStreams;
+  void Function(bool shareScreenStarted) get updateShareScreenStarted;
+  void Function(bool updateMainWindow) get updateUpdateMainWindow;
+  void Function(List<Stream> newLimitedStreams) get updateNewLimitedStreams;
+  void Function(List<Stream> oldAllStreams) get updateOldAllStreams;
+  void Function(bool deferReceive) get updateDeferReceive;
+  void Function(double heightWidth) get updateMainHeightWidth;
+  void Function(bool shareEnded) get updateShareEnded;
+  void Function(bool lockScreen) get updateLockScreen;
+  void Function(bool firstAll) get updateFirstAll;
+  void Function(bool firstRound) get updateFirstRound;
+
+  // Mediasfu functions
+  ReorderStreamsType get reorderStreams;
+  PrepopulateUserMediaType get prepopulateUserMedia;
+  GetVideosType get getVideos;
+  RePortType get rePort;
+  CloseAndResizeParameters Function() get getUpdatedAllParams;
+}
+
+// Options Interface
+class CloseAndResizeOptions {
+  final String producerId;
+  final String kind;
+  final CloseAndResizeParameters parameters;
+
+  CloseAndResizeOptions({
+    required this.producerId,
+    required this.kind,
+    required this.parameters,
+  });
+}
+
+// Type definition for the CloseAndResize function
+typedef CloseAndResizeType = Future<void> Function(
+    CloseAndResizeOptions options);
+
+/// Manages the closing and resizing of streams within a media session, adapting the layout
+/// and updating participant and stream information as needed.
 ///
-/// The [producerId] is the ID of the producer.
-/// The [kind] specifies the type of media stream (audio, video, screenshare, or screen).
-/// The [parameters] is a map containing various parameters related to the media streams.
+/// This function performs the following operations based on the specified stream type (`kind`):
+/// - **Audio Stream**: Stops audio by removing the relevant stream, updates active participant names, and triggers stream reordering if applicable.
+/// - **Video Stream**: Stops video by removing it from both the active and limited streams lists, updates the main window if the admin's video is affected, and triggers reordering.
+/// - **Screenshare**: Stops screen sharing, updates various flags, restores deferred video receiving, and triggers reordering.
 ///
-/// Usage:
+/// ### Parameters:
+///
+/// - `options` (`CloseAndResizeOptions`): Configuration options for handling the stream:
+///   - `producerId` (`String`): The ID of the producer whose stream is being managed.
+///   - `kind` (`String`): Specifies the type of stream (`'audio'`, `'video'`, or `'screenshare'`).
+///   - `parameters` (`CloseAndResizeParameters`): Additional parameters required for handling:
+///     - `allAudioStreams`, `allVideoStreams`: Lists of all active audio and video streams, respectively.
+///     - `participants`: List of all participants in the session.
+///     - `lockScreen` (`bool`): Indicates if screen is currently locked.
+///     - `updateAllVideoStreams` and `updateAllAudioStreams` (functions): Callbacks for updating stream lists.
+///     - Various update callbacks for managing flags like `updateMainWindow`, `updateFirstAll`, etc.
+///     - `reorderStreams` (`ReorderStreamsType`): Function to reorder streams based on active session state.
+///
+/// ### Returns:
+///
+/// A `Future<void>` that completes once the function operations are done.
+///
+/// ### Throws:
+///
+/// This function does not throw directly but logs errors in debug mode if any occur during execution.
+///
+/// ### Example:
+///
 /// ```dart
-/// await closeAndResize(
-///   producerId: '123',
-///   kind: 'audio',
-///   parameters: {
-///     'getUpdatedAllParams': () => {...},
-///     'allAudioStreams': [...],
-///     'allVideoStreams': [...],
-///     'activeNames': [...],
-///     'participants': [...],
-///     'streamNames': [...],
-///     'recordingDisplayType': 'video',
-///     'recordingVideoOptimized': true,
-///     'adminIDStream': '456',
-///     'newLimitedStreams': [...],
-///     'newLimitedStreamsIDs': [...],
-///     'oldAllStreams': [...],
-///     'shareScreenStarted': true,
-///     'shared': true,
-///     'meetingDisplayType': 'video',
-///     'deferReceive': true,
-///     'lockScreen': true,
-///     'firstAll': true,
-///     'firstRound': true,
-///     'gotAllVids': true,
-///     'eventType': 'conference',
-///     'hostLabel': 'Host',
-///     'shareEnded': true,
-///     'updateMainWindow': true,
-///     'reorderStreams': () async {...},
-///     'prepopulateUserMedia': () => [...],
-///     'getVideos': () async {...},
-///     'rePort': () async {...},
-///   },
+/// final options = CloseAndResizeOptions(
+///   producerId: 'producer-123',
+///   kind: 'video',
+///   parameters: CloseAndResizeParametersMock(
+///     allAudioStreams: [],
+///     allVideoStreams: [],
+///     activeNames: [],
+///     participants: [Participant(id: 'user1', name: 'User 1')],
+///     lockScreen: false,
+///     updateAllVideoStreams: (videoStreams) => print('Updated video streams'),
+///     updateMainHeightWidth: (heightWidth) => print('Updated main height width: $heightWidth'),
+///     reorderStreams: (options) async => print('Reordered streams'),
+///     prepopulateUserMedia: (options) async => print('Prepopulated user media'),
+///     rePort: (options) async => print('Reported changes'),
+///   ),
 /// );
+///
+/// await closeAndResize(options);
 /// ```
 
-typedef GetUpdatedAllParams = Map<String, dynamic> Function();
+Future<void> closeAndResize(CloseAndResizeOptions options) async {
+  var parameters = options.parameters.getUpdatedAllParams();
 
-typedef CloseAndResizeFunction = Future<void> Function({
-  required String producerId,
-  required String kind,
-  required Map<String, dynamic> parameters,
-});
+  // Extract parameters
+  List<Stream> allAudioStreams = parameters.allAudioStreams;
+  List<Stream> allVideoStreams = parameters.allVideoStreams;
+  List<String> activeNames = parameters.activeNames;
+  List<Participant> participants = parameters.participants;
+  List<Stream> streamNames = parameters.streamNames;
+  String recordingDisplayType = parameters.recordingDisplayType;
+  bool recordingVideoOptimized = parameters.recordingVideoOptimized;
+  String? adminIDStream = parameters.adminIDStream;
+  List<Stream> newLimitedStreams = parameters.newLimitedStreams;
+  List<String> newLimitedStreamsIDs = parameters.newLimitedStreamsIDs;
+  List<Stream> oldAllStreams = parameters.oldAllStreams;
+  bool shareScreenStarted = parameters.shareScreenStarted;
+  bool shared = parameters.shared;
+  String meetingDisplayType = parameters.meetingDisplayType;
+  bool deferReceive = parameters.deferReceive;
+  bool lockScreen = parameters.lockScreen;
+  bool firstAll = parameters.firstAll;
+  bool firstRound = parameters.firstRound;
+  bool gotAllVids = parameters.gotAllVids;
+  EventType eventType = parameters.eventType;
+  String hostLabel = parameters.hostLabel;
+  bool shareEnded = parameters.shareEnded;
+  bool updateMainWindow = parameters.updateMainWindow;
 
-typedef PrepopulateUserMedia = List<dynamic> Function({
-  required String name,
-  required Map<String, dynamic> parameters,
-});
+  // Update functions
+  var updateActiveNames = parameters.updateActiveNames;
+  var updateAllVideoStreams = parameters.updateAllVideoStreams;
+  var updateAllAudioStreams = parameters.updateAllAudioStreams;
+  var updateShareScreenStarted = parameters.updateShareScreenStarted;
+  var updateUpdateMainWindow = parameters.updateUpdateMainWindow;
+  var updateNewLimitedStreams = parameters.updateNewLimitedStreams;
+  var updateOldAllStreams = parameters.updateOldAllStreams;
+  var updateDeferReceive = parameters.updateDeferReceive;
+  var updateMainHeightWidth = parameters.updateMainHeightWidth;
+  var updateShareEnded = parameters.updateShareEnded;
+  var updateLockScreen = parameters.updateLockScreen;
+  var updateFirstAll = parameters.updateFirstAll;
+  var updateFirstRound = parameters.updateFirstRound;
 
-typedef ReorderStreams = Future<void> Function({
-  bool add,
-  bool screenChanged,
-  required Map<String, dynamic> parameters,
-});
-
-typedef GetVideos = Future<void> Function({
-  required Map<String, dynamic> parameters,
-});
-
-typedef RePort = Future<void> Function({
-  bool restart,
-  required Map<String, dynamic> parameters,
-});
-
-typedef UpdateActiveNamesFunction = void Function(List<String>);
-typedef UpdateAllAudioStreamsFunction = void Function(List<dynamic>);
-typedef UpdateAllVideoStreamsFunction = void Function(List<dynamic>);
-typedef UpdateSharedFunction = void Function(bool);
-typedef UpdateShareScreenStartedFunction = void Function(bool);
-typedef UpdateUpdateMainWindowFunction = void Function(bool);
-typedef UpdateNewLimitedStreamsFunction = void Function(List<dynamic>);
-typedef UpdateNewLimitedStreamsIDsFunction = void Function(List<String>);
-typedef UpdateOldAllStreamsFunction = void Function(List<dynamic>);
-typedef UpdateDeferReceiveFunction = void Function(bool);
-typedef UpdateMainHeightWidthFunction = void Function(int);
-typedef UpdateShareEndedFunction = void Function(bool);
-typedef UpdateLockScreenFunction = void Function(bool);
-typedef UpdateFirstAllFunction = void Function(bool);
-typedef UpdateFirstRoundFunction = void Function(bool);
-typedef UpdateGotAllVidsFunction = void Function(bool);
-typedef UpdateEventTypeFunction = void Function(String);
-
-// Usage:
-Future<void> closeAndResize({
-  required String producerId,
-  required String kind,
-  required Map<String, dynamic> parameters,
-}) async {
-  GetUpdatedAllParams getUpdatedAllParams = parameters['getUpdatedAllParams'];
-
-  parameters = getUpdatedAllParams();
-
-  List<dynamic> allAudioStreams = parameters['allAudioStreams'];
-  List<dynamic> allVideoStreams = parameters['allVideoStreams'];
-  List<String> activeNames = parameters['activeNames'];
-  List<dynamic> participants = parameters['participants'];
-  List<dynamic> streamNames = parameters['streamNames'];
-  String recordingDisplayType = parameters['recordingDisplayType'];
-  bool recordingVideoOptimized = parameters['recordingVideoOptimized'];
-  String adminIDStream = parameters['adminIDStream'];
-  List<dynamic> newLimitedStreams = parameters['newLimitedStreams'];
-  List<String> newLimitedStreamsIDs = parameters['newLimitedStreamsIDs'];
-  List<dynamic> oldAllStreams = parameters['oldAllStreams'];
-  bool shareScreenStarted = parameters['shareScreenStarted'];
-  bool shared = parameters['shared'];
-  String meetingDisplayType = parameters['meetingDisplayType'];
-  bool? deferReceive = parameters['deferReceive'];
-  bool? lockScreen = parameters['lockScreen'];
-  bool? firstAll = parameters['firstAll'];
-  bool? firstRound = parameters['firstRound'];
-  bool? gotAllVids = parameters['gotAllVids'];
-  String? eventType = parameters['eventType'];
-  String? hostLabel = parameters['hostLabel'];
-  bool? shareEnded = parameters['shareEnded'];
-  bool? updateMainWindow = parameters['updateMainWindow'];
-
-  UpdateActiveNamesFunction updateActiveNames = parameters['updateActiveNames'];
-  UpdateAllAudioStreamsFunction updateAllAudioStreams =
-      parameters['updateAllAudioStreams'];
-  UpdateAllVideoStreamsFunction updateAllVideoStreams =
-      parameters['updateAllVideoStreams'];
-  UpdateShareScreenStartedFunction updateShareScreenStarted =
-      parameters['updateShareScreenStarted'];
-  UpdateUpdateMainWindowFunction updateUpdateMainWindow =
-      parameters['updateUpdateMainWindow'];
-  UpdateNewLimitedStreamsFunction updateNewLimitedStreams =
-      parameters['updateNewLimitedStreams'];
-  UpdateOldAllStreamsFunction updateOldAllStreams =
-      parameters['updateOldAllStreams'];
-  UpdateDeferReceiveFunction updateDeferReceive =
-      parameters['updateDeferReceive'];
-  UpdateMainHeightWidthFunction updateMainHeightWidth =
-      parameters['updateMainHeightWidth'];
-  UpdateShareEndedFunction updateShareEnded = parameters['updateShareEnded'];
-  UpdateLockScreenFunction updateLockScreen = parameters['updateLockScreen'];
-  UpdateFirstAllFunction updateFirstAll = parameters['updateFirstAll'];
-  UpdateFirstRoundFunction updateFirstRound = parameters['updateFirstRound'];
-
-  // mediasfu functions
-  ReorderStreams reorderStreams = parameters['reorderStreams'];
-  PrepopulateUserMedia prepopulateUserMedia =
-      parameters['prepopulateUserMedia'];
-  GetVideos getVideos = parameters['getVideos'];
-  RePort rePort = parameters['rePort'];
+  // Mediasfu functions
+  var reorderStreams = parameters.reorderStreams;
+  var prepopulateUserMedia = parameters.prepopulateUserMedia;
+  var getVideos = parameters.getVideos;
+  var rePort = parameters.rePort;
 
   try {
-    dynamic participant;
+    Participant? participant;
 
-    if (kind == 'audio') {
+    if (options.kind == 'audio') {
       // Stop the audio by removing the miniAudio with id = producerId
-      allAudioStreams.removeWhere(
-          (audioStream) => audioStream['producerId'] == producerId);
+      allAudioStreams = allAudioStreams
+          .where((audioStream) => audioStream.producerId != options.producerId)
+          .toList();
       updateAllAudioStreams(allAudioStreams);
 
       if (recordingDisplayType == 'video' && recordingVideoOptimized) {
         // Handle optimized recording case
       } else {
-        // Get the name of the participant with the producerId
         participant = participants.firstWhere(
-            (obj) => obj['audioID'] == producerId,
-            orElse: () => null);
+          (obj) => obj.audioID == options.producerId,
+        );
 
-        if (participant != null) {
-          if (participant['videoID'] == null || participant['videoID'] == "") {
-            // Remove the participant from the activeNames array
-            activeNames.removeWhere((name) => name == participant['name']);
+        if (participant.name.isNotEmpty) {
+          if (participant.videoID.isEmpty || participant.videoID == "") {
+            activeNames.removeWhere((name) => name == participant!.name);
             updateActiveNames(activeNames);
           }
         }
       }
 
-      // Check if the participant's videoID is not null or ""
       var checker = meetingDisplayType == 'video'
-          ? participant[0]['videoID'] != null && participant[0]['videoID'] != ""
+          ? participant != null &&
+              participant.videoID.isNotEmpty &&
+              participant.videoID != ""
           : true;
 
       if (checker) {
         if (shareScreenStarted || shared) {
           if (meetingDisplayType != 'video' ||
-              participant[0]['videoID'] != null &&
-                  participant[0]['videoID'] != "") {
-            await reorderStreams(parameters: parameters);
+              (participant != null && participant.videoID.isNotEmpty)) {
+            final optionsReorder = ReorderStreamsOptions(
+              add: false,
+              screenChanged: true,
+              parameters: parameters,
+            );
+            await reorderStreams(optionsReorder);
           }
         } else {
           if (meetingDisplayType != 'video') {
+            final optionsReorder = ReorderStreamsOptions(
+              add: false,
+              screenChanged: true,
+              parameters: parameters,
+            );
             await reorderStreams(
-                add: false, screenChanged: true, parameters: parameters);
+              optionsReorder,
+            );
           }
         }
       }
-    } else if (kind == 'video') {
-      if (producerId == adminIDStream) {
+    } else if (options.kind == 'video') {
+      if (options.producerId == adminIDStream) {
         updateMainWindow = true;
         updateUpdateMainWindow(updateMainWindow);
       }
 
-      allVideoStreams.removeWhere(
-          (videoStream) => videoStream['producerId'] == producerId);
+      allVideoStreams = allVideoStreams
+          .where((videoStream) => videoStream.producerId != options.producerId)
+          .toList();
       updateAllVideoStreams(allVideoStreams);
 
-      oldAllStreams.removeWhere(
-          (videoStream) => videoStream['producerId'] == producerId);
+      oldAllStreams = oldAllStreams
+          .where((videoStream) => videoStream.producerId != options.producerId)
+          .toList();
       updateOldAllStreams(oldAllStreams);
 
-      newLimitedStreams.removeWhere(
-          (videoStream) => videoStream['producerId'] == producerId);
+      newLimitedStreams = newLimitedStreams
+          .where((videoStream) => videoStream.producerId != options.producerId)
+          .toList();
       updateNewLimitedStreams(newLimitedStreams);
 
-      // Remove the participant from activeNames
       activeNames.removeWhere((name) {
         var participant = streamNames.firstWhere(
-            (obj) => obj['producerId'] == producerId,
-            orElse: () => null);
-        return participant != null ? name == participant['name'] : false;
+            (obj) => obj.producerId == options.producerId,
+            orElse: () => Stream(producerId: '', name: ''));
+        return name == participant.name;
       });
       updateActiveNames(activeNames);
 
-      if (lockScreen!) {
+      if (lockScreen) {
         deferReceive = true;
-        if (newLimitedStreamsIDs.contains(producerId)) {
-          prepopulateUserMedia(name: hostLabel!, parameters: parameters);
+        if (newLimitedStreamsIDs.contains(options.producerId)) {
+          final optionsPrepopulate = PrepopulateUserMediaOptions(
+            name: hostLabel,
+            parameters: parameters,
+          );
+          prepopulateUserMedia(optionsPrepopulate);
+          final optionsReorder = ReorderStreamsOptions(
+            add: false,
+            screenChanged: true,
+            parameters: parameters,
+          );
           await reorderStreams(
-              add: false, screenChanged: true, parameters: parameters);
+            optionsReorder,
+          );
         }
       } else {
-        prepopulateUserMedia(name: hostLabel!, parameters: parameters);
+        final optionsPrepopulate = PrepopulateUserMediaOptions(
+          name: hostLabel,
+          parameters: parameters,
+        );
+        prepopulateUserMedia(optionsPrepopulate);
+        final optionsReorder = ReorderStreamsOptions(
+          add: false,
+          screenChanged: true,
+          parameters: parameters,
+        );
         await reorderStreams(
-            add: false, screenChanged: true, parameters: parameters);
+          optionsReorder,
+        );
       }
-    } else if (kind == 'screenshare' || kind == 'screen') {
+    } else if (options.kind == 'screenshare' || options.kind == 'screen') {
       updateMainWindow = true;
 
       shareScreenStarted = false;
@@ -252,22 +319,45 @@ Future<void> closeAndResize({
       updateFirstAll(firstAll);
       updateFirstRound(firstRound);
 
-      if (!gotAllVids! || deferReceive!) {
+      if (!gotAllVids || deferReceive) {
         deferReceive = false;
         updateDeferReceive(deferReceive);
-        await getVideos(parameters: parameters);
-        await rePort(parameters: parameters);
+        final optionsGetVideos = GetVideosOptions(
+          participants: participants,
+          allVideoStreams: allVideoStreams,
+          oldAllStreams: oldAllStreams,
+          updateAllVideoStreams: updateAllVideoStreams,
+          updateOldAllStreams: updateOldAllStreams,
+        );
+        await getVideos(options: optionsGetVideos);
+        final optionsRePort = RePortOptions(
+          parameters: parameters,
+        );
+        await rePort(optionsRePort);
       }
 
-      if (eventType == 'conference') {
+      if (eventType == EventType.conference) {
         updateMainHeightWidth(0);
       }
 
-      prepopulateUserMedia(name: hostLabel!, parameters: parameters);
+      final optionsPrepopulate = PrepopulateUserMediaOptions(
+        name: hostLabel,
+        parameters: parameters,
+      );
+      prepopulateUserMedia(optionsPrepopulate);
+
+      final optionsReorder = ReorderStreamsOptions(
+        add: false,
+        screenChanged: true,
+        parameters: parameters,
+      );
       await reorderStreams(
-          add: false, screenChanged: true, parameters: parameters);
+        optionsReorder,
+      );
     }
   } catch (error) {
-    // Handle error
+    if (kDebugMode) {
+      print('closeAndResize error: $error');
+    }
   }
 }

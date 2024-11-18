@@ -1,205 +1,222 @@
-// ignore_for_file: empty_catches
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import '../../methods/utils/get_modal_position.dart' show getModalPosition;
-import './message_panel.dart' show MessagePanel;
-import '../../methods/message_methods/send_message.dart' show sendMessage;
+import 'package:flutter/foundation.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
+import '../../methods/utils/get_modal_position.dart'
+    show getModalPosition, GetModalPositionOptions;
+import './message_panel.dart' show MessagePanel, MessagePanelOptions;
+import '../../methods/message_methods/send_message.dart'
+    show sendMessage, SendMessageType;
+import '../../types/types.dart'
+    show CoHostResponsibility, EventType, Message, Participant, ShowAlert;
 
-/// MessagesModal - A modal for displaying and interacting with messages.
-///
-/// This modal displays messages in tabs (direct and group) and allows users
-/// to send new messages.
-///
-/// Whether the messages modal is visible.
-/// final bool isMessagesModalVisible;
-///
-/// Callback function called when the messages modal is closed.
-/// final VoidCallback onMessagesClose;
-///
-/// Function called when the send message button is pressed.
-/// final SendMessage onSendMessagePress;
-///
-/// Additional parameters for sending messages.
-/// final Map<String, dynamic> parameters;
-///
-/// The list of messages to be displayed.
-/// final List<dynamic> messages;
-///
-/// The position of the modal, e.g., 'topRight'.
-/// final String position;
-///
-/// The background color of the modal.
-/// final Color backgroundColor;
-///
-/// The background color of the active tab.
-/// final Color activeTabBackgroundColor;
-///
-/// _MessagesModalState - State class for MessagesModal.
-///
-/// This state class manages the active tab and the display of direct and group messages.
-///
-/// activeTab - A notifier for the active tab.
-///
-/// directMessages - A list of direct messages.
-///
-/// groupMessages - A list of group messages.
-
-typedef SendMessage = Future<void> Function(
-    {required Map<String, dynamic> parameters});
-
-class MessagesModal extends StatefulWidget {
+class MessagesModalOptions {
   final bool isMessagesModalVisible;
   final VoidCallback onMessagesClose;
-  final SendMessage onSendMessagePress;
-  final Map<String, dynamic> parameters;
-  final List<dynamic> messages;
+  final SendMessageType onSendMessagePress;
+  final List<Message> messages;
   final String position;
   final Color backgroundColor;
   final Color activeTabBackgroundColor;
+  final EventType eventType;
+  final String member;
+  final String islevel;
+  final List<CoHostResponsibility> coHostResponsibility;
+  final String coHost;
+  final bool startDirectMessage;
+  final Participant? directMessageDetails;
+  final Function(bool) updateStartDirectMessage;
+  final Function(Participant?) updateDirectMessageDetails;
+  final String roomName;
+  final io.Socket? socket;
+  final String chatSetting;
+  final ShowAlert? showAlert;
 
-  const MessagesModal({
-    super.key,
+  MessagesModalOptions({
     required this.isMessagesModalVisible,
     required this.onMessagesClose,
     this.onSendMessagePress = sendMessage,
-    required this.parameters,
     required this.messages,
     this.position = 'topRight',
     this.backgroundColor = const Color(0xFFF5F5F5),
     this.activeTabBackgroundColor = const Color.fromARGB(255, 150, 231, 236),
+    required this.eventType,
+    required this.member,
+    required this.islevel,
+    required this.coHostResponsibility,
+    required this.coHost,
+    required this.startDirectMessage,
+    this.directMessageDetails,
+    required this.updateStartDirectMessage,
+    required this.updateDirectMessageDetails,
+    required this.roomName,
+    this.socket,
+    required this.chatSetting,
+    this.showAlert,
   });
+}
+
+typedef MessagesModalType = MessagesModal Function({
+  required MessagesModalOptions options,
+});
+
+/// `MessagesModal` displays a modal interface for managing direct and group messages within an event.
+/// It provides separate tabs for viewing and sending direct or group messages, configurable based on the event type.
+///
+/// ### Parameters:
+/// - `MessagesModalOptions` `options`: Configuration for the modal, including:
+///   - `isMessagesModalVisible`: Whether the modal is visible.
+///   - `onMessagesClose`: Callback to close the modal.
+///   - `onSendMessagePress`: Function to handle sending a message.
+///   - `messages`: List of `Message` objects to display.
+///   - `position`: Modal position on the screen (e.g., `'topRight'`).
+///   - `backgroundColor`: Modal background color.
+///   - `activeTabBackgroundColor`: Background color for the active tab.
+///   - `eventType`, `member`, `islevel`: Event and user role information for filtering messages.
+///   - `coHost`, `coHostResponsibility`: Co-host settings and responsibilities.
+///   - `directMessageDetails`: Participant details for direct messages.
+///   - `updateStartDirectMessage` and `updateDirectMessageDetails`: Functions to manage direct messaging state.
+///   - `socket`: Socket instance for real-time updates.
+///   - `showAlert`: Optional callback for displaying alerts.
+///
+/// ### Key Functions:
+/// - `_populateMessages`: Populates lists for `directMessages` and `groupMessages` based on event type, user roles, and responsibilities.
+/// - `_buildTabContent`: Displays content in the active tab, showing either direct or group messages depending on the selected tab.
+/// - `_handleSendButton`: Validates and sends messages, clearing the input and updating the reply state as needed.
+///
+/// ### Example Usage:
+/// ```dart
+/// MessagesModal(
+///   options: MessagesModalOptions(
+///     isMessagesModalVisible: true,
+///     onMessagesClose: () => print("Modal closed"),
+///     messages: messageList,
+///     eventType: EventType.chat,
+///     member: 'user123',
+///     islevel: '1',
+///     coHostResponsibility: [CoHostResponsibility(name: 'chat', value: true)],
+///     coHost: 'host123',
+///     startDirectMessage: false,
+///     directMessageDetails: null,
+///     updateStartDirectMessage: (value) => print("Direct message started: $value"),
+///     updateDirectMessageDetails: (participant) => print("Direct message to: ${participant?.name}"),
+///     roomName: 'MainRoom',
+///     socket: socketInstance,
+///     chatSetting: 'enabled',
+///     showAlert: (options) => print("Alert: ${options.message}"),
+///   ),
+/// );
+/// ```
+///
+/// ### Modal Content:
+/// - **Header with Tabs**: Contains tabs for switching between direct and group messaging, shown only in webinar or conference mode.
+/// - **Tab Content**: Displays a list of messages and input field, with different messages shown based on active tab.
+///
+/// ### Dependencies:
+/// - `socket_io_client` for real-time message handling.
+/// - `MessagePanel` component to display and manage messages within each tab.
+///
+/// This modal is particularly useful in events or group settings, where real-time messaging and role-based message visibility are important.
+
+class MessagesModal extends StatefulWidget {
+  final MessagesModalOptions options;
+
+  const MessagesModal({super.key, required this.options});
 
   @override
-  // ignore: library_private_types_in_public_api
   _MessagesModalState createState() => _MessagesModalState();
 }
 
 class _MessagesModalState extends State<MessagesModal> {
   late ValueNotifier<String> activeTab;
-  late List<dynamic> directMessages;
-  late List<dynamic> groupMessages;
-  late String position;
+  late List<Message> directMessages;
+  late List<Message> groupMessages;
+  late ValueNotifier<bool> focusedInput;
 
   @override
   void initState() {
     super.initState();
-    activeTab = ValueNotifier<String>(
-        widget.parameters['eventType'] == 'webinar' ||
-                widget.parameters['eventType'] == 'conference'
-            ? 'direct'
-            : 'group');
-    directMessages = [];
-    groupMessages = [];
-    populateMessages();
+    activeTab = ValueNotifier(widget.options.eventType == EventType.webinar ||
+            widget.options.eventType == EventType.conference
+        ? 'direct'
+        : 'group');
+    _populateMessages();
+    focusedInput = ValueNotifier(widget.options.startDirectMessage &&
+            widget.options.directMessageDetails != null &&
+            (widget.options.eventType == EventType.webinar ||
+                widget.options.eventType == EventType.conference)
+        ? true
+        : false);
   }
 
   @override
-  void didUpdateWidget(covariant MessagesModal oldWidget) {
+  void didUpdateWidget(MessagesModal oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.messages != widget.messages) {
-      populateMessages();
-    }
-
-    if (widget.parameters['startDirectMessage'] !=
-        oldWidget.parameters['startDirectMessage']) {
-      if (widget.parameters['startDirectMessage'] &&
-          widget.parameters['directMessageDetails'] != null) {
-        if (widget.parameters['eventType'] == 'webinar' ||
-            widget.parameters['eventType'] == 'conference') {
-          activeTab.value = 'direct';
-        } else {
-          if (widget.parameters['eventType'] == 'broadcast' ||
-              widget.parameters['eventType'] == 'chat') {
-            activeTab.value = 'group';
-          }
-        }
-      }
+    if (oldWidget.options.messages != widget.options.messages) {
+      _populateMessages();
     }
   }
 
-  void populateMessages() {
-    var chatValue = false;
-    try {
-      chatValue = widget.parameters['coHostResponsibility']
-          .firstWhere((item) => item['name'] == 'chat')['value'];
-    } catch (error) {}
+  void _populateMessages() {
+    final chatValue = widget.options.coHostResponsibility
+        .any((item) => item.name == 'chat' && item.value);
 
-    var directMsgs =
-        widget.messages.where((message) => !message['group']).toList();
-    directMsgs = directMsgs
+    directMessages = widget.options.messages
         .where((message) =>
-            message['sender'] == widget.parameters['member'] ||
-            message['receivers'].contains(widget.parameters['member']) ||
-            (widget.parameters['islevel'] == '2' ||
-                (widget.parameters['coHost'] == widget.parameters['member'] &&
-                    chatValue == true)))
+            !message.group &&
+            (message.sender == widget.options.member ||
+                message.receivers.contains(widget.options.member) ||
+                widget.options.islevel == '2' ||
+                (widget.options.coHost == widget.options.member && chatValue)))
         .toList();
-    var groupMsgs =
-        widget.messages.where((message) => message['group']).toList();
-    setState(() {
-      directMessages = directMsgs;
-      groupMessages = groupMsgs;
-    });
+
+    groupMessages =
+        widget.options.messages.where((message) => message.group).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    var modalWidth = 0.8 * screenWidth;
-    if (modalWidth > 400) {
-      modalWidth = 400;
-    }
+    final modalWidth = screenWidth * 0.8 > 400 ? 400.0 : screenWidth * 0.8;
     final modalHeight = kIsWeb
         ? MediaQuery.of(context).size.height * 0.7
         : MediaQuery.of(context).size.height * 0.5;
 
     return Visibility(
-      visible: widget.isMessagesModalVisible,
+      visible: widget.options.isMessagesModalVisible,
       child: Stack(
         children: [
           Positioned(
-            top: getModalPosition(
-                widget.position, context, modalWidth, modalHeight)['top'],
-            right: getModalPosition(
-                widget.position, context, modalWidth, modalHeight)['right'],
-            child: GestureDetector(
-              child: Container(
-                color: Colors.black.withOpacity(0.5),
-                child: Align(
-                  alignment: Alignment.topRight,
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    width: modalWidth,
-                    height: modalHeight,
-                    decoration: BoxDecoration(
-                      color: widget.backgroundColor,
-                      borderRadius: BorderRadius.circular(0),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            if (widget.parameters['eventType'] == 'webinar' ||
-                                widget.parameters['eventType'] ==
-                                    'conference') ...[
-                              buildTab('Direct', 'direct'),
-                              buildTab('Group', 'group'),
-                            ],
-                            IconButton(
-                              onPressed: widget.onMessagesClose,
-                              icon: const Icon(Icons.close),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Expanded(
-                          child: buildTabContent(),
-                        ),
-                      ],
-                    ),
+            top: getModalPosition(GetModalPositionOptions(
+              position: widget.options.position,
+              modalWidth: modalWidth,
+              modalHeight: modalHeight,
+              context: context,
+            ))['top'],
+            right: getModalPosition(GetModalPositionOptions(
+              position: widget.options.position,
+              modalWidth: modalWidth,
+              modalHeight: modalHeight,
+              context: context,
+            ))['right'],
+            child: Container(
+              color: Colors.black.withOpacity(0.5),
+              child: Align(
+                alignment: Alignment.topRight,
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  width: modalWidth,
+                  height: modalHeight,
+                  decoration: BoxDecoration(
+                    color: widget.options.backgroundColor,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildHeader(),
+                      const Divider(),
+                      Expanded(child: _buildTabContent()),
+                    ],
                   ),
                 ),
               ),
@@ -210,19 +227,34 @@ class _MessagesModalState extends State<MessagesModal> {
     );
   }
 
-  Widget buildTab(String text, String tab) {
+  Widget _buildHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        if (widget.options.eventType == EventType.webinar ||
+            widget.options.eventType == EventType.conference) ...[
+          _buildTabButton('Direct', 'direct'),
+          _buildTabButton('Group', 'group'),
+        ],
+        IconButton(
+          onPressed: widget.options.onMessagesClose,
+          icon: const Icon(Icons.close),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTabButton(String text, String tab) {
     return ValueListenableBuilder<String>(
       valueListenable: activeTab,
       builder: (context, value, child) {
         return InkWell(
-          onTap: () {
-            activeTab.value = tab;
-          },
+          onTap: () => activeTab.value = tab,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             decoration: BoxDecoration(
               color: value == tab
-                  ? widget.activeTabBackgroundColor
+                  ? widget.options.activeTabBackgroundColor
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(5),
             ),
@@ -239,35 +271,39 @@ class _MessagesModalState extends State<MessagesModal> {
     );
   }
 
-  Widget buildTabContent() {
+  Widget _buildTabContent() {
     return ValueListenableBuilder<String>(
       valueListenable: activeTab,
       builder: (context, value, child) {
-        if (value == 'direct' &&
-            (widget.parameters['eventType'] == 'webinar' ||
-                widget.parameters['eventType'] == 'conference')) {
-          return MessagePanel(
-            messages: directMessages,
-            messagesLength: widget.messages.length,
-            type: 'direct',
-            onSendMessagePress: widget.onSendMessagePress,
-            username: widget.parameters['member'],
-            parameters: widget.parameters,
-            backgroundColor: widget.backgroundColor,
-            focusedInput: false, // focusedInput is not used in direct messages
-          );
-        } else {
-          return MessagePanel(
-            messages: groupMessages,
-            messagesLength: widget.messages.length,
-            type: 'group',
-            onSendMessagePress: widget.onSendMessagePress,
-            username: widget.parameters['member'],
-            parameters: widget.parameters,
-            backgroundColor: widget.backgroundColor,
-            focusedInput: false,
-          );
-        }
+        final isDirectTab = value == 'direct' &&
+            (widget.options.eventType == EventType.webinar ||
+                widget.options.eventType == EventType.conference);
+        final optionsPanel = MessagePanelOptions(
+          messages: isDirectTab ? directMessages : groupMessages,
+          messagesLength: widget.options.messages.length,
+          type: isDirectTab ? 'direct' : 'group',
+          onSendMessagePress: widget.options.onSendMessagePress,
+          username: widget.options.member,
+          backgroundColor: widget.options.backgroundColor,
+          focusedInput: focusedInput.value,
+          showAlert: widget.options.showAlert,
+          eventType: widget.options.eventType,
+          member: widget.options.member,
+          islevel: widget.options.islevel,
+          coHostResponsibility: widget.options.coHostResponsibility,
+          coHost: widget.options.coHost,
+          directMessageDetails: widget.options.directMessageDetails,
+          updateStartDirectMessage: widget.options.updateStartDirectMessage,
+          updateDirectMessageDetails: widget.options.updateDirectMessageDetails,
+          roomName: widget.options.roomName,
+          socket: widget.options.socket,
+          chatSetting: widget.options.chatSetting,
+          startDirectMessage: widget.options.startDirectMessage,
+          youAreCoHost: widget.options.coHost == widget.options.member,
+        );
+        return MessagePanel(
+          options: optionsPanel,
+        );
       },
     );
   }

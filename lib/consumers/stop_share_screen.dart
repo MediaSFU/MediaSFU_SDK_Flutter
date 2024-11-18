@@ -1,145 +1,207 @@
-// ignore_for_file: empty_catches
-
-import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
+import '../types/types.dart'
+    show
+        EventType,
+        DisconnectSendTransportScreenParameters,
+        PrepopulateUserMediaParameters,
+        ReorderStreamsParameters,
+        DisconnectSendTransportScreenType,
+        PrepopulateUserMediaType,
+        ReorderStreamsType,
+        GetVideosType,
+        GetVideosOptions,
+        PrepopulateUserMediaOptions,
+        ReorderStreamsOptions,
+        Stream,
+        DisconnectSendTransportScreenOptions;
 
-/// This function stops sharing the screen and performs various updates and actions based on the provided parameters.
+/// Parameters required for stopping screen sharing.
+/// Extends multiple parameter interfaces from your TypeScript definitions.
+abstract class StopShareScreenParameters
+    implements
+        DisconnectSendTransportScreenParameters,
+        PrepopulateUserMediaParameters,
+        ReorderStreamsParameters {
+  // Inherited properties from the interfaces will be defined by the implementing class
+
+  // Additional properties as abstract getters
+  bool get shared;
+  bool get shareScreenStarted;
+  bool get shareEnded;
+  bool get updateMainWindow;
+  bool get deferReceive;
+  String get hostLabel;
+  bool get lockScreen;
+  bool get forceFullDisplay;
+  bool get firstAll;
+  bool get firstRound;
+  MediaStream? get localStreamScreen;
+  EventType get eventType;
+  bool get prevForceFullDisplay;
+  bool get annotateScreenStream;
+
+  // Update functions as abstract getters
+  void Function(bool) get updateShared;
+  void Function(bool) get updateShareScreenStarted;
+  void Function(bool) get updateShareEnded;
+  void Function(bool) get updateUpdateMainWindow;
+  void Function(bool) get updateDeferReceive;
+  void Function(bool) get updateLockScreen;
+  void Function(bool) get updateForceFullDisplay;
+  void Function(bool) get updateFirstAll;
+  void Function(bool) get updateFirstRound;
+  void Function(MediaStream?) get updateLocalStreamScreen;
+  void Function(double) get updateMainHeightWidth;
+  void Function(bool) get updateAnnotateScreenStream;
+  void Function(bool) get updateIsScreenboardModalVisible;
+  void Function(List<Stream>) get updateAllVideoStreams;
+  void Function(List<Stream>) get updateOldAllStreams;
+
+  // Mediasfu functions as abstract getters
+  DisconnectSendTransportScreenType get disconnectSendTransportScreen;
+  PrepopulateUserMediaType get prepopulateUserMedia;
+  ReorderStreamsType get reorderStreams;
+  GetVideosType get getVideos;
+
+  // Method to retrieve updated parameters
+  StopShareScreenParameters Function() get getUpdatedAllParams;
+
+  // Dynamic key-value support
+  // dynamic operator [](String key);
+}
+
+/// Options for the stopShareScreen function.
+class StopShareScreenOptions {
+  StopShareScreenParameters parameters;
+
+  StopShareScreenOptions({required this.parameters});
+}
+
+/// Function type definition for stopping screen sharing.
+typedef StopShareScreenType = Future<void> Function(
+    StopShareScreenOptions options);
+
+/// Stops the screen sharing process and updates various states and UI elements accordingly.
 ///
-/// The [parameters] map contains the following keys:
-/// - 'shared': A boolean value indicating whether the screen is currently being shared. Defaults to `false`.
-/// - 'shareScreenStarted': A boolean value indicating whether the screen sharing has started. Defaults to `false`.
-/// - 'shareEnded': A boolean value indicating whether the screen sharing has ended. Defaults to `true`.
-/// - 'updateMainWindow': A boolean value indicating whether to update the main window. Defaults to `true`.
-/// - 'deferReceive': A boolean value indicating whether to defer receiving video streams. Defaults to `false`.
-/// - 'hostLabel': A string representing the host label. Defaults to an empty string.
-/// - 'lockScreen': A boolean value indicating whether the screen is locked. Defaults to `false`.
-/// - 'forceFullDisplay': A boolean value indicating whether to force full display. Defaults to `false`.
-/// - 'firstAll': A boolean value indicating whether it's the first time for all participants. Defaults to `false`.
-/// - 'firstRound': A boolean value indicating whether it's the first round of sharing. Defaults to `false`.
-/// - 'localStreamScreen': A [MediaStream] object representing the local screen stream.
-/// - 'eventType': A string representing the event type.
-/// - 'prevForceFullDisplay': A boolean value indicating the previous force full display value.
-/// - 'updateShared': A callback function to update the shared value.
-/// - 'updateShareScreenStarted': A callback function to update the shareScreenStarted value.
-/// - 'updateShareEnded': A callback function to update the shareEnded value.
-/// - 'updateUpdateMainWindow': A callback function to update the updateMainWindow value.
-/// - 'updateDeferReceive': A callback function to update the deferReceive value.
-/// - 'updateLockScreen': A callback function to update the lockScreen value.
-/// - 'updateForceFullDisplay': A callback function to update the forceFullDisplay value.
-/// - 'updateFirstAll': A callback function to update the firstAll value.
-/// - 'updateFirstRound': A callback function to update the firstRound value.
-/// - 'updateLocalStreamScreen': A callback function to update the localStreamScreen value.
-/// - 'updateMainHeightWidth': A callback function to update the mainHeightWidth value.
-/// - 'disconnectSendTransportScreen': A function to disconnect the send transport for screen sharing.
-/// - 'prepopulateUserMedia': A function to prepopulate user media.
-/// - 'reorderStreams': A function to reorder streams.
-/// - 'getVideos': A function to get videos.
+/// This function is designed to stop the screen sharing session and reset related states. It performs
+/// several key actions:
+/// 1. Resets screen sharing states (`shared`, `shareScreenStarted`, `shareEnded`) and updates main UI flags.
+/// 2. Stops the local screen stream and disconnects the transport for screen sharing.
+/// 3. Manages screen annotation states by toggling the annotation overlay as needed.
+/// 4. Prepopulates user media and triggers a reordering of video streams if layout changes are necessary.
 ///
-/// This function performs the following actions:
-/// - Updates the shared, shareScreenStarted, shareEnded, and updateMainWindow values based on the provided parameters.
-/// - If deferReceive is true, sets deferReceive to false, updates the deferReceive value, and calls the getVideos function.
-/// - Stops all tracks in the localStreamScreen and updates the localStreamScreen value.
-/// - Disconnects the send transport for screen sharing.
-/// - If the eventType is 'conference', updates the mainHeightWidth value to 0.
-/// - Prepopulates user media with the hostLabel and the provided parameters.
-/// - Reorders the streams by removing the screen stream and updating the screenChanged value.
-/// - Updates the lockScreen, forceFullDisplay, firstAll, and firstRound values based on the provided parameters.
+/// ### Parameters:
+/// - `options` (`StopShareScreenOptions`): Configuration options that include:
+///   - `parameters`: (`StopShareScreenParameters`) - This includes necessary configurations and functions:
+///     - `shared` (bool): Whether screen sharing is active.
+///     - `shareScreenStarted` (bool): Indicates if screen sharing has started.
+///     - `shareEnded` (bool): Marks the end of screen sharing.
+///     - `updateMainWindow` (bool): Controls UI main window updates.
+///     - `deferReceive` (bool): Delays receiving streams if needed.
+///     - `hostLabel` (String): Host label for UI updates.
+///     - `lockScreen` (bool): Locks screen if true.
+///     - `forceFullDisplay` (bool): Enforces full display settings.
+///     - `firstAll` (bool): Indicates if this is the first display round.
+///     - `firstRound` (bool): Tracks the first round of screen sharing.
+///     - `localStreamScreen` (MediaStream?): Local screen media stream.
+///     - `eventType` (EventType): The type of event (e.g., conference, chat, etc.).
+///     - `prevForceFullDisplay` (bool): Previous full display state.
+///     - `annotateScreenStream` (bool): Whether screen annotation is enabled.
 ///
-/// Throws an error if any of the above actions fail.
+/// - **Update Functions**: Various callbacks to update states:
+///     - `updateShared`, `updateShareScreenStarted`, `updateShareEnded`, etc.,
+///       which update specific flags and settings as the sharing state changes.
+///
+/// - **MediaSFU Functions**:
+///     - `disconnectSendTransportScreen` (DisconnectSendTransportScreenType): Disconnects the transport.
+///     - `prepopulateUserMedia` (PrepopulateUserMediaType): Prepopulates user media in the UI.
+///     - `reorderStreams` (ReorderStreamsType): Reorders the streams to adapt to new layout changes.
+///     - `getVideos` (GetVideosType): Retrieves video streams.
+///
+/// ### Example Usage:
+/// ```dart
+/// final parameters = StopShareScreenParameters(
+///   shared: true,
+///   shareScreenStarted: true,
+///   shareEnded: false,
+///   updateMainWindow: true,
+///   deferReceive: false,
+///   hostLabel: "Host",
+///   lockScreen: false,
+///   forceFullDisplay: false,
+///   firstAll: false,
+///   firstRound: false,
+///   localStreamScreen: localStream,
+///   eventType: EventType.conference,
+///   prevForceFullDisplay: false,
+///   annotateScreenStream: false,
+///   updateShared: (value) => print("Shared: $value"),
+///   // Additional update functions...
+/// );
+///
+/// final options = StopShareScreenOptions(parameters: parameters);
+///
+/// await stopShareScreen(options);
+/// ```
+///
+/// ### Error Handling:
+/// - Errors encountered during actions like stopping streams, disconnecting transport,
+///   or prepopulating media are logged for debugging purposes.
 
-typedef OnScreenChanges = Future<void> Function(
-    {bool changed, required Map<String, dynamic> parameters});
-typedef StopShareScreen = Future<void> Function(
-    {required Map<String, dynamic> parameters});
-typedef DisconnectSendTransportVideo = Future<void> Function(
-    {required Map<String, dynamic> parameters});
-typedef DisconnectSendTransportAudio = Future<void> Function(
-    {required Map<String, dynamic> parameters});
-typedef DisconnectSendTransportScreen = Future<void> Function(
-    {required Map<String, dynamic> parameters});
+Future<void> stopShareScreen(StopShareScreenOptions options) async {
+  // Retrieve updated parameters
+  StopShareScreenParameters parameters =
+      options.parameters.getUpdatedAllParams();
 
-typedef PrepopulateUserMedia = List<dynamic> Function({
-  required String name,
-  required Map<String, dynamic> parameters,
-});
+  // Destructure necessary properties
+  bool shared = parameters.shared;
+  bool shareScreenStarted = parameters.shareScreenStarted;
+  bool shareEnded = parameters.shareEnded;
+  bool updateMainWindow = parameters.updateMainWindow;
+  bool deferReceive = parameters.deferReceive;
+  String hostLabel = parameters.hostLabel;
+  bool lockScreen = parameters.lockScreen;
+  bool forceFullDisplay = parameters.forceFullDisplay;
+  bool firstAll = parameters.firstAll;
+  bool firstRound = parameters.firstRound;
+  MediaStream? localStreamScreen = parameters.localStreamScreen;
+  EventType eventType = parameters.eventType;
+  bool prevForceFullDisplay = parameters.prevForceFullDisplay;
+  bool annotateScreenStream = parameters.annotateScreenStream;
 
-typedef ReorderStreams = Future<void> Function({
-  bool add,
-  bool screenChanged,
-  required Map<String, dynamic> parameters,
-});
+  // Update functions
+  void Function(bool) updateShared = parameters.updateShared;
+  void Function(bool) updateShareScreenStarted =
+      parameters.updateShareScreenStarted;
+  void Function(bool) updateShareEnded = parameters.updateShareEnded;
+  void Function(bool) updateUpdateMainWindow =
+      parameters.updateUpdateMainWindow;
+  void Function(bool) updateDeferReceive = parameters.updateDeferReceive;
+  void Function(bool) updateLockScreen = parameters.updateLockScreen;
+  void Function(bool) updateForceFullDisplay =
+      parameters.updateForceFullDisplay;
+  void Function(bool) updateFirstAll = parameters.updateFirstAll;
+  void Function(bool) updateFirstRound = parameters.updateFirstRound;
+  void Function(MediaStream?) updateLocalStreamScreen =
+      parameters.updateLocalStreamScreen;
+  void Function(double) updateMainHeightWidth =
+      parameters.updateMainHeightWidth;
+  void Function(bool) updateAnnotateScreenStream =
+      parameters.updateAnnotateScreenStream;
+  void Function(bool) updateIsScreenboardModalVisible =
+      parameters.updateIsScreenboardModalVisible;
 
-typedef GetVideos = Future<void> Function({
-  required Map<String, dynamic> parameters,
-});
+  // mediasfu functions
+  DisconnectSendTransportScreenType disconnectSendTransportScreen =
+      parameters.disconnectSendTransportScreen;
+  PrepopulateUserMediaType prepopulateUserMedia =
+      parameters.prepopulateUserMedia;
+  ReorderStreamsType reorderStreams = parameters.reorderStreams;
+  GetVideosType getVideos = parameters.getVideos;
 
-typedef UpdateMainWindowFunction = void Function(bool);
-typedef UpdateActiveNamesFunction = void Function(List<String>);
-typedef UpdateAllAudioStreamsFunction = void Function(List<dynamic>);
-typedef UpdateAllVideoStreamsFunction = void Function(List<dynamic>);
-typedef UpdateSharedFunction = void Function(bool);
-typedef UpdateShareScreenStartedFunction = void Function(bool);
-typedef UpdateUpdateMainWindowFunction = void Function(bool);
-typedef UpdateNewLimitedStreamsFunction = void Function(List<dynamic>);
-typedef UpdateDeferReceiveFunction = void Function(bool);
-typedef UpdateHostLabelFunction = void Function(String);
-typedef UpdateLockScreenFunction = void Function(bool);
-typedef UpdateForceFullDisplayFunction = void Function(bool);
-typedef UpdateFirstAllFunction = void Function(bool);
-typedef UpdateFirstRoundFunction = void Function(bool);
-typedef UpdateLocalStreamScreenFunction = void Function(MediaStream);
-typedef UpdateMainHeightWidthFunction = void Function(int);
-typedef UpdateShareEndedFunction = void Function(bool);
-typedef UpdateGotAllVidsFunction = void Function(bool);
-typedef UpdateEventTypeFunction = void Function(String);
-typedef UpdateShared = void Function(bool);
-typedef UpdateShareScreenStarted = void Function(bool);
-typedef UpdateShareEnded = void Function(bool);
-
-Future<void> stopShareScreen({required Map<String, dynamic> parameters}) async {
-  // Destructure parameters
-  // Access values from the parameters map directly
-
-  bool shared = parameters['shared'] ?? false;
-  bool shareScreenStarted = parameters['shareScreenStarted'] ?? false;
-  bool shareEnded = parameters['shareEnded'] ?? true;
-  bool updateMainWindow = parameters['updateMainWindow'] ?? true;
-  bool deferReceive = parameters['deferReceive'] ?? false;
-  String hostLabel = parameters['hostLabel'] ?? '';
-  bool lockScreen = parameters['lockScreen'] ?? false;
-  bool forceFullDisplay = parameters['forceFullDisplay'] ?? false;
-  bool firstAll = parameters['firstAll'] ?? false;
-  bool firstRound = parameters['firstRound'] ?? false;
-  MediaStream? localStreamScreen = parameters['localStreamScreen'];
-  String eventType = parameters['eventType'];
-  bool prevForceFullDisplay = parameters['prevForceFullDisplay'];
-  // Updates for the above
-  UpdateShared updateShared = parameters['updateShared'];
-  UpdateShareScreenStarted updateShareScreenStarted =
-      parameters['updateShareScreenStarted'];
-  UpdateShareEnded updateShareEnded = parameters['updateShareEnded'];
-  UpdateUpdateMainWindowFunction updateUpdateMainWindow =
-      parameters['updateUpdateMainWindow'];
-  UpdateDeferReceiveFunction updateDeferReceive =
-      parameters['updateDeferReceive'];
-  UpdateLockScreenFunction updateLockScreen = parameters['updateLockScreen'];
-  UpdateForceFullDisplayFunction updateForceFullDisplay =
-      parameters['updateForceFullDisplay'];
-  UpdateFirstAllFunction updateFirstAll = parameters['updateFirstAll'];
-  UpdateFirstRoundFunction updateFirstRound = parameters['updateFirstRound'];
-  UpdateLocalStreamScreenFunction updateLocalStreamScreen =
-      parameters['updateLocalStreamScreen'];
-  UpdateMainHeightWidthFunction updateMainHeightWidth =
-      parameters['updateMainHeightWidth'];
-
-  // Mediasfu functions
-  DisconnectSendTransportScreen disconnectSendTransportScreen =
-      parameters['disconnectSendTransportScreen'];
-  PrepopulateUserMedia prepopulateUserMedia =
-      parameters['prepopulateUserMedia'];
-  ReorderStreams reorderStreams = parameters['reorderStreams'];
-  GetVideos getVideos = parameters['getVideos'];
-
+  // Begin updating states
   shared = false;
   updateShared(shared);
   shareScreenStarted = false;
@@ -149,34 +211,85 @@ Future<void> stopShareScreen({required Map<String, dynamic> parameters}) async {
   updateMainWindow = true;
   updateUpdateMainWindow(updateMainWindow);
 
+  // Handle deferReceive
   if (deferReceive) {
     deferReceive = false;
     updateDeferReceive(deferReceive);
-    await getVideos(parameters: parameters);
+    final optionsGet = GetVideosOptions(
+        participants: parameters.participants,
+        allVideoStreams: parameters.allVideoStreams,
+        oldAllStreams: parameters.oldAllStreams,
+        adminVidID: parameters.adminVidID,
+        updateAllVideoStreams: parameters.updateAllVideoStreams,
+        updateOldAllStreams: parameters.updateOldAllStreams);
+
+    await getVideos(options: optionsGet);
   }
 
-  try {
-    localStreamScreen!.getTracks().forEach((track) async => await track.stop());
-    updateLocalStreamScreen(localStreamScreen);
-  } catch (error) {}
+  // Stop all tracks in the local screen stream
+  if (localStreamScreen != null) {
+    try {
+      await Future.wait(localStreamScreen.getTracks().map((track) async {
+        await track.stop();
+      }));
+      updateLocalStreamScreen(null);
+    } catch (error) {
+      if (kDebugMode) {
+        print("Error stopping localStreamScreen tracks: $error");
+      }
+    }
+  }
 
+  // Disconnect send transport screen
   try {
-    await disconnectSendTransportScreen(parameters: parameters);
-  } catch (error) {}
+    final optionsDisconnect =
+        DisconnectSendTransportScreenOptions(parameters: parameters);
+    await disconnectSendTransportScreen(optionsDisconnect);
+  } catch (error) {
+    if (kDebugMode) {
+      print("Error disconnecting send transport screen: $error");
+    }
+  }
 
-  if (eventType == 'conference') {
+  // Handle screen annotation
+  if (annotateScreenStream) {
+    annotateScreenStream = false;
+    updateAnnotateScreenStream(annotateScreenStream);
+    updateIsScreenboardModalVisible(true);
+    await Future.delayed(const Duration(milliseconds: 500));
+    updateIsScreenboardModalVisible(false);
+  }
+
+  // Update mainHeightWidth if event type is conference
+  if (eventType == EventType.conference) {
     updateMainHeightWidth(0);
   }
 
+  // Prepopulate user media
   try {
-    prepopulateUserMedia(name: hostLabel, parameters: parameters);
-  } catch (error) {}
+    final optionsPrepopulate =
+        PrepopulateUserMediaOptions(name: hostLabel, parameters: parameters);
+    prepopulateUserMedia(optionsPrepopulate);
+  } catch (error) {
+    if (kDebugMode) {
+      print("Error in prepopulateUserMedia: $error");
+    }
+  }
 
+  // Reorder streams
   try {
+    final optionsReorder =
+        ReorderStreamsOptions(screenChanged: true, parameters: parameters);
     await reorderStreams(
-        add: false, screenChanged: true, parameters: parameters);
-  } catch (error) {}
+      optionsReorder,
+    );
+  } catch (error) {
+    if (kDebugMode) {
+      print("Error in reorderStreams: $error");
+    }
+  }
 
+  // Reset UI states
   lockScreen = false;
   updateLockScreen(lockScreen);
   forceFullDisplay = prevForceFullDisplay;

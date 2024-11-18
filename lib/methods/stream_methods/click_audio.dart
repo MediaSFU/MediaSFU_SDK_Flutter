@@ -1,142 +1,192 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
+import '../../types/types.dart'
+    show
+        CheckPermissionType,
+        DisconnectSendTransportAudioParameters,
+        DisconnectSendTransportAudioType,
+        Participant,
+        RequestPermissionAudioType,
+        ResumeSendTransportAudioParameters,
+        ResumeSendTransportAudioType,
+        ShowAlert,
+        StreamSuccessAudioParameters,
+        StreamSuccessAudioType,
+        DisconnectSendTransportAudioOptions,
+        ResumeSendTransportAudioOptions,
+        CheckPermissionOptions,
+        StreamSuccessAudioOptions;
 
-/// Clicks the audio button to toggle audio on/off in a video conference room.
+// Define ClickAudioParameters class with all parameters required for the clickAudio function
+abstract class ClickAudioParameters
+    implements
+        DisconnectSendTransportAudioParameters,
+        ResumeSendTransportAudioParameters,
+        StreamSuccessAudioParameters {
+  // Core properties as abstract getters
+  bool get checkMediaPermission;
+  bool get hasAudioPermission;
+  bool get audioPaused;
+  bool get audioAlreadyOn;
+  bool get audioOnlyRoom;
+  bool get recordStarted;
+  bool get recordResumed;
+  bool get recordPaused;
+  bool get recordStopped;
+  String get recordingMediaOptions;
+  String get islevel;
+  bool get youAreCoHost;
+  bool get adminRestrictSetting;
+  String? get audioRequestState;
+  int? get audioRequestTime;
+  String get member;
+  io.Socket? get socket;
+  String get roomName;
+  String get userDefaultAudioInputDevice;
+  bool get micAction;
+  MediaStream? get localStream;
+  String get audioSetting;
+  String get videoSetting;
+  String get screenshareSetting;
+  String get chatSetting;
+  int get updateRequestIntervalSeconds;
+  List<Participant> get participants;
+  bool get transportCreated;
+  bool get transportCreatedAudio;
+
+  // Callback functions as abstract getters
+  void Function(bool) get updateAudioAlreadyOn;
+  void Function(String?) get updateAudioRequestState;
+  void Function(bool) get updateAudioPaused;
+  void Function(MediaStream?) get updateLocalStream;
+  void Function(List<Participant> participants) get updateParticipants;
+  void Function(bool) get updateTransportCreated;
+  void Function(bool) get updateTransportCreatedAudio;
+  void Function(bool) get updateMicAction;
+  ShowAlert? get showAlert;
+
+  // Mediasfu functions as abstract getters
+  CheckPermissionType get checkPermission;
+  StreamSuccessAudioType get streamSuccessAudio;
+  DisconnectSendTransportAudioType get disconnectSendTransportAudio;
+  RequestPermissionAudioType get requestPermissionAudio;
+  ResumeSendTransportAudioType get resumeSendTransportAudio;
+
+  // Method to retrieve updated parameters
+  ClickAudioParameters Function() get getUpdatedAllParams;
+
+  // dynamic operator [](String key);
+  // void operator []=(String key, dynamic value);
+}
+
+// Define ClickAudioOptions with parameters of type ClickAudioParameters
+class ClickAudioOptions {
+  final ClickAudioParameters parameters;
+
+  ClickAudioOptions({required this.parameters});
+}
+
+// Type definition for the clickAudio function
+typedef ClickAudioType = Future<void> Function(ClickAudioOptions options);
+
+/// Toggles audio for a user, either enabling or disabling the microphone.
 ///
-/// This function handles the logic for turning on/off the audio in a video conference room.
-/// It takes a map of parameters as input, including various settings and callbacks.
-/// The function checks for permissions, handles audio requests, and updates the UI accordingly.
+/// ### Parameters:
+/// - `options` (`ClickAudioOptions`): Contains all required parameters and callbacks.
+///   - `parameters` (`ClickAudioParameters`): The key configurations for permissions,
+///      media settings, callback functions, and state variables.
 ///
-/// Parameters:
-/// - `parameters`: A map of parameters including settings and callbacks.
+/// ### Workflow:
+/// 1. **Audio Toggle**:
+///    - **Disable**: Checks if recording is active and if it's safe to disable audio.
+///    - **Enable**: Verifies permissions and sends a request to the host if necessary.
 ///
-/// Callbacks:
-/// - `showAlert`: A callback function to show an alert message.
-/// - `checkPermission`: A callback function to check for permissions.
-/// - `streamSuccessAudio`: A callback function to handle successful audio streaming.
-/// - `requestPermissionAudio`: A callback function to request audio permission.
-/// - `disconnectSendTransportAudio`: A callback function to disconnect the audio send transport.
-/// - `resumeSendTransportAudio`: A callback function to resume the audio send transport.
-/// - `updateAudioAlreadyOn`: A callback function to update the audio already on state.
-/// - `updateAudioRequestState`: A callback function to update the audio request state.
-/// - `updateLocalStream`: A callback function to update the local stream.
-/// - `updateAudioPaused`: A callback function to update the audio paused state.
-/// - `updateParticipants`: A callback function to update the participants list.
-/// - `updateTransportCreated`: A callback function to update the transport created state.
-/// - `updateTransportCreatedAudio`: A callback function to update the audio transport created state.
-/// - `updateMicAction`: A callback function to update the mic action state.
+/// 2. **Permissions & Requests**:
+///    - If the user lacks permissions, sends a request to the host or prompts for permissions.
+///    - Uses callbacks to update the UI and emit requests or permission checks.
 ///
-/// Returns: A Future that completes when the audio click operation is finished.
+/// 3. **Media Constraints**:
+///    - Configures constraints for `getUserMedia` based on device and user preference.
+///
+/// ### Example Usage:
+/// ```dart
+/// final parameters = ClickAudioParameters(
+///   checkMediaPermission: true,
+///   hasAudioPermission: false,
+///   audioPaused: false,
+///   // Other properties and callbacks...
+/// );
+///
+/// await clickAudio(ClickAudioOptions(parameters: parameters));
+/// ```
+///
+/// ### Error Handling:
+/// - Logs any errors to the console in debug mode.
 
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
-});
-
-typedef CheckPermission = Future<int> Function({
-  required String permissionType,
-  required Map<String, dynamic> parameters,
-});
-
-typedef StreamSuccessAudio = Future<void> Function({
-  required MediaStream stream,
-  required Map<String, dynamic> parameters,
-});
-
-typedef RequestPermissionAudio = Future<bool> Function();
-
-typedef DisconnectSendTransportAudio = Future<void> Function({
-  required Map<String, dynamic> parameters,
-});
-
-typedef ResumeSendTransportAudio = Future<void> Function({
-  required Map<String, dynamic> parameters,
-});
-
-typedef UpdateVideoRequestState = void Function(String value);
-typedef UpdateAudioRequestState = void Function(String value);
-typedef UpdateVideoRequestTime = void Function(DateTime value);
-typedef UpdateAudioRequestTime = void Function(DateTime value);
-typedef UpdateLocalStream = void Function(dynamic value);
-typedef UpdateLocalStreamVideo = void Function(dynamic value);
-typedef UpdateAudioAlreadyOn = void Function(bool value);
-typedef UpdateLocalStreamAudio = void Function(dynamic value);
-typedef UpdateAudioPaused = void Function(bool audioPaused);
-typedef UpdateParticipants = void Function(List<dynamic> participants);
-typedef UpdateTransportCreated = void Function(bool transportCreated);
-typedef UpdateTransportCreatedAudio = void Function(bool transportCreatedAudio);
-typedef UpdateMicAction = void Function(bool micAction);
-
-Future<void> clickAudio({
-  required Map<String, dynamic> parameters,
-}) async {
+Future<void> clickAudio(ClickAudioOptions options) async {
   try {
-    // Destructure parameters
-    bool checkMediaPermission = parameters['checkMediaPermission'] ?? false;
-    bool hasAudioPermission = parameters['hasAudioPermission'] ?? false;
-    bool audioPaused = parameters['audioPaused'] ?? false;
-    bool audioAlreadyOn = parameters['audioAlreadyOn'] ?? false;
-    bool audioOnlyRoom = parameters['audioOnlyRoom'] ?? false;
-    bool recordStarted = parameters['recordStarted'] ?? false;
-    bool recordResumed = parameters['recordResumed'] ?? false;
-    bool recordPaused = parameters['recordPaused'] ?? false;
-    bool recordStopped = parameters['recordStopped'] ?? false;
-    String recordingMediaOptions = parameters['recordingMediaOptions'] ?? '';
-    String islevel = parameters['islevel'] ?? '1';
-    bool youAreCoHost = parameters['youAreCoHost'] ?? false;
-    bool adminRestrictSetting = parameters['adminRestrictSetting'] ?? false;
-    String audioRequestState = parameters['audioRequestState'] ?? '';
-    DateTime? audioRequestTime = parameters['audioRequestTime'];
-    String member = parameters['member'] ?? '';
-    io.Socket? socket = parameters['socket'];
-    String roomName = parameters['roomName'] ?? '';
-    String userDefaultAudioInputDevice =
-        parameters['userDefaultAudioInputDevice'] ?? '';
-    bool micAction = parameters['micAction'] ?? false;
-    dynamic localStream = parameters['localStream'];
-    String audioSetting = parameters['audioSetting'] ?? 'allow';
-    String videoSetting = parameters['videoSetting'] ?? 'allow';
-    String screenshareSetting = parameters['screenshareSetting'] ?? 'allow';
-    String chatSetting = parameters['chatSetting'] ?? 'allow';
-    int requestIntervalSeconds = parameters['requestIntervalSeconds'] ?? 0;
-    dynamic participants = parameters['participants'];
-    bool transportCreated = parameters['transportCreated'] ?? false;
-    bool transportCreatedAudio = parameters['transportCreatedAudio'] ?? false;
-    ShowAlert? showAlert = parameters['showAlert'];
-    UpdateAudioAlreadyOn updateAudioAlreadyOn =
-        parameters['updateAudioAlreadyOn'];
-    UpdateAudioRequestState updateAudioRequestState =
-        parameters['updateAudioRequestState'];
-    UpdateLocalStream updateLocalStream = parameters['updateLocalStream'];
-    UpdateAudioPaused updateAudioPaused = parameters['updateAudioPaused'];
-    UpdateParticipants updateParticipants = parameters['updateParticipants'];
-    UpdateTransportCreated updateTransportCreated =
-        parameters['updateTransportCreated'];
-    UpdateTransportCreatedAudio updateTransportCreatedAudio =
-        parameters['updateTransportCreatedAudio'];
-    UpdateMicAction updateMicAction = parameters['updateMicAction'];
+    final parameters = options.parameters;
 
-    //mediasfu functions
-    CheckPermission checkPermission = parameters['checkPermission'];
-    StreamSuccessAudio streamSuccessAudio = parameters['streamSuccessAudio'];
-    RequestPermissionAudio requestPermissionAudio =
-        parameters['requestPermissionAudio'];
-    DisconnectSendTransportAudio disconnectSendTransportAudio =
-        parameters['disconnectSendTransportAudio'];
-    ResumeSendTransportAudio resumeSendTransportAudio =
-        parameters['resumeSendTransportAudio'];
+    // Destructure parameters
+    final bool checkMediaPermission = parameters.checkMediaPermission;
+    bool hasAudioPermission = parameters.hasAudioPermission;
+    bool audioPaused = parameters.audioPaused;
+    bool audioAlreadyOn = parameters.audioAlreadyOn;
+    final bool audioOnlyRoom = parameters.audioOnlyRoom;
+    final bool recordStarted = parameters.recordStarted;
+    final bool recordResumed = parameters.recordResumed;
+    final bool recordPaused = parameters.recordPaused;
+    final bool recordStopped = parameters.recordStopped;
+    final String recordingMediaOptions = parameters.recordingMediaOptions;
+    final String islevel = parameters.islevel;
+    final bool youAreCoHost = parameters.youAreCoHost;
+    final bool adminRestrictSetting = parameters.adminRestrictSetting;
+    String? audioRequestState = parameters.audioRequestState;
+    final int? audioRequestTime = parameters.audioRequestTime;
+    final String member = parameters.member;
+    final io.Socket? socket = parameters.socket;
+    final String roomName = parameters.roomName;
+    final String userDefaultAudioInputDevice =
+        parameters.userDefaultAudioInputDevice;
+    bool micAction = parameters.micAction;
+    MediaStream? localStream = parameters.localStream;
+    final String audioSetting = parameters.audioSetting;
+    final String videoSetting = parameters.videoSetting;
+    final String screenshareSetting = parameters.screenshareSetting;
+    final String chatSetting = parameters.chatSetting;
+    final int updateRequestIntervalSeconds =
+        parameters.updateRequestIntervalSeconds;
+    final List<Participant> participants = parameters.participants;
+    bool transportCreated = parameters.transportCreated;
+    bool transportCreatedAudio = parameters.transportCreatedAudio;
+
+    // Callback functions
+    final updateAudioAlreadyOn = parameters.updateAudioAlreadyOn;
+    final updateAudioRequestState = parameters.updateAudioRequestState;
+    final updateAudioPaused = parameters.updateAudioPaused;
+    final updateLocalStream = parameters.updateLocalStream;
+    final updateParticipants = parameters.updateParticipants;
+    final updateTransportCreated = parameters.updateTransportCreated;
+    final updateTransportCreatedAudio = parameters.updateTransportCreatedAudio;
+    final updateMicAction = parameters.updateMicAction;
+    final showAlert = parameters.showAlert;
+
+    // mediasfu functions
+    final checkPermission = parameters.checkPermission;
+    final streamSuccessAudio = parameters.streamSuccessAudio;
+    final requestPermissionAudio = parameters.requestPermissionAudio;
+    final disconnectSendTransportAudio =
+        parameters.disconnectSendTransportAudio;
+    final resumeSendTransportAudio = parameters.resumeSendTransportAudio;
 
     if (audioOnlyRoom) {
-      if (showAlert != null) {
-        showAlert(
-          message: 'You cannot turn on your camera in an audio-only event.',
-          type: 'danger',
-          duration: 3000,
-        );
-      }
+      showAlert?.call(
+          message: "You cannot turn on your camera in an audio-only event.",
+          type: "danger",
+          duration: 3000);
       return;
     }
 
@@ -146,82 +196,80 @@ Future<void> clickAudio({
           (recordStarted || recordResumed) &&
           !(recordPaused || recordStopped) &&
           recordingMediaOptions == 'audio') {
-        if (showAlert != null) {
-          showAlert(
+        showAlert?.call(
             message:
-                'You cannot turn off your audio while recording, please pause or stop recording first.',
-            type: 'danger',
-            duration: 3000,
-          );
-        }
+                "You cannot turn off your audio while recording, please pause or stop recording first.",
+            type: "danger",
+            duration: 3000);
         return;
       }
 
       // Update the icon and turn off audio
       audioAlreadyOn = false;
       updateAudioAlreadyOn(audioAlreadyOn);
-      localStream.getAudioTracks()[0].enabled = false;
+      localStream?.getAudioTracks()[0].enabled = false;
       updateLocalStream(localStream);
-      await disconnectSendTransportAudio(parameters: parameters);
+      final optionsDisconnect = DisconnectSendTransportAudioOptions(
+        parameters: parameters,
+      );
+      await disconnectSendTransportAudio(optionsDisconnect);
       audioPaused = true;
       updateAudioPaused(audioPaused);
     } else {
       if (adminRestrictSetting) {
-        // Return with access denied by admin
-        if (showAlert != null) {
-          showAlert(
+        showAlert?.call(
             message:
-                'You cannot turn on your microphone. Access denied by host.',
-            type: 'danger',
-            duration: 3000,
-          );
-        }
+                "You cannot turn on your microphone. Access denied by host.",
+            type: "danger",
+            duration: 3000);
         return;
       }
 
       int response = 2;
+
       if (!micAction && islevel != '2' && !youAreCoHost) {
-        // Check if audio permission is set to approval
-        response =
-            await checkPermission(permissionType: 'audioSetting', parameters: {
-          'audioSetting': audioSetting,
-          'videoSetting': videoSetting,
-          'screenshareSetting': screenshareSetting,
-          'chatSetting': chatSetting,
-        });
+        final optionsCheck = CheckPermissionOptions(
+          permissionType: 'audioSetting',
+          audioSetting: audioSetting,
+          videoSetting: videoSetting,
+          screenshareSetting: screenshareSetting,
+          chatSetting: chatSetting,
+        );
+        response = await checkPermission(optionsCheck);
       } else {
         response = 0;
       }
 
       switch (response) {
         case 1:
-          // Approval
-
-          // Check if request is pending or not
           if (audioRequestState == 'pending') {
-            if (showAlert != null) {
-              showAlert(
+            showAlert?.call(
                 message:
-                    'A request is pending. Please wait for the host to respond.',
-                type: 'danger',
-                duration: 3000,
-              );
-            }
+                    "A request is pending. Please wait for the host to respond.",
+                type: "danger",
+                duration: 3000);
             return;
           }
 
-          // Send request to host
-          if (showAlert != null) {
-            showAlert(
-              message: 'Request sent to host.',
-              type: 'success',
-              duration: 3000,
-            );
+          if (audioRequestState == 'rejected' &&
+              DateTime.now().millisecondsSinceEpoch - audioRequestTime! <
+                  updateRequestIntervalSeconds * 1000) {
+            showAlert?.call(
+                message:
+                    "A request was rejected. Please wait for $updateRequestIntervalSeconds seconds before sending another request.",
+                type: "danger",
+                duration: 3000);
+            return;
           }
+
+          showAlert?.call(
+              message: "Request sent to host.",
+              type: "success",
+              duration: 3000);
           audioRequestState = 'pending';
           updateAudioRequestState(audioRequestState);
-          // Create a request and add to the request list and send to host
-          var userRequest = {
+
+          final userRequest = {
             'id': socket!.id,
             'name': member,
             'icon': 'fa-microphone'
@@ -231,31 +279,25 @@ Future<void> clickAudio({
           break;
 
         case 2:
-          // Check if rejected and current time is less than audioRequestTime
-          if (audioRequestState == 'rejected' &&
-              (DateTime.now().millisecondsSinceEpoch -
-                      audioRequestTime!.millisecondsSinceEpoch) <
-                  requestIntervalSeconds) {
-            if (showAlert != null) {
-              showAlert(
-                message:
-                    'A request was rejected. Please wait for $requestIntervalSeconds seconds before sending another request.',
-                type: 'danger',
-                duration: 3000,
-              );
-            }
-            return;
-          }
+          showAlert?.call(
+            message:
+                'You cannot turn on your microphone. Access denied by host.',
+            type: 'danger',
+            duration: 3000,
+          );
+
           break;
 
         case 0:
-          // Allow
           if (audioPaused) {
-            localStream.getAudioTracks()[0].enabled = true;
-            audioAlreadyOn = true;
-            await resumeSendTransportAudio(parameters: parameters);
-            socket!.emit('resumeProducerAudio',
-                {'mediaTag': 'audio', 'roomName': roomName});
+            localStream?.getAudioTracks()[0].enabled = true;
+            updateAudioAlreadyOn(true);
+            final optionsResume = ResumeSendTransportAudioOptions(
+              parameters: parameters,
+            );
+            await resumeSendTransportAudio(options: optionsResume);
+            socket!.emit("resumeProducerAudio",
+                {"mediaTag": "audio", "roomName": roomName});
             updateLocalStream(localStream);
             updateAudioAlreadyOn(audioAlreadyOn);
             if (micAction == true) {
@@ -263,14 +305,14 @@ Future<void> clickAudio({
               updateMicAction(micAction);
             }
 
-            for (var participant in participants.toList()) {
+            for (var participant in participants) {
               if (participant['socketId'] == socket.id &&
-                  participant['name'] == member) {
-                participant['muted'] = false;
+                  participant.name == member) {
+                participant.muted = false;
               }
             }
-
             updateParticipants(participants);
+
             transportCreated = true;
             updateTransportCreated(transportCreated);
             transportCreatedAudio = true;
@@ -281,45 +323,43 @@ Future<void> clickAudio({
               if (checkMediaPermission) {
                 bool statusMic = await requestPermissionAudio();
                 if (statusMic != true) {
-                  if (showAlert != null) {
-                    showAlert(
+                  showAlert?.call(
                       message:
-                          'Allow access to your microphone or check if your microphone is not being used by another application.',
-                      type: 'danger',
-                      duration: 3000,
-                    );
-                  }
+                          "Allow access to your microphone or check if your microphone is not being used by another application.",
+                      type: "danger",
+                      duration: 3000);
                   return;
                 }
               }
             }
-            Map<String, dynamic> mediaConstraints = {};
-            if (userDefaultAudioInputDevice != '') {
-              mediaConstraints = {
-                'audio': {'deviceId': userDefaultAudioInputDevice},
-                'video': false
-              };
-            } else {
-              mediaConstraints = {'audio': true, 'video': false};
-            }
+
+            final mediaConstraints = userDefaultAudioInputDevice.isNotEmpty
+                ? {
+                    'audio': {'deviceId': userDefaultAudioInputDevice},
+                    'video': false
+                  }
+                : {'audio': true, 'video': false};
+
             try {
-              MediaStream stream =
+              final stream =
                   await navigator.mediaDevices.getUserMedia(mediaConstraints);
-              await streamSuccessAudio(stream: stream, parameters: {
-                ...parameters,
-                'audioConstraints': mediaConstraints,
-              });
+              final optionsStream = StreamSuccessAudioOptions(
+                parameters: parameters,
+                stream: stream,
+                audioConstraints: mediaConstraints,
+              );
+              await streamSuccessAudio(optionsStream);
             } catch (error) {
-              if (showAlert != null) {
-                showAlert(
+              showAlert?.call(
                   message:
-                      'Allow access to your microphone or check if your microphone is not being used by another application.',
-                  type: 'danger',
-                  duration: 3000,
-                );
-              }
+                      "Allow access to your microphone or check if your microphone is not being used by another application.",
+                  type: "danger",
+                  duration: 3000);
             }
           }
+          break;
+
+        default:
           break;
       }
     }

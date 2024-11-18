@@ -1,104 +1,224 @@
+// ignore_for_file: unused_shown_name, unused_import
 import 'package:flutter/material.dart';
-import 'package:mediasfu_sdk/mediasfu_sdk.dart'
-    show
-        MediasfuGeneric,
-        PreJoinPage,
-        generateRandomParticipants,
-        generateRandomMessages,
-        generateRandomRequestList,
-        generateRandomWaitingRoomList;
+import 'package:mediasfu_sdk/mediasfu_sdk.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
-// Global credentials used for authentication
-final credentials = {
-  'apiUserName': "your_api_user_name",
-  'apiKey': "your_api_key",
-};
+/// A custom pre-join page widget that can be used instead of the default Mediasfu pre-join page.
+///
+/// This widget displays a personalized welcome message and includes a button to proceed to the session.
+///
+/// **Note:** Ensure this widget is passed to [MediasfuWebinarOptions] only when you intend to use a custom pre-join page.
 
-/// The main application widget responsible for setting up the UI and navigation.
+// Uncomment the following lines to use a custom pre-join page
+
+Widget myCustomPreJoinPage({
+  PreJoinPageOptions? options,
+  required Credentials credentials,
+}) {
+  return Scaffold(
+    appBar: AppBar(
+      title: const Text('Welcome to Mediasfu'),
+    ),
+    body: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'Hello, ${credentials.apiUserName}!',
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Get ready to join your session.',
+            style: TextStyle(fontSize: 18),
+          ),
+          const SizedBox(height: 40),
+          ElevatedButton(
+            onPressed: () {
+              // Proceed to the session by updating the validation status
+              options!.updateValidated(true);
+            },
+            child: const Text('Join Now'),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+/// The main application widget for MediaSFU.
 ///
-/// Users have the option to provide a custom view by passing the [PreJoinPage]
-/// widget, which can be tailored to their specific requirements. This flexibility
-/// allows users to design and customize the prejoin experience according to their
-/// needs, such as collecting additional information or providing specialized instructions.
-/// When using the prejoin page, ensure to pass appropriate [credentials] for authentication.
-///
-/// For generic usage, where a custom view is not provided, the application defaults
-/// to [MediasfuGeneric], offering a generic prejoin experience. In this mode, seed data
-/// can be utilized for UI design purposes by enabling the [useSeed] flag. When [useSeed]
-/// is true, seed data containing random participants, messages, requests, and waiting lists
-/// is provided. Set [useLocalUIMode] to true to prevent making requests to Mediasfu servers
-/// during UI development.
+/// This widget initializes the necessary credentials and configuration for the MediaSFU application,
+/// including options for using seed data to generate random participants and messages.
+/// It allows selecting different event types such as broadcast, chat, webinar, and conference.
 class MyApp extends StatelessWidget {
-  /// Whether to use seed data for generating random participants and messages.
-  final bool useSeed = false;
-
+  /// Constructs a new instance of [MyApp].
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Name of the member
-    const String memberName = 'Prince';
+    // Mediasfu account credentials
+    // Replace 'your_api_username' and 'your_api_key' with your actual credentials
+    final credentials = Credentials(
+      apiUserName: "your_api_user_name",
+      apiKey: "your_api_key",
+    );
+    // Whether to use seed data for generating random participants and messages
+    // Set to true if you want to run the application in local UI mode with seed data
 
-    // Name of the host (same as member if the member is the host)
-    const String hostName = 'Fred';
+    //NOTE: Seed data usage is unstable and may cause the application to crash due to the large amount of null values
 
-    // Determine the event type
-    const String eventType =
-        'chat'; // 'broadcast', 'chat', 'webinar', 'conference'
+    const bool useSeed = false;
+    SeedData? seedData;
 
-    // Generate random participants, messages, requests, and waiting list
-    final participants = useSeed
-        ? generateRandomParticipants(memberName, '', hostName,
-            forChatBroadcast: eventType == "broadcast" || eventType == "chat")
-        : [];
-    final messages = useSeed
-        ? generateRandomMessages(participants, memberName, '', hostName,
-            forChatBroadcast: eventType == "broadcast" || eventType == "chat")
-        : [];
-    final requests = useSeed
-        ? generateRandomRequestList(participants, memberName, '', 3)
-        : [];
-    final waitingList =
-        useSeed ? generateRandomWaitingRoomList(participants) : [];
+    // Event type ('broadcast', 'chat', 'webinar', 'conference')
+    // Set this to match the component you are using
+    // Uncomment and set the desired event type
+    // const EventType eventType = EventType.webinar;
 
-    // Create seed data
-    final seedData = {
-      'participants': participants,
-      'messages': messages,
-      'requests': requests,
-      'waitingList': waitingList,
-      'member': memberName,
-      'host': hostName,
-      'eventType': eventType,
-    };
+    /*
+    // If using seed data, generate random participants, messages, requests, and waiting room lists
+    if (useSeed) {
+      // Name of the member
+      const String memberName = 'Prince';
+
+      // Name of the host
+      const String hostName = 'Fred';
+
+      // Generate random participants
+      final participants = generateRandomParticipants(
+        GenerateRandomParticipantsOptions(
+          member: memberName,
+          coHost: '',
+          host: hostName,
+          forChatBroadcast:
+              eventType == EventType.chat || eventType == EventType.broadcast,
+        ),
+      );
+
+      // Generate random messages
+      final messages = generateRandomMessages(
+        GenerateRandomMessagesOptions(
+          participants: participants,
+          member: memberName,
+          host: hostName,
+        ),
+      );
+
+      // Generate random requests
+      final requests = generateRandomRequestList(
+        GenerateRandomRequestListOptions(
+          participants: participants,
+          hostName: memberName,
+          coHostName: '',
+          numberOfRequests: 3,
+        ),
+      );
+
+      // Generate random waiting list
+      final waitingList = generateRandomWaitingRoomList();
+
+      // Assign generated data to seedData
+      seedData = SeedData(
+        participants: participants,
+        messages: messages,
+        requests: requests,
+        waitingList: waitingList,
+        member: memberName,
+        host: hostName,
+        eventType: eventType,
+      );
+    }
+    */
 
     // Whether to use local UI mode; prevents making requests to the Mediasfu servers during UI development
-    final useLocalUIMode = useSeed;
+    const bool useLocalUIMode = useSeed;
+
+    // === Main Activated Example ===
+    // Default to MediasfuWebinar with credentials
+    // This will render the pre-join page requiring credentials
+    final MediasfuWebinarOptions options = MediasfuWebinarOptions(
+      credentials: credentials,
+      // Uncomment the following lines to use a custom pre-join page
+
+      /*
+      preJoinPageWidget: (
+          {PreJoinPageOptions? options, required Credentials credentials}) {
+        return myCustomPreJoinPage(
+          credentials: credentials,
+        );
+      },
+      */
+
+      // Uncomment the following lines to enable local UI mode with seed data
+      /*
+      useLocalUIMode: useLocalUIMode,
+      useSeed: useSeed,
+      seedData: seedData,
+      */
+    );
 
     return MaterialApp(
-      title: 'Mediasfu Generic',
+      title: 'Mediasfu Webinar',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MediasfuGeneric(
-        // Configure the PrejoinPage widget with credentials and parameters
-        PrejoinPage: ({
-          required Map<String, dynamic> credentials,
-          required Map<String, dynamic> parameters,
-        }) {
-          return PreJoinPage(credentials: credentials, parameters: parameters);
-        },
-        useLocalUIMode: useLocalUIMode,
-        useSeed: useSeed,
-        // Pass seed data if useSeed is true and useLocalUIMode is true
-        seedData: useSeed && useLocalUIMode ? seedData : {},
-        // Pass global credentials only if using a PrejoinPage
-        credentials: !useLocalUIMode ? credentials : {},
+      home: MediasfuWebinar(options: options),
+    );
+
+    // === Alternative Use Cases ===
+    // Uncomment the desired block to use a different Mediasfu component
+
+    /*
+    // Simple Use Case (Welcome Page)
+    // Renders the default welcome page
+    // No additional inputs required
+    return MaterialApp(
+      title: 'Mediasfu Welcome',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: MediasfuWebinar(),
+    );
+    */
+
+    /*
+    // Use Case with Pre-Join Page (Credentials Required)
+    // Uses a pre-join page that requires users to enter credentials
+    return MaterialApp(
+      title: 'Mediasfu Pre-Join',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: MediasfuWebinar(
+        options: MediasfuWebinarOptions(
+          preJoinPageWidget: PreJoinPage(),
+          credentials: credentials,
+        ),
       ),
     );
+    */
+
+    /*
+    // Use Case with Local UI Mode (Seed Data Required)
+    // Runs the application in local UI mode using seed data
+    return MaterialApp(
+      title: 'Mediasfu Local UI',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: MediasfuWebinar(
+        options: MediasfuWebinarOptions(
+          useLocalUIMode: true,
+          useSeed: true,
+          seedData: seedData!,
+        ),
+      ),
+    );
+    */
   }
 }

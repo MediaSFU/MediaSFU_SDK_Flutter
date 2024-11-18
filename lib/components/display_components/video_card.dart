@@ -1,133 +1,138 @@
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import './card_video_display.dart' show CardVideoDisplay;
-import './audio_decibel_check.dart' show AudioDecibelCheck;
-import '../../consumers/control_media.dart' show controlMedia;
-import 'dart:math';
+import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart'
+    show MediaStream;
+import 'package:socket_io_client/socket_io_client.dart' as io;
+import './card_video_display.dart'
+    show CardVideoDisplay, CardVideoDisplayOptions;
+import './audio_decibel_check.dart'
+    show
+        AudioDecibelCheck,
+        AudioDecibelCheckOptions,
+        AudioDecibelCheckParameters;
+import '../../consumers/control_media.dart'
+    show controlMedia, ControlMediaOptions, ControlMediaType;
+import '../../types/types.dart'
+    show AudioDecibels, Participant, CoHostResponsibility, ShowAlert, EventType;
 
-/// VideoCard - A widget for displaying a video card with customizable features.
-///
-/// This widget allows you to display a video card with various customization options such as controls,
-/// information display, and waveform animations.
-///
-/// The custom styling options for the video card.
-///final Map<String, dynamic>? customStyle;
-///
-/// The name associated with the video.
-///final String? name;
-///
-/// The color of the bars in the controls.
-///final Color? barColor;
-///
-/// The color of the text in the controls.
-///final Color? textColor;
-///
-/// The source of the image to display in the video card.
-///final String? imageSource;
-///
-/// A flag indicating whether to round the edges of the image.
-///final bool? roundedImage;
-///
-/// The style options for the image.
-///final Map<String, dynamic>? imageStyle;
-///
-/// The ID of the remote producer associated with the video.
-///final String? remoteProducerId;
-///
-/// The type of event associated with the video.
-///final String? eventType;
-///
-/// A flag indicating whether to force full display of the video.
-///final bool? forceFullDisplay;
-///
-/// The video stream to display in the card.
-///final dynamic videoStream;
-///
-/// A flag indicating whether to show controls for the video.
-///final bool? showControls;
-///
-/// A flag indicating whether to show information about the video.
-///final bool? showInfo;
-///
-/// The component to display video information.
-///final Widget? videoInfoComponent;
-///
-/// The component to display video controls.
-///final Widget? videoControlsComponent;
-///
-/// The position of the controls.
-///final String? controlsPosition;
-///
-/// The position of the information display.
-///final String? infoPosition;
-///
-/// The participant associated with the video.
-///final dynamic participant;
-///
-/// The background color of the video card.
-///final Color? backgroundColor;
-///
-/// The audio decibels of the video.
-///final Map<String, dynamic>? audioDecibels;
-///
-/// A flag indicating whether to mirror the video.
-///final bool? doMirror;
-///
-/// The parameters associated with the video.
-///final Map<String, dynamic> parameters;
+/// VideoCardParameters - Defines the parameters required for the `VideoCard` widget.
+abstract class VideoCardParameters implements AudioDecibelCheckParameters {
+  io.Socket? get socket;
+  String get roomName;
+  List<CoHostResponsibility> get coHostResponsibility;
+  ShowAlert? get showAlert;
+  String get coHost;
+  List<Participant> get participants;
+  String get member;
+  String get islevel;
+  List<AudioDecibels> get audioDecibels;
 
-class VideoCard extends StatefulWidget {
-  final Map<String, dynamic>? customStyle;
-  final String? name;
-  final Color? barColor;
-  final Color? textColor;
-  final String? imageSource;
-  final bool? roundedImage;
-  final Map<String, dynamic>? imageStyle;
-  final String? remoteProducerId;
-  final String? eventType;
-  final bool? forceFullDisplay;
-  final dynamic videoStream;
-  final bool? showControls;
-  final bool? showInfo;
+  VideoCardParameters Function() get getUpdatedAllParams;
+
+  // dynamic operator [](String key);
+}
+
+/// Configuration options for the `VideoCard` widget.
+///
+/// The `VideoCardOptions` class provides a comprehensive set of configuration options to customize
+/// the appearance and behavior of the `VideoCard` widget, including parameters for audio and video control,
+/// waveform animations, and display options.
+///
+/// ### Example:
+/// ```dart
+/// VideoCard(
+///   options: VideoCardOptions(
+///     parameters: VideoCardParametersImplementation(),
+///     name: "John Doe",
+///     remoteProducerId: "12345",
+///     eventType: EventType.video,
+///     videoStream: mediaStream,
+///     participant: participant,
+///   ),
+/// );
+/// ```
+///
+class VideoCardOptions {
+  final VideoCardParameters parameters;
+  final String name;
+  final Color barColor;
+  final Color textColor;
+  final String imageSource;
+  final bool roundedImage;
+  final Map<String, dynamic> imageStyle;
+  final String remoteProducerId;
+  final EventType eventType;
+  final bool forceFullDisplay;
+  final MediaStream? videoStream;
+  final bool showControls;
+  final bool showInfo;
   final Widget? videoInfoComponent;
   final Widget? videoControlsComponent;
-  final String? controlsPosition;
-  final String? infoPosition;
-  final dynamic participant;
-  final Color? backgroundColor;
-  final Map<String, dynamic>? audioDecibels;
-  final bool? doMirror;
-  final Map<String, dynamic> parameters;
+  final String controlsPosition;
+  final String infoPosition;
+  final Participant participant;
+  final Color backgroundColor;
+  final bool doMirror;
+  final ControlMediaType controlUserMedia;
 
-  const VideoCard({
-    super.key,
-    this.customStyle,
-    this.name,
+  VideoCardOptions({
+    required this.parameters,
+    required this.name,
     this.barColor = const Color.fromARGB(255, 232, 46, 46),
     this.textColor = const Color.fromARGB(255, 25, 25, 25),
-    this.imageSource,
-    this.roundedImage,
-    this.imageStyle,
-    this.remoteProducerId,
-    this.eventType,
-    this.forceFullDisplay,
+    this.imageSource = '',
+    this.roundedImage = false,
+    this.imageStyle = const {},
+    required this.remoteProducerId,
+    required this.eventType,
+    this.forceFullDisplay = false,
     required this.videoStream,
-    this.showControls,
-    this.showInfo,
+    this.showControls = true,
+    this.showInfo = true,
     this.videoInfoComponent,
     this.videoControlsComponent,
     this.controlsPosition = 'topLeft',
     this.infoPosition = 'topRight',
     required this.participant,
-    this.backgroundColor,
-    this.audioDecibels,
-    this.doMirror,
-    required this.parameters,
+    this.backgroundColor = const Color(0xFF2c678f),
+    this.doMirror = false,
+    this.controlUserMedia = controlMedia,
   });
+}
+
+typedef VideoCardType = Widget Function({required VideoCardOptions options});
+
+/// VideoCard - A widget for displaying a video card with customizable features.
+///
+/// The `VideoCard` widget provides an interface for rendering video streams, participant information,
+/// audio waveform animations, and control options in a structured card format. It offers options
+/// for displaying audio waveform feedback based on audio decibel levels, control buttons
+/// for managing audio and video settings, and additional participant details.
+///
+/// ### Parameters:
+/// - `options` (`VideoCardOptions`): Configuration options for the video card.
+///
+/// ### Example Usage:
+/// ```dart
+/// VideoCard(
+///   options: VideoCardOptions(
+///     parameters: VideoCardParametersImplementation(),
+///     name: "John Doe",
+///     remoteProducerId: "12345",
+///     eventType: EventType.video,
+///     videoStream: mediaStream,
+///     participant: participant,
+///   ),
+/// );
+/// ```
+///
+class VideoCard extends StatefulWidget {
+  final VideoCardOptions options;
+
+  const VideoCard({super.key, required this.options});
 
   @override
-  // ignore: library_private_types_in_public_api
   _VideoCardState createState() => _VideoCardState();
 }
 
@@ -139,9 +144,12 @@ class _VideoCardState extends State<VideoCard> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     waveformAnimations = List.generate(
-        9,
-        (_) => AnimationController(
-            vsync: this, duration: const Duration(seconds: 1)));
+      9,
+      (_) => AnimationController(
+        vsync: this,
+        duration: const Duration(seconds: 1),
+      ),
+    );
     animateWaveform();
   }
 
@@ -166,32 +174,31 @@ class _VideoCardState extends State<VideoCard> with TickerProviderStateMixin {
     for (var controller in waveformAnimations) {
       controller.dispose();
     }
-
     super.dispose();
   }
 
   Widget renderControls() {
-    if (!widget.showControls!) {
+    if (!widget.options.showControls) {
       return const SizedBox();
     }
 
-    final controlsComponent = widget.videoControlsComponent ??
+    final controlsComponent = widget.options.videoControlsComponent ??
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             GestureDetector(
               onTap: toggleAudio,
               child: Container(
-                padding: const EdgeInsets.all(2), // Adjust padding here
+                padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.25),
                   borderRadius: BorderRadius.circular(0),
                 ),
                 child: Icon(
-                  widget.participant?['muted'] ?? false
+                  widget.options.participant.muted!
                       ? Icons.mic_off
                       : Icons.mic_none,
-                  color: widget.participant?['muted'] ?? false
+                  color: widget.options.participant.muted!
                       ? Colors.red
                       : Colors.green,
                   size: 14,
@@ -202,16 +209,16 @@ class _VideoCardState extends State<VideoCard> with TickerProviderStateMixin {
             GestureDetector(
               onTap: toggleVideo,
               child: Container(
-                padding: const EdgeInsets.all(2), // Adjust padding here
+                padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.25),
                   borderRadius: BorderRadius.circular(0),
                 ),
                 child: Icon(
-                  widget.participant?['videoOn'] ?? true
+                  widget.options.participant.videoOn ?? true
                       ? Icons.videocam
                       : Icons.videocam_off,
-                  color: widget.participant?['videoOn'] ?? true
+                  color: widget.options.participant.videoOn ?? true
                       ? Colors.green
                       : Colors.red,
                   size: 14,
@@ -224,31 +231,49 @@ class _VideoCardState extends State<VideoCard> with TickerProviderStateMixin {
     return controlsComponent;
   }
 
-  void toggleAudio() async {
-    if (widget.participant?['muted'] ?? false) {
-      // Handle when participant is muted
+  Future<void> toggleAudio() async {
+    if (widget.options.participant.muted!) {
+      // Handle unmuting logic if applicable
     } else {
-      // Handle when participant is not muted
-      await controlMedia(
-        participantId: widget.participant['id'],
-        participantName: widget.participant['name'],
+      final optionsControl = ControlMediaOptions(
+        participantId: widget.options.participant.id!,
+        participantName: widget.options.participant.name,
         type: 'audio',
-        parameters: widget.parameters,
+        socket: widget.options.parameters.socket,
+        roomName: widget.options.parameters.roomName,
+        coHostResponsibility: widget.options.parameters.coHostResponsibility,
+        showAlert: widget.options.parameters.showAlert,
+        coHost: widget.options.parameters.coHost,
+        participants: widget.options.parameters.participants,
+        member: widget.options.parameters.member,
+        islevel: widget.options.parameters.islevel,
+      );
+      await widget.options.controlUserMedia(
+        optionsControl,
       );
     }
   }
 
-  void toggleVideo() async {
-    if (widget.participant?['videoOn'] ?? false) {
-      // Handle when participant's video is on
-      await controlMedia(
-        participantId: widget.participant['id'],
-        participantName: widget.participant['name'],
+  Future<void> toggleVideo() async {
+    if (widget.options.participant.videoOn ?? false) {
+      final optionsControl = ControlMediaOptions(
+        participantId: widget.options.participant.id!,
+        participantName: widget.options.participant.name,
         type: 'video',
-        parameters: widget.parameters,
+        socket: widget.options.parameters.socket,
+        roomName: widget.options.parameters.roomName,
+        coHostResponsibility: widget.options.parameters.coHostResponsibility,
+        showAlert: widget.options.parameters.showAlert,
+        coHost: widget.options.parameters.coHost,
+        participants: widget.options.parameters.participants,
+        member: widget.options.parameters.member,
+        islevel: widget.options.parameters.islevel,
+      );
+      await widget.options.controlUserMedia(
+        optionsControl,
       );
     } else {
-      // Handle when participant's video is off
+      // Handle video off logic if applicable
     }
   }
 
@@ -259,41 +284,35 @@ class _VideoCardState extends State<VideoCard> with TickerProviderStateMixin {
       return Container(
         decoration: BoxDecoration(
           border: Border.all(color: Colors.black, width: 2),
-          color: widget.backgroundColor ?? const Color(0xFF2c678f),
+          color: widget.options.backgroundColor,
         ),
         child: Stack(
           children: [
             CardVideoDisplay(
-              remoteProducerId: widget.remoteProducerId!,
-              eventType: widget.eventType!,
-              forceFullDisplay: widget.forceFullDisplay!,
-              videoStream: widget.videoStream,
-              backgroundColor: widget.backgroundColor!,
-              doMirror: widget.doMirror!,
+              options: CardVideoDisplayOptions(
+                  remoteProducerId: widget.options.remoteProducerId,
+                  eventType: widget.options.eventType,
+                  forceFullDisplay: widget.options.forceFullDisplay,
+                  videoStream: widget.options.videoStream!,
+                  backgroundColor: widget.options.backgroundColor,
+                  doMirror: widget.options.doMirror),
             ),
             Positioned(
-              top: widget.infoPosition! == 'topLeft'
+              top: widget.options.infoPosition.toLowerCase().contains('top')
                   ? 0
-                  : widget.infoPosition! == 'topRight'
+                  : null,
+              left: widget.options.infoPosition.toLowerCase().contains('left')
+                  ? 0
+                  : null,
+              bottom:
+                  widget.options.infoPosition.toLowerCase().contains('bottom')
                       ? 0
                       : null,
-              left: widget.infoPosition! == 'topLeft'
+              right: widget.options.infoPosition.toLowerCase().contains('right')
                   ? 0
-                  : widget.infoPosition! == 'bottomLeft'
-                      ? 0
-                      : null,
-              bottom: widget.infoPosition! == 'bottomLeft'
-                  ? 0
-                  : widget.infoPosition! == 'bottomRight'
-                      ? 0
-                      : null,
-              right: widget.infoPosition! == 'topRight'
-                  ? 0
-                  : widget.infoPosition! == 'bottomRight'
-                      ? 0
-                      : null,
-              child: widget.videoInfoComponent ??
-                  (widget.showInfo!
+                  : null,
+              child: widget.options.videoInfoComponent ??
+                  (widget.options.showInfo
                       ? Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -301,114 +320,95 @@ class _VideoCardState extends State<VideoCard> with TickerProviderStateMixin {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 2, vertical: 3),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(
-                                    0.25), // Adjust opacity as needed
-                                borderRadius: BorderRadius.circular(
-                                    0), // Adjust border radius as needed
+                                color: Colors.white.withOpacity(0.25),
+                                borderRadius: BorderRadius.circular(0),
                               ),
                               child: Text(
-                                widget.participant?['name'] ?? '',
+                                widget.options.participant.name,
                                 style: TextStyle(
-                                  color: widget.textColor!,
-                                  fontSize: 12,
+                                  color: widget.options.textColor,
+                                  fontSize: 10,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
                             const SizedBox(width: 5),
-                            showWaveform.value
-                                ? Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 2, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(
-                                          0.25), // Adjust opacity as needed
-                                      borderRadius: BorderRadius.circular(
-                                          0), // Adjust border radius as needed
-                                    ),
-                                    child: ValueListenableBuilder<bool>(
-                                        valueListenable: showWaveform,
-                                        builder:
-                                            (context, showWaveform, child) {
-                                          return showWaveform
-                                              ? Row(
-                                                  children: List.generate(
-                                                    waveformAnimations.length,
-                                                    (index) => AnimatedBuilder(
-                                                      animation:
-                                                          waveformAnimations[
-                                                              index],
-                                                      builder:
-                                                          (context, child) {
-                                                        // Generate a random height between 1 and 14
-                                                        final randomHeight =
-                                                            Random().nextDouble() *
-                                                                14;
-                                                        return Container(
-                                                          height: showWaveform
-                                                              ? randomHeight
-                                                              : 0, // Show or hide waveform based on the showWaveform flag
-                                                          width: 5,
-                                                          color:
-                                                              widget.barColor!,
-                                                          margin:
-                                                              const EdgeInsets
-                                                                  .symmetric(
-                                                                  horizontal:
-                                                                      1),
-                                                        );
-                                                      },
-                                                    ),
-                                                  ),
-                                                )
-                                              : const SizedBox();
-                                        }))
-                                : const SizedBox(),
+                            ValueListenableBuilder<bool>(
+                              valueListenable: showWaveform,
+                              builder: (context, show, child) {
+                                return show
+                                    ? Row(
+                                        children: List.generate(
+                                          waveformAnimations.length,
+                                          (index) => AnimatedBuilder(
+                                            animation:
+                                                waveformAnimations[index],
+                                            builder: (context, child) {
+                                              final randomHeight =
+                                                  Random().nextDouble() * 14;
+                                              return Container(
+                                                height: show ? randomHeight : 0,
+                                                width: 5,
+                                                color: widget.options.barColor,
+                                                margin:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 1),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      )
+                                    : const SizedBox();
+                              },
+                            ),
                           ],
                         )
                       : const SizedBox()),
             ),
-            widget.showControls == true
+            widget.options.showControls
                 ? Positioned(
-                    top: widget.controlsPosition == 'topLeft' ||
-                            widget.controlsPosition == 'topRight'
+                    top: widget.options.controlsPosition
+                            .toLowerCase()
+                            .contains('top')
                         ? 0
                         : null,
-                    left: widget.controlsPosition == 'topLeft' ||
-                            widget.controlsPosition == 'bottomLeft'
+                    left: widget.options.controlsPosition
+                            .toLowerCase()
+                            .contains('left')
                         ? 0
                         : null,
-                    bottom: widget.controlsPosition == 'bottomLeft' ||
-                            widget.controlsPosition == 'bottomRight'
+                    bottom: widget.options.controlsPosition
+                            .toLowerCase()
+                            .contains('bottom')
                         ? 0
                         : null,
-                    right: widget.controlsPosition == 'topRight' ||
-                            widget.controlsPosition == 'bottomRight'
+                    right: widget.options.controlsPosition
+                            .toLowerCase()
+                            .contains('right')
                         ? 0
                         : null,
                     child: Container(
-                      // padding: EdgeInsets.all(2),
                       child: renderControls(),
                     ),
                   )
                 : const SizedBox(),
             // Add AudioDecibelCheck widget to control the showWaveform status
             AudioDecibelCheck(
+                options: AudioDecibelCheckOptions(
               animateWaveform: animateWaveform,
               resetWaveform: resetWaveform,
-              name: widget.name!,
-              participant: widget.participant!,
-              parameters: widget.parameters,
+              name: widget.options.name,
+              participant: widget.options.participant,
+              parameters: widget.options.parameters,
               onShowWaveformChanged: updateShowWaveform,
-            ),
+            )),
           ],
         ),
       );
     } catch (error) {
       if (kDebugMode) {
-        // print('Error add widget: $error');
+        print('Error adding widget: $error');
       }
-
       return ErrorWidget(error.toString());
     }
   }

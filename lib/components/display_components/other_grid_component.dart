@@ -1,39 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// OtherGridComponent - A widget for displaying a grid component with customizable background color and children.
-///
-/// This widget allows you to display a grid component with customizable background color and child widgets.
-/// It provides options to control the visibility of the grid component and to show a timer with meeting progress time.
-
-/// The background color of the grid component.
-///final Color backgroundColor;
-
-/// The list of child widgets to display within the grid component.
-///final List<Widget> children;
-
-/// The width of the grid component.
-///final double width;
-
-/// The height of the grid component.
-///final double height;
-
-/// A flag indicating whether to show the aspect of the grid component.
-///
-/// If set to true, the grid component will be visible. If set to false, the grid component will be hidden.
-///final bool showAspect;
-
-/// The background color for the time display.
-/// final Color timeBackgroundColor;
-
-/// A flag indicating whether to show the timer.
-///
-/// If set to true, the timer will be displayed. If set to false, the timer will be hidden.
-///final bool showTimer;
-
-/// The meeting progress time to display on the timer.
-///final String meetingProgressTime;
-
-class OtherGridComponent extends StatelessWidget {
+/// OtherGridComponentOptions - Configuration options for the `OtherGridComponent`.
+class OtherGridComponentOptions {
   final Color backgroundColor;
   final List<Widget> children;
   final double width;
@@ -43,8 +11,7 @@ class OtherGridComponent extends StatelessWidget {
   final bool showTimer;
   final String meetingProgressTime;
 
-  const OtherGridComponent({
-    super.key,
+  const OtherGridComponentOptions({
     required this.backgroundColor,
     required this.children,
     required this.width,
@@ -54,18 +21,50 @@ class OtherGridComponent extends StatelessWidget {
     required this.showTimer,
     required this.meetingProgressTime,
   });
+}
+
+typedef OtherGridComponentType = Widget Function(
+    {required OtherGridComponentOptions options});
+
+/// OtherGridComponent - A widget for displaying a grid with customizable background color, children, and optional timer.
+///
+/// This widget displays a grid-like container with optional timer functionality. It allows flexibility for various layouts
+/// by accepting child widgets and controlling visibility through `showAspect`.
+///
+/// ### Parameters:
+/// - `options` (`OtherGridComponentOptions`): Configuration options for the grid component.
+///
+/// ### Example Usage:
+/// ```dart
+/// OtherGridComponent(
+///   options: OtherGridComponentOptions(
+///     backgroundColor: Colors.black,
+///     width: 100.0,
+///     height: 100.0,
+///     showAspect: true,
+///     timeBackgroundColor: Colors.white,
+///     showTimer: true,
+///     meetingProgressTime: "10:00",
+///     children: [ChildWidget()],
+///   ),
+/// );
+/// ```
+class OtherGridComponent extends StatelessWidget {
+  final OtherGridComponentOptions options;
+
+  const OtherGridComponent({super.key, required this.options});
 
   @override
   Widget build(BuildContext context) {
     return Visibility(
-      visible: showAspect,
+      visible: options.showAspect,
       child: Container(
-        width: width,
-        height: height,
-        color: backgroundColor,
+        width: options.width,
+        height: options.height,
+        color: options.backgroundColor,
         child: Stack(
           children: [
-            ...children,
+            ...options.children,
           ],
         ),
       ),

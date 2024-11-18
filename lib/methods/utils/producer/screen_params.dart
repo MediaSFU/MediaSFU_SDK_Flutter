@@ -1,17 +1,20 @@
-/// Screen parameters for video encoding for screen sharing
-///
-/// This constant [screenParams] represents the screen parameters used for video encoding during screen sharing.
-/// It contains information about the encoding settings, such as the maximum bitrate and initial available bitrate,
-/// as well as codec options like the video start bitrate.
-const Map<String, dynamic> screenParams = {
-  'encodings': [
-    {
-      'rid': 'r7',
-      'maxBitrate': 3000000,
-      'initialAvailableBitrate': 1500000,
-    }
+import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart'
+    show RtpEncodingParameters, ProducerCodecOptions;
+import '../../../types/types.dart' show ProducerOptionsType;
+
+/// Represents screen parameters for video encoding, particularly for screen sharing.
+
+/// Constant `screenParams` representing screen encoding parameters and codec options for screen sharing.
+final ProducerOptionsType screenParams = ProducerOptionsType(
+  encodings: [
+    RtpEncodingParameters(
+      rid: 'r0',
+      maxBitrate: 3000000,
+      minBitrate: 500000,
+    ),
   ],
-  'codecOptions': {
-    'videoGoogleStartBitrate': 1000,
-  },
-};
+  codecOptions: ProducerCodecOptions(
+    videoGoogleStartBitrate: 1000,
+    // Add any other codec-specific options if required
+  ),
+);

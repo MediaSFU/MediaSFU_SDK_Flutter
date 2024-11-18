@@ -46,7 +46,7 @@ export 'package:mediasfu_sdk/producers/socket_receive_methods/get_domains.dart'
 export 'package:mediasfu_sdk/producers/socket_receive_methods/update_consuming_domains.dart'
     show updateConsumingDomains;
 export 'package:mediasfu_sdk/producers/socket_receive_methods/recording_notice.dart'
-    show RecordingNotice;
+    show recordingNotice;
 export 'package:mediasfu_sdk/producers/socket_receive_methods/time_left_recording.dart'
     show timeLeftRecording;
 export 'package:mediasfu_sdk/producers/socket_receive_methods/stopped_recording.dart'

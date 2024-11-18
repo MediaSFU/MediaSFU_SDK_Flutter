@@ -1,51 +1,78 @@
-// ignore_for_file: empty_catches
-
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import '../types/types.dart'
+    show
+        ShowAlert,
+        StreamSuccessScreenType,
+        StreamSuccessScreenParameters,
+        StreamSuccessScreenOptions;
+
+/// Parameters for starting screen sharing.
+abstract class StartShareScreenParameters
+    implements StreamSuccessScreenParameters {
+  // Properties as abstract getters
+  bool get shared;
+  ShowAlert? get showAlert;
+  bool get onWeb;
+
+  // Update function as an abstract getter
+  Function(bool) get updateShared;
+
+  // Mediasfu function as an abstract getter
+  StreamSuccessScreenType get streamSuccessScreen;
+
+  // Dynamic access operator for additional properties
+  // dynamic operator [](String key);
+}
+
+/// Options for starting screen sharing.
+class StartShareScreenOptions {
+  StartShareScreenParameters parameters;
+  int? targetWidth;
+  int? targetHeight;
+
+  StartShareScreenOptions(
+      {required this.parameters, this.targetWidth, this.targetHeight});
+}
+
+/// Function type for starting screen sharing.
+typedef StartShareScreenType = Future<void> Function(
+    StartShareScreenOptions options);
 
 /// Starts the screen sharing process.
 ///
-/// This function allows the user to share their screen by capturing the display media.
-/// It takes a map of parameters as input, including the following:
-/// - `shared`: A boolean value indicating whether the screen is currently being shared.
-/// - `showAlert`: A function that displays an alert message to the user.
-/// - `updateShared`: A function that updates the shared variable.
-/// - `onWeb`: A boolean value indicating whether the app is running on the web.
-/// - `streamSuccessScreen`: A function that handles the success scenario after capturing the screen stream.
+/// @param [StartShareScreenOptions] options - The options for starting screen sharing.
+/// @param [StartShareScreenParameters] options.parameters - The parameters for screen sharing.
 ///
-/// If the app is not running on the web, an alert message is displayed to the user and the function returns.
-/// Otherwise, it attempts to capture the screen stream using the `navigator.mediaDevices.getDisplayMedia` method.
-/// If successful, the `streamSuccessScreen` function is called with the captured stream and the parameters.
-/// If unsuccessful, an alert message is displayed to the user.
-/// Finally, the `shared` variable is updated using the `updateShared` function.
+/// This function displays an alert if screen sharing fails or if an attempt is made to share screen on mobile.
+/// It also calls the `streamSuccessScreen` function when sharing is successful.
 ///
-/// Throws an error if an error occurs during the screen sharing process.
+/// Example:
+/// ```dart
+/// final options = StartShareScreenOptions(
+///   parameters: StartShareScreenParameters(
+///     shared: false,
+///     showAlert: (msg, type, duration) => print(msg),
+///     updateShared: (isShared) => print("Shared: $isShared"),
+///     onWeb: true,
+///     streamSuccessScreen: (stream, parameters) async => print("Success"),
+///   ),
+///  targetWidth: 1920,
+///  targetHeight: 1080,
+/// );
+/// await startShareScreen(options);
+/// ```
 
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
-});
-
-typedef StreamSuccessScreen = Future<void> Function(
-    {required MediaStream stream, required Map<String, dynamic> parameters});
-
-typedef StartShareScreen = Future<void> Function({
-  required Map<String, dynamic> parameters,
-});
-
-typedef UpdateShared = void Function(bool shared);
-
-Future<void> startShareScreen(
-    {required Map<String, dynamic> parameters}) async {
-  bool shared = parameters['shared'] ?? false;
-  ShowAlert? showAlert = parameters['showAlert'];
-  UpdateShared updateShared = parameters['updateShared'];
-  bool onWeb = parameters['onWeb'];
-
-  //mediasfu functions
-  StreamSuccessScreen streamSuccessScreen = parameters['streamSuccessScreen'];
+Future<void> startShareScreen(StartShareScreenOptions options) async {
+  final targetWidth = options.targetWidth ?? 1280;
+  final targetHeight = options.targetHeight ?? 720;
+  final parameters = options.parameters;
+  bool shared = parameters.shared;
+  final showAlert = parameters.showAlert;
+  final updateShared = parameters.updateShared;
+  final onWeb = parameters.onWeb;
+  final streamSuccessScreen = parameters.streamSuccessScreen;
 
   try {
     if (!onWeb) {
@@ -64,26 +91,29 @@ Future<void> startShareScreen(
       MediaStream stream = await navigator.mediaDevices.getDisplayMedia({
         'video': {
           'cursor': 'always',
-          'width': 1280,
-          'height': 720,
+          'width': targetWidth,
+          'height': targetHeight,
           'frameRate': 30
         },
         'audio': false
       });
 
       try {
-        await streamSuccessScreen(stream: stream, parameters: parameters);
-      } catch (error) {}
+        final optionsStream = StreamSuccessScreenOptions(
+          stream: stream,
+          parameters: parameters,
+        );
+        await streamSuccessScreen(optionsStream);
+      } catch (_) {}
       shared = true;
     } catch (error) {
       shared = false;
-      if (showAlert != null) {
-        showAlert(
-          message: 'Could not share screen, check and retry',
-          type: 'danger',
-          duration: 3000,
-        );
-      }
+
+      showAlert?.call(
+        message: 'Could not share screen, check and retry',
+        type: 'danger',
+        duration: 3000,
+      );
     }
 
     // Update the shared variable

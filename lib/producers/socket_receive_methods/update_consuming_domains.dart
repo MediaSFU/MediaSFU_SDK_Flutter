@@ -1,98 +1,120 @@
-// ignore_for_file: unused_local_variable
-
 import 'package:flutter/foundation.dart';
-import 'package:socket_io_client/socket_io_client.dart' as io;
+import '../../types/types.dart'
+    show
+        ConnectIpsType,
+        GetDomainsType,
+        ConnectIpsParameters,
+        GetDomainsParameters,
+        AltDomains,
+        Participant,
+        ConsumeSocket,
+        GetDomainsOptions,
+        ConnectIpsOptions;
 
-/// Updates consuming domains based on the provided parameters.
+/// Represents the parameters required for updating consuming domains.
+abstract class UpdateConsumingDomainsParameters
+    implements ConnectIpsParameters, GetDomainsParameters {
+  List<Participant> get participants;
+  List<ConsumeSocket> get consumeSockets;
+
+  // mediasfu functions
+  ConnectIpsType get connectIps;
+  GetDomainsType get getDomains;
+
+  UpdateConsumingDomainsParameters Function() get getUpdatedAllParams;
+
+  // dynamic operator [](String key);
+}
+
+/// Represents the options for updating consuming domains.
+class UpdateConsumingDomainsOptions {
+  final List<String> domains;
+  final AltDomains altDomains;
+  final String apiUserName;
+  final String apiKey;
+  final String apiToken;
+  final UpdateConsumingDomainsParameters parameters;
+
+  UpdateConsumingDomainsOptions({
+    required this.domains,
+    required this.altDomains,
+    required this.apiUserName,
+    required this.apiKey,
+    required this.apiToken,
+    required this.parameters,
+  });
+}
+
+typedef UpdateConsumingDomainsType = Future<void> Function(
+    UpdateConsumingDomainsOptions options);
+
+/// Updates consuming domains based on the provided options.
 ///
-/// This function is responsible for updating the consuming domains based on the provided parameters.
-/// It takes in a list of domains, a map of alternative domains, and a map of parameters.
-/// The parameters should include a list of participants, an API username, an API key (optional),
-/// an API token, and a list of consume sockets.
+/// This function updates consuming domains by invoking `getDomains` and `connectIps`
+/// functions based on the provided parameters.
 ///
-/// The function first checks if the participants array is not empty.
-/// If it is not empty, it checks if the altDomains map has keys and removes any duplicates.
-/// If altDomains is not empty, it calls the `getDomains` function with the provided domains, altDomains, and parameters.
-/// If altDomains is empty, it calls the `connectIps` function with the provided consumeSockets, domains, apiUserName,
-/// apiKey, apiToken, and parameters.
+/// @param [UpdateConsumingDomainsOptions] options - The options for updating consuming domains.
+/// - `domains`: List of primary domains.
+/// - `altDomains`: Alternative domains map.
+/// - `apiUserName`: API username for authorization.
+/// - `apiKey`: API key for secure access.
+/// - `apiToken`: API token for secure access.
+/// - `parameters`: UpdateConsumingDomainsParameters instance with required parameters and functions.
 ///
-/// If an error occurs during the execution of this function, it will be caught and handled accordingly.
-
-typedef NewProducerMethod = Future<void> Function({
-  required String producerId,
-  required String islevel,
-  required dynamic nsock,
-  required Map<String, dynamic> parameters,
-});
-
-typedef ClosedProducerMethod = Future<void> Function({
-  required String remoteProducerId,
-  required Map<String, dynamic> parameters,
-});
-
-typedef JoinConsumeRoomMethod = Future<Map<String, dynamic>> Function({
-  required io.Socket remoteSock,
-  required String apiToken,
-  required String apiUserName,
-  required Map<String, dynamic> parameters,
-});
-
-typedef ConnectIps = Future<List<dynamic>> Function({
-  required List<Map<String, io.Socket>> consumeSockets,
-  required List<dynamic> remIP,
-  required String apiUserName,
-  String? apiKey,
-  String? apiToken,
-  NewProducerMethod? newProducerMethod,
-  ClosedProducerMethod? closedProducerMethod,
-  JoinConsumeRoomMethod? joinConsumeRoomMethod,
-  required Map<String, dynamic> parameters,
-});
-
-typedef GetDomains = Future<void> Function({
-  required List<String> domains,
-  required Map<String, String> altDomains,
-  required Map<String, dynamic> parameters,
-});
-
-/// Updates consuming domains based on the provided parameters.
-void updateConsumingDomains({
-  required List<String> domains,
-  required Map<String, String> altDomains,
-  required Map<String, dynamic> parameters,
-}) async {
+/// Example usage:
+/// ```dart
+/// final options = UpdateConsumingDomainsOptions(
+///   domains: ["domain1.com", "domain2.com"],
+///   altDomains: AltDomains(altDomains: {"domain1.com": ["alt1.com"]}),
+///   apiUserName: "myApiUser",
+///   apiKey: "myApiKey",
+///   apiToken: "myApiToken",
+///   parameters: UpdateConsumingDomainsParameters(
+///     participants: [Participant(id: "user1", name: "User 1")],
+///     consumeSockets: [ConsumeSocket(id: "socket1", isConnected: true)],
+///     connectIps: (options) async => print("Connecting IPs"),
+///     getDomains: (options) async => print("Getting Domains"),
+///   ),
+/// );
+/// await updateConsumingDomains(options);
+/// ```
+void updateConsumingDomains(UpdateConsumingDomainsOptions options) async {
   try {
-    List<dynamic> participants = parameters['participants'];
-    String apiUserName = parameters['apiUserName'];
-    String apiKey = parameters['apiKey'] ?? '';
-    String apiToken = parameters['apiToken'];
-    List<Map<String, io.Socket>> consumeSockets = parameters['consumeSockets'];
+    // Access latest parameters
+    final updatedParams = options.parameters.getUpdatedAllParams();
 
-    // mediasfu functions
-    ConnectIps connectIps = parameters['connectIps'];
-    GetDomains getDomains = parameters['getDomains'];
-
-    // Check if participants array is not empty
-    if (participants.isNotEmpty) {
-      // Check if altDomains has keys and remove duplicates
-      if (altDomains.isNotEmpty) {
-        await getDomains(
-            domains: domains, altDomains: altDomains, parameters: parameters);
+    // Check if participants list is non-empty
+    if (updatedParams.participants.isNotEmpty) {
+      // Check if altDomains has entries
+      if (options.altDomains.altDomains.isNotEmpty) {
+        final optionsGet = GetDomainsOptions(
+          domains: options.domains,
+          altDomains: options.altDomains,
+          apiUserName: options.apiUserName,
+          apiKey: options.apiKey,
+          apiToken: options.apiToken,
+          parameters: updatedParams,
+        );
+        await updatedParams.getDomains(
+          optionsGet,
+        );
       } else {
-        final response = await connectIps(
-          consumeSockets: consumeSockets,
-          remIP: domains,
-          apiUserName: apiUserName,
-          apiKey: apiKey,
-          apiToken: apiToken,
-          parameters: parameters,
+        final optionsConnect = ConnectIpsOptions(
+          consumeSockets: updatedParams.consumeSockets,
+          remIP: options.domains,
+          apiUserName: options.apiUserName,
+          apiKey: options.apiKey,
+          apiToken: options.apiToken,
+          parameters: updatedParams,
+        );
+        await updatedParams.connectIps(
+          optionsConnect,
         );
       }
     }
   } catch (error) {
     if (kDebugMode) {
-      print("MediaSFU - Error in updateConsumingDomains: $error");
+      print("Error in updateConsumingDomains: $error");
     }
-    // Handle error accordingly
   }
 }

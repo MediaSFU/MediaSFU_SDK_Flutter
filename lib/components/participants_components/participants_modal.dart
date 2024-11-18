@@ -1,73 +1,71 @@
 // ignore_for_file: non_constant_identifier_names
+
 import 'package:flutter/material.dart';
-import '../../methods/utils/get_modal_position.dart' show getModalPosition;
-import './participant_list.dart' show ParticipantList;
-import './participant_list_others.dart' show ParticipantListOthers;
+import 'package:socket_io_client/socket_io_client.dart' as io;
+import '../../methods/utils/get_modal_position.dart'
+    show getModalPosition, GetModalPositionOptions;
+import './participant_list.dart'
+    show ParticipantList, ParticipantListOptions, ParticipantListType;
+import './participant_list_others.dart'
+    show
+        ParticipantListOthers,
+        ParticipantListOthersOptions,
+        ParticipantListOthersType;
 import '../../methods/participants_methods/mute_participants.dart'
     show muteParticipants;
 import '../../methods/participants_methods/message_participants.dart'
     show messageParticipants;
 import '../../methods/participants_methods/remove_participants.dart'
     show removeParticipants;
-import '../../methods/utils/format_number.dart' show formatNumber;
+import '../../types/types.dart'
+    show
+        ShowAlert,
+        CoHostResponsibility,
+        Participant,
+        MuteParticipantsType,
+        MessageParticipantsType,
+        RemoveParticipantsType,
+        EventType;
 
-/// ParticipantsModal - Displays a modal for managing participants.
-///
-/// isParticipantsModalVisible - A boolean indicating whether the participants modal is visible.
-///
-/// onParticipantsClose - A callback function invoked when closing the participants modal.
-///
-/// onParticipantsFilterChange - A function to handle filtering participants based on user input.
-///
-/// participantsCounter - An integer representing the number of participants.
-///
-/// onMuteParticipants - A function to handle muting/unmuting participants.
-///
-/// onMessageParticipants - A function to handle messaging participants.
-///
-/// onRemoveParticipants - A function to handle removing participants.
-///
-/// RenderParticipantList - A function that renders the participant list widget.
-///
-/// RenderParticipantListOthers - A function that renders the participant list for others widget.
-///
-/// formatBroadcastViews - A function to format the number of views for a broadcast event.
-///
-/// parameters - Additional parameters such as co-host responsibility, co-host, member, islevel, participants, and event type.
-///
-/// position - The position of the modal ('topRight' by default).
-///
-/// backgroundColor - The background color of the modal (default color: 0xFF83C0E9).
+abstract class ParticipantsModalParameters {
+  // Core properties as abstract getters
+  List<CoHostResponsibility> get coHostResponsibility;
+  String get coHost;
+  String get member;
+  String get islevel;
+  List<Participant> get participants;
+  EventType get eventType;
+  io.Socket? get socket;
+  ShowAlert? get showAlert;
+  String get roomName;
 
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
-});
+  // Update functions as abstract getters returning functions
+  void Function(bool) get updateIsMessagesModalVisible;
+  void Function(Participant?) get updateDirectMessageDetails;
+  void Function(bool) get updateStartDirectMessage;
+  void Function(List<Participant>) get updateParticipants;
 
-class ParticipantsModal extends StatelessWidget {
+  // Method to retrieve updated parameters as an abstract getter
+  ParticipantsModalParameters Function() get getUpdatedAllParams;
+
+  // dynamic operator [](String key);
+}
+
+class ParticipantsModalOptions {
   final bool isParticipantsModalVisible;
   final VoidCallback onParticipantsClose;
   final ValueChanged<String> onParticipantsFilterChange;
   final int participantsCounter;
-  final Future<void> Function({required Map<String, dynamic> parameters})
-      onMuteParticipants; // Adjusted function signature
-  final void Function({
-    required Map<String, dynamic> parameters,
-  }) onMessageParticipants;
-  final Future<void> Function({required Map<String, dynamic> parameters})
-      onRemoveParticipants; // Adjusted function signature
-  final Widget Function(Map<String, dynamic> parameters) RenderParticipantList;
-  final Widget Function(Map<String, dynamic> parameters)
-      RenderParticipantListOthers;
-  final Function(int) formatBroadcastViews;
-  final Map<String, dynamic> parameters;
-  final String position;
+  final MuteParticipantsType onMuteParticipants;
+  final MessageParticipantsType onMessageParticipants;
+  final RemoveParticipantsType onRemoveParticipants;
+  final ParticipantListType RenderParticipantList;
+  final ParticipantListOthersType RenderParticipantListOthers;
   final Color backgroundColor;
+  final String position;
+  final ParticipantsModalParameters parameters;
 
-  // ignore: prefer_const_constructors_in_immutables
-  ParticipantsModal({
-    super.key,
+  ParticipantsModalOptions({
     required this.isParticipantsModalVisible,
     required this.onParticipantsClose,
     required this.onParticipantsFilterChange,
@@ -77,81 +75,94 @@ class ParticipantsModal extends StatelessWidget {
     this.onRemoveParticipants = removeParticipants,
     this.RenderParticipantList = defaultParticipantList,
     this.RenderParticipantListOthers = defaultParticipantListOthers,
-    this.formatBroadcastViews = formatNumber,
-    required this.parameters,
-    this.position = 'topRight',
     this.backgroundColor = const Color(0xFF83C0E9),
+    this.position = 'topRight',
+    required this.parameters,
   });
 
   // Default function for rendering participant list
-  static Widget defaultParticipantList(Map<String, dynamic> parameters) {
-    return ParticipantList(
-      participants: parameters['participants'],
-      isBroadcast: parameters['eventType'] == 'broadcast',
-      onMuteParticipants: parameters['onMuteParticipants'],
-      onMessageParticipants: parameters['onMessageParticipants'],
-      onRemoveParticipants: parameters['onRemoveParticipants'],
-      formatBroadcastViews: parameters['formatBroadcastViews'],
-      parameters: parameters['parameters'],
-    );
+  static Widget defaultParticipantList(
+      {required ParticipantListOptions options}) {
+    return ParticipantList(options: options);
   }
 
-  // Default function for rendering participant list others
-  static Widget defaultParticipantListOthers(dynamic parameters) {
-    return ParticipantListOthers(
-      participants: parameters['participants'],
-      parameters: parameters['parameters'],
-    );
+  // Default function for rendering participant list for others
+  static Widget defaultParticipantListOthers(
+      {required ParticipantListOthersOptions options}) {
+    return ParticipantListOthers(options: options);
   }
+}
+
+typedef ParticipantsModalType = Widget Function(
+    {required ParticipantsModalOptions options});
+
+/// `ParticipantsModal` is a widget that displays a modal for managing participants in an event.
+/// It allows users to filter, mute, message, or remove participants depending on their permissions.
+///
+/// ### Parameters:
+/// - `options` (`ParticipantsModalOptions`): Configuration options for the modal, including visibility, filtering, and action callbacks.
+///
+/// ### Example Usage:
+/// ```dart
+/// ParticipantsModal(
+///   options: ParticipantsModalOptions(
+///     isParticipantsModalVisible: true,
+///     onParticipantsClose: () => print("Modal closed"),
+///     onParticipantsFilterChange: (filter) => print("Filter: $filter"),
+///     participantsCounter: 10,
+///     parameters: myParticipantsModalParameters,
+///   ),
+/// );
+/// ```
+///
+/// The modal adjusts its width based on screen size, displays a search field for participant filtering,
+/// and uses different components to render participants based on their roles and access levels.
+
+class ParticipantsModal extends StatelessWidget {
+  final ParticipantsModalOptions options;
+
+  const ParticipantsModal({super.key, required this.options});
 
   @override
   Widget build(BuildContext context) {
-    // Assign parameters here
-    final coHostResponsibility = parameters['coHostResponsibility'] ?? [];
-    final coHost = parameters['coHost'] ?? '';
-    final member = parameters['member'] ?? '';
-    final islevel = parameters['islevel'] ?? '1';
-    final participants = parameters['participants'] ?? [];
-    final eventType = parameters['eventType'] ?? '';
-
     final screenWidth = MediaQuery.of(context).size.width;
-    var modalWidth = 0.8 * screenWidth;
+    double modalWidth = 0.8 * screenWidth;
     if (modalWidth > 400) {
       modalWidth = 400;
     }
-    final modalHeight = MediaQuery.of(context).size.height * 0.65;
-
-    bool participantsValue = false;
-    try {
-      var participantItem = coHostResponsibility.firstWhere(
-          (item) => item['name'] == 'participants',
-          orElse: () => null);
-
-      if (participantItem != null) {
-        participantsValue = participantItem['value'] ?? false;
-      }
-    } catch (error) {
-      // Handle error if needed
-    }
+    final modalHeight = MediaQuery.of(context).size.height * 0.75;
+    final participants = options.parameters.participants;
+    final islevel = options.parameters.islevel;
+    final coHost = options.parameters.coHost;
+    final member = options.parameters.member;
+    final participantsValue = options.parameters.coHostResponsibility
+        .any((item) => item.name == 'participants' && item.value);
 
     return Visibility(
-      visible: isParticipantsModalVisible,
+      visible: options.isParticipantsModalVisible,
       child: Stack(
         children: [
           Positioned(
-            top: getModalPosition(
-                position, context, modalWidth, modalHeight)['top'],
-            right: getModalPosition(
-                position, context, modalWidth, modalHeight)['right'],
-            child: AnimatedContainer(
+            top: getModalPosition(GetModalPositionOptions(
+              position: options.position,
+              modalWidth: modalWidth,
+              modalHeight: modalHeight,
+              context: context,
+            ))['top'],
+            right: getModalPosition(GetModalPositionOptions(
+              position: options.position,
+              modalWidth: modalWidth,
+              modalHeight: modalHeight,
+              context: context,
+            ))['right'],
+            child: Container(
               width: modalWidth,
               height: modalHeight,
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: backgroundColor,
+                color: options.backgroundColor,
                 borderRadius: BorderRadius.circular(10),
               ),
-              duration: const Duration(milliseconds: 300),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -161,7 +172,7 @@ class ParticipantsModal extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
-                          'Participants ($participantsCounter)',
+                          'Participants (${options.participantsCounter})',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -171,7 +182,7 @@ class ParticipantsModal extends StatelessWidget {
                       ),
                       IconButton(
                         icon: const Icon(Icons.close),
-                        onPressed: onParticipantsClose,
+                        onPressed: options.onParticipantsClose,
                         color: Colors.black,
                       ),
                     ],
@@ -186,7 +197,7 @@ class ParticipantsModal extends StatelessWidget {
                         contentPadding: EdgeInsets.symmetric(
                             vertical: 8.0, horizontal: 10.0),
                       ),
-                      onChanged: onParticipantsFilterChange,
+                      onChanged: options.onParticipantsFilterChange,
                     ),
                   ),
                   Expanded(
@@ -197,23 +208,41 @@ class ParticipantsModal extends StatelessWidget {
                         children: [
                           if (participants.isNotEmpty &&
                               (islevel == '2' ||
-                                  (coHost == member &&
-                                      participantsValue ==
-                                          true))) // Check participantsValue
-                            RenderParticipantList({
-                              'participants': participants,
-                              'eventType': eventType,
-                              'onMuteParticipants': onMuteParticipants,
-                              'onMessageParticipants': onMessageParticipants,
-                              'onRemoveParticipants': onRemoveParticipants,
-                              'formatBroadcastViews': formatBroadcastViews,
-                              'parameters': parameters,
-                            })
-                          else if (parameters['participants'] != null)
-                            RenderParticipantListOthers({
-                              'participants': participants,
-                              'parameters': parameters,
-                            })
+                                  (coHost == member && participantsValue)))
+                            options.RenderParticipantList(
+                              options: ParticipantListOptions(
+                                participants: participants,
+                                isBroadcast: options.parameters.eventType ==
+                                    EventType.broadcast,
+                                onMuteParticipants: options.onMuteParticipants,
+                                onMessageParticipants:
+                                    options.onMessageParticipants,
+                                onRemoveParticipants:
+                                    options.onRemoveParticipants,
+                                socket: options.parameters.socket,
+                                coHostResponsibility:
+                                    options.parameters.coHostResponsibility,
+                                member: options.parameters.member,
+                                islevel: options.parameters.islevel,
+                                showAlert: options.parameters.showAlert,
+                                coHost: options.parameters.coHost,
+                                roomName: options.parameters.roomName,
+                                updateIsMessagesModalVisible: options
+                                    .parameters.updateIsMessagesModalVisible,
+                                updateDirectMessageDetails: options
+                                    .parameters.updateDirectMessageDetails,
+                                updateStartDirectMessage:
+                                    options.parameters.updateStartDirectMessage,
+                                updateParticipants:
+                                    options.parameters.updateParticipants,
+                              ),
+                            )
+                          else if (participants.isNotEmpty)
+                            options.RenderParticipantListOthers(
+                                options: ParticipantListOthersOptions(
+                                    participants: participants,
+                                    coHost: coHost,
+                                    member: member))
                           else
                             const Text('No participants'),
                         ],

@@ -1,257 +1,266 @@
 // ignore_for_file: non_constant_identifier_names
+
 import 'dart:async';
-import 'package:flutter/foundation.dart'; // Import async for Future
+import 'package:flutter/foundation.dart';
+import '../types/types.dart'
+    show
+        Participant,
+        ChangeVidsParameters,
+        ChangeVidsType,
+        ChangeVidsOptions,
+        Stream;
 
-/// Reorders the streams based on the given parameters.
+abstract class ReorderStreamsParameters implements ChangeVidsParameters {
+  List<Stream> get allVideoStreams;
+  List<Participant> get participants;
+  List<Stream> get oldAllStreams;
+  String get screenId;
+  String get adminVidID;
+  List<Stream> get newLimitedStreams;
+  List<String> get newLimitedStreamsIDs;
+  List<String> get activeSounds;
+  String get screenShareIDStream;
+  String get screenShareNameStream;
+  String get adminIDStream;
+  String get adminNameStream;
+
+  // Update functions as abstract getters
+  void Function(List<String> ids) get updateNewLimitedStreamsIDs;
+  void Function(List<String> sounds) get updateActiveSounds;
+  void Function(String id) get updateScreenShareIDStream;
+  void Function(String name) get updateScreenShareNameStream;
+  void Function(String id) get updateAdminIDStream;
+  void Function(String name) get updateAdminNameStream;
+  void Function(List<Stream> streams) get updateYouYouStream;
+
+  // Mediasfu function as a getter
+  ChangeVidsType get changeVids;
+
+  // Method for getting updated parameters
+  ReorderStreamsParameters Function() get getUpdatedAllParams;
+
+  // Dynamic access operator for additional properties
+  // dynamic operator [](String key);
+}
+
+class ReorderStreamsOptions {
+  final bool add;
+  final bool screenChanged;
+  final ReorderStreamsParameters parameters;
+
+  ReorderStreamsOptions({
+    this.add = false,
+    this.screenChanged = false,
+    required this.parameters,
+  });
+}
+
+typedef ReorderStreamsType = Future<void> Function(
+    ReorderStreamsOptions options);
+
+/// Reorders video streams in the participant grid based on user roles and screen share status.
 ///
-/// The [reorderStreams] function is responsible for reordering the video streams
-/// based on the provided parameters. It takes in several optional named parameters:
-/// - [add]: A boolean value indicating whether to add new streams or not. Default is `false`.
-/// - [screenChanged]: A boolean value indicating whether the screen has changed or not. Default is `false`.
-/// - [parameters]: A map containing the required parameters for reordering the streams.
+/// This function updates the order of video streams, ensuring that the user's own stream, the admin's stream, and any shared screen are appropriately prioritized.
+/// It checks for changes in the screen sharing status and admin status and adds these streams to the limited stream list.
 ///
-/// The [parameters] map should contain the following keys:
-/// - 'allVideoStreams': A list of all video streams.
-/// - 'participants': A list of participants.
-/// - 'oldAllStreams': A list of old streams.
-/// - 'screenId': The ID of the screen.
-/// - 'adminVidID': The ID of the admin video.
-/// - 'updateNewLimitedStreams': A function to update the new limited streams.
-/// - 'updateNewLimitedStreamsIDs': A function to update the new limited stream IDs.
-/// - 'updateActiveSounds': A function to update the active sounds.
-/// - 'updateScreenShareIDStream': A function to update the screen share ID stream.
-/// - 'updateScreenShareNameStream': A function to update the screen share name stream.
-/// - 'updateAdminIDStream': A function to update the admin ID stream.
-/// - 'updateAdminNameStream': A function to update the admin name stream.
-/// - 'updateYouYouStream': A function to update the youyou stream.
-/// - 'changeVids': A function to change the videos.
+/// If `add` is true, it will add new streams to the limited streams list; otherwise, it will reset the list. It also updates various states like active sounds,
+/// screen share information, and admin information.
 ///
-/// The function first destructures the parameters and initializes some variables.
-/// It then checks if the admin video ID is empty or not. If it's not empty, it adds
-/// the admin stream to the new limited streams. It also adds the youyou stream and
-/// the screen share stream if applicable. If the admin video ID is empty, it only
-/// adds the youyou stream and the screen share stream if applicable.
+/// Parameters:
+/// - [options] (`ReorderStreamsOptions`): Options for the reorder function, including whether to add streams or reflect screen changes.
 ///
-/// Finally, it updates the necessary states and reflects the changes on the UI.
-/// Any errors that occur during the process are caught and handled.
-///
-/// Example usage:
+/// Example:
 /// ```dart
-/// reorderStreams(parameters: {
-///   'allVideoStreams': allVideoStreams,
-///   'participants': participants,
-///   'oldAllStreams': oldAllStreams,
-///   'screenId': screenId,
-///   'adminVidID': adminVidID,
-///   'updateNewLimitedStreams': updateNewLimitedStreams,
-///   'updateNewLimitedStreamsIDs': updateNewLimitedStreamsIDs,
-///   'updateActiveSounds': updateActiveSounds,
-///   'updateScreenShareIDStream': updateScreenShareIDStream,
-///   'updateScreenShareNameStream': updateScreenShareNameStream,
-///   'updateAdminIDStream': updateAdminIDStream,
-///   'updateAdminNameStream': updateAdminNameStream,
-///   'updateYouYouStream': updateYouYouStream,
-///   'changeVids': changeVids,
-/// });
-/// ```
+/// final reorderOptions = ReorderStreamsOptions(
+///   add: true,
+///   screenChanged: true,
+///   parameters: ReorderStreamsParameters(
+///     allVideoStreams: [/* video streams list */],
+///     participants: [/* participants list */],
+///     oldAllStreams: [/* old streams list */],
+///     screenId: 'screen123',
+///     adminVidID: 'admin123',
+///     newLimitedStreams: [],
+///     newLimitedStreamsIDs: [],
+///     activeSounds: [],
+///     screenShareIDStream: '',
+///     screenShareNameStream: '',
+///     adminIDStream: '',
+///     adminNameStream: '',
+///     changeVids: (ChangeVidsOptions options) async => /* function logic */,
+///     getUpdatedAllParams: () => /* function to get updated parameters */,
+///   ),
+/// );
 ///
-/// Note: This code is ignoring the `non_constant_identifier_names` lint.
-/// This is done intentionally to avoid renaming the typedefs.
-
-typedef ChangeVids = Future<void> Function({
-  bool screenChanged,
-  required Map<String, dynamic> parameters,
-});
-
-typedef UpdateNewLimitedStreams = void Function(List<dynamic> value);
-typedef UpdateNewLimitedStreamsIDs = void Function(List<String> value);
-typedef UpdateActiveSounds = void Function(List<String> value);
-typedef UpdateScreenShareIDStream = void Function(String value);
-typedef UpdateScreenShareNameStream = void Function(String value);
-typedef UpdateAdminIDStream = void Function(String value);
-typedef UpdateAdminNameStream = void Function(String value);
-typedef UpdateYouYouStream = void Function(dynamic value);
-typedef UpdateAdminVidID = void Function(String value);
+/// await reorderStreams(reorderOptions);
+/// ```
 
 Future<void> reorderStreams(
-    {bool add = false,
-    bool screenChanged = false,
-    required Map<String, dynamic> parameters}) async {
+  ReorderStreamsOptions options,
+) async {
+  ReorderStreamsParameters parameters =
+      options.parameters.getUpdatedAllParams();
+  final bool add = options.add;
+  final bool screenChanged = options.screenChanged;
+
+  List<Stream> allVideoStreams = parameters.allVideoStreams;
+  List<Participant> participants = parameters.participants;
+  List<Stream> oldAllStreams = parameters.oldAllStreams;
+  String screenId = parameters.screenId;
+  String adminVidID = parameters.adminVidID;
+  List<Stream> newLimitedStreams = add ? parameters.newLimitedStreams : [];
+  List<String> newLimitedStreamsIDs =
+      add ? parameters.newLimitedStreamsIDs : [];
+  List<String> activeSounds = add ? parameters.activeSounds : [];
+
   try {
-    // Destructure parameters
-    List<dynamic> allVideoStreams = parameters['allVideoStreams'] ?? [];
-    List<dynamic> participants = parameters['participants'] ?? [];
-    List<dynamic> oldAllStreams = parameters['oldAllStreams'] ?? [];
-    String screenId = parameters['screenId'] ?? "";
-    String adminVidID = parameters['adminVidID'] ?? "";
-    UpdateNewLimitedStreams updateNewLimitedStreams =
-        parameters['updateNewLimitedStreams'] ?? (value) {};
-    UpdateNewLimitedStreamsIDs updateNewLimitedStreamsIDs =
-        parameters['updateNewLimitedStreamsIDs'] ?? (value) {};
-    UpdateActiveSounds updateActiveSounds = parameters['updateActiveSounds'];
-    UpdateScreenShareIDStream updateScreenShareIDStream =
-        parameters['updateScreenShareIDStream'];
-    UpdateScreenShareNameStream updateScreenShareNameStream =
-        parameters['updateScreenShareNameStream'];
-    UpdateAdminIDStream updateAdminIDStream = parameters['updateAdminIDStream'];
-    UpdateAdminNameStream updateAdminNameStream =
-        parameters['updateAdminNameStream'];
-    UpdateYouYouStream updateYouYouStream = parameters['updateYouYouStream'];
-
-    // mediasfu functions
-    ChangeVids changeVids = parameters['changeVids'];
-
-    // function to reorder streams on the ui
-    var newLimitedStreams = [];
-    List<String> newLimitedStreamsIDs = [];
-    List<String> activeSounds = [];
-
-    if (!add) {
-      newLimitedStreams = [];
-      newLimitedStreamsIDs = [];
-      activeSounds = []; // get actives back in
-    }
-
     var youyou = allVideoStreams
-        .where((stream) => stream['producerId'] == 'youyou')
+        .where((stream) => stream.producerId == 'youyou')
         .toList();
     var admin = participants
-        .where((participant) => participant['islevel'] == '2')
+        .where((participant) => participant.islevel == '2')
         .toList();
 
     if (admin.isNotEmpty) {
-      adminVidID = admin[0]?['videoID'] ?? "";
+      adminVidID = admin[0].videoID;
     } else {
       adminVidID = "";
     }
 
-    if (!(adminVidID == "")) {
+    if (adminVidID.isNotEmpty) {
       var adminStream = allVideoStreams.firstWhere(
-          (stream) => stream['producerId'] == adminVidID,
-          orElse: () => null);
+          (stream) => stream.producerId == adminVidID,
+          orElse: () => Stream(producerId: '', name: 'none'));
 
       if (!add) {
         newLimitedStreams.addAll(youyou);
-        newLimitedStreamsIDs
-            .addAll(youyou.map((stream) => stream['producerId']));
+        newLimitedStreamsIDs.addAll(youyou.map((stream) => stream.producerId));
       } else {
         var youyouStream = newLimitedStreams.firstWhere(
-            (stream) => stream['producerId'] == 'youyou',
-            orElse: () => null);
-        if (youyouStream == null) {
+            (stream) => stream.producerId == 'youyou',
+            orElse: () => Stream(producerId: '', name: 'none'));
+        if (youyouStream.name == 'none') {
           newLimitedStreams.addAll(youyou);
           newLimitedStreamsIDs
-              .addAll(youyou.map((stream) => stream['producerId']));
+              .addAll(youyou.map((stream) => stream.producerId));
         }
       }
 
-      if (adminStream != null) {
-        updateAdminIDStream(adminVidID);
+      if (adminStream.name != 'none') {
+        parameters.updateAdminIDStream(adminVidID);
         if (!add) {
           newLimitedStreams.add(adminStream);
-          newLimitedStreamsIDs.add(adminStream['producerId']);
+          newLimitedStreamsIDs.add(adminStream.producerId);
         } else {
           var adminStreamer = newLimitedStreams.firstWhere(
-              (stream) => stream['producerId'] == adminVidID,
-              orElse: () => null);
-          if (adminStreamer == null) {
+              (stream) => stream.producerId == adminVidID,
+              orElse: () => Stream(producerId: '', name: 'none'));
+          if (adminStreamer.name == 'none') {
             newLimitedStreams.add(adminStream);
-            newLimitedStreamsIDs.add(adminStream['producerId']);
+            newLimitedStreamsIDs.add(adminStream.producerId);
           }
         }
       }
 
       var oldAdminStream = oldAllStreams.firstWhere(
-          (stream) => stream['producerId'] == adminVidID,
-          orElse: () => null);
+          (stream) => stream.producerId == adminVidID,
+          orElse: () => Stream(producerId: '', name: 'none'));
 
-      if (oldAdminStream != null) {
-        updateAdminIDStream(adminVidID);
-        updateAdminNameStream(admin[0]?['name'] ?? "");
+      if (oldAdminStream.name != 'none') {
+        parameters.updateAdminIDStream(adminVidID);
+        parameters.updateAdminNameStream(admin[0].name);
         if (!add) {
           newLimitedStreams.add(oldAdminStream);
-          newLimitedStreamsIDs.add(oldAdminStream['producerId']);
+          newLimitedStreamsIDs.add(oldAdminStream.producerId);
         } else {
           var adminStreamer = newLimitedStreams.firstWhere(
-              (stream) => stream['producerId'] == adminVidID,
-              orElse: () => null);
-          if (adminStreamer == null) {
+              (stream) => stream.producerId == adminVidID,
+              orElse: () => Stream(producerId: '', name: 'none'));
+          if (adminStreamer.name == 'none') {
             newLimitedStreams.add(oldAdminStream);
-            newLimitedStreamsIDs.add(oldAdminStream['producerId']);
+            newLimitedStreamsIDs.add(oldAdminStream.producerId);
           }
         }
       }
 
       var screenParticipant = participants
-          .where((participant) => participant['ScreenID'] == screenId)
+          .where((participant) => participant.ScreenID == screenId)
           .toList();
 
       if (screenParticipant.isNotEmpty) {
-        var screenParticipantVidID = screenParticipant[0]['videoID'];
+        var screenParticipantVidID = screenParticipant[0].videoID;
         var screenParticipantVidID_ = newLimitedStreams
-            .where((stream) => stream['producerId'] == screenParticipantVidID)
+            .where((stream) => stream.producerId == screenParticipantVidID)
             .toList();
-        if (screenParticipantVidID_.isEmpty && screenParticipantVidID != null) {
-          updateScreenShareIDStream(screenParticipantVidID);
-          updateScreenShareNameStream(screenParticipant[0]['name']);
+        if (screenParticipantVidID_.isEmpty &&
+            screenParticipantVidID.isNotEmpty) {
+          parameters.updateScreenShareIDStream(screenParticipantVidID);
+          parameters.updateScreenShareNameStream(screenParticipant[0].name);
           var screenParticipantVidID__ = allVideoStreams
-              .where((stream) => stream['producerId'] == screenParticipantVidID)
+              .where((stream) => stream.producerId == screenParticipantVidID)
               .toList();
           newLimitedStreams.addAll(screenParticipantVidID__);
           newLimitedStreamsIDs.addAll(
-              screenParticipantVidID__.map((stream) => stream['producerId']));
+              screenParticipantVidID__.map((stream) => stream.producerId));
         }
       }
     } else {
       if (!add) {
         newLimitedStreams.addAll(youyou);
-        newLimitedStreamsIDs
-            .addAll(youyou.map((stream) => stream['producerId']));
+        newLimitedStreamsIDs.addAll(youyou.map((stream) => stream.producerId));
       } else {
         var youyouStream = newLimitedStreams.firstWhere(
-            (stream) => stream['producerId'] == 'youyou',
-            orElse: () => null);
-        if (youyouStream == null) {
+            (stream) => stream.producerId == 'youyou',
+            orElse: () => Stream(producerId: '', name: 'none'));
+        if (youyouStream.name == 'none') {
           newLimitedStreams.addAll(youyou);
           newLimitedStreamsIDs
-              .addAll(youyou.map((stream) => stream['producerId']));
+              .addAll(youyou.map((stream) => stream.producerId));
         }
       }
 
       var screenParticipant = participants
-          .where((participant) => participant['ScreenID'] == screenId)
+          .where((participant) => participant.ScreenID == screenId)
           .toList();
 
       if (screenParticipant.isNotEmpty) {
-        var screenParticipantVidID = screenParticipant[0]['videoID'];
+        var screenParticipantVidID = screenParticipant[0].videoID;
         var screenParticipantVidID_ = newLimitedStreams
-            .where((stream) => stream['producerId'] == screenParticipantVidID)
+            .where((stream) => stream.producerId == screenParticipantVidID)
             .toList();
-        if (screenParticipantVidID_.isEmpty && screenParticipantVidID != null) {
-          updateScreenShareIDStream(screenParticipantVidID);
-          updateScreenShareNameStream(screenParticipant[0]['name']);
+        if (screenParticipantVidID_.isEmpty &&
+            screenParticipantVidID.isNotEmpty) {
+          parameters.updateScreenShareIDStream(screenParticipantVidID);
+          parameters.updateScreenShareNameStream(screenParticipant[0].name);
           var screenParticipantVidID__ = allVideoStreams
-              .where((stream) => stream['producerId'] == screenParticipantVidID)
+              .where((stream) => stream.producerId == screenParticipantVidID)
               .toList();
           newLimitedStreams.addAll(screenParticipantVidID__);
           newLimitedStreamsIDs.addAll(
-              screenParticipantVidID__.map((stream) => stream['producerId']));
+              screenParticipantVidID__.map((stream) => stream.producerId));
         }
       }
     }
 
     // Update all the states
-    updateNewLimitedStreams(newLimitedStreams);
-    updateNewLimitedStreamsIDs(newLimitedStreamsIDs);
-    updateActiveSounds(activeSounds);
-    updateYouYouStream(youyou);
+    parameters.updateNewLimitedStreams(newLimitedStreams);
+    parameters.updateNewLimitedStreamsIDs(newLimitedStreamsIDs);
+    parameters.updateActiveSounds(activeSounds);
+    parameters.updateYouYouStream(youyou);
 
     // Reflect the changes on the UI
-    await changeVids(screenChanged: screenChanged, parameters: parameters);
-  } catch (error) {
+    final optionsChangeVids = ChangeVidsOptions(
+      screenChanged: screenChanged,
+      parameters: parameters,
+    );
+    await parameters.changeVids(
+      optionsChangeVids,
+    );
+  } catch (error, stackTrace) {
     // Handle errors
     if (kDebugMode) {
       print('Error during reordering streams: $error');
+      print('Stack trace reordering streams: $stackTrace');
     }
   }
 }

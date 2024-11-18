@@ -1,65 +1,70 @@
-/// Update media settings for all participants by the admin.
-///
-/// This function updates the media settings for all participants in a video conference.
-/// It takes a list of settings and a map of parameters as input.
-/// The list of settings contains the audio, video, screenshare, and chat settings in the specified order.
-/// The map of parameters contains the update functions for each setting.
+import 'package:flutter/foundation.dart';
+import '../../types/types.dart' show Settings;
+
+/// Represents the options for updating media settings, including functions to update each setting.
+class UpdateMediaSettingsOptions {
+  final Settings settings;
+  final void Function(String) updateAudioSetting;
+  final void Function(String) updateVideoSetting;
+  final void Function(String) updateScreenshareSetting;
+  final void Function(String) updateChatSetting;
+
+  UpdateMediaSettingsOptions({
+    required this.settings,
+    required this.updateAudioSetting,
+    required this.updateVideoSetting,
+    required this.updateScreenshareSetting,
+    required this.updateChatSetting,
+  });
+}
+
+/// Type definition for updating media settings.
+typedef UpdateMediaSettingsType = void Function(
+    UpdateMediaSettingsOptions options);
+
+/// Updates media settings by calling the respective update functions for each setting type.
 ///
 /// Example usage:
 /// ```dart
 /// updateMediaSettings(
-///   settings: ['allow', 'allow', 'allow', 'allow'],
-///   parameters: {
-///     'updateAudioSetting': (item) {
-///       // Update audio setting logic here
-///     },
-///     'updateVideoSetting': (item) {
-///       // Update video setting logic here
-///     },
-///     'updateScreenshareSetting': (item) {
-///       // Update screenshare setting logic here
-///     },
-///     'updateChatSetting': (item) {
-///       // Update chat setting logic here
-///     },
-///   },
+///   UpdateMediaSettingsOptions(
+///     settings: ['enabled', 'enabled', 'disabled', 'enabled'],
+///     updateAudioSetting: (value) => print("Audio setting: $value"),
+///     updateVideoSetting: (value) => print("Video setting: $value"),
+///     updateScreenshareSetting: (value) => print("Screenshare setting: $value"),
+///     updateChatSetting: (value) => print("Chat setting: $value"),
+///   ),
 /// );
 /// ```
-///
-/// Throws an error if any of the update functions fail.
-typedef UpdateSettingsItem = void Function(String item);
-
-void updateMediaSettings({
-  required List settings,
-  required Map<String, dynamic> parameters,
-}) async {
+void updateMediaSettings(UpdateMediaSettingsOptions options) {
   try {
-    // Destructure parameters
-    final UpdateSettingsItem updateAudioSetting =
-        parameters['updateAudioSetting'];
-    final UpdateSettingsItem updateVideoSetting =
-        parameters['updateVideoSetting'];
-    final UpdateSettingsItem updateScreenshareSetting =
-        parameters['updateScreenshareSetting'];
-    final UpdateSettingsItem updateChatSetting =
-        parameters['updateChatSetting'];
+    // Get the settings
+    String audioSetting;
+    String videoSetting;
+    String screenshareSetting;
+    String chatSetting;
 
-    // Extract settings
-    final String audioSetting = settings[0] ?? 'allow';
-    final String videoSetting = settings[1] ?? 'allow';
-    final String screenshareSetting = settings[2] ?? 'allow';
-    final String chatSetting = settings[3] ?? 'allow';
+    audioSetting = options.settings.settings.isNotEmpty
+        ? options.settings.settings[0]
+        : 'allow';
+    videoSetting = options.settings.settings.length > 1
+        ? options.settings.settings[1]
+        : 'allow';
+    screenshareSetting = options.settings.settings.length > 2
+        ? options.settings.settings[2]
+        : 'allow';
+    chatSetting = options.settings.settings.length > 3
+        ? options.settings.settings[3]
+        : 'allow';
 
-    // Update audio setting
-    updateAudioSetting(audioSetting);
-    // Update video setting
-    updateVideoSetting(videoSetting);
-    // Update screenshare setting
-    updateScreenshareSetting(screenshareSetting);
-    // Update chat setting
-    updateChatSetting(chatSetting);
+    // Update each setting
+    options.updateAudioSetting(audioSetting);
+    options.updateVideoSetting(videoSetting);
+    options.updateScreenshareSetting(screenshareSetting);
+    options.updateChatSetting(chatSetting);
   } catch (error) {
-    // print("Error in updateMediaSettings: $error");
-    // Handle error accordingly
+    if (kDebugMode) {
+      print("Error in updateMediaSettings: $error");
+    }
   }
 }

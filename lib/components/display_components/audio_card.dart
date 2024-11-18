@@ -1,72 +1,68 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import './mini_card.dart' show MiniCard;
 import 'dart:math';
-import '../../consumers/control_media.dart' show controlMedia;
+import 'package:socket_io_client/socket_io_client.dart' as io;
+import './mini_card.dart' show MiniCard, MiniCardOptions;
+import '../../consumers/control_media.dart'
+    show controlMedia, ControlMediaType, ControlMediaOptions;
+import '../../types/types.dart'
+    show Participant, ShowAlert, EventType, CoHostResponsibility, AudioDecibels;
 
-/// AudioCard - A card widget for displaying audio-related information and controls.
-///
-/// This widget represents a card that displays audio-related information, such as
-/// participant name, audio waveform, and audio controls (e.g., mute/unmute).
-///
-/// Required parameters:
-/// - [customStyle]: The custom decoration style for the card.
-/// - [name]: The name of the participant associated with the audio.
-/// - [onHide]: A function to handle hiding the audio card.
-/// - [parameters]: Additional parameters for customizing the audio card behavior.
-///
-/// Optional parameters:
-/// - [barColor]: The color of the audio waveform bars. Defaults to red.
-/// - [textColor]: The color of the text in the audio card. Defaults to white.
-/// - [imageSource]: The image source for the participant avatar.
-/// - [roundedImage]: Whether the participant avatar should have rounded corners. Defaults to false.
-/// - [imageStyle]: The decoration style for the participant avatar image.
-/// - [showControls]: Whether to display audio controls. Defaults to true.
-/// - [showInfo]: Whether to display participant information. Defaults to true.
-/// - [videoInfoComponent]: A custom widget for displaying video-related information.
-/// - [videoControlsComponent]: A custom widget for displaying video controls.
-/// - [controlsPosition]: The position of the audio controls (topLeft, topRight, bottomLeft, bottomRight). Defaults to topLeft.
-/// - [infoPosition]: The position of the participant information (topLeft, topRight, bottomLeft, bottomRight). Defaults to topRight.
-/// - [backgroundColor]: The background color of the audio card. Defaults to white.
+/// AudioCardParameters - Abstract class defining parameters required for the `AudioCard` widget.
+abstract class AudioCardParameters {
+  List<AudioDecibels> get audioDecibels;
+  List<Participant> get participants;
+  io.Socket? get socket;
+  List<CoHostResponsibility> get coHostResponsibility;
+  String get roomName;
+  ShowAlert? get showAlert;
+  String get coHost;
+  String get islevel;
+  String get member;
+  EventType get eventType;
+
+  AudioCardParameters Function() get getUpdatedAllParams;
+
+  // dynamic operator [](String key);
+}
+
+/// AudioCardOptions - Configuration options for the `AudioCard` widget.
 ///
 /// Example:
 /// ```dart
 /// AudioCard(
-///   customStyle: BoxDecoration(
-///     color: Colors.blueGrey,
-///     borderRadius: BorderRadius.circular(10),
+///   options: AudioCardOptions(
+///     name: "Participant Name",
+///     customStyle: BoxDecoration(color: Colors.grey),
+///     participant: participantData,
+///     barColor: Colors.red,
+///     parameters: parameters,
 ///   ),
-///   name: 'John Doe',
-///   onHide: () {
-///     // Logic to hide the audio card
-///   },
-///   parameters: {
-///     // Additional parameters here
-///   },
 /// );
 /// ```
-
-class AudioCard extends StatefulWidget {
+class AudioCardOptions {
+  final ControlMediaType controlUserMedia;
   final BoxDecoration customStyle;
-  final String? name;
-  final Color? barColor;
-  final Color? textColor;
+  final String name;
+  final Color barColor;
+  final Color textColor;
   final String? imageSource;
-  final bool? roundedImage;
-  final BoxDecoration? imageStyle; // Update the type to BoxDecoration?
-  final bool? showControls;
-  final bool? showInfo;
+  final bool roundedImage;
+  final BoxDecoration? imageStyle;
+  final bool showControls;
+  final bool showInfo;
   final Widget? videoInfoComponent;
   final Widget? videoControlsComponent;
-  final String? controlsPosition;
-  final String? infoPosition;
-  final Map<String, dynamic> participant;
-  final Map<String, dynamic>? audioDecibels;
-  final Map<String, dynamic> parameters;
-  final Color? backgroundColor;
+  final String
+      controlsPosition; // 'topLeft', 'topRight', 'bottomLeft', 'bottomRight'
+  final String
+      infoPosition; // 'topLeft', 'topRight', 'bottomLeft', 'bottomRight'
+  final Participant participant;
+  final Color backgroundColor;
+  final AudioCardParameters parameters;
 
-  const AudioCard({
-    super.key,
+  AudioCardOptions({
+    this.controlUserMedia = controlMedia,
     required this.customStyle,
     required this.name,
     this.barColor = const Color.fromARGB(255, 240, 35, 35),
@@ -80,34 +76,58 @@ class AudioCard extends StatefulWidget {
     this.videoControlsComponent,
     this.controlsPosition = 'topLeft',
     this.infoPosition = 'topRight',
-    this.participant = const {},
-    this.audioDecibels,
-    required this.parameters,
+    required this.participant,
     this.backgroundColor = Colors.white,
+    required this.parameters,
+  });
+}
+
+typedef AudioCardType = Widget Function({required AudioCardOptions options});
+
+/// AudioCard - A card widget for displaying audio-related information and controls for a participant.
+///
+/// Example:
+/// ```dart
+/// AudioCard(
+///   options: AudioCardOptions(
+///     name: "Participant Name",
+///     customStyle: BoxDecoration(color: Colors.grey),
+///     participant: participantData,
+///     barColor: Colors.red,
+///     parameters: parameters,
+///   ),
+/// );
+/// ```
+class AudioCard extends StatefulWidget {
+  final AudioCardOptions options;
+
+  const AudioCard({
+    super.key,
+    required this.options,
   });
 
   @override
-  // ignore: library_private_types_in_public_api
   _AudioCardState createState() => _AudioCardState();
 }
 
 class _AudioCardState extends State<AudioCard> with TickerProviderStateMixin {
   late List<AnimationController> waveformAnimations;
   ValueNotifier<bool> showWaveform = ValueNotifier<bool>(false);
-  late Map<String, dynamic>? participant;
+  late Participant participant;
 
   @override
   void initState() {
     super.initState();
     waveformAnimations = List.generate(
-        9,
-        (_) => AnimationController(
-            vsync: this, duration: const Duration(seconds: 1)));
+      9,
+      (_) => AnimationController(
+        vsync: this,
+        duration: const Duration(seconds: 2),
+      ),
+    );
     animateWaveform();
     showWaveform.value = true;
-    participant = widget.parameters['participants'].firstWhere(
-        (participant) => participant!['name'] == widget.name,
-        orElse: () => null);
+    participant = widget.options.participant;
 
     animateWaveformChecker();
   }
@@ -115,23 +135,29 @@ class _AudioCardState extends State<AudioCard> with TickerProviderStateMixin {
   void animateWaveformChecker() {
     Timer.periodic(const Duration(seconds: 1), (timer) {
       final audioDecibels =
-          widget.parameters['getUpdatedAllParams']()['audioDecibels'];
+          widget.options.parameters.getUpdatedAllParams().audioDecibels;
       final participants =
-          widget.parameters['getUpdatedAllParams']()['participants'];
+          widget.options.parameters.getUpdatedAllParams().participants;
 
       // Find the existing audio entry and participant based on the name.
-      final existingEntry = audioDecibels?.firstWhere(
-        (entry) => entry['name'] == widget.name,
-        orElse: () => null,
+      final existingEntry = audioDecibels.firstWhere(
+        (entry) => entry.name == widget.options.name,
+        orElse: () => AudioDecibels(name: '', averageLoudness: 0),
       );
-      participant = participants?.firstWhere(
-        (participant) => participant['name'] == widget.name,
-        orElse: () => null,
+      Participant? participant = participants.firstWhere(
+        (participant) => participant.name == widget.options.name,
+        orElse: () => Participant(
+          id: '',
+          name: '',
+          muted: true,
+          videoID: "",
+          audioID: "",
+        ),
       );
-      if (existingEntry != null &&
-          existingEntry['averageLoudness'] > 127.5 &&
-          participant != null &&
-          !participant!['muted']) {
+      if (existingEntry.name.isNotEmpty &&
+          existingEntry.averageLoudness > 127.5 &&
+          participant.name.isNotEmpty &&
+          !participant.muted!) {
         // animateWaveform();
         showWaveform.value = true;
       } else {
@@ -162,11 +188,11 @@ class _AudioCardState extends State<AudioCard> with TickerProviderStateMixin {
   }
 
   Widget renderControls() {
-    if (!widget.showControls!) {
+    if (!widget.options.showControls) {
       return const SizedBox();
     }
 
-    final controlsComponent = widget.videoControlsComponent ??
+    final controlsComponent = widget.options.videoControlsComponent ??
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -179,10 +205,10 @@ class _AudioCardState extends State<AudioCard> with TickerProviderStateMixin {
                   borderRadius: BorderRadius.circular(0),
                 ),
                 child: Icon(
-                  widget.participant['muted'] ?? false
+                  widget.options.participant.muted!
                       ? Icons.mic_off
                       : Icons.mic_none,
-                  color: widget.participant['muted'] ?? false
+                  color: widget.options.participant.muted!
                       ? Colors.red
                       : Colors.green,
                   size: 14,
@@ -199,10 +225,10 @@ class _AudioCardState extends State<AudioCard> with TickerProviderStateMixin {
                   borderRadius: BorderRadius.circular(0),
                 ),
                 child: Icon(
-                  widget.participant['videoOn'] ?? true
+                  widget.options.participant.videoOn!
                       ? Icons.videocam
                       : Icons.videocam_off,
-                  color: widget.participant['videoOn'] ?? true
+                  color: widget.options.participant.videoOn!
                       ? Colors.green
                       : Colors.red,
                   size: 14,
@@ -216,26 +242,43 @@ class _AudioCardState extends State<AudioCard> with TickerProviderStateMixin {
   }
 
   void toggleAudio() async {
-    // Implement audio toggle functionality here
-    if (participant!['muted']) {
-    } else {
-      await controlMedia(
-        participantId: participant!['id'],
-        participantName: widget.name!,
+    if (!widget.options.participant.muted!) {
+      final optionsControl = ControlMediaOptions(
+        participantId: widget.options.participant.id!,
+        participantName: widget.options.participant.name,
         type: 'audio',
-        parameters: widget.parameters,
+        socket: widget.options.parameters.socket,
+        roomName: widget.options.parameters.roomName,
+        coHostResponsibility: widget.options.parameters.coHostResponsibility,
+        showAlert: widget.options.parameters.showAlert,
+        coHost: widget.options.parameters.coHost,
+        participants: widget.options.parameters.participants,
+        member: widget.options.parameters.member,
+        islevel: widget.options.parameters.islevel,
+      );
+      await widget.options.controlUserMedia(
+        optionsControl,
       );
     }
   }
 
   void toggleVideo() async {
-    // Implement video toggle functionality here
-    if (participant!['videoOn']) {
-      await controlMedia(
-        participantId: participant!['id'],
-        participantName: widget.name!,
+    if (widget.options.participant.videoOn!) {
+      final optionsControl = ControlMediaOptions(
+        participantId: widget.options.participant.id!,
+        participantName: widget.options.participant.name,
         type: 'video',
-        parameters: widget.parameters,
+        socket: widget.options.parameters.socket,
+        roomName: widget.options.parameters.roomName,
+        coHostResponsibility: widget.options.parameters.coHostResponsibility,
+        showAlert: widget.options.parameters.showAlert,
+        coHost: widget.options.parameters.coHost,
+        participants: widget.options.parameters.participants,
+        member: widget.options.parameters.member,
+        islevel: widget.options.parameters.islevel,
+      );
+      await widget.options.controlUserMedia(
+        optionsControl,
       );
     }
   }
@@ -244,129 +287,119 @@ class _AudioCardState extends State<AudioCard> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: widget.customStyle.color,
+        color: widget.options.backgroundColor,
         border: Border.all(color: Colors.black, width: 2),
+        borderRadius: widget.options.customStyle.borderRadius,
       ),
       child: Stack(
         children: [
           // Use MiniCard widget instead of Image
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
+          Positioned.fill(
             child: MiniCard(
-              initials: widget.name!.isNotEmpty ? widget.name! : '',
-              fontSize: 24,
-              imageSource: widget.imageSource,
-              roundedImage: widget.roundedImage ?? false,
-              imageStyle: widget.imageStyle, // Use imageStyle here
-            ),
+                options: MiniCardOptions(
+                    initials: widget.options.name.isNotEmpty
+                        ? widget.options.name
+                        : '',
+                    fontSize: 24,
+                    imageSource: widget.options.imageSource,
+                    roundedImage: widget.options.roundedImage,
+                    imageStyle: widget.options.imageStyle)),
           ),
+          // Participant Info
           Positioned(
-              top: widget.infoPosition! == 'topLeft'
-                  ? 0
-                  : widget.infoPosition! == 'topRight'
-                      ? 0
-                      : null,
-              left: widget.infoPosition! == 'topLeft'
-                  ? 0
-                  : widget.infoPosition! == 'bottomLeft'
-                      ? 0
-                      : null,
-              bottom: widget.infoPosition! == 'bottomLeft'
-                  ? 0
-                  : widget.infoPosition! == 'bottomRight'
-                      ? 0
-                      : null,
-              right: widget.infoPosition! == 'topRight'
-                  ? 0
-                  : widget.infoPosition! == 'bottomRight'
-                      ? 0
-                      : null,
-              child: widget.showInfo!
-                  ? Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Container(
-                        //   padding: const EdgeInsets.symmetric(
-                        //       horizontal: 2, vertical: 3),
-                        //   decoration: BoxDecoration(
-                        //     color: Colors.white
-                        //         .withOpacity(0.25), // Adjust opacity as needed
-                        //     borderRadius: BorderRadius.circular(
-                        //         0), // Adjust border radius as needed
-                        //   ),
-                        //   child: Text(
-                        //     widget.participant['name'] ?? '',
-                        //     style: TextStyle(
-                        //       color: widget.textColor!,
-                        //       fontSize: 14,
-                        //       fontWeight: FontWeight.bold,
-                        //     ),
-                        //   ),
-                        // ),
-                        const SizedBox(width: 5),
-                        Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 2, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(
-                                  0.25), // Adjust opacity as needed
-                              borderRadius: BorderRadius.circular(
-                                  0), // Adjust border radius as needed
-                            ),
-                            child: ValueListenableBuilder<bool>(
-                                valueListenable: showWaveform,
-                                builder: (context, showWaveform, child) {
-                                  return showWaveform
-                                      ? Row(
-                                          children: List.generate(
-                                            waveformAnimations.length,
-                                            (index) => AnimatedBuilder(
-                                              animation:
-                                                  waveformAnimations[index],
-                                              builder: (context, child) {
-                                                // Generate a random height between 1 and 14
-                                                final randomHeight =
-                                                    Random().nextDouble() * 14;
-                                                return Container(
-                                                  height: showWaveform
-                                                      ? randomHeight
-                                                      : 0, // Show or hide waveform based on the showWaveform flag
-                                                  width: 5,
-                                                  color: widget.barColor!,
-                                                  margin: const EdgeInsets
-                                                      .symmetric(horizontal: 1),
-                                                );
-                                              },
-                                            ),
-                                          ),
-                                        )
-                                      : const SizedBox();
-                                })),
-                      ],
-                    )
-                  : const SizedBox()),
+            top: widget.options.infoPosition.toLowerCase().contains('top')
+                ? 0
+                : null,
+            left: widget.options.infoPosition.toLowerCase().contains('left')
+                ? 0
+                : null,
+            bottom: widget.options.infoPosition.toLowerCase().contains('bottom')
+                ? 0
+                : null,
+            right: widget.options.infoPosition.toLowerCase().contains('right')
+                ? 0
+                : null,
+            child: widget.options.showInfo
+                ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(width: 5),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 2, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.25),
+                          borderRadius: BorderRadius.circular(0),
+                        ),
+                        child: ValueListenableBuilder<bool>(
+                          valueListenable: showWaveform,
+                          builder: (context, showWaveform, child) {
+                            return showWaveform
+                                ? Row(
+                                    children: List.generate(
+                                      waveformAnimations.length,
+                                      (index) => AnimatedBuilder(
+                                        animation: waveformAnimations[index],
+                                        builder: (context, child) {
+                                          // Generate a random height between 1 and 14
+                                          final randomHeight =
+                                              Random().nextDouble() * 14;
+                                          return Container(
+                                            height:
+                                                showWaveform ? randomHeight : 0,
+                                            width: 5,
+                                            color: widget.options.barColor,
+                                            margin: const EdgeInsets.symmetric(
+                                                horizontal: 1),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  )
+                                : const SizedBox();
+                          },
+                        ),
+                      ),
+                    ],
+                  )
+                : const SizedBox(),
+          ),
+          // Controls
           Positioned(
-            top: widget.controlsPosition == 'topLeft' ||
-                    widget.controlsPosition == 'topRight'
+            top: widget.options.controlsPosition.toLowerCase().contains('top')
                 ? 0
                 : null,
-            left: widget.controlsPosition == 'topLeft' ||
-                    widget.controlsPosition == 'bottomLeft'
+            left: widget.options.controlsPosition.toLowerCase().contains('left')
                 ? 0
                 : null,
-            bottom: widget.controlsPosition == 'bottomLeft' ||
-                    widget.controlsPosition == 'bottomRight'
-                ? 0
-                : null,
-            right: widget.controlsPosition == 'topRight' ||
-                    widget.controlsPosition == 'bottomRight'
-                ? 0
-                : null,
+            bottom:
+                widget.options.controlsPosition.toLowerCase().contains('bottom')
+                    ? 0
+                    : null,
+            right:
+                widget.options.controlsPosition.toLowerCase().contains('right')
+                    ? 0
+                    : null,
             child: renderControls(),
-          )
+          ),
+          // Video Info Component
+          if (widget.options.videoInfoComponent != null)
+            Positioned(
+              top: widget.options.infoPosition.toLowerCase().contains('top')
+                  ? 0
+                  : null,
+              left: widget.options.infoPosition.toLowerCase().contains('left')
+                  ? 0
+                  : null,
+              bottom:
+                  widget.options.infoPosition.toLowerCase().contains('bottom')
+                      ? 0
+                      : null,
+              right: widget.options.infoPosition.toLowerCase().contains('right')
+                  ? 0
+                  : null,
+              child: widget.options.videoInfoComponent!,
+            ),
         ],
       ),
     );

@@ -1,52 +1,101 @@
 import 'package:flutter/material.dart';
-import '../../methods/utils/get_modal_position.dart' show getModalPosition;
+import '../../types/types.dart';
+import '../../methods/utils/get_modal_position.dart'
+    show getModalPosition, GetModalPositionOptions;
 import '../../methods/display_settings_methods/modify_display_settings.dart'
-    show modifyDisplaySettings;
+    show
+        modifyDisplaySettings,
+        ModifyDisplaySettingsType,
+        ModifyDisplaySettingsParameters;
 
-/// DisplaySettingsModal - A modal widget for configuring display settings.
-///
-/// This widget allows users to modify various display settings such as display options,
-/// audiograph visibility, and force full display settings.
-///
-/// Whether the display settings modal is visible.
-///final bool isDisplaySettingsModalVisible;
-///
-/// A function called when the display settings modal is closed.
-///final Function() onDisplaySettingsClose;
-///
-/// A function for modifying display settings.
-///final Future<void> Function({required Map<String, dynamic> parameters}) onModifyDisplaySettings;
-///
-/// The parameters associated with the display settings.
-///final Map<String, dynamic> parameters;
-///
-/// The position of the modal.
-///final String position;
-///
-/// The background color of the modal.
-///final Color backgroundColor;
+abstract class DisplaySettingsModalParameters
+    implements ModifyDisplaySettingsParameters {
+  String get meetingDisplayType;
+  bool get autoWave;
+  bool get forceFullDisplay;
+  bool get meetingVideoOptimized;
 
-class DisplaySettingsModal extends StatefulWidget {
-  final bool isDisplaySettingsModalVisible;
-  final Function() onDisplaySettingsClose;
-  final Future<void> Function({required Map<String, dynamic> parameters})
-      onModifyDisplaySettings;
-  final Map<String, dynamic> parameters;
+  // dynamic operator [](String key);
+  // void operator []=(String key, dynamic value);
+}
+
+/// DisplaySettingsModalOptions - Configuration options for the `DisplaySettingsModal`.
+class DisplaySettingsModalOptions {
+  final bool isVisible;
+  final VoidCallback onClose;
+  final ModifyDisplaySettingsType onModifySettings;
+  final DisplaySettingsModalParameters parameters;
   final String position;
   final Color backgroundColor;
 
-  const DisplaySettingsModal({
-    super.key,
-    required this.isDisplaySettingsModalVisible,
-    required this.onDisplaySettingsClose,
-    this.onModifyDisplaySettings = modifyDisplaySettings,
+  DisplaySettingsModalOptions({
+    required this.isVisible,
+    required this.onClose,
+    this.onModifySettings = modifyDisplaySettings,
     required this.parameters,
     this.position = 'topRight',
     this.backgroundColor = const Color(0xFF83C0E9),
   });
+}
+
+typedef DisplaySettingsModalType = DisplaySettingsModal Function(
+    {required DisplaySettingsModalOptions options});
+
+/// `DisplaySettingsModalOptions` - Configuration options for the `DisplaySettingsModal`.
+///
+/// ### Properties:
+/// - `isVisible`: Boolean to determine the visibility of the modal.
+/// - `onClose`: Callback to close the modal.
+/// - `onModifySettings`: Callback to apply changes in display settings.
+/// - `parameters`: Current display settings as a `DisplaySettingsModalParameters` object.
+/// - `position`: Position of the modal on the screen (default is 'topRight').
+/// - `backgroundColor`: Background color of the modal (default is `Color(0xFF83C0E9)`).
+///
+/// ### Example Usage:
+/// ```dart
+/// DisplaySettingsModal(
+///   options: DisplaySettingsModalOptions(
+///     isVisible: true,
+///     onClose: () => print("Modal closed"),
+///     parameters: DisplaySettingsModalParametersImplementation(),
+///   ),
+/// );
+/// ```
+
+/// `DisplaySettingsModal` - A modal widget for adjusting display settings.
+///
+/// This widget allows users to set display preferences for a meeting or event, including display options,
+/// enabling/disabling audiographs, forcing full display, and optimizing video participant visibility.
+///
+/// ### Parameters:
+/// - `options` (`DisplaySettingsModalOptions`): Configuration options for the modal.
+///
+/// ### Structure:
+/// - Modal header with title ("Display Settings") and close button.
+/// - Dropdown selector for `Display Option` with values: Video Participants Only, Media Participants Only, and Show All Participants.
+/// - Switch toggles for settings:
+///     - `Display Audiographs`
+///     - `Force Full Display`
+///     - `Force Video Participants`
+/// - Save button to apply the selected display settings.
+///
+/// ### Example Usage:
+/// ```dart
+/// DisplaySettingsModal(
+///   options: DisplaySettingsModalOptions(
+///     isVisible: true,
+///     onClose: () => print("Modal closed"),
+///     parameters: DisplaySettingsModalParametersImplementation(),
+///   ),
+/// );
+/// ```
+
+class DisplaySettingsModal extends StatefulWidget {
+  final DisplaySettingsModalOptions options;
+
+  const DisplaySettingsModal({super.key, required this.options});
 
   @override
-  // ignore: library_private_types_in_public_api
   _DisplaySettingsModalState createState() => _DisplaySettingsModalState();
 }
 
@@ -59,11 +108,10 @@ class _DisplaySettingsModalState extends State<DisplaySettingsModal> {
   @override
   void initState() {
     super.initState();
-    // Initialize local state variables with current parameter values
-    _meetingDisplayType = widget.parameters['meetingDisplayType'];
-    _autoWave = widget.parameters['autoWave'];
-    _forceFullDisplay = widget.parameters['forceFullDisplay'];
-    _meetingVideoOptimized = widget.parameters['meetingVideoOptimized'];
+    _meetingDisplayType = widget.options.parameters.meetingDisplayType;
+    _autoWave = widget.options.parameters.autoWave;
+    _forceFullDisplay = widget.options.parameters.forceFullDisplay;
+    _meetingVideoOptimized = widget.options.parameters.meetingVideoOptimized;
   }
 
   @override
@@ -77,26 +125,32 @@ class _DisplaySettingsModalState extends State<DisplaySettingsModal> {
     final modalHeight = MediaQuery.of(context).size.height * 0.65;
 
     return Visibility(
-      visible: widget.isDisplaySettingsModalVisible,
+      visible: widget.options.isVisible,
       child: Stack(
         children: [
           Positioned(
-            top: getModalPosition(
-                widget.position, context, modalWidth, modalHeight)['top'],
-            right: getModalPosition(
-                widget.position, context, modalWidth, modalHeight)['right'],
+            top: getModalPosition(GetModalPositionOptions(
+              position: widget.options.position,
+              modalWidth: modalWidth,
+              modalHeight: modalHeight,
+              context: context,
+            ))['top'],
+            right: getModalPosition(GetModalPositionOptions(
+                position: widget.options.position,
+                modalWidth: modalWidth,
+                modalHeight: modalHeight,
+                context: context))['right'],
             child: Center(
               child: Container(
                 width: modalWidth,
                 height: modalHeight,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: widget.backgroundColor,
+                  color: widget.options.backgroundColor,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -110,127 +164,53 @@ class _DisplaySettingsModalState extends State<DisplaySettingsModal> {
                           ),
                         ),
                         IconButton(
-                          onPressed: widget.onDisplaySettingsClose,
+                          onPressed: widget.options.onClose,
                           icon: const Icon(Icons.close),
                           color: Colors.black,
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
-                    // Display Option Picker
-                    const Text(
-                      'Display Option:',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    DropdownButton<String>(
+                    const Divider(color: Colors.black),
+                    _buildDropdownSetting(
+                      label: 'Display Option:',
                       value: _meetingDisplayType,
-                      onChanged: (value) {
-                        setState(() {
-                          _meetingDisplayType = value!;
-                        });
-                      },
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'video',
-                          child: Text('Video Participants Only'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'media',
-                          child: Text('Media Participants Only'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'all',
-                          child: Text('Show All Participants'),
-                        ),
-                      ],
+                      options: const ['video', 'media', 'all'],
+                      onChanged: (value) =>
+                          setState(() => _meetingDisplayType = value),
+                    ),
+                    _buildSwitchSetting(
+                      label: 'Display Audiographs',
+                      value: _autoWave,
+                      onChanged: (value) => setState(() => _autoWave = value),
+                    ),
+                    _buildSwitchSetting(
+                      label: 'Force Full Display',
+                      value: _forceFullDisplay,
+                      onChanged: (value) =>
+                          setState(() => _forceFullDisplay = value),
+                    ),
+                    _buildSwitchSetting(
+                      label: 'Force Video Participants',
+                      value: _meetingVideoOptimized,
+                      onChanged: (value) =>
+                          setState(() => _meetingVideoOptimized = value),
                     ),
                     const SizedBox(height: 20),
-                    // Display Audiographs Toggle
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Display Audiographs',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                        Switch(
-                          value: _autoWave,
-                          onChanged: (value) {
-                            setState(() {
-                              _autoWave = value;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    // Force Full Display Toggle
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Force Full Display',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                        Switch(
-                          value: _forceFullDisplay,
-                          onChanged: (value) {
-                            setState(() {
-                              _forceFullDisplay = value;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    // Force Video Participants Toggle
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Force Video Participants',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                        Switch(
-                          value: _meetingVideoOptimized,
-                          onChanged: (value) {
-                            setState(() {
-                              _meetingVideoOptimized = value;
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    // Save Button
                     ElevatedButton(
                       onPressed: () {
-                        // On save, apply temporary changes to parameters and trigger the modification function
-                        widget.onModifyDisplaySettings(
-                          parameters: {
-                            ...widget.parameters,
-                            'meetingDisplayType': _meetingDisplayType,
-                            'autoWave': _autoWave,
-                            'forceFullDisplay': _forceFullDisplay,
-                            'meetingVideoOptimized': _meetingVideoOptimized,
-                          },
+                        widget.options.parameters
+                            .updateMeetingDisplayType(_meetingDisplayType);
+                        widget.options.parameters.updateAutoWave(_autoWave);
+                        widget.options.parameters
+                            .updateForceFullDisplay(_forceFullDisplay);
+                        _forceFullDisplay;
+                        widget.options.parameters.updateMeetingVideoOptimized(
+                            _meetingVideoOptimized);
+                        _meetingVideoOptimized;
+                        final optionsModify = ModifyDisplaySettingsOptions(
+                            parameters: widget.options.parameters);
+                        widget.options.onModifySettings(
+                          optionsModify,
                         );
                       },
                       child: const Text('Save'),
@@ -242,6 +222,65 @@ class _DisplaySettingsModalState extends State<DisplaySettingsModal> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDropdownSetting({
+    required String label,
+    required String value,
+    required List<String> options,
+    required ValueChanged<String> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+        DropdownButton<String>(
+          value: value,
+          onChanged: (newValue) => onChanged(newValue!),
+          items: options.map((option) {
+            return DropdownMenuItem(
+              value: option,
+              child: Text(option == 'video'
+                  ? 'Video Participants Only'
+                  : option == 'media'
+                      ? 'Media Participants Only'
+                      : 'Show All Participants'),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSwitchSetting({
+    required String label,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+        Switch(
+          value: value,
+          onChanged: onChanged,
+        ),
+      ],
     );
   }
 }

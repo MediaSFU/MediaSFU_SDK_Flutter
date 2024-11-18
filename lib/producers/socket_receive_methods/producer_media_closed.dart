@@ -1,125 +1,181 @@
-// ignore_for_file: empty_catches
-
 import 'dart:async';
+import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 
-/// Closes the video or screenshare of a participant.
+import '../../types/types.dart'
+    show
+        CloseAndResizeParameters,
+        CloseAndResizeType,
+        PrepopulateUserMediaParameters,
+        PrepopulateUserMediaType,
+        ReorderStreamsParameters,
+        ReorderStreamsType,
+        TransportType,
+        CloseAndResizeOptions,
+        PrepopulateUserMediaOptions,
+        ReorderStreamsOptions;
+
+/// Abstract class defining the parameters required for closing media of a producer.
+abstract class ProducerMediaClosedParameters
+    implements
+        CloseAndResizeParameters,
+        PrepopulateUserMediaParameters,
+        ReorderStreamsParameters {
+  // Core properties as abstract getters
+  List<TransportType> get consumerTransports;
+  String get hostLabel;
+  bool get shared;
+
+  // Update functions as abstract getters returning functions
+  void Function(List<TransportType>) get updateConsumerTransports;
+  void Function(bool) get updateShared;
+  void Function(bool) get updateShareScreenStarted;
+  void Function(String) get updateScreenId;
+  void Function(bool) get updateShareEnded;
+
+  // Mediasfu functions as abstract getters
+  CloseAndResizeType get closeAndResize;
+  PrepopulateUserMediaType get prepopulateUserMedia;
+  ReorderStreamsType get reorderStreams;
+
+  // Method to retrieve updated parameters as an abstract getter
+  ProducerMediaClosedParameters Function() get getUpdatedAllParams;
+
+  // Dynamic key-value support
+  // dynamic operator [](String key);
+}
+
+/// Class representing options for closing a producer's media.
+class ProducerMediaClosedOptions {
+  final String producerId;
+  final String kind; // 'video' | 'screen' | 'audio' | 'screenshare'
+  final ProducerMediaClosedParameters parameters;
+
+  ProducerMediaClosedOptions({
+    required this.producerId,
+    required this.kind,
+    required this.parameters,
+  });
+}
+
+// Typedef for the closure function signature
+typedef ProducerMediaClosedType = Future<void> Function(
+    ProducerMediaClosedOptions options);
+
+/// Handles the closure of a media producer's stream or screenshare.
 ///
-/// [producerId] is the ID of the producer.
-/// [kind] is the kind of media (video, screenshare).
-/// [parameters] is a map of parameters including:
-///   - [getUpdatedAllParams]: A function that returns an updated map of parameters.
-///   - [consumerTransports]: A list of consumer transports.
-///   - [updateConsumerTransports]: A function to update the consumer transports.
-///   - [hostLabel]: The label of the host.
-///   - [shared]: A boolean indicating if the media is shared.
-///   - [updateShared]: A function to update the shared status.
-///   - [updateShareScreenStarted]: A function to update the screen sharing status.
-///   - [updateScreenId]: A function to update the screen ID.
-///   - [updateShareEnded]: A function to update the share ended status.
-///   - [closeAndResize]: A function to close and resize the media.
-///   - [prepopulateUserMedia]: A function to prepopulate user media.
-///   - [reorderStreams]: A function to reorder streams.
+/// This function identifies the transport associated with the given `producerId`,
+/// closes it, and updates shared states based on the `kind` of media.
 ///
-/// This function updates the UI to optimize interest levels and closes the video or screenshare.
-/// If the producer to close is found in the consumer transports, it closes the consumer transport and consumer,
-/// removes the producer from the consumer transports, and calls the [closeAndResize] function.
-/// If the kind is 'screenshare' or 'screen', it updates the shared status, screen sharing status, screen ID,
-/// share ended status, prepopulates user media, and calls the [reorderStreams] function.
+/// If the `producerId` is found in the `consumerTransports` list, the associated transport
+/// and consumer are closed, and the `consumerTransports` list is updated accordingly. If
+/// the `kind` is `screenshare` or `screen`, and the media is shared, the share settings are reset.
+///
+/// Throws an error if any transport or consumer closure fails.
+///
+/// Example usage:
+/// ```dart
+/// final parameters = ProducerMediaClosedOptions(
+///   producerId: 'abc123',
+///   kind: 'screenshare',
+///   parameters: myParameters,
+/// );
+///
+/// await producerMediaClosed(
+///   producerId: parameters.producerId,
+///   kind: parameters.kind,
+///   parameters: parameters.parameters,
+/// );
+/// ```
+///
+/// - [producerId] (`String`): The ID of the producer to close.
+/// - [kind] (`String`): Type of media (e.g., 'video', 'screenshare').
+/// - [parameters] (`ProducerMediaClosedParameters`): Configuration and dependencies for handling the closure.
 
-typedef GetUpdatedAllParams = Map<String, dynamic> Function();
+Future<void> producerMediaClosed(
+  ProducerMediaClosedOptions options,
+) async {
+  final producerId = options.producerId;
+  final kind = options.kind;
+  final parameters = options.parameters;
 
-typedef CloseAndResize = Future<void> Function({
-  required String producerId,
-  required String kind,
-  required Map<String, dynamic> parameters,
-});
+  // Get updated parameters
+  final updatedParameters = parameters.getUpdatedAllParams();
 
-typedef PrepopulateUserMedia = List<dynamic> Function({
-  required String name,
-  required Map<String, dynamic> parameters,
-});
+  final consumerTransports = updatedParameters.consumerTransports;
+  final updateConsumerTransports = updatedParameters.updateConsumerTransports;
+  final hostLabel = updatedParameters.hostLabel;
+  final shared = updatedParameters.shared;
+  final updateShared = updatedParameters.updateShared;
+  final updateShareScreenStarted = updatedParameters.updateShareScreenStarted;
+  final updateScreenId = updatedParameters.updateScreenId;
+  final updateShareEnded = updatedParameters.updateShareEnded;
+  final closeAndResize = updatedParameters.closeAndResize;
+  final prepopulateUserMedia = updatedParameters.prepopulateUserMedia;
+  final reorderStreams = updatedParameters.reorderStreams;
 
-typedef ReorderStreams = Future<void> Function({
-  bool add,
-  bool screenChanged,
-  required Map<String, dynamic> parameters,
-});
+  // Find the transport for the producer to close
+  TransportType? producerToClose = consumerTransports.firstWhereOrNull(
+      (transportData) => transportData.producerId == producerId);
 
-Future<void> producerMediaClosed({
-  required String producerId,
-  required String kind,
-  required Map<String, dynamic> parameters,
-}) async {
-  // Update to close the video, screenshare of a participant
-  // producerId is the id of the producer
-  // kind is the kind of media (video, screenshare)
-  // never emitted for audio
-
-  GetUpdatedAllParams getUpdatedAllParams = parameters['getUpdatedAllParams'];
-  parameters = getUpdatedAllParams();
-
-  List<dynamic>? consumerTransports = parameters['consumerTransports'];
-  Function? updateConsumerTransports = parameters['updateConsumerTransports'];
-  String hostLabel = parameters['hostLabel'];
-  bool shared = parameters['shared'];
-  Function(bool)? updateShared = parameters['updateShared'];
-  Function(bool)? updateShareScreenStarted =
-      parameters['updateShareScreenStarted'];
-  Function(String)? updateScreenId = parameters['updateScreenId'];
-  Function(bool)? updateShareEnded = parameters['updateShareEnded'];
-
-  // mediasfu functions
-  CloseAndResize closeAndResize = parameters['closeAndResize'];
-  PrepopulateUserMedia prepopulateUserMedia =
-      parameters['prepopulateUserMedia'];
-  ReorderStreams reorderStreams = parameters['reorderStreams'];
-
-  if (updateConsumerTransports == null ||
-      consumerTransports == null ||
-      updateShared == null ||
-      updateShareScreenStarted == null ||
-      updateScreenId == null ||
-      updateShareEnded == null) {
-    return; // Handle missing or null parameters
+  if (producerToClose == null) {
+    return;
   }
 
-  // Operations to update UI to optimize interest levels and close the video or screenshare
-  var producerToClose = consumerTransports.firstWhere(
-    (transportData) => transportData['producerId'] == producerId,
-    orElse: () => null,
-  );
-
-  if (producerToClose != null) {
+  if (producerToClose.producerId.isNotEmpty) {
     try {
       await producerToClose['consumerTransport'].close();
-    } catch (error) {}
+    } catch (error) {
+      if (kDebugMode) {
+        print('Error closing consumer transport: $error');
+      }
+    }
 
     try {
-      await producerToClose['consumer'].close();
-    } catch (error) {}
+      producerToClose.consumer.close();
+    } catch (error) {
+      if (kDebugMode) {
+        print('Error closing consumer: $error');
+      }
+    }
 
-    consumerTransports = consumerTransports
-        .where((transportData) => transportData['producerId'] != producerId)
+    final updatedTransports = consumerTransports
+        .where(
+          (transportData) => transportData.producerId != producerId,
+        )
         .toList();
-    updateConsumerTransports(consumerTransports);
+    updateConsumerTransports(updatedTransports);
 
-    await closeAndResize(
+    final optionsClose = CloseAndResizeOptions(
       producerId: producerId,
       kind: kind,
-      parameters: parameters,
+      parameters: updatedParameters,
     );
-  } else {
-    if (kind == 'screenshare' || kind == 'screen') {
-      if (shared) {
-        await updateShared(false);
-      } else {
-        await updateShareScreenStarted(false);
-        await updateScreenId('');
-      }
-      await updateShareEnded(true);
-      prepopulateUserMedia(name: hostLabel, parameters: parameters);
-      await reorderStreams(
-          add: false, screenChanged: true, parameters: parameters);
+    await closeAndResize(
+      optionsClose,
+    );
+  } else if (kind == 'screenshare' || kind == 'screen') {
+    if (shared) {
+      updateShared(false);
+    } else {
+      updateShareScreenStarted(false);
+      updateScreenId('');
     }
+    updateShareEnded(true);
+    final optionsPrepopulate = PrepopulateUserMediaOptions(
+      name: hostLabel,
+      parameters: updatedParameters,
+    );
+    await prepopulateUserMedia(
+      optionsPrepopulate,
+    );
+    final optionsReorder = ReorderStreamsOptions(
+      add: false,
+      screenChanged: true,
+      parameters: updatedParameters,
+    );
+    await reorderStreams(
+      optionsReorder,
+    );
   }
 }

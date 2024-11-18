@@ -1,287 +1,284 @@
-// ignore_for_file: empty_catches
-
 import 'dart:async';
-import 'package:flutter/foundation.dart';
-import 'package:socket_io_client/socket_io_client.dart' as io;
+import '../../types/types.dart'
+    show
+        Participant,
+        Request,
+        ReorderStreamsType,
+        ReorderStreamsParameters,
+        SleepType,
+        ConnectIpsParameters,
+        OnScreenChangesParameters,
+        OnScreenChangesType,
+        ConnectIpsType,
+        ConsumeSocket,
+        CoHostResponsibility,
+        WaitingRoomParticipant,
+        ReorderStreamsOptions,
+        OnScreenChangesOptions,
+        ConnectIpsOptions,
+        SleepOptions;
 
-/// This file contains various typedefs and functions related to handling members in a meeting.
-/// It includes callback functions, methods for joining and consuming rooms, and functions for updating UI.
-/// The [allMembers] function is the main function that handles the logic for updating participants, connecting to sockets, and updating UI based on the received data.
-/// It takes in various parameters including lists of members, requests, co-hosts, and consume sockets, as well as API credentials.
-/// The function extracts callback functions and other parameters from the provided map and performs the necessary operations.
-/// It updates the participantsAll and participants arrays with the received member data, checks for active names, connects to sockets, and updates UI based on the received data.
-/// The function also handles the case when the screen is shared and updates the shareScreenStarted flag accordingly.
-/// It uses the provided callback functions to update the UI and performs additional operations related to Mediasfu.
-/// The function is asynchronous and returns a Future<void>.
-
-typedef UpdateParticipantsAll = void Function(List<Map<String, dynamic>>);
-typedef UpdateParticipants = void Function(List<Map<String, dynamic>>);
-typedef UpdateRequestList = void Function(List<dynamic>);
+/// Callback function type for updating participant data.
+typedef UpdateParticipants = void Function(List<Participant>);
+typedef UpdateRequestList = void Function(List<Request>);
 typedef UpdateCoHost = void Function(String);
-typedef UpdateCoHostResponsibility = void Function(List<Map<String, dynamic>>);
-typedef UpdateFirstAll = void Function(bool);
-typedef UpdateMembersReceived = void Function(bool);
-typedef UpdateDeferScreenReceived = void Function(bool);
-typedef UpdateShareScreenStarted = void Function(bool);
+typedef UpdateCoHostResponsibility = void Function(List<CoHostResponsibility>);
+typedef UpdateBoolean = void Function(bool);
+typedef UpdateSockets = void Function(List<ConsumeSocket>);
+typedef UpdateIPs = void Function(List<String>);
+typedef UpdateTotalReqWait = void Function(int);
 typedef UpdateHostFirstSwitch = void Function(bool);
-typedef UpdateMeetingDisplayType = void Function(String);
-typedef UpdateAudioSetting = void Function(String?);
-typedef UpdateVideoSetting = void Function(String?);
-typedef UpdateScreenshareSetting = void Function(String?);
-typedef UpdateChatSetting = void Function(String?);
-typedef UpdateConsumeSockets = void Function(List<Map<String, io.Socket>>);
-typedef UpdateRoomRecvIPs = void Function(List<dynamic>);
-typedef UpdateIsLoadingModalVisible = void Function(bool);
+typedef UpdateParticipantsAll = void Function(List<Participant>);
 
-typedef NewProducerMethod = Future<void> Function({
-  required String producerId,
-  required String islevel,
-  required io.Socket nsock,
-  required Map<String, dynamic> parameters,
-});
+/// Defines parameters for managing all members.
+abstract class AllMembersParameters
+    implements
+        OnScreenChangesParameters,
+        ConnectIpsParameters,
+        ReorderStreamsParameters {
+  // Core properties as abstract getters
+  List<Participant> get participantsAll;
+  List<Participant> get participants;
+  List<String> get dispActiveNames;
+  List<Request> get requestList;
+  String get coHost;
+  List<CoHostResponsibility> get coHostResponsibility;
+  bool get lockScreen;
+  bool get firstAll;
+  bool get membersReceived;
+  List<String> get roomRecvIPs;
+  bool get deferScreenReceived;
+  String get screenId;
+  bool get shareScreenStarted;
+  String get meetingDisplayType;
+  String get audioSetting;
+  String get videoSetting;
+  String get screenshareSetting;
+  String get chatSetting;
+  bool get hostFirstSwitch;
+  List<WaitingRoomParticipant> get waitingRoomList;
+  String get islevel;
 
-typedef ClosedProducerMethod = Future<void> Function({
-  required String remoteProducerId,
-  required Map<String, dynamic> parameters,
-});
+  // Update functions as abstract getters
+  UpdateParticipantsAll get updateParticipantsAll;
+  UpdateParticipants get updateParticipants;
+  UpdateRequestList get updateRequestList;
+  UpdateCoHost get updateCoHost;
+  UpdateCoHostResponsibility get updateCoHostResponsibility;
+  UpdateBoolean get updateFirstAll;
+  UpdateBoolean get updateMembersReceived;
+  UpdateBoolean get updateDeferScreenReceived;
+  UpdateBoolean get updateShareScreenStarted;
+  UpdateSockets get updateConsumeSockets;
+  UpdateIPs get updateRoomRecvIPs;
+  UpdateBoolean get updateIsLoadingModalVisible;
+  UpdateTotalReqWait get updateTotalReqWait;
+  UpdateHostFirstSwitch get updateHostFirstSwitch;
 
-typedef JoinConsumeRoomMethod = Future<Map<String, dynamic>> Function({
-  required io.Socket remoteSock,
-  required String apiToken,
-  required String apiUserName,
-  required Map<String, dynamic> parameters,
-});
+  // Mediasfu functions as abstract getters
+  OnScreenChangesType get onScreenChanges;
+  ConnectIpsType get connectIps;
+  SleepType get sleep;
+  ReorderStreamsType get reorderStreams;
 
-typedef ConnectIps = Future<List<dynamic>> Function({
-  required List<Map<String, io.Socket>> consumeSockets,
-  required List<dynamic> remIP,
-  required String apiUserName,
-  String? apiKey,
-  String? apiToken,
-  NewProducerMethod? newProducerMethod,
-  ClosedProducerMethod? closedProducerMethod,
-  JoinConsumeRoomMethod? joinConsumeRoomMethod,
-  required Map<String, dynamic> parameters,
-});
+  // dynamic operator [](String key);
+}
 
-// Mediasfu functions
-typedef OnScreenChanges = Future<void> Function(
-    {bool changed, required Map<String, dynamic> parameters});
-typedef FormatNumber = String Function(int);
-typedef Sleep = Future<void> Function(int);
-typedef ReorderStreams = Future<void> Function({
-  bool add,
-  bool screenChanged,
-  required Map<String, dynamic> parameters,
-});
+/// Options for managing all members.
+class AllMembersOptions {
+  final List<Participant> members;
+  final List<Request> requests;
+  final String coHost;
+  final List<CoHostResponsibility> coHostRes;
+  final AllMembersParameters parameters;
+  final List<ConsumeSocket> consumeSockets;
+  final String apiUserName;
+  final String apiKey;
+  final String apiToken;
 
-Future<void> allMembers({
-  required List<dynamic> members,
-  required List<dynamic> requestss,
-  required String coHoste,
-  required List<dynamic> coHostRes,
-  required Map<String, dynamic> parameters,
-  required List<Map<String, io.Socket>> consumeSockets,
-  required String apiUserName,
-  required String apiKey,
-  required String apiToken,
-}) async {
-  // Extracting callback functions from parameters
-  try {
-    List<dynamic> participantsAll = parameters['participantsAll'] ?? [];
-    List<dynamic> participants = parameters['participants'] ?? [];
-    List<String> dispActiveNames = parameters['dispActiveNames'] ?? [];
-    String coHost = parameters['coHost'] ?? '';
-    bool lockScreen = parameters['lockScreen'] ?? false;
-    bool firstAll = parameters['firstAll'] ?? false;
-    bool membersReceived = parameters['membersReceived'] ?? false;
-    List<dynamic> roomRecvIPs = parameters['roomRecvIPs'] ?? [];
-    bool deferScreenReceived = parameters['deferScreenReceived'] ?? false;
-    bool shareScreenStarted = parameters['shareScreenStarted'] ?? false;
-    String? screenId = parameters['screenId'] ?? '';
-    String? meetingDisplayType = parameters['meetingDisplayType'] ?? '';
-    bool hostFirstSwitch = parameters['hostFirstSwitch'] ?? false;
-    List<dynamic> waitingRoomList = parameters['waitingRoomList'] ?? [];
-    String? islevel = parameters['islevel'] ?? '1';
+  AllMembersOptions({
+    required this.members,
+    required this.requests,
+    required this.coHost,
+    required this.coHostRes,
+    required this.parameters,
+    required this.consumeSockets,
+    required this.apiUserName,
+    required this.apiKey,
+    required this.apiToken,
+  });
+}
 
-    Function(List<dynamic>) updateParticipantsAll =
-        parameters['updateParticipantsAll'];
-    parameters['updateParticipantsAll'];
-    Function(List<dynamic>) updateParticipants =
-        parameters['updateParticipants'];
-    Function(List<dynamic>) updateRequestList = parameters['updateRequestList'];
-    Function(String) updateCoHost = parameters['updateCoHost'];
-    Function(List<dynamic>) updateCoHostResponsibility =
-        parameters['updateCoHostResponsibility'];
-    Function(bool) updateFirstAll = parameters['updateFirstAll'];
-    Function(bool) updateMembersReceived = parameters['updateMembersReceived'];
+typedef AllMembersType = Future<void> Function(AllMembersOptions options);
 
-    Function(bool) updateDeferScreenReceived =
-        parameters['updateDeferScreenReceived'];
-    Function(bool) updateShareScreenStarted =
-        parameters['updateShareScreenStarted'];
-    Function(bool) updateHostFirstSwitch = parameters['updateHostFirstSwitch'];
-    UpdateConsumeSockets updateConsumeSockets =
-        parameters['updateConsumeSockets'];
-    Function(List<dynamic>) updateRoomRecvIPs = parameters['updateRoomRecvIPs'];
-    Function(bool) updateIsLoadingModalVisible =
-        parameters['updateIsLoadingModalVisible'];
-    Function(int) updateTotalReqWait = parameters['updateTotalReqWait'];
+/// Manages all members and updates the UI.
+///
+/// This function updates the participants list by filtering out banned or suspended members,
+/// updates request lists, manages connections, and reorders streams if necessary. It also handles
+/// waiting room participants, sets up connections for active participants, and updates UI states
+/// like screen share and host switches as needed.
+///
+/// ### Example Usage:
+/// ```dart
+/// final options = AllMembersOptions(
+///   members: [
+///     Participant(name: 'Alice', audioID: 'audio1', videoID: 'video1', isBanned: false, isSuspended: false),
+///     Participant(name: 'Bob', audioID: 'audio2', videoID: 'video2', isBanned: false, isSuspended: false),
+///   ],
+///   requests: [Request(id: 'req1', name: 'Alice'), Request(id: 'req2', name: 'Bob')],
+///   coHost: 'Alice',
+///   coHostRes: [CoHostResponsibility(id: 'res1', task: 'manage')],
+///   parameters: AllMembersParameters(
+///     participantsAll: [],
+///     participants: [],
+///     dispActiveNames: ['Alice', 'Bob'],
+///     requestList: [],
+///     coHost: 'Alice',
+///     coHostResponsibility: [],
+///     lockScreen: false,
+///     firstAll: false,
+///     membersReceived: false,
+///     roomRecvIPs: ['192.000.1.1'],
+///     deferScreenReceived: true,
+///     screenId: 'screen123',
+///     shareScreenStarted: false,
+///     meetingDisplayType: 'all',
+///     hostFirstSwitch: false,
+///     waitingRoomList: [WaitingRoomParticipant(name: 'Charlie')],
+///     islevel: '2',
+///     updateParticipantsAll: (updatedList) => print('Participants all updated: $updatedList'),
+///     updateParticipants: (filteredList) => print('Filtered participants updated: $filteredList'),
+///     updateRequestList: (updatedRequests) => print('Requests updated: $updatedRequests'),
+///     updateCoHost: (newCoHost) => print('Co-host updated: $newCoHost'),
+///     updateCoHostResponsibility: (responsibilities) => print('Co-host responsibilities updated: $responsibilities'),
+///     updateFirstAll: (isFirstAll) => print('First all updated: $isFirstAll'),
+///     updateMembersReceived: (received) => print('Members received updated: $received'),
+///     updateDeferScreenReceived: (defer) => print('Defer screen received updated: $defer'),
+///     updateShareScreenStarted: (started) => print('Share screen started updated: $started'),
+///     updateHostFirstSwitch: (switched) => print('Host first switch updated: $switched'),
+///     updateConsumeSockets: (sockets) => print('Consume sockets updated: $sockets'),
+///     updateRoomRecvIPs: (ips) => print('Room receive IPs updated: $ips'),
+///     updateIsLoadingModalVisible: (visible) => print('Loading modal visibility updated: $visible'),
+///     updateTotalReqWait: (total) => print('Total request wait count updated: $total'),
+///     onScreenChanges: (params) async => print('Screen changes detected'),
+///     connectIps: (connectOptions) async => print('Connected to IPs with options: $connectOptions'),
+///     sleep: (ms) async => print('Sleeping for $ms milliseconds'),
+///     reorderStreams: (options) async => print('Reordered streams with options: $options'),
+///   ),
+///   consumeSockets: [ConsumeSocket(id: 'socket1')],
+///   apiUserName: 'user123',
+///   apiKey: 'key123',
+///   apiToken: 'token123',
+/// );
+///
+/// await allMembers(options);
+/// ```
+///
+/// In this example:
+/// - The function processes members like `Alice` and `Bob`, filtering them, managing requests,
+///   and updating the list based on ban or suspend status.
+/// - It configures waiting room participants, manages co-host assignments, and handles IP
+///   connections with `connectIps`, updating relevant states in the UI.
+Future<void> allMembers(AllMembersOptions options) async {
+  final params = options.parameters;
 
-    // Mediasfu functions
-    OnScreenChanges onScreenChanges = parameters['onScreenChanges'];
-    ConnectIps connectIps = parameters['connectIps'];
-    Future<void> Function({
-      bool add,
-      bool screenChanged,
-      required Map<String, dynamic> parameters,
-    }) reorderStreams = parameters['reorderStreams'];
+  params.updateParticipantsAll(
+    options.members
+        .map((member) => Participant(
+            name: member.name,
+            isBanned: member.isBanned,
+            isSuspended: member.isSuspended,
+            audioID: member.audioID,
+            videoID: member.videoID))
+        .toList(),
+  );
 
-    try {
-      // Update the participantsAll array with the name, isBanned, and isSuspended values
-      participantsAll = members
-          .map((participant) => {
-                'isBanned': participant['isBanned'],
-                'isSuspended': participant['isSuspended'],
-                'name': participant['name'],
-              })
-          .toList();
-      updateParticipantsAll(participantsAll);
+  params.updateParticipants(
+    options.members
+        .where((participant) =>
+            !participant.isBanned! && !participant.isSuspended!)
+        .toList(),
+  );
 
-      participants = members
-          .where((participant) =>
-              !participant['isBanned'] && !participant['isSuspended'])
-          .toList();
-      updateParticipants(participants);
-
-      // Check if dispActiveNames is not empty and contains the name of the participant that is not in the participants array
-      if (dispActiveNames.isNotEmpty) {
-        // Check if the participant that is not in the participants array is in the dispActiveNames array
-        List<dynamic> dispActiveNames_ = dispActiveNames
-            .where((name) =>
-                !participants.any((participant) => participant['name'] == name))
-            .toList();
-        if (dispActiveNames_.isNotEmpty) {
-          // Remove the participant that is not in the participants array from the dispActiveNames array
-          await reorderStreams(
-              add: false, screenChanged: true, parameters: parameters);
-        }
-      }
-
-      // Operations to update the UI; make sure we are connected to the server before updating the UI
-      if (!membersReceived) {
-        if (roomRecvIPs.isEmpty) {
-          // Keep checking every 0.005s
-          Timer.periodic(const Duration(milliseconds: 5), (timer) async {
-            if (roomRecvIPs.isNotEmpty) {
-              timer.cancel();
-
-              if (deferScreenReceived && screenId != null) {
-                shareScreenStarted = true;
-                updateShareScreenStarted(shareScreenStarted);
-              }
-
-              var socketsAndIps = await connectIps(
-                  consumeSockets: consumeSockets,
-                  parameters: parameters,
-                  apiUserName: apiUserName,
-                  apiKey: apiKey,
-                  apiToken: apiToken,
-                  remIP: roomRecvIPs);
-
-              if (socketsAndIps.isNotEmpty) {
-                updateConsumeSockets(socketsAndIps[0]);
-                updateRoomRecvIPs(socketsAndIps[1]);
-              }
-
-              membersReceived = true;
-              updateMembersReceived(membersReceived);
-
-              await Future.delayed(const Duration(milliseconds: 250));
-              updateIsLoadingModalVisible(false);
-              deferScreenReceived = false;
-              updateDeferScreenReceived(deferScreenReceived);
-            }
-          });
-        } else {
-          var socketsAndIps = await connectIps(
-              consumeSockets: consumeSockets,
-              parameters: parameters,
-              apiUserName: apiUserName,
-              apiKey: apiKey,
-              apiToken: apiToken,
-              remIP: roomRecvIPs);
-          if (socketsAndIps.isNotEmpty) {
-            updateConsumeSockets(socketsAndIps[0]);
-            updateRoomRecvIPs(socketsAndIps[1]);
-          }
-
-          membersReceived = true;
-          updateMembersReceived(membersReceived);
-
-          if (deferScreenReceived && screenId != null) {
-            shareScreenStarted = true;
-            updateShareScreenStarted(shareScreenStarted);
-          }
-
-          await Future.delayed(const Duration(milliseconds: 250));
-          updateIsLoadingModalVisible(false);
-          deferScreenReceived = false;
-          updateDeferScreenReceived(deferScreenReceived);
-        }
-      } else {
-        if (screenId != null && screenId.isNotEmpty) {
-          var host = participants.firstWhere(
-              (participant) =>
-                  participant['ScreenID'] == screenId &&
-                  participant['ScreenOn'] == true,
-              orElse: () => <String, dynamic>{});
-          if (deferScreenReceived &&
-              host != null &&
-              host.isNotEmpty &&
-              screenId.isNotEmpty) {
-            shareScreenStarted = true;
-            updateShareScreenStarted(shareScreenStarted);
-          }
-        }
-      }
-
-      // Return requests for only ids that are in the participants array and update the count badge
-      List<dynamic> updatedRequestList = requestss
-          .where((request) => participants
-              .any((participant) => participant['id'] == request['id']))
-          .toList();
-      updateRequestList(updatedRequestList);
-      updateTotalReqWait(updatedRequestList.length + waitingRoomList.length);
-
-      coHost = coHoste;
-      updateCoHost(coHost);
-      updateCoHostResponsibility(coHostRes);
-
-      try {
-        if (!lockScreen && !firstAll) {
-          await onScreenChanges(parameters: parameters);
-          if (meetingDisplayType != 'all') {
-            firstAll = true;
-            updateFirstAll(firstAll);
-          }
-        } else {
-          if (islevel == '2') {
-            if (!hostFirstSwitch) {
-              await onScreenChanges(parameters: parameters);
-              hostFirstSwitch = true;
-              updateHostFirstSwitch(hostFirstSwitch);
-            }
-          }
-        }
-      } catch (error) {}
-    } catch (error) {
-      rethrow;
+  if (params.dispActiveNames.isNotEmpty) {
+    final missingNames = params.dispActiveNames
+        .where((name) => !params.participants.any((p) => p.name == name))
+        .toList();
+    if (missingNames.isNotEmpty) {
+      final optionsReorder = ReorderStreamsOptions(
+        screenChanged: true,
+        parameters: params,
+      );
+      await params.reorderStreams(
+        optionsReorder,
+      );
     }
-  } catch (error) {
-    if (kDebugMode) {
-      print('Errors in allMembers: $error');
-    }
-    rethrow;
   }
+
+  if (!params.membersReceived) {
+    if (params.roomRecvIPs.isEmpty) {
+      Timer.periodic(const Duration(milliseconds: 10), (timer) async {
+        if (params.roomRecvIPs.isNotEmpty) {
+          timer.cancel();
+          await _handleConnections(options, params);
+        }
+      });
+    } else {
+      await _handleConnections(options, params);
+    }
+  }
+
+  final updatedRequests = options.requests
+      .where((req) => params.participants.any((p) => p.id == req.id))
+      .toList();
+  params.updateRequestList(updatedRequests);
+  params.updateTotalReqWait(
+      updatedRequests.length + params.waitingRoomList.length);
+  params.updateCoHost(options.coHost);
+  params.updateCoHostResponsibility(options.coHostRes);
+
+  if (!params.lockScreen && !params.firstAll) {
+    final optionsChanges = OnScreenChangesOptions(
+      parameters: params,
+    );
+    await params.onScreenChanges(
+      optionsChanges,
+    );
+    if (params.meetingDisplayType != 'all') params.updateFirstAll(true);
+  } else if (params.islevel == '2' && !params.hostFirstSwitch) {
+    final optionsChanges = OnScreenChangesOptions(
+      parameters: params,
+    );
+    await params.onScreenChanges(
+      optionsChanges,
+    );
+    params.updateHostFirstSwitch(true);
+  }
+}
+
+Future<void> _handleConnections(
+    AllMembersOptions options, AllMembersParameters params) async {
+  if (params.deferScreenReceived && params.screenId.isNotEmpty) {
+    params.updateShareScreenStarted(true);
+  }
+
+  final optionsConnect = ConnectIpsOptions(
+    consumeSockets: options.consumeSockets,
+    remIP: params.roomRecvIPs,
+    parameters: params,
+    apiUserName: options.apiUserName,
+    apiKey: options.apiKey,
+    apiToken: options.apiToken,
+  );
+  final [sockets, ips] = await params.connectIps(
+    optionsConnect,
+  );
+
+  params.updateConsumeSockets(sockets);
+  params.updateRoomRecvIPs(ips);
+
+  params.updateMembersReceived(true);
+  await params.sleep(SleepOptions(ms: 250));
+  params.updateIsLoadingModalVisible(false);
+  params.updateDeferScreenReceived(false);
 }

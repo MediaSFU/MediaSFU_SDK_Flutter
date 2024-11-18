@@ -1,55 +1,99 @@
-// ignore_for_file: unused_local_variable
-
 import 'dart:async';
+
+/// Type definition for updating the meeting progress time in HH:MM:SS format.
+typedef UpdateMeetingProgressTime = void Function(String formattedTime);
+
+/// Parameters for starting the meeting progress timer.
+abstract class StartMeetingProgressTimerParameters {
+  // Core properties as abstract getters
+  UpdateMeetingProgressTime get updateMeetingProgressTime;
+  bool get validated;
+  String get roomName;
+
+  // Method to retrieve updated parameters as an abstract getter
+  StartMeetingProgressTimerParameters Function() get getUpdatedAllParams;
+
+  // dynamic operator [](String key);
+}
+
+/// Options for starting the meeting progress timer.
+class StartMeetingProgressTimerOptions {
+  final int startTime;
+  final StartMeetingProgressTimerParameters parameters;
+
+  StartMeetingProgressTimerOptions({
+    required this.startTime,
+    required this.parameters,
+  });
+}
+
+typedef StartMeetingProgressTimerType = void Function({
+  required StartMeetingProgressTimerOptions options,
+});
 
 /// Starts a timer to track the progress of a meeting.
 ///
-/// The [startTime] parameter specifies the start time of the meeting in seconds.
-/// The [parameters] parameter is a map containing the callback functions for updating the meeting progress time and getting updated parameters.
+/// This function calculates the elapsed time from the provided start time,
+/// updates the time every second, and formats it to `HH:MM:SS`.
 ///
-/// The timer will update the meeting progress time every second by calling the [updateMeetingProgressTime] callback function.
-/// It will also check for updated parameters by calling the [getUpdatedAllParams] callback function.
-/// If the meeting is no longer validated or the room name is null or empty, the timer will be canceled.
+/// - If the meeting is invalidated or the room name is empty, the timer stops.
+///
+/// ### Example Usage:
+/// ```dart
+/// startMeetingProgressTimer(
+///   options: StartMeetingProgressTimerOptions(
+///     startTime: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+///     parameters: StartMeetingProgressTimerParameters(
+///       updateMeetingProgressTime: (time) => print("Meeting Time: $time"),
+///       validated: true,
+///       roomName: "room1",
+///       getUpdatedAllParams: () => {
+///         'validated': true,
+///         'roomName': 'room1',
+///       },
+///     ),
+///   ),
+/// );
+/// ```
+void startMeetingProgressTimer({
+  required StartMeetingProgressTimerOptions options,
+}) {
+  final startTime = options.startTime;
+  var parameters = options.parameters;
 
-typedef UpdateMeetingProgressTime = void Function(String time);
-typedef GetUpdatedAllParams = Map<String, dynamic> Function();
-
-void startMeetingProgressTimer(
-    {required int startTime, required Map<String, dynamic> parameters}) {
-  UpdateMeetingProgressTime updateMeetingProgressTime =
-      parameters['updateMeetingProgressTime'];
-  GetUpdatedAllParams getUpdatedAllParams = parameters['getUpdatedAllParams'];
-
+  // Utility function to calculate elapsed time based on start time.
   int calculateElapsedTime(int startTime) {
-    int currentTimeInSeconds = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    final currentTimeInSeconds = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     return currentTimeInSeconds - startTime;
   }
 
-  String padNumber(int number) {
-    return number.toString().padLeft(2, '0');
-  }
+  // Utility function to format time in HH:MM:SS format.
+  String padNumber(int number) => number.toString().padLeft(2, '0');
 
   String formatTime(int timeInSeconds) {
-    int hours = timeInSeconds ~/ 3600;
-    int remainingSeconds = timeInSeconds % 3600;
-    int minutes = remainingSeconds ~/ 60;
-    int seconds = remainingSeconds % 60;
+    final hours = timeInSeconds ~/ 3600;
+    final minutes = (timeInSeconds % 3600) ~/ 60;
+    final seconds = timeInSeconds % 60;
     return '${padNumber(hours)}:${padNumber(minutes)}:${padNumber(seconds)}';
   }
 
-  int elapsedTime = calculateElapsedTime(startTime);
+  var elapsedTime = calculateElapsedTime(startTime);
 
+  // Initialize and start the timer
+  // ignore: unused_local_variable
   late Timer timer;
   timer = Timer.periodic(const Duration(seconds: 1), (timer) {
     elapsedTime++;
-    String formattedTime = formatTime(elapsedTime);
-    updateMeetingProgressTime(formattedTime);
+    final formattedTime = formatTime(elapsedTime);
+    parameters.updateMeetingProgressTime(formattedTime);
 
-    Map<String, dynamic> updatedParams = getUpdatedAllParams();
-    bool validated = updatedParams['validated'];
-    String? roomName = updatedParams['roomName'];
+    // Get updated parameters
+    final updatedParams = parameters.getUpdatedAllParams();
+    final validated = updatedParams.validated;
+    final roomName = updatedParams.roomName;
 
-    if (!validated || roomName == null || roomName.isEmpty) {
+    // Stop the timer if the meeting is invalidated or room name is missing
+    if (!validated || roomName.isEmpty) {
       timer.cancel();
     }
   });

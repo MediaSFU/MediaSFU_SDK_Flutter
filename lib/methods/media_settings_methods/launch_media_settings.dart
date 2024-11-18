@@ -2,64 +2,76 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'dart:async';
 
+/// Defines options for launching the media settings modal, including visibility toggling,
+/// available audio/video devices, and update functions.
+class LaunchMediaSettingsOptions {
+  final void Function(bool isVisible) updateIsMediaSettingsModalVisible;
+  final bool isMediaSettingsModalVisible;
+  final List<MediaDeviceInfo> audioInputs;
+  final List<MediaDeviceInfo> videoInputs;
+  final void Function(List<MediaDeviceInfo>) updateAudioInputs;
+  final void Function(List<MediaDeviceInfo>) updateVideoInputs;
+  final bool videoAlreadyOn;
+  final bool audioAlreadyOn;
+  final bool onWeb;
+  final void Function(bool) updateIsLoadingModalVisible;
+
+  LaunchMediaSettingsOptions({
+    required this.updateIsMediaSettingsModalVisible,
+    required this.isMediaSettingsModalVisible,
+    required this.audioInputs,
+    required this.videoInputs,
+    required this.updateAudioInputs,
+    required this.updateVideoInputs,
+    required this.videoAlreadyOn,
+    required this.audioAlreadyOn,
+    required this.onWeb,
+    required this.updateIsLoadingModalVisible,
+  });
+}
+
+/// Type definition for the function that launches the media settings modal.
+typedef LaunchMediaSettingsType = Future<void> Function(
+    LaunchMediaSettingsOptions options);
+
 /// Launches the media settings modal and updates the available audio and video input devices.
 ///
-/// The [parameters] map should contain the following keys:
-/// - 'updateIsMediaSettingsModalVisible': A function that updates the visibility state of the media settings modal.
-/// - 'isMediaSettingsModalVisible': A boolean indicating whether the media settings modal is currently visible.
-/// - 'audioInputs': A list of [MediaDeviceInfo] representing the available audio input devices.
-/// - 'videoInputs': A list of [MediaDeviceInfo] representing the available video input devices.
-/// - 'updateAudioInputs': A function that updates the available audio input devices.
-/// - 'updateVideoInputs': A function that updates the available video input devices.
-/// - 'updateIsLoadingModalVisible': A function that updates the visibility state of the loading modal.
-/// - 'videoAlreadyOn': A boolean indicating whether the video is already turned on.
-/// - 'audioAlreadyOn': A boolean indicating whether the audio is already turned on.
-/// - 'onWeb': A boolean indicating whether the app is running on the web platform.
+/// This function checks if the media settings modal is not currently visible, and if so,
+/// it attempts to get the media stream to force the permission prompt, then retrieves the
+/// available media devices and updates the audio and video inputs lists.
 ///
-/// If the media settings modal is not currently visible, this function attempts to get the media stream
-/// to force the permission prompt. It then retrieves the list of all available media devices and filters
-/// them to get only audio and video input devices. The available audio and video input devices are then
-/// updated using the provided update functions. If an error occurs while getting the media devices, the
-/// loading modal visibility is updated accordingly.
+/// Example:
+/// ```dart
+/// final options = LaunchMediaSettingsOptions(
+///   updateIsMediaSettingsModalVisible: (isVisible) => print("Modal visibility: $isVisible"),
+///   isMediaSettingsModalVisible: false,
+///   audioInputs: [],
+///   videoInputs: [],
+///   updateAudioInputs: (inputs) => print("Audio Inputs: $inputs"),
+///   updateVideoInputs: (inputs) => print("Video Inputs: $inputs"),
+///   videoAlreadyOn: false,
+///   audioAlreadyOn: false,
+///   onWeb: true,
+///   updateIsLoadingModalVisible: (isVisible) => print("Loading modal: $isVisible"),
+/// );
 ///
-/// Finally, this function toggles the visibility state of the media settings modal.
-
-typedef UpdateBoolFunction = void Function(bool);
-typedef UpdateListFunction = void Function(List<MediaDeviceInfo>);
-typedef UpdateIsLoadingModalVisible = void Function(bool value);
-
-Future<void> launchMediaSettings({
-  required Map<String, dynamic> parameters,
-}) async {
-  // Destructure parameters for ease of use
-  final UpdateBoolFunction updateIsMediaSettingsModalVisible =
-      parameters['updateIsMediaSettingsModalVisible'];
-  final bool isMediaSettingsModalVisible =
-      parameters['isMediaSettingsModalVisible'];
-  List<MediaDeviceInfo>? audioInputs = parameters['audioInputs'];
-  List<MediaDeviceInfo>? videoInputs = parameters['videoInputs'];
-  final UpdateListFunction updateAudioInputs = parameters['updateAudioInputs'];
-  final UpdateListFunction updateVideoInputs = parameters['updateVideoInputs'];
-  final UpdateIsLoadingModalVisible updateIsLoadingModalVisible =
-      parameters['updateIsLoadingModalVisible'] ?? (_) {};
-
-  bool videoAlreadyOn = parameters['videoAlreadyOn'] ?? false;
-  bool audioAlreadyOn = parameters['audioAlreadyOn'] ?? false;
-  bool onWeb = parameters['onWeb'] ?? false;
-
-  // Check if media settings modal is not visible and update available audio and video input devices
-  if (!isMediaSettingsModalVisible) {
+/// await launchMediaSettings(options);
+/// ```
+///
+Future<void> launchMediaSettings(LaunchMediaSettingsOptions options) async {
+  if (!options.isMediaSettingsModalVisible) {
     try {
       // Force permission prompt by attempting to get media stream
-      updateIsLoadingModalVisible(true);
-      if (onWeb && (!videoAlreadyOn && !audioAlreadyOn)) {
+      options.updateIsLoadingModalVisible(true);
+
+      if (options.onWeb && !options.videoAlreadyOn && !options.audioAlreadyOn) {
         MediaStream stream = await navigator.mediaDevices.getUserMedia({
-          'audio': true, // Request audio access
-          'video': true, // Request video access
+          'audio': true,
+          'video': true,
         });
 
         // Close the stream as it's not needed
-        for (var track in stream.getTracks().toList()) {
+        for (var track in stream.getTracks()) {
           track.stop();
         }
       }
@@ -68,24 +80,22 @@ Future<void> launchMediaSettings({
       List<MediaDeviceInfo> devices =
           await navigator.mediaDevices.enumerateDevices();
 
-      // Filter the devices to get only audio and video input devices
-      videoInputs =
-          devices.where((device) => device.kind == 'videoinput').toList();
-      audioInputs =
-          devices.where((device) => device.kind == 'audioinput').toList();
+      // Filter devices to get only audio and video input devices
+      options.updateVideoInputs(
+          devices.where((device) => device.kind == 'videoinput').toList());
+      options.updateAudioInputs(
+          devices.where((device) => device.kind == 'audioinput').toList());
 
-      // Update the available audio and video input devices
-      updateVideoInputs(videoInputs);
-      updateAudioInputs(audioInputs);
-      updateIsLoadingModalVisible(false);
+      options.updateIsLoadingModalVisible(false);
     } catch (error) {
-      updateIsLoadingModalVisible(false);
+      options.updateIsLoadingModalVisible(false);
       if (kDebugMode) {
         print('Error getting media devices: $error');
       }
     }
   }
 
-  // Open or close the media settings modal based on its current visibility state
-  updateIsMediaSettingsModalVisible(!isMediaSettingsModalVisible);
+  // Toggle the media settings modal visibility
+  options
+      .updateIsMediaSettingsModalVisible(!options.isMediaSettingsModalVisible);
 }

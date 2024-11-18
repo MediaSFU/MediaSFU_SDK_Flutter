@@ -1,46 +1,93 @@
 import 'package:flutter/material.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
+import '../../methods/requests_methods/respond_to_requests.dart'
+    show respondToRequests, RespondToRequestsType, RespondToRequestsOptions;
+import '../../types/types.dart' show Request;
 
-/// RenderRequestComponent is a StatelessWidget that renders a single request item.
-///
-/// `request`: The details of the request item.
-/// `onRequestItemPress`: Callback function to respond to the request item press.
-/// `requestList`: The list of requests.
-/// `updateRequestList`: Function to update the request list.
-/// `roomName`: The name of the room.
-/// `socket`: The socket for communication.
-
-typedef RespondToRequests = void Function(
-    {required Map<String, dynamic> parameters});
-
-class RenderRequestComponent extends StatelessWidget {
-  final Map<String, dynamic> request;
-  final RespondToRequests onRequestItemPress;
-  final List<dynamic> requestList;
-  final Function(List<dynamic>) updateRequestList;
+/// Options for configuring the `RenderRequestComponent`.
+class RenderRequestComponentOptions {
+  final Request request;
+  final RespondToRequestsType onRequestItemPress;
+  final List<Request> requestList;
+  final void Function(List<Request>) updateRequestList;
   final String roomName;
-  final dynamic socket;
+  final io.Socket? socket;
 
-  const RenderRequestComponent({
-    super.key,
+  RenderRequestComponentOptions({
     required this.request,
-    required this.onRequestItemPress,
+    this.onRequestItemPress = respondToRequests,
     required this.requestList,
     required this.updateRequestList,
     required this.roomName,
-    required this.socket,
+    this.socket,
   });
+}
+
+typedef RenderRequestComponentType = Widget Function(
+    {required RenderRequestComponentOptions options});
+
+/// `RenderRequestComponent` is a stateless widget that renders a request item with options
+/// to accept or reject the request. The component displays the request name, a relevant icon,
+/// and two action buttons, allowing users to respond to requests in real time.
+///
+/// ### Parameters:
+/// - [options] (`RenderRequestComponentOptions`): Contains the following:
+///   - `request`: The request data, including `name` and `icon`.
+///   - `onRequestItemPress`: A function to handle pressing accept or reject actions. Defaults to `respondToRequests`.
+///   - `requestList`: The current list of requests to manage state.
+///   - `updateRequestList`: A function to update the request list state in the parent.
+///   - `roomName`: The room identifier.
+///   - `socket`: The socket instance for emitting responses.
+///
+/// ### Example:
+/// ```dart
+/// RenderRequestComponent(
+///   options: RenderRequestComponentOptions(
+///     request: Request(id: '1', name: 'John Doe', icon: 'fa-microphone'),
+///     requestList: requests,
+///     updateRequestList: (newList) => setState(() => requests = newList),
+///     roomName: 'MainRoom',
+///     socket: socket,
+///   ),
+/// );
+/// ```
+///
+/// ### Workflow:
+/// 1. `handleRequestAction` processes either 'accepted' or 'rejected' actions using the provided `onRequestItemPress`.
+/// 2. `_getIconData` matches icon strings like `fa-microphone` to relevant `Icons`.
+/// 3. Displays request name, icon, and buttons for accepting or rejecting the request.
+
+class RenderRequestComponent extends StatelessWidget {
+  final RenderRequestComponentOptions options;
+
+  const RenderRequestComponent({super.key, required this.options});
 
   void handleRequestAction(String action) {
-    onRequestItemPress(
-      parameters: {
-        'request': request,
-        'updateRequestList': updateRequestList,
-        'requestList': requestList,
-        'action': action,
-        'roomName': roomName,
-        'socket': socket,
-      },
+    options.onRequestItemPress(
+      RespondToRequestsOptions(
+        request: options.request,
+        updateRequestList: options.updateRequestList,
+        requestList: options.requestList,
+        action: action,
+        roomName: options.roomName,
+        socket: options.socket,
+      ),
     );
+  }
+
+  IconData _getIconData(String icon) {
+    switch (icon) {
+      case 'fa-microphone':
+        return Icons.mic;
+      case 'fa-desktop':
+        return Icons.desktop_windows;
+      case 'fa-video':
+        return Icons.videocam;
+      case 'fa-comments':
+        return Icons.comment;
+      default:
+        return Icons.error;
+    }
   }
 
   @override
@@ -49,12 +96,12 @@ class RenderRequestComponent extends StatelessWidget {
       children: [
         Expanded(
           flex: 5,
-          child: Text(request['name']),
+          child: Text(options.request.name!),
         ),
         Expanded(
           flex: 2,
           child: Icon(
-            _getIconData(request['icon']),
+            _getIconData(options.request.icon),
             size: 24,
             color: Colors.black,
           ),
@@ -84,20 +131,5 @@ class RenderRequestComponent extends StatelessWidget {
         const Expanded(flex: 1, child: SizedBox()), // Spacer
       ],
     );
-  }
-
-  IconData _getIconData(String icon) {
-    switch (icon) {
-      case 'fa-microphone':
-        return Icons.mic;
-      case 'fa-desktop':
-        return Icons.desktop_windows;
-      case 'fa-video':
-        return Icons.videocam;
-      case 'fa-comments':
-        return Icons.comment;
-      default:
-        return Icons.error; // or any other default icon
-    }
   }
 }

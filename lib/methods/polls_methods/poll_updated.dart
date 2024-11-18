@@ -1,67 +1,108 @@
+import '../../types/types.dart' show Poll, ShowAlert, PollUpdatedData;
 import 'package:flutter/foundation.dart';
 
-typedef ShowAlert = void Function(
-    {required String message, required String type, required int duration});
-typedef UpdatePolls = void Function(List<dynamic> polls);
-typedef UpdatePoll = void Function(Map<String, dynamic> poll);
-typedef UpdateIsPollModalVisible = void Function(bool visible);
+/// Defines options for updating poll information.
+class PollUpdatedOptions {
+  final PollUpdatedData data;
+  final List<Poll> polls;
+  Poll? poll;
+  final String member;
+  final String islevel;
+  final ShowAlert? showAlert;
+  final void Function(List<Poll>) updatePolls;
+  final void Function(Poll) updatePoll;
+  final void Function(bool) updateIsPollModalVisible;
 
-Future<void> pollUpdated({
-  required Map<String, dynamic> data,
-  required Map<String, dynamic> parameters,
-}) async {
+  PollUpdatedOptions({
+    required this.data,
+    required this.polls,
+    this.poll,
+    required this.member,
+    required this.islevel,
+    this.showAlert,
+    required this.updatePolls,
+    required this.updatePoll,
+    required this.updateIsPollModalVisible,
+  });
+}
+
+/// Type definition for the function that updates poll information.
+typedef PollUpdatedType = Future<void> Function(PollUpdatedOptions options);
+
+/// Updates the poll state based on the provided options.
+///
+/// This function checks the poll's status and updates the state accordingly.
+/// If a new poll starts, it displays an alert and opens the poll modal for eligible members.
+///
+/// Parameters:
+/// - [options]: The [PollUpdatedOptions] containing details such as the poll data, member level,
+///   and update functions for the poll state.
+///
+/// Example:
+/// ```dart
+/// final options = PollUpdatedOptions(
+///   data: PollUpdatedData(poll: updatedPoll, status: "started"),
+///   polls: currentPolls,
+///   poll: currentPoll,
+///   member: "user123",
+///   islevel: "1",
+///   showAlert: (alert) => print(alert.message),
+///   updatePolls: (updatedPolls) => setPolls(updatedPolls),
+///   updatePoll: (updatedPoll) => setCurrentPoll(updatedPoll),
+///   updateIsPollModalVisible: (visible) => setIsPollModalVisible(visible),
+/// );
+///
+/// await pollUpdated(options);
+/// ```
+
+Future<void> pollUpdated(PollUpdatedOptions options) async {
   try {
-    List<dynamic> polls = parameters['polls'] ?? [];
-    Map<String, dynamic> poll = parameters['poll'] ?? {};
-    String member = parameters['member'] ?? '';
-    String islevel = parameters['islevel'] ?? '0';
-    ShowAlert? showAlert = parameters['showAlert'];
-    UpdatePolls updatePolls = parameters['updatePolls'];
-    UpdatePoll updatePoll = parameters['updatePoll'];
-    UpdateIsPollModalVisible updateIsPollModalVisible =
-        parameters['updateIsPollModalVisible'];
+    List<Poll> polls = options.polls;
+    Poll poll = options.poll ?? Poll(question: '', options: [], id: '');
 
-    if (data['polls'] != null) {
-      polls = data['polls'];
-      updatePolls(polls);
+    if (options.data.polls != null) {
+      polls = options.data.polls ?? [];
+      options.updatePolls(polls);
     } else {
-      polls = [data['poll']];
-      updatePolls(polls);
+      polls = [options.data.poll];
+      options.updatePolls(polls);
     }
 
-    Map<String, dynamic> tempPoll = {'id': ''};
-
-    if (poll.isNotEmpty) {
-      tempPoll = Map<String, dynamic>.from(poll);
+    Poll tempPoll = Poll(
+        id: '', question: '', options: [], status: '', type: '', votes: []);
+    if (poll.id != '') {
+      tempPoll = poll;
     }
 
-    if (data['status'] != 'ended') {
-      poll = data['poll'];
-      updatePoll(poll);
+    if (options.data.status != 'ended') {
+      poll = options.data.poll;
+      options.updatePoll(poll);
     }
 
-    if (data['status'] == 'started' && islevel != '2') {
-      if (poll['voters'] == null ||
-          (poll['voters'] is Map && !poll['voters'].containsKey(member))) {
-        showAlert?.call(
-            message: 'New poll started', type: 'success', duration: 3000);
-        updateIsPollModalVisible(true);
+    if (options.data.status == 'started' && options.islevel != '2') {
+      if (poll.voters == null ||
+          (poll.voters is Map && !poll.voters!.containsKey(options.member))) {
+        options.showAlert?.call(
+          message: 'New poll started',
+          type: 'success',
+          duration: 3000,
+        );
+        options.updateIsPollModalVisible(true);
       }
-    } else if (data['status'] == 'ended') {
-      if (islevel == '2') {
-        showAlert?.call(message: 'Poll ended', type: 'danger', duration: 3000);
-        updateIsPollModalVisible(false);
-      } else {
-        if (tempPoll['id'] == data['poll']['id']) {
-          showAlert?.call(
-              message: 'Poll ended', type: 'danger', duration: 3000);
-        }
+    } else if (options.data.status == 'ended') {
+      if (tempPoll.id == options.data.poll.id) {
+        options.showAlert?.call(
+          message: 'Poll ended',
+          type: 'danger',
+          duration: 3000,
+        );
+        options.updatePoll(options.data.poll);
       }
     }
   } catch (error, stackTrace) {
     if (kDebugMode) {
       print('Error updating poll: $error');
-      print('Stacktrace Poll update: $stackTrace');
+      print('Stacktrace: $stackTrace');
     }
   }
 }

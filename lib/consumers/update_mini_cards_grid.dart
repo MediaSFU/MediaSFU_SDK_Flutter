@@ -1,112 +1,159 @@
-import 'dart:async';
+import '../types/types.dart' show GridSizes, ComponentSizes, EventType;
 
-/// Updates the mini cards grid based on the provided parameters.
+/// Parameters required for updating the mini cards grid layout.
 ///
-/// The [rows] parameter specifies the number of rows in the grid.
-/// The [cols] parameter specifies the number of columns in the grid.
-/// The [defal] parameter specifies whether to update the default grid or an alternative grid.
-/// The [actualRows] parameter specifies the actual number of rows in the grid.
-/// The [ind] parameter specifies the index of the grid.
-/// The [parameters] parameter is a map that contains various update functions and grid sizes.
+/// This class holds the properties and functions needed to update
+/// the grid layout dynamically based on configuration changes.
+abstract class UpdateMiniCardsGridParameters {
+  // Update functions as abstract getters returning function types
+  void Function(int) get updateGridRows;
+  void Function(int) get updateGridCols;
+  void Function(int) get updateAltGridRows;
+  void Function(int) get updateAltGridCols;
+  void Function(GridSizes) get updateGridSizes;
+
+  // Properties as abstract getters
+  GridSizes get gridSizes;
+  String get paginationDirection;
+  double get paginationHeightWidth;
+  bool get doPaginate;
+  ComponentSizes get componentSizes;
+  EventType get eventType;
+
+  // Method to retrieve updated parameters as a getter
+  UpdateMiniCardsGridParameters Function() get getUpdatedAllParams;
+
+  // Dynamic access operator for additional properties
+  // dynamic operator [](String key);
+}
+
+/// Options for configuring the mini cards grid update.
+class UpdateMiniCardsGridOptions {
+  final int rows;
+  final int cols;
+  final bool defal;
+  final int actualRows;
+  final UpdateMiniCardsGridParameters parameters;
+
+  /// Constructor for [UpdateMiniCardsGridOptions].
+  ///
+  /// [rows] and [cols] specify the number of rows and columns in the grid.
+  /// [defal] determines if the main grid should be updated (`true`) or the alternate grid (`false`).
+  /// [actualRows] is the number of rows used in the grid layout calculation.
+  /// [parameters] holds the necessary functions and configurations for the grid update.
+  UpdateMiniCardsGridOptions({
+    required this.rows,
+    required this.cols,
+    this.defal = true,
+    this.actualRows = 2,
+    required this.parameters,
+  });
+}
+
+typedef UpdateMiniCardsGridType = Future<void> Function(
+    UpdateMiniCardsGridOptions options);
+
+/// Updates the mini cards grid layout based on the specified configuration.
 ///
-/// The [parameters] map should contain the following keys:
-/// - 'getUpdatedAllParams': A function that returns a map of updated parameters.
-/// - 'updateGridRows': A function that updates the number of rows in the grid.
-/// - 'updateGridCols': A function that updates the number of columns in the grid.
-/// - 'updateAltGridRows': A function that updates the number of rows in the alternative grid.
-/// - 'updateAltGridCols': A function that updates the number of columns in the alternative grid.
-/// - 'updateGridSizes': A function that updates the grid sizes.
-/// - 'gridSizes': A map that contains the current grid sizes.
-/// - 'paginationDirection': A string that specifies the pagination direction.
-/// - 'paginationHeightWidth': An integer that specifies the pagination height or width.
-/// - 'doPaginate': A boolean that indicates whether pagination is enabled.
-/// - 'componentSizes': A map that contains the sizes of various components.
-/// - 'eventType': A string that specifies the type of event.
+/// This function calculates the dimensions of each grid cell and updates either
+/// the main grid or an alternative grid based on [defal]. The layout calculation
+/// considers pagination adjustments, event-specific spacing, and component dimensions.
 ///
-/// The function calculates the card width and height based on the container size, number of rows, and number of columns.
-/// It then updates the grid sizes and calls the appropriate update functions based on the [defal] parameter.
+/// * [rows] - The number of rows in the grid.
+/// * [cols] - The number of columns in the grid.
+/// * [defal] - If `true`, updates the main grid; if `false`, updates an alternative grid.
+/// * [actualRows] - The effective row count used for layout calculations.
 ///
-/// Throws an error if any of the required parameters are missing.
+/// Example usage:
+/// ```dart
+/// final params = UpdateMiniCardsGridParameters(
+///   updateGridRows: (rows) => print('Updated grid rows: $rows'),
+///   updateGridCols: (cols) => print('Updated grid cols: $cols'),
+///   updateAltGridRows: (rows) => print('Updated alt grid rows: $rows'),
+///   updateAltGridCols: (cols) => print('Updated alt grid cols: $cols'),
+///   updateGridSizes: (gridSizes) => print('Updated grid sizes: $gridSizes'),
+///   gridSizes: GridSizes(gridWidth: 100, gridHeight: 100, altGridWidth: 80, altGridHeight: 80),
+///   paginationDirection: 'horizontal',
+///   paginationHeightWidth: 30.0,
+///   doPaginate: true,
+///   componentSizes: ComponentSizes(otherWidth: 500, otherHeight: 300),
+///   eventType: EventType.chat,
+///   getUpdatedAllParams: () => params,
+/// );
+///
+/// final options = UpdateMiniCardsGridOptions(
+///   rows: 3,
+///   cols: 4,
+///   defal: true,
+///   actualRows: 3,
+///   parameters: params,
+/// );
+///
+/// await updateMiniCardsGrid(options);
+/// ```
+Future<void> updateMiniCardsGrid(UpdateMiniCardsGridOptions options) async {
+  // Retrieve updated parameters
+  var parameters = options.parameters.getUpdatedAllParams();
 
-typedef UpdateGridRows = void Function(int rows);
-typedef UpdateGridCols = void Function(int cols);
-typedef UpdateAltGridRows = void Function(int rows);
-typedef UpdateAltGridCols = void Function(int cols);
-typedef UpdateGridSizes = void Function(Map<String, int> gridSizes);
-typedef GetUpdatedAllParams = Map<String, dynamic> Function();
+  // Destructure parameters
+  final updateGridRows = parameters.updateGridRows;
+  final updateGridCols = parameters.updateGridCols;
+  final updateAltGridRows = parameters.updateAltGridRows;
+  final updateAltGridCols = parameters.updateAltGridCols;
+  final updateGridSizes = parameters.updateGridSizes;
 
-Future<void> updateMiniCardsGrid({
-  required int rows,
-  required int cols,
-  bool defal = true,
-  int actualRows = 2,
-  int ind = 0,
-  required Map<String, dynamic> parameters,
-}) async {
-  GetUpdatedAllParams getUpdatedAllParams = parameters['getUpdatedAllParams'];
+  // Grid configuration
+  var gridSizes = parameters.gridSizes;
+  final paginationDirection = parameters.paginationDirection;
+  final paginationHeightWidth = parameters.paginationHeightWidth;
+  final doPaginate = parameters.doPaginate;
+  final componentSizes = parameters.componentSizes;
+  final eventType = parameters.eventType;
 
-  parameters = getUpdatedAllParams();
+  double containerWidth = componentSizes.otherWidth;
+  double containerHeight = componentSizes.otherHeight;
 
-  UpdateGridRows updateGridRows = parameters['updateGridRows'];
-  UpdateGridCols updateGridCols = parameters['updateGridCols'];
-  UpdateAltGridRows updateAltGridRows = parameters['updateAltGridRows'];
-  UpdateAltGridCols updateAltGridCols = parameters['updateAltGridCols'];
-  UpdateGridSizes updateGridSizes = parameters['updateGridSizes'];
-
-  Map<String, int> gridSizes = parameters['gridSizes'];
-  String paginationDirection = parameters['paginationDirection'];
-  int paginationHeightWidth = parameters['paginationHeightWidth'];
-  bool doPaginate = parameters['doPaginate'];
-  Map<String, double> componentSizes = parameters['componentSizes'];
-  String eventType = parameters['eventType'];
-
-  double? containerWidth = componentSizes['otherWidth'];
-  double? containerHeight = componentSizes['otherHeight'];
-
+  // Adjust container size for pagination if enabled
   if (doPaginate) {
     if (paginationDirection == 'horizontal') {
-      if (containerHeight != null) {
-        containerHeight -= paginationHeightWidth;
-      }
+      containerHeight -= paginationHeightWidth;
     } else {
-      if (containerWidth != null) {
-        containerWidth -= paginationHeightWidth;
-      }
+      containerWidth -= paginationHeightWidth;
     }
   }
 
-  int cardSpacing = 1; // 3px margin between cards
-  if (eventType == 'chat') {
-    cardSpacing = 0;
-  }
-  int totalSpacingHorizontal = (cols - 1) * cardSpacing;
-  int totalSpacingVertical = (actualRows - 1) * cardSpacing;
-  int cardWidth = cols == 0 || actualRows == 0
-      ? 0
-      : ((containerWidth! - totalSpacingHorizontal) / cols).floor();
-  int cardHeight = cols == 0 || actualRows == 0
-      ? 0
-      : ((containerHeight! - totalSpacingVertical) / actualRows).floor();
+  int cardSpacing = eventType == EventType.chat ? 0 : 3;
+  final totalSpacingHorizontal = (options.cols - 1) * cardSpacing;
+  final totalSpacingVertical = (options.actualRows - 1) * cardSpacing;
 
-  if (defal) {
-    updateGridRows(rows);
-    updateGridCols(cols);
+  // Calculate individual card dimensions
+  final cardWidth = options.cols == 0 || options.actualRows == 0
+      ? 0
+      : ((containerWidth - totalSpacingHorizontal) / options.cols).floor();
+  final cardHeight = options.cols == 0 || options.actualRows == 0
+      ? 0
+      : ((containerHeight - totalSpacingVertical) / options.actualRows).floor();
 
-    gridSizes = {
-      ...gridSizes,
-      'gridWidth': cardWidth,
-      'gridHeight': cardHeight,
-    };
+  // Update grid or alternative grid based on `defal` flag
+  if (options.defal) {
+    updateGridRows(options.rows);
+    updateGridCols(options.cols);
+    gridSizes = GridSizes(
+      gridWidth: cardWidth,
+      gridHeight: cardHeight,
+      altGridWidth: gridSizes.altGridWidth,
+      altGridHeight: gridSizes.altGridHeight,
+    );
     updateGridSizes(gridSizes);
   } else {
-    updateAltGridRows(rows);
-    updateAltGridCols(cols);
-
-    gridSizes = {
-      ...gridSizes,
-      'altGridWidth': cardWidth,
-      'altGridHeight': cardHeight,
-    };
+    updateAltGridRows(options.rows);
+    updateAltGridCols(options.cols);
+    gridSizes = GridSizes(
+      gridWidth: gridSizes.gridWidth,
+      gridHeight: gridSizes.gridHeight,
+      altGridWidth: cardWidth,
+      altGridHeight: cardHeight,
+    );
     updateGridSizes(gridSizes);
   }
 }

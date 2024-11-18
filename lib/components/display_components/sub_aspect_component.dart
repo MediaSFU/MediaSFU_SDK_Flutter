@@ -1,32 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// SubAspectComponent - A widget for displaying a sub-aspect component with customizable background color and children.
-///
-/// This widget allows you to display a sub-aspect component with customizable background color and child widgets.
-/// It provides options to control the visibility of the sub-aspect component and adjust its size.
-///
-/// The background color of the sub-aspect component.
-/// final Color backgroundColor;
-///
-/// The list of child widgets to display within the sub-aspect component.
-/// final List<Widget> children;
-/// A flag indicating whether to show the controls of the sub-aspect component.
-/// Defaults to true if not provided.
-/// final bool showControls;
-
-/// The fraction of the container's width that the sub-aspect component occupies.
-/// Defaults to null if not provided.
-/// final double? containerWidthFraction;
-
-/// The fraction of the container's height that the sub-aspect component occupies.
-/// Defaults to null if not provided.
-/// final double? containerHeightFraction;
-
-/// The default fraction (pixesl) used for calculating the size of the sub-aspect component.
-/// Defaults to 40px if not provided.
-/// final double defaultFractionSub;
-
-class SubAspectComponent extends StatefulWidget {
+/// SubAspectComponentOptions - Configuration options for the `SubAspectComponent` widget.
+class SubAspectComponentOptions {
   final Color backgroundColor;
   final List<Widget> children;
   final bool showControls;
@@ -34,18 +9,51 @@ class SubAspectComponent extends StatefulWidget {
   final double? containerHeightFraction;
   final double defaultFractionSub;
 
-  const SubAspectComponent({
-    super.key,
+  const SubAspectComponentOptions({
     required this.backgroundColor,
     required this.children,
     this.showControls = true,
-    this.containerWidthFraction = 1,
-    this.containerHeightFraction = 1,
-    this.defaultFractionSub = 40,
+    this.containerWidthFraction,
+    this.containerHeightFraction,
+    this.defaultFractionSub = 40.0,
   });
+}
+
+typedef SubAspectComponentType = Widget Function(
+    {required SubAspectComponentOptions options});
+
+/// `SubAspectComponent` - A widget for displaying a sub-aspect component with customizable features.
+///
+/// This widget allows users to display a sub-aspect component with options for background color, control visibility,
+/// and scaling based on the viewport.
+///
+/// ### Properties:
+/// - `backgroundColor`: Background color of the component.
+/// - `children`: List of child widgets to render within the component.
+/// - `showControls`: Flag to determine if controls should be visible. Defaults to true.
+/// - `containerWidthFraction`: Fraction of the container width the component occupies. Defaults to full width.
+/// - `containerHeightFraction`: Fraction of the container height the component occupies. Defaults to full height.
+/// - `defaultFractionSub`: Default height fraction in pixels if controls are visible. Defaults to 40.0.
+///
+/// ### Example Usage:
+/// ```dart
+/// SubAspectComponent(
+///   options: SubAspectComponentOptions(
+///     backgroundColor: Colors.black,
+///     children: [Text('Content goes here')],
+///     showControls: true,
+///     containerWidthFraction: 0.5,
+///     containerHeightFraction: 0.5,
+///     defaultFractionSub: 40.0,
+///   ),
+/// );
+/// ```
+class SubAspectComponent extends StatefulWidget {
+  final SubAspectComponentOptions options;
+
+  const SubAspectComponent({super.key, required this.options});
 
   @override
-  // ignore: library_private_types_in_public_api
   _SubAspectComponentState createState() => _SubAspectComponentState();
 }
 
@@ -54,54 +62,39 @@ class _SubAspectComponentState extends State<SubAspectComponent> {
   late double _width;
 
   @override
-  void initState() {
-    super.initState();
-    // Don't perform operations that depend on context here
-    // Move it to the build() method or didChangeDependencies() method
-  }
-
-  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Perform operations that depend on context here
     _updateAspectStyles();
   }
 
   void _updateAspectStyles() {
-    // ignore: unused_local_variable
-    final EdgeInsets safeAreaInsets = MediaQuery.of(context).padding +
-        MediaQuery.of(context).systemGestureInsets;
     final double windowWidth = MediaQuery.of(context).size.width;
+
     double subAspectFraction =
-        widget.showControls ? widget.defaultFractionSub : 0;
+        widget.options.showControls ? widget.options.defaultFractionSub : 0;
 
     subAspectFraction = subAspectFraction > 0 && subAspectFraction < 40
         ? 40
         : subAspectFraction;
 
     setState(() {
-      _height = widget.showControls ? subAspectFraction : 0;
-
-      _width = widget.containerWidthFraction != null
-          ? widget.containerWidthFraction! * windowWidth
-          : windowWidth;
+      _height = widget.options.showControls ? subAspectFraction : 0;
+      _width = (widget.options.containerWidthFraction ?? 1.0) * windowWidth;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Visibility(
-      visible: widget.showControls,
+      visible: widget.options.showControls,
       child: Positioned(
         bottom: 0,
-        child: SizedBox(
-          height: _height,
+        child: Container(
           width: _width,
-          child: Container(
-            color: widget.backgroundColor,
-            child: Stack(
-              children: widget.children,
-            ),
+          height: widget.options.showControls ? _height : 0,
+          color: widget.options.backgroundColor,
+          child: Stack(
+            children: widget.options.children,
           ),
         ),
       ),

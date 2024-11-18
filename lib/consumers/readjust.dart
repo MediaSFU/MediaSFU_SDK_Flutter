@@ -1,114 +1,165 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import '../types/types.dart'
+    show
+        PrepopulateUserMediaType,
+        EventType,
+        PrepopulateUserMediaParameters,
+        PrepopulateUserMediaOptions;
 
-/// Adjusts the grid sizes based on the given parameters.
-///
-/// The [readjust] function is responsible for adjusting the grid sizes based on the provided parameters. It takes in the following required parameters:
-/// - [n]: An integer representing a value.
-/// - [state]: An integer representing the state.
-/// - [parameters]: A map of string keys and dynamic values representing the parameters.
-///
-/// The function performs the following steps:
-/// 1. Retrieves the [getUpdatedAllParams] function from the [parameters] map and assigns it to the [getUpdatedAllParams] variable.
-/// 2. Updates the [parameters] map by calling the [getUpdatedAllParams] function.
-/// 3. Retrieves various values from the [parameters] map, such as [eventType], [shareScreenStarted], [shared], [mainHeightWidth], [prevMainHeightWidth], [hostLabel], [firstRound], and [lockScreen].
-/// 4. Retrieves the [updateMainHeightWidth] function from the [parameters] map and assigns it to the [updateMainHeightWidth] variable.
-/// 5. Retrieves the [prepopulateUserMedia] function from the [parameters] map and assigns it to the [prepopulateUserMedia] variable.
-/// 6. Performs calculations based on the [eventType], [shareScreenStarted], [shared], and [n] values to determine the values of [val1] and [val2].
-/// 7. Updates the [mainHeightWidth] value based on the [state] and [val2] values.
-/// 8. Performs additional calculations to determine the values of [cal1] and [cal2].
-/// 9. Calls the [updateMainHeightWidth] function with the [cal2] value.
-/// 10. Checks if the [prevMainHeightWidth] is different from the [mainHeightWidth] and performs the necessary actions based on the [lockScreen], [shared], and [firstRound] values.
-///
-/// Throws an error if any errors occur during the process of updating grid sizes.
+abstract class ReadjustParameters implements PrepopulateUserMediaParameters {
+  // Properties as abstract getters
+  EventType get eventType;
+  bool get shareScreenStarted;
+  bool get shared;
+  double get mainHeightWidth;
+  double get prevMainHeightWidth;
+  String get hostLabel;
+  bool get firstRound;
+  bool get lockScreen;
 
-typedef UpdateMainHeightWidth = void Function(double value);
-typedef PrepopulateUserMedia = List<dynamic> Function({
-  required String name,
-  required Map<String, dynamic> parameters,
+  // Update function as an abstract getter
+  void Function(double) get updateMainHeightWidth;
+
+  // Mediasfu function as an abstract getter
+  PrepopulateUserMediaType get prepopulateUserMedia;
+
+  // Method to get updated parameters
+  ReadjustParameters Function() get getUpdatedAllParams;
+
+  // Dynamic key-value support
+  // dynamic operator [](String key);
+}
+
+class ReadjustOptions {
+  final int n;
+  final int state;
+  final ReadjustParameters parameters;
+
+  ReadjustOptions({
+    required this.n,
+    required this.state,
+    required this.parameters,
+  });
+}
+
+typedef ReadjustType = Future<void> Function({
+  required ReadjustOptions options,
 });
 
-typedef OnScreenChanges = Future<void> Function(
-    {bool changed, required Map<String, dynamic> parameters});
-typedef GetUpdatedAllParams = Map<String, dynamic> Function();
+/// Adjusts the layout parameters based on the current state, participant count, and event type.
+///
+/// This function recalculates layout values to determine the main and secondary display areas
+/// for participants in a media application. It considers various factors such as whether screen sharing
+/// is active, the type of event (e.g., conference, broadcast, chat), and the number of participants.
+/// If the layout changes, it triggers a function to prepopulate user media.
+///
+/// ### Parameters:
+/// - `options` (`ReadjustOptions`): Options for the adjustment, containing:
+///   - `n` (int): The participant count, influencing layout decisions.
+///   - `state` (int): The current layout state (0 for initial layout, others for adjustments).
+///   - `parameters` (`ReadjustParameters`): Includes:
+///     - `eventType`: The type of event being held (e.g., conference, broadcast).
+///     - `shareScreenStarted`: Indicates if screen sharing is in progress.
+///     - `shared`: Indicates if media is shared among participants.
+///     - `mainHeightWidth`: Current main area height/width used for layout.
+///     - `prevMainHeightWidth`: Previous height/width for comparison.
+///     - `hostLabel`: The name of the host, affecting layout if they are present.
+///     - `firstRound`: Indicates if this is the first adjustment round.
+///     - `lockScreen`: Indicates if the screen is locked.
+///     - `updateMainHeightWidth`: A function to update the main height/width value.
+///     - `prepopulateUserMedia`: A function to prepopulate media when layout changes.
+///
+/// ### Returns:
+/// - `Future<void>`: Completes when the adjustment is finished. Handles any errors that occur during execution.
+///
+/// ### Example Usage:
+/// ```dart
+/// final readjustParams = ReadjustParameters(
+///   eventType: EventType.conference,
+///   shareScreenStarted: false,
+///   shared: false,
+///   mainHeightWidth: 50.0,
+///   prevMainHeightWidth: 50.0,
+///   hostLabel: 'HostUser',
+///   firstRound: true,
+///   lockScreen: false,
+///   updateMainHeightWidth: (width) => print('Updated width: $width'),
+///   prepopulateUserMedia: (name, params) async {
+///     print('Prepopulating media for $name');
+///   },
+///   getUpdatedAllParams: () => updatedParams, // Function that provides updated parameters
+/// );
+///
+/// await readjust(
+///   options: ReadjustOptions(
+///     n: 5,
+///     state: 1,
+///     parameters: readjustParams,
+///   ),
+/// );
+/// ```
+///
+/// ### Error Handling:
+/// - Logs any errors encountered during the adjustment process to the debug console.
 
 Future<void> readjust({
-  required int n,
-  required int state,
-  required Map<String, dynamic> parameters,
+  required ReadjustOptions options,
 }) async {
+  ReadjustParameters parameters = options.parameters.getUpdatedAllParams();
+  final int n = options.n;
+  final int state = options.state;
+
   try {
-    GetUpdatedAllParams getUpdatedAllParams = parameters['getUpdatedAllParams'];
-    parameters = getUpdatedAllParams();
+    // Destructure parameters
+    final EventType eventType = parameters.eventType;
+    final bool shareScreenStarted = parameters.shareScreenStarted;
+    final bool shared = parameters.shared;
+    double mainHeightWidth = parameters.mainHeightWidth;
+    double prevMainHeightWidth = parameters.prevMainHeightWidth;
+    final String hostLabel = parameters.hostLabel;
+    final bool firstRound = parameters.firstRound;
+    final bool lockScreen = parameters.lockScreen;
 
-    String eventType = parameters['eventType'];
-    bool shareScreenStarted = parameters['shareScreenStarted'];
-    bool shared = parameters['shared'];
-    double mainHeightWidth = parameters['mainHeightWidth'];
-    double prevMainHeightWidth = parameters['prevMainHeightWidth'];
-    String hostLabel = parameters['hostLabel'];
-    bool firstRound = parameters['firstRound'];
-    bool lockScreen = parameters['lockScreen'];
-
-    UpdateMainHeightWidth updateMainHeightWidth =
-        parameters['updateMainHeightWidth'];
-
-    // mediasfu functions
-    PrepopulateUserMedia prepopulateUserMedia =
-        parameters['prepopulateUserMedia'];
-
+    // Logic to update the layout parameters based on the state and event conditions
     if (state == 0) {
       prevMainHeightWidth = mainHeightWidth;
     }
 
-    var val1 = 6;
-    var val2 = 12 - val1;
-    var cal1 = ((val1 / 12) * 100).floor();
-    var cal2 = 100 - cal1;
+    int val1 = 6;
+    int val2 = 12 - val1;
+    int cal1 = ((val1 / 12) * 100).floor();
+    int cal2 = 100 - cal1;
 
-    if (eventType == 'broadcast') {
+    if (eventType == EventType.broadcast) {
       val1 = 0;
-      val2 = 12 - val1;
-
+      val2 = 12;
       if (n == 0) {
         val1 = 0;
-        val2 = 12 - val1;
+        val2 = 12;
       }
-    } else if (eventType == 'chat' ||
-        (eventType == 'conference' && !(shareScreenStarted || shared))) {
+    } else if (eventType == EventType.chat ||
+        (eventType == EventType.conference &&
+            !(shareScreenStarted || shared))) {
       val1 = 12;
-      val2 = 12 - val1;
+      val2 = 0;
+    } else if (shareScreenStarted || shared) {
+      val1 = 2;
+      val2 = 10;
     } else {
-      if (shareScreenStarted || shared) {
-        val2 = 10;
-        val1 = 12 - val2;
+      // Adjust layout based on participant count
+      if (n == 0) {
+        val1 = 1;
+      } else if (n < 4) {
+        val1 = 4;
+      } else if (n < 6) {
+        val1 = 6;
+      } else if (n < 12) {
+        val1 = 8;
       } else {
-        if (n == 0) {
-          val1 = 1;
-          val2 = 12 - val1;
-        } else if (n >= 1 && n < 4) {
-          val1 = 4;
-          val2 = 12 - val1;
-        } else if (n >= 4 && n < 6) {
-          val1 = 6;
-          val2 = 12 - val1;
-        } else if (n >= 6 && n < 9) {
-          val1 = 6;
-          val2 = 12 - val1;
-        } else if (n >= 9 && n < 12) {
-          val1 = 6;
-          val2 = 12 - val1;
-        } else if (n >= 12 && n < 20) {
-          val1 = 8;
-          val2 = 12 - val1;
-        } else if (n >= 20 && n < 50) {
-          val1 = 8;
-          val2 = 12 - val1;
-        } else {
-          val1 = 10;
-          val2 = 12 - val1;
-        }
+        val1 = 10;
       }
+      val2 = 12 - val1;
     }
 
     if (state == 0) {
@@ -117,23 +168,23 @@ Future<void> readjust({
 
     cal1 = ((val1 / 12) * 100).floor();
     cal2 = 100 - cal1;
+    parameters.updateMainHeightWidth(cal2.toDouble());
 
-    updateMainHeightWidth(cal2.toDouble());
-
+    // Trigger media prepopulation if layout changed
     if (prevMainHeightWidth != mainHeightWidth) {
-      if (!lockScreen && !shared) {
-        prepopulateUserMedia(name: hostLabel, parameters: parameters);
-      } else {
-        if (!firstRound) {
-          prepopulateUserMedia(name: hostLabel, parameters: parameters);
-        }
+      if (!lockScreen && !shared || !firstRound) {
+        final optionsPrepopulate = PrepopulateUserMediaOptions(
+          name: hostLabel,
+          parameters: parameters,
+        );
+        await parameters.prepopulateUserMedia(
+          optionsPrepopulate,
+        );
       }
     }
   } catch (error) {
-    // Handle errors during the process of updating grid sizes
     if (kDebugMode) {
-      // print('Error updating grid sizes: $error');
+      print("Error updating layout: $error");
     }
-    // throw error;
   }
 }

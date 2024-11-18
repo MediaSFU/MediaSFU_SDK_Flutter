@@ -1,123 +1,136 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import '../types/types.dart'
+    show TriggerParameters, TriggerType, TriggerOptions;
 
-/// Compares the active names with the previous active names and triggers a function if there are any changes.
+/// Parameters interface for comparing active names.
+abstract class CompareActiveNamesParameters extends TriggerParameters {
+  List<String> get activeNames;
+  List<String> get prevActiveNames;
+  void Function(List<String> prevActiveNames) get updatePrevActiveNames;
+
+  // Mediasfu functions
+  TriggerType get trigger;
+  CompareActiveNamesParameters Function() get getUpdatedAllParams;
+}
+
+/// Options interface for comparing active names.
+class CompareActiveNamesOptions {
+  final bool restart;
+  final CompareActiveNamesParameters parameters;
+
+  CompareActiveNamesOptions({
+    this.restart = false,
+    required this.parameters,
+  });
+}
+
+/// Type definition for the [compareActiveNames] function.
+typedef CompareActiveNamesType = Future<void> Function(
+    CompareActiveNamesOptions options);
+
+/// Compares the current `activeNames` list with the `prevActiveNames` list and triggers an action if there are any differences.
+/// The function updates `prevActiveNames` after the comparison to keep track of changes.
 ///
-/// The [compareActiveNames] function takes the following parameters:
-/// - [tStamp]: A required string representing a timestamp.
-/// - [restart]: An optional boolean indicating whether to restart the comparison. Defaults to `false`.
-/// - [parameters]: A required map of string keys and dynamic values containing additional parameters.
+/// This function performs the following steps:
+/// 1. If the `restart` flag is true, it triggers the action without comparison.
+/// 2. If `restart` is false, it compares each name in `activeNames` to check if any name is new or removed compared to `prevActiveNames`.
+/// 3. If a change is detected, it calls the `trigger` function with the updated `activeNames`.
+/// 4. Finally, it updates `prevActiveNames` to reflect the current `activeNames`.
 ///
-/// The [compareActiveNames] function performs the following steps:
-/// 1. Retrieves the updated parameters using the `getUpdatedAllParams` function from the [parameters] map.
-/// 2. Extracts the [activeNames], [prevActiveNames], and [updatePrevActiveNames] from the updated parameters.
-/// 3. Initializes a trigger function using the `trigger` function from the [parameters] map.
-/// 4. Restarts the comparison if [restart] is `true` by calling the trigger function with the [activeNames] and [parameters].
-/// 5. Compares each name in [activeNames] with the names in [prevActiveNames].
-///    - If a name in [activeNames] is not present in [prevActiveNames], triggers the function and breaks the loop.
-/// 6. If no changes are detected in step 5, checks for new names in [prevActiveNames].
-///    - If a name in [prevActiveNames] is not present in [activeNames], triggers the function and breaks the loop.
-/// 7. Updates [prevActiveNames] with the current [activeNames] and calls [updatePrevActiveNames] with [prevActiveNames].
+/// ### Parameters:
+/// - `options` (`CompareActiveNamesOptions`): Configuration options for comparing active names:
+///   - `restart` (`bool`): When true, triggers an action immediately without comparison.
+///   - `parameters` (`CompareActiveNamesParameters`): Provides the lists of `activeNames` and `prevActiveNames`,
+///     as well as functions to update `prevActiveNames` and trigger actions when changes are detected.
 ///
-/// If an error occurs during the comparison, it is caught and logged in debug mode.
+/// ### Returns:
+/// A `Future<void>` that completes when the comparison and possible trigger actions are finished.
 ///
-/// Example usage:
+/// ### Example:
+///
 /// ```dart
-/// await compareActiveNames(
-///   tStamp: '2022-01-01',
-///   restart: true,
-///   parameters: {
-///     'getUpdatedAllParams': getUpdatedAllParams,
-///     'activeNames': ['John', 'Jane'],
-///     'prevActiveNames': ['John'],
-///     'updatePrevActiveNames': updatePrevActiveNames,
-///     'trigger': triggerFunction,
-///   },
+/// final options = CompareActiveNamesOptions(
+///   restart: false,
+///   parameters: MyCompareActiveNamesParameters(
+///     activeNames: ['Alice', 'Bob'],
+///     prevActiveNames: ['Alice'],
+///     updatePrevActiveNames: (prevNames) => print('Previous names updated to: $prevNames'),
+///     trigger: (TriggerOptions options) => print('Triggered action with ${options.refActiveNames}'),
+///   ),
 /// );
+///
+/// compareActiveNames(options).then((_) {
+///   print('Active names comparison completed successfully.');
+/// });
 /// ```
+///
+/// ### Error Handling:
+/// If an error occurs, it is caught and logged in debug mode without throwing further.
 
-typedef TriggerFunction = void Function(
-    {required List<String> refActiveNames,
-    required Map<String, dynamic> parameters});
+Future<void> compareActiveNames(CompareActiveNamesOptions options) async {
+  var parameters = options.parameters.getUpdatedAllParams();
 
-typedef CompareActiveNames = Future<void> Function({
-  required String tStamp,
-  bool restart,
-  required Map<String, dynamic> parameters,
-});
+  // Extract parameters
+  List<String> activeNames = parameters.activeNames;
+  List<String> prevActiveNames = parameters.prevActiveNames;
+  var updatePrevActiveNames = parameters.updatePrevActiveNames;
+  var trigger = parameters.trigger;
 
-typedef GetUpdatedAllParams = Map<String, dynamic> Function();
-
-typedef UpdatePrevActiveNames = void Function(List<String> prevActiveNames);
-
-Future<void> compareActiveNames({
-  required String tStamp,
-  bool restart = false,
-  required Map<String, dynamic> parameters,
-}) async {
   try {
-    GetUpdatedAllParams getUpdatedAllParams = parameters['getUpdatedAllParams'];
-
-    parameters = getUpdatedAllParams();
-
-    List<String> activeNames = parameters['activeNames'];
-    List<String> prevActiveNames = parameters['prevActiveNames'];
-    Function updatePrevActiveNames = parameters['updatePrevActiveNames'];
-
-    // mediasfu functions
-    TriggerFunction trigger = parameters['trigger'];
-
     // Restart the comparison if needed
-    if (restart) {
-      trigger(refActiveNames: activeNames, parameters: parameters);
+    if (options.restart) {
+      final optionsTrigger = TriggerOptions(
+        parameters: parameters,
+        refActiveNames: activeNames,
+      );
+      trigger(optionsTrigger);
       return;
     }
 
-    // List to track changes in activeNames
+    // Track changes in activeNames
     List<bool> nameChanged = [];
 
     // Compare each name in activeNames
-    for (int i = 0; i < activeNames.length; i++) {
-      final currentName = activeNames[i];
-
+    for (final currentName in activeNames) {
       // Check if the name is present in prevActiveNames
       final hasNameChanged = !prevActiveNames.contains(currentName);
 
       if (hasNameChanged) {
         nameChanged.add(true);
-        trigger(refActiveNames: activeNames, parameters: parameters);
+        final optionsTrigger = TriggerOptions(
+          parameters: parameters,
+          refActiveNames: activeNames,
+        );
+        trigger(optionsTrigger);
         break;
       }
     }
 
-    // Count the number of true in nameChanged
+    // Count occurrences of true in nameChanged
     final count = nameChanged.where((value) => value).length;
 
     if (count < 1) {
       // Check for new names in prevActiveNames
-      for (int i = 0; i < prevActiveNames.length; i++) {
-        final currentName = prevActiveNames[i];
-
-        // Check if the name is present in activeNames
+      for (final currentName in prevActiveNames) {
         final hasNameChanged = !activeNames.contains(currentName);
 
-        // Signal change if the name is new
         if (hasNameChanged) {
-          trigger(refActiveNames: activeNames, parameters: parameters);
+          final optionsTrigger = TriggerOptions(
+            parameters: parameters,
+            refActiveNames: activeNames,
+          );
+          trigger(optionsTrigger);
           break;
         }
       }
     }
 
     // Update prevActiveNames with current activeNames
-    prevActiveNames = List<String>.from(activeNames);
-    updatePrevActiveNames(prevActiveNames);
+    updatePrevActiveNames(List<String>.from(activeNames));
   } catch (error) {
     if (kDebugMode) {
-      // print('compareActiveNames error: $error');
-      // print('compareActiveNames stackTrace: $stackTrace');
+      print('compareActiveNames error: $error');
     }
-
-    // throw error;
   }
 }

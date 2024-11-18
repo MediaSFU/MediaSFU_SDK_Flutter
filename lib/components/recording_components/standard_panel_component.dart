@@ -1,31 +1,76 @@
 import 'package:flutter/material.dart';
+import '../../types/types.dart' show EventType;
 
-/// StandardPanelComponent is a StatelessWidget that represents a standard panel for recording settings.
+// Define StandardPanelComponentParameters as an abstract class with getters and setters
+abstract class StandardPanelComponentParameters {
+  String get recordingMediaOptions;
+  String get recordingAudioOptions;
+  String get recordingVideoOptions;
+  bool get recordingAddHLS;
+  EventType get eventType;
+
+  void Function(String) get updateRecordingMediaOptions;
+  void Function(String) get updateRecordingAudioOptions;
+  void Function(String) get updateRecordingVideoOptions;
+  void Function(bool) get updateRecordingAddHLS;
+}
+
+class StandardPanelComponentOptions {
+  final StandardPanelComponentParameters parameters;
+
+  StandardPanelComponentOptions({required this.parameters});
+}
+
+typedef StandardPanelType = Widget Function(
+    {required StandardPanelComponentOptions options});
+
+/// `StandardPanelComponent` displays a form with recording options, including:
+/// - Media Options: Selects the type of recording (audio or video).
+/// - Specific Audios and Videos: Configures specific recording preferences for
+///   audio and video based on the event type.
+/// - Add HLS: Optionally adds HLS (HTTP Live Streaming).
 ///
-/// `parameters`: Additional parameters for recording settings.
+/// ### Parameters:
+/// - [options] (`StandardPanelComponentOptions`): Options object containing parameters:
+///   - `recordingMediaOptions` (String): Selected media recording type.
+///   - `recordingAudioOptions` (String): Specific audio configuration.
+///   - `recordingVideoOptions` (String): Specific video configuration.
+///   - `recordingAddHLS` (bool): Enables or disables HLS streaming.
+///   - `eventType` (EventType): Type of the event for filtering options.
+///
+/// ### Example:
+/// ```dart
+/// StandardPanelComponent(
+///   options: StandardPanelComponentOptions(
+///     parameters: MyStandardPanelComponentParameters(
+///       recordingMediaOptions: "video",
+///       recordingAudioOptions: "all",
+///       recordingVideoOptions: "mainScreen",
+///       recordingAddHLS: true,
+///       eventType: EventType.conference,
+///       updateRecordingMediaOptions: (option) => print("Media option updated: $option"),
+///       updateRecordingAudioOptions: (option) => print("Audio option updated: $option"),
+///       updateRecordingVideoOptions: (option) => print("Video option updated: $option"),
+///       updateRecordingAddHLS: (enabled) => print("HLS enabled: $enabled"),
+///     ),
+///   ),
+/// );
+/// ```
+///
+/// This example initializes the component with default settings for a conference event.
 
 class StandardPanelComponent extends StatelessWidget {
-  final Map<String, dynamic> parameters;
+  final StandardPanelComponentOptions options;
 
-  const StandardPanelComponent({super.key, required this.parameters});
+  const StandardPanelComponent({super.key, required this.options});
 
   @override
   Widget build(BuildContext context) {
-    final String recordingMediaOptions = parameters['recordingMediaOptions'];
-    final String recordingAudioOptions = parameters['recordingAudioOptions'];
-    final String recordingVideoOptions = parameters['recordingVideoOptions'];
-    final bool recordingAddHLS = parameters['recordingAddHLS'];
-    final Function updateRecordingMediaOptions =
-        parameters['updateRecordingMediaOptions'];
-    final Function updateRecordingAudioOptions =
-        parameters['updateRecordingAudioOptions'];
-    final Function updateRecordingVideoOptions =
-        parameters['updateRecordingVideoOptions'];
-    final Function updateRecordingAddHLS = parameters['updateRecordingAddHLS'];
-    final String eventType = parameters['eventType'];
-
     const TextStyle labelStyle = TextStyle(
-        color: Colors.black, height: 1.5, fontWeight: FontWeight.bold);
+      color: Colors.black,
+      height: 1.5,
+      fontWeight: FontWeight.bold,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -36,8 +81,9 @@ class StandardPanelComponent extends StatelessWidget {
           children: [
             const Text('Media Options:', style: labelStyle),
             _buildPicker(
-              value: recordingMediaOptions,
-              onValueChanged: (value) => updateRecordingMediaOptions(value),
+              value: options.parameters.recordingMediaOptions,
+              onValueChanged: (value) =>
+                  options.parameters.updateRecordingMediaOptions(value),
               items: [
                 {'label': 'Record Video', 'value': 'video'},
                 {'label': 'Record Audio Only', 'value': 'audio'},
@@ -48,14 +94,15 @@ class StandardPanelComponent extends StatelessWidget {
         ),
 
         // Specific Audios
-        if (eventType != 'broadcast') ...[
+        if (options.parameters.eventType != EventType.broadcast) ...[
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text('Specific Audios:', style: labelStyle),
               _buildPicker(
-                value: recordingAudioOptions,
-                onValueChanged: (value) => updateRecordingAudioOptions(value),
+                value: options.parameters.recordingAudioOptions,
+                onValueChanged: (value) =>
+                    options.parameters.updateRecordingAudioOptions(value),
                 items: [
                   {'label': 'Add All', 'value': 'all'},
                   {'label': 'Add All On Screen', 'value': 'onScreen'},
@@ -72,8 +119,9 @@ class StandardPanelComponent extends StatelessWidget {
             children: [
               const Text('Specific Videos:', style: labelStyle),
               _buildPicker(
-                value: recordingVideoOptions,
-                onValueChanged: (value) => updateRecordingVideoOptions(value),
+                value: options.parameters.recordingVideoOptions,
+                onValueChanged: (value) =>
+                    options.parameters.updateRecordingVideoOptions(value),
                 items: [
                   {'label': 'Add All', 'value': 'all'},
                   {
@@ -93,9 +141,9 @@ class StandardPanelComponent extends StatelessWidget {
           children: [
             const Text('Add HLS:', style: labelStyle),
             _buildPicker(
-              value: recordingAddHLS.toString(),
-              onValueChanged: (value) =>
-                  updateRecordingAddHLS(value == 'true' || value == true),
+              value: options.parameters.recordingAddHLS.toString(),
+              onValueChanged: (value) => options.parameters
+                  .updateRecordingAddHLS(value == 'true' || value == true),
               items: [
                 {'label': 'True', 'value': 'true'},
                 {'label': 'False', 'value': 'false'},
@@ -107,9 +155,10 @@ class StandardPanelComponent extends StatelessWidget {
 
         // Separator
         Container(
-            height: 1,
-            color: Colors.black,
-            margin: const EdgeInsets.symmetric(vertical: 5)),
+          height: 1,
+          color: Colors.black,
+          margin: const EdgeInsets.symmetric(vertical: 5),
+        ),
       ],
     );
   }

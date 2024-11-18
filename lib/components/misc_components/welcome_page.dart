@@ -1,10 +1,43 @@
 // import 'dart:io'; // use the welcome_page.qrcode.dart file
 import 'package:flutter/material.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
 // import 'package:permission_handler/permission_handler.dart'; // handle permissions manually
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:flutter/foundation.dart' show kIsWeb; // use the welcome_page.qrcode.dart file
 import 'dart:async';
+import '../../types/types.dart'
+    show ShowAlert, ConnectSocketType, ConnectSocketOptions;
+
+class WelcomePageOptions {
+  final String imgSrc;
+  final ShowAlert? showAlert;
+  final Function(bool) updateIsLoadingModalVisible;
+  final ConnectSocketType connectSocket;
+  final Function(io.Socket?) updateSocket;
+  final Function(bool) updateValidated;
+  final Function(String) updateApiUserName;
+  final Function(String) updateApiToken;
+  final Function(String) updateLink;
+  final Function(String) updateRoomName;
+  final Function(String) updateMember;
+
+  WelcomePageOptions({
+    this.imgSrc = 'https://mediasfu.com/images/logo192.png',
+    required this.showAlert,
+    required this.updateIsLoadingModalVisible,
+    required this.connectSocket,
+    required this.updateSocket,
+    required this.updateValidated,
+    required this.updateApiUserName,
+    required this.updateApiToken,
+    required this.updateLink,
+    required this.updateRoomName,
+    required this.updateMember,
+  });
+}
+
+typedef WelcomePageType = WelcomePage Function({WelcomePageOptions options});
 
 /// This file contains the implementation of the WelcomePage widget.
 /// Implement the qr_code_scanner package to scan QR codes using the 'welcome_page.qrcode.dart' file.
@@ -28,9 +61,7 @@ import 'dart:async';
 /// - `_linkController`: A TextEditingController for the event link input field.
 /// - `showAlert`: A function callback for showing an alert message.
 /// - `updateIsLoadingModalVisible`: A function callback for updating the visibility of a loading modal.
-/// - `onWeb`: A boolean flag indicating whether the app is running on the web.
 /// - `connectSocket`: A function callback for connecting to a socket.
-/// - `socket`: A dynamic variable representing the socket connection.
 /// - `updateSocket`: A function callback for updating the socket connection.
 /// - `updateValidated`: A function callback for updating the validation status.
 /// - `updateApiUserName`: A function callback for updating the API username.
@@ -38,7 +69,6 @@ import 'dart:async';
 /// - `updateLink`: A function callback for updating the event link.
 /// - `updateRoomName`: A function callback for updating the room name.
 /// - `updateMember`: A function callback for updating the member.
-/// - `validated`: A boolean flag indicating whether the event details are validated.
 /// - `_isScannerVisible`: A boolean flag indicating whether the QR code scanner is visible.
 /// - `_scannedData`: A string representing the scanned QR code data.
 /// - `_controller`: A QRViewController for controlling the QR code scanner.
@@ -58,26 +88,69 @@ import 'dart:async';
 /// Note: This documentation comment only covers the selected code. There may be additional code
 /// and functionality in the complete file.
 
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
-});
-
-typedef ConnectSocket = Future<dynamic> Function(
-    String apiUserName, String apiKey, String apiToken, String link);
-
 int maxAttempts =
     20; // Maximum number of unsuccessful attempts before rate limiting
 int rateLimitDuration = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
 
-class WelcomePage extends StatefulWidget {
-  final Map<String, dynamic> parameters;
+/// `WelcomePage` is a StatefulWidget that provides a welcome screen where users can enter details
+/// for an event, including event display name, token (secret), event ID, and event link.
+/// It includes options to validate input, handle socket connection, and provide feedback using alerts.
+///
+/// ### Main Parameters:
+/// - `WelcomePageOptions` `options`: Configures callbacks and behavior, including showing alerts,
+///   connecting to a socket, and updating state for the event information.
+///   - `showAlert`: Displays messages to the user, especially for errors and connection feedback.
+///   - `updateIsLoadingModalVisible`: Toggles a loading indicator during requests.
+///   - `connectSocket`: Establishes a socket connection using the provided options.
+///   - `updateSocket`, `updateValidated`, `updateApiUserName`, `updateApiToken`, `updateLink`,
+///     `updateRoomName`, `updateMember`: Callbacks for updating state in the parent widget.
+///
+/// ### Key Functions:
+/// - `_handleConfirm`: Validates the user input fields before initiating a connection request.
+///   If all inputs are valid, it calls `_checkLimitsAndMakeRequest` to handle the request.
+/// - `_checkLimitsAndMakeRequest`: Manages the connection request, checking for rate limits
+///   and attempting a socket connection if permitted. On successful connection, it updates the state,
+///   while unsuccessful attempts trigger an alert message.
+/// - `_launchURL`: Opens a specified URL in the browser, e.g., to obtain an event token.
+///
+/// ### Example Usage:
+/// ```dart
+/// WelcomePage(
+///   options: WelcomePageOptions(
+///     showAlert: (message, type, duration) => print("Alert: $message"),
+///     updateIsLoadingModalVisible: (isVisible) => print("Loading: $isVisible"),
+///     connectSocket: myConnectSocketFunction,
+///     updateSocket: (socket) => print("Socket Updated"),
+///     updateValidated: (isValid) => print("Validated: $isValid"),
+///     updateApiUserName: (userName) => print("API UserName: $userName"),
+///     updateApiToken: (token) => print("API Token: $token"),
+///     updateLink: (link) => print("Link: $link"),
+///     updateRoomName: (roomName) => print("Room Name: $roomName"),
+///     updateMember: (member) => print("Member: $member"),
+///   ),
+/// );
+/// ```
+///
+/// ### UI Elements:
+/// - Input Fields: Includes text fields for "Display Name," "Event Token," "Event ID," and "Event Link."
+/// - Confirm Button: Validates input and attempts a connection if details are valid.
+/// - Helper Links and QR Code Scanner: Additional options to obtain event details, including
+///   a link to get an event token from the `mediasfu.com` website.
+///
+/// ### Helper Functions:
+/// - `_validateAlphanumeric`: Checks if a string contains only alphanumeric characters.
+/// - `requestPermissionCamera`: Placeholder for camera permissions (e.g., for QR code scanning).
+///
+/// ### Note:
+/// This implementation depends on an external `showAlert` function to notify users
+/// and relies on the `connectSocket` function to establish a socket connection.
 
-  const WelcomePage({super.key, required this.parameters});
+class WelcomePage extends StatefulWidget {
+  final WelcomePageOptions options;
+
+  const WelcomePage({super.key, required this.options});
 
   @override
-  // ignore: library_private_types_in_public_api
   _WelcomePageState createState() => _WelcomePageState();
 }
 
@@ -86,20 +159,6 @@ class _WelcomePageState extends State<WelcomePage> {
   final TextEditingController _secretController = TextEditingController();
   final TextEditingController _eventIDController = TextEditingController();
   final TextEditingController _linkController = TextEditingController();
-
-  late final ShowAlert showAlert;
-  late final Function(bool) updateIsLoadingModalVisible;
-  late bool onWeb;
-  late final ConnectSocket connectSocket;
-  late dynamic socket;
-  late Function(dynamic) updateSocket;
-  late Function(bool) updateValidated;
-  late Function(String) updateApiUserName;
-  late Function(String) updateApiToken;
-  late Function(String) updateLink;
-  late Function(String) updateRoomName;
-  late Function(String) updateMember;
-  late bool validated;
 
   // final bool _isScannerVisible = false;
   // final String _scannedData = '';
@@ -121,22 +180,6 @@ class _WelcomePageState extends State<WelcomePage> {
   @override
   void initState() {
     super.initState();
-    // Extract showAlert and updateIsLoadingModalVisible from parameters
-
-    showAlert = widget.parameters['showAlert'];
-    updateIsLoadingModalVisible =
-        widget.parameters['updateIsLoadingModalVisible'];
-    onWeb = widget.parameters['onWeb'];
-    connectSocket = widget.parameters['connectSocket'];
-    socket = widget.parameters['socket'];
-    updateSocket = widget.parameters['updateSocket'];
-    updateValidated = widget.parameters['updateValidated'];
-    updateApiUserName = widget.parameters['updateApiUserName'];
-    updateApiToken = widget.parameters['updateApiToken'];
-    updateLink = widget.parameters['updateLink'];
-    updateRoomName = widget.parameters['updateRoomName'];
-    updateMember = widget.parameters['updateMember'];
-    validated = widget.parameters['validated'];
   }
 
   // final GlobalKey _qrKey = GlobalKey(debugLabel: 'QR');
@@ -272,7 +315,7 @@ class _WelcomePageState extends State<WelcomePage> {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 5),
-                    const Text('Don\'t have a secret?',
+                    const Text('Do not have a secret?',
                         textAlign: TextAlign.center),
                     const SizedBox(height: 5),
                     ElevatedButton(
@@ -360,7 +403,7 @@ class _WelcomePageState extends State<WelcomePage> {
   }
 
   void _handleConfirm() async {
-    updateIsLoadingModalVisible(true);
+    widget.options.updateIsLoadingModalVisible(true);
 
     // Get input values from text controllers
     final String name = _nameController.text;
@@ -370,12 +413,12 @@ class _WelcomePageState extends State<WelcomePage> {
 
     // Validate input values
     if (name.isEmpty || secret.isEmpty || eventID.isEmpty || link.isEmpty) {
-      showAlert(
+      widget.options.showAlert!(
         message: 'Please fill all the fields.',
         type: 'danger',
         duration: 3000,
       );
-      updateIsLoadingModalVisible(false);
+      widget.options.updateIsLoadingModalVisible(false);
       return;
     }
 
@@ -384,12 +427,12 @@ class _WelcomePageState extends State<WelcomePage> {
         !_validateAlphanumeric(eventID) ||
         !link.contains('mediasfu.com') ||
         eventID.toLowerCase().startsWith('d')) {
-      showAlert(
+      widget.options.showAlert!(
         message: 'Please enter valid details.',
         type: 'danger',
         duration: 3000,
       );
-      updateIsLoadingModalVisible(false);
+      widget.options.updateIsLoadingModalVisible(false);
       return;
     }
 
@@ -399,12 +442,12 @@ class _WelcomePageState extends State<WelcomePage> {
         eventID.length > 32 ||
         eventID.length < 8 ||
         link.length < 12) {
-      showAlert(
+      widget.options.showAlert!(
         message: 'Please enter valid details.',
         type: 'danger',
         duration: 3000,
       );
-      updateIsLoadingModalVisible(false);
+      widget.options.updateIsLoadingModalVisible(false);
       return;
     }
 
@@ -415,7 +458,7 @@ class _WelcomePageState extends State<WelcomePage> {
       link: link,
       userName: name,
     );
-    updateIsLoadingModalVisible(false);
+    widget.options.updateIsLoadingModalVisible(false);
   }
 
   // use the welcome_page.qrcode.dart file
@@ -532,20 +575,20 @@ class _WelcomePageState extends State<WelcomePage> {
     if (unsuccessfulAttempts >= maxAttempts) {
       if (DateTime.now().millisecondsSinceEpoch - lastRequestTimestamp <
           rateLimitDuration) {
-        showAlert(
+        widget.options.showAlert!(
           message: 'Too many unsuccessful attempts. Please try again later.',
           type: 'danger',
           duration: 3000,
         );
-        await prefs.setInt(
+        prefs.setInt(
           'lastRequestTimestamp',
           DateTime.now().millisecondsSinceEpoch,
         );
         return;
       } else {
         unsuccessfulAttempts = 0;
-        await prefs.setInt('unsuccessfulAttempts', unsuccessfulAttempts);
-        await prefs.setInt(
+        prefs.setInt('unsuccessfulAttempts', unsuccessfulAttempts);
+        prefs.setInt(
           'lastRequestTimestamp',
           DateTime.now().millisecondsSinceEpoch,
         );
@@ -553,9 +596,13 @@ class _WelcomePageState extends State<WelcomePage> {
     }
 
     try {
-      updateIsLoadingModalVisible(true);
+      widget.options.updateIsLoadingModalVisible(true);
 
-      final socketPromise = connectSocket(apiUserName, apiKey, apiToken, link);
+      final socketPromise = widget.options.connectSocket(ConnectSocketOptions(
+          apiUserName: apiUserName,
+          apiToken: apiToken,
+          apiKey: apiKey,
+          link: link));
       const timeoutDuration = Duration(milliseconds: duration);
 
       final socketWithTimeout = await socketPromise.timeout(
@@ -565,38 +612,38 @@ class _WelcomePageState extends State<WelcomePage> {
         },
       );
 
-      if (socketWithTimeout != null && socketWithTimeout.id != null) {
+      if (socketWithTimeout.id!.isNotEmpty) {
         unsuccessfulAttempts = 0;
-        await prefs.setInt('unsuccessfulAttempts', unsuccessfulAttempts);
-        await prefs.setInt(
+        prefs.setInt('unsuccessfulAttempts', unsuccessfulAttempts);
+        prefs.setInt(
           'lastRequestTimestamp',
           DateTime.now().millisecondsSinceEpoch,
         );
         // Update state or perform other actions on successful request
-        await updateSocket(socketWithTimeout);
-        await updateApiUserName(apiUserName);
-        await updateApiToken(apiToken);
-        await updateLink(link);
-        await updateRoomName(apiUserName);
-        await updateMember(userName);
-        updateIsLoadingModalVisible(false);
-        await updateValidated(true);
+        widget.options.updateSocket(socketWithTimeout);
+        widget.options.updateApiUserName(apiUserName);
+        widget.options.updateApiToken(apiToken);
+        widget.options.updateLink(link);
+        widget.options.updateRoomName(apiUserName);
+        widget.options.updateMember(userName);
+        widget.options.updateIsLoadingModalVisible(false);
+        widget.options.updateValidated(true);
       } else {
-        updateIsLoadingModalVisible(false);
+        widget.options.updateIsLoadingModalVisible(false);
         unsuccessfulAttempts++;
-        await prefs.setInt('unsuccessfulAttempts', unsuccessfulAttempts);
-        await prefs.setInt(
+        prefs.setInt('unsuccessfulAttempts', unsuccessfulAttempts);
+        prefs.setInt(
           'lastRequestTimestamp',
           DateTime.now().millisecondsSinceEpoch,
         );
         if (unsuccessfulAttempts >= maxAttempts) {
-          showAlert(
+          widget.options.showAlert!(
             message: 'Too many unsuccessful attempts. Please try again later.',
             type: 'danger',
             duration: 3000,
           );
         } else {
-          showAlert(
+          widget.options.showAlert!(
             message: 'Invalid credentials. Please try again later.',
             type: 'danger',
             duration: 3000,
@@ -604,22 +651,22 @@ class _WelcomePageState extends State<WelcomePage> {
         }
       }
     } catch (error) {
-      updateIsLoadingModalVisible(false);
+      widget.options.updateIsLoadingModalVisible(false);
 
-      await prefs.setInt('unsuccessfulAttempts', unsuccessfulAttempts);
-      await prefs.setInt(
+      prefs.setInt('unsuccessfulAttempts', unsuccessfulAttempts);
+      prefs.setInt(
         'lastRequestTimestamp',
         DateTime.now().millisecondsSinceEpoch,
       );
 
       if (unsuccessfulAttempts >= maxAttempts) {
-        showAlert(
+        widget.options.showAlert!(
           message: 'Too many unsuccessful attempts. Please try again later.',
           type: 'danger',
           duration: 3000,
         );
       } else {
-        showAlert(
+        widget.options.showAlert!(
           message: 'Unable to connect. ${error.toString()}',
           type: 'danger',
           duration: 3000,

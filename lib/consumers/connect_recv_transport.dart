@@ -1,85 +1,115 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
-import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
+import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart'
+    show MediaStream, Transport, Consumer;
+import '../types/types.dart'
+    show
+        ConsumerResumeType,
+        ConsumerResumeParameters,
+        TransportType,
+        ConsumerResumeOptions;
 
-/// Connects the receiving transport to consume media.
-///
-/// This function establishes a connection between the receiving transport and the media consumer.
-/// It adds the consumer to the list of consumer transports, updates the consumer transports array,
-/// extracts the track from the consumer, and emits a 'consumer-resume' event to signal consumer resumption.
-///
-/// Parameters:
-/// - `consumer`: The consumer object representing the media consumer.
-/// - `consumerTransport`: The consumer transport object.
-/// - `remoteProducerId`: The ID of the remote producer.
-/// - `serverConsumerTransportId`: The ID of the server consumer transport.
-/// - `nsock`: The socket object for communication.
-/// - `parameters`: Additional parameters for the function.
-///
-/// Returns: A [Future] that completes when the connection is established.
+/// Parameters for connecting the receiving transport.
+abstract class ConnectRecvTransportParameters
+    implements ConsumerResumeParameters {
+  List<TransportType> get consumerTransports;
+  void Function(List<TransportType> transports) get updateConsumerTransports;
 
-/// Definition:
-/// - ConsumerResume: Represents a function that resumes a consumer.
-///   Parameters:
-///     - stream: The media stream to resume.
-///     - kind: The type of media (e.g., audio, video).
-///     - remoteProducerId: The ID of the remote producer.
-///     - parameters: Additional parameters needed for resuming.
-///     - nsock: The socket connection.
-/// connectRecvTransport(
+  // mediasfu functions
+  ConsumerResumeType get consumerResume;
+  ConnectRecvTransportParameters Function() get getUpdatedAllParams;
+
+  /// Allows accessing additional dynamic properties.
+  // dynamic operator [](String key);
+}
+
+/// Options for connecting the receiving transport.
+class ConnectRecvTransportOptions {
+  final Consumer consumer;
+  final Transport consumerTransport;
+  final String remoteProducerId;
+  final String serverConsumerTransportId;
+  final io.Socket nsock;
+  final ConnectRecvTransportParameters parameters;
+
+  ConnectRecvTransportOptions({
+    required this.consumer,
+    required this.consumerTransport,
+    required this.remoteProducerId,
+    required this.serverConsumerTransportId,
+    required this.nsock,
+    required this.parameters,
+  });
+}
+
+/// Type definition for the [connectRecvTransport] function.
+typedef ConnectRecvTransportType = Future<void> Function(
+    ConnectRecvTransportOptions options);
+
+/// Establishes a connection for the receiving transport to consume media from a remote producer and resumes the consumer stream.
+///
+/// ### Parameters:
+/// - `options` (`ConnectRecvTransportOptions`): Contains all necessary details to connect and manage the receiving transport:
+///   - `consumer` (`Consumer`): The media consumer instance.
+///   - `consumerTransport` (`Transport`): The transport associated with the consumer.
+///   - `remoteProducerId` (`String`): The ID of the producer being consumed.
+///   - `serverConsumerTransportId` (`String`): The server-generated transport ID.
+///   - `nsock` (`io.Socket`): The socket instance for real-time communication.
+///   - `parameters` (`ConnectRecvTransportParameters`): Includes parameters for updating transports, resuming the consumer, and device details.
+///
+/// ### Workflow:
+/// 1. **Consumption Initiation**: Emits a `consume` event to the socket to initiate media consumption, passing in the device's `rtpCapabilities`.
+/// 2. **Consumer Transport Management**: Adds the transport and consumer details to the `consumerTransports` list for tracking active connections.
+/// 3. **Stream Resumption**: If the consumer is successfully created, emits a `consumer-resume` event to resume media reception and triggers `consumerResume` to update the UI and media handling.
+///
+/// ### Returns:
+/// - A `Future<void>` that completes once the transport is connected and the consumer is resumed.
+///
+/// ### Example Usage:
+/// ```dart
+/// final options = ConnectRecvTransportOptions(
 ///   consumer: myConsumer,
 ///   consumerTransport: myConsumerTransport,
-///   remoteProducerId: 'remote_producer_id',
-///   serverConsumerTransportId: 'server_consumer_transport_id',
+///   remoteProducerId: 'producer-id-123',
+///   serverConsumerTransportId: 'transport-id-abc',
 ///   nsock: mySocket,
-///   parameters: {
-///     'getUpdatedAllParams': getUpdatedAllParamsFunction,
-///     'updateConsumerTransports': updateConsumerTransportsFunction,
-///     'consumerResume': consumerResumeFunction,
-///   },
+///   parameters: myConnectRecvTransportParameters,
 /// );
 ///
+/// connectRecvTransport(options).then(() {
+///   print('Receiving transport connected and consumer resumed');
+/// }).catchError((error) {
+///   print('Error connecting transport: $error');
+/// });
+/// ```
+///
+/// ### Error Handling:
+/// - Logs any errors encountered during the consumption or resumption process in debug mode.
 
-typedef GetUpdatedAllparameters = Map<String, dynamic> Function();
-typedef UpdateConsumerTransports = void Function(
-    List<dynamic> consumerTransports);
-typedef ConsumerResume = Future<void> Function({
-  required MediaStream stream,
-  required String kind,
-  required String remoteProducerId,
-  required Map<String, dynamic> parameters,
-  required io.Socket nsock,
-});
+Future<void> connectRecvTransport(ConnectRecvTransportOptions options) async {
+  var parameters = options.parameters.getUpdatedAllParams();
 
-Future<void> connectRecvTransport({
-  required Consumer consumer,
-  required dynamic consumerTransport,
-  required String remoteProducerId,
-  required String serverConsumerTransportId,
-  required io.Socket nsock,
-  required Map<String, dynamic> parameters,
-}) async {
+  // Extract parameters
+  final consumer = options.consumer;
+  final consumerTransports = parameters.consumerTransports;
+  final updateConsumerTransports = parameters.updateConsumerTransports;
+  final consumerResume = parameters.consumerResume;
+
+  final nsock = options.nsock;
+  final consumerTransport = options.consumerTransport;
+  final remoteProducerId = options.remoteProducerId;
+  final serverConsumerTransportId = options.serverConsumerTransportId;
+
   try {
-    GetUpdatedAllparameters getUpdatedAllParams =
-        parameters['getUpdatedAllParams'];
-
-    List<dynamic> consumerTransports =
-        getUpdatedAllParams()['consumerTransports'];
-    UpdateConsumerTransports updateConsumerTransports =
-        parameters['updateConsumerTransports'];
-
-    // mediasfu functions
-    ConsumerResume consumerResume = parameters['consumerResume'];
-
     // Update consumerTransports array with the new consumer
-    consumerTransports.add({
-      'consumerTransport': consumerTransport,
-      'serverConsumerTransportId': serverConsumerTransportId,
-      'producerId': remoteProducerId,
-      'consumer': consumer,
-      'socket_': nsock,
-    });
+    consumerTransports.add(TransportType(
+      consumerTransport: consumerTransport,
+      serverConsumerTransportId: serverConsumerTransportId,
+      producerId: remoteProducerId,
+      consumer: consumer,
+      socket_: nsock,
+    ));
 
     updateConsumerTransports(consumerTransports);
 
@@ -89,17 +119,17 @@ Future<void> connectRecvTransport({
     // Emit 'consumer-resume' event to signal consumer resumption
     nsock.emitWithAck('consumer-resume', {
       'serverConsumerId': consumer.id,
-    }, ack: (dynamic data) async {
-      if (data['resumed'] == true) {
+    }, ack: (resumeData) async {
+      if (resumeData['resumed'] == true) {
         // Consumer resumed and ready to be used
         try {
-          await consumerResume(
+          await consumerResume(ConsumerResumeOptions(
             stream: stream,
             kind: consumer.kind ?? '',
             remoteProducerId: remoteProducerId,
             parameters: parameters,
             nsock: nsock,
-          );
+          ));
         } catch (error) {
           // Handle error
           if (kDebugMode) {
@@ -111,9 +141,7 @@ Future<void> connectRecvTransport({
   } catch (error) {
     // Handle error
     if (kDebugMode) {
-      print('connectRecvTransport error: $error');
+      print('consume error: $error');
     }
-
-    // throw new Error('Error connecting receiving transport to consume media.');
   }
 }

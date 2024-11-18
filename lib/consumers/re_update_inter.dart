@@ -1,85 +1,183 @@
-// ignore_for_file: empty_catches
-
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import '../types/types.dart'
+    show
+        Stream,
+        Participant,
+        OnScreenChangesType,
+        ReorderStreamsType,
+        ChangeVidsType,
+        OnScreenChangesParameters,
+        ReorderStreamsParameters,
+        ChangeVidsParameters,
+        EventType,
+        ReorderStreamsOptions,
+        ChangeVidsOptions,
+        OnScreenChangesOptions;
 
-/// Updates the UI for active media streams based on the provided parameters.
+abstract class ReUpdateInterParameters
+    implements
+        OnScreenChangesParameters,
+        ReorderStreamsParameters,
+        ChangeVidsParameters {
+  // Basic properties as abstract getters
+  int get screenPageLimit;
+  int get itemPageLimit;
+  int get reorderInterval;
+  int get fastReorderInterval;
+  EventType get eventType;
+  List<Participant> get participants;
+  List<Stream> get allVideoStreams; // Use Stream for (Participant | Stream)
+  bool get shared;
+  bool get shareScreenStarted;
+  String get adminNameStream;
+  String get screenShareNameStream;
+  bool get updateMainWindow;
+  bool get sortAudioLoudness;
+  int get lastReorderTime;
+  List<Stream> get newLimitedStreams;
+  List<String> get newLimitedStreamsIDs;
+  List<String> get oldSoundIds;
+
+  // Update functions as abstract getters
+  void Function(bool) get updateUpdateMainWindow;
+  void Function(bool) get updateSortAudioLoudness;
+  void Function(int) get updateLastReorderTime;
+  void Function(List<Stream>) get updateNewLimitedStreams;
+  void Function(List<String>) get updateNewLimitedStreamsIDs;
+  void Function(List<String>) get updateOldSoundIds;
+
+  // Mediasfu functions as abstract getters
+  OnScreenChangesType get onScreenChanges;
+  ReorderStreamsType get reorderStreams;
+  ChangeVidsType get changeVids;
+
+  // Getter for updated parameters as a method
+  ReUpdateInterParameters Function() get getUpdatedAllParams;
+
+  // Dynamic access operator
+  // dynamic operator [](String key);
+}
+
+class ReUpdateInterOptions {
+  final String name;
+  final bool add;
+  final bool force;
+  final double average;
+  final ReUpdateInterParameters parameters;
+
+  ReUpdateInterOptions({
+    required this.name,
+    this.add = false,
+    this.force = false,
+    this.average = 127.0,
+    required this.parameters,
+  });
+}
+
+// Function type definition
+typedef ReUpdateInterType = Future<void> Function(ReUpdateInterOptions options);
+
+/// Updates the layout or content of the media streams based on user activity, screen share, or conference settings.
 ///
-/// The [name] parameter is required and represents the name of the stream.
-/// The [add] parameter indicates whether a new stream is being added.
-/// The [force] parameter indicates whether the update should be forced.
-/// The [average] parameter represents the average value.
-/// The [parameters] parameter is a map that contains various parameters for the update.
+/// This function reorganizes or adds video streams to the screen layout. It Streamally adjusts stream visibility
+/// and layout based on screen sharing, conference activity, and audio loudness changes. If a user is actively
+/// sharing or speaking loudly, the function may promote their stream to a prominent position based on defined intervals.
 ///
-/// This function performs various operations based on the provided parameters,
-/// such as reordering streams, changing videos, and updating the main window.
-/// It also handles scenarios related to screen sharing and shared streams.
+/// Parameters:
+/// - [options] (`ReUpdateInterOptions`): Options for updating the stream layout. Includes:
+///   - [name]: Name of the participant whose stream might be updated.
+///   - [add]: Determines if a stream should be added to the layout.
+///   - [force]: Forces the removal of a stream if true.
+///   - [average]: Audio loudness average for determining active speakers.
+///   - [parameters]: Parameters containing configuration settings for updating streams.
 ///
-/// The function returns a [Future] that completes when the update is finished.
+/// Example:
+/// ```dart
+/// final parameters = ReUpdateInterParameters(
+///   screenPageLimit: 6,
+///   itemPageLimit: 3,
+///   reorderInterval: 10000,
+///   fastReorderInterval: 5000,
+///   eventType: EventType.conference,
+///   participants: [participant1, participant2],
+///   allVideoStreams: [stream1, stream2],
+///   shared: false,
+///   shareScreenStarted: false,
+///   updateMainWindow: false,
+///   sortAudioLoudness: false,
+///   lastReorderTime: DateTime.now().millisecondsSinceEpoch,
+///   newLimitedStreams: [],
+///   newLimitedStreamsIDs: [],
+///   oldSoundIds: [],
+///   updateUpdateMainWindow: (value) => print('Update main window: $value'),
+///   updateSortAudioLoudness: (value) => print('Sort audio loudness: $value'),
+///   updateLastReorderTime: (value) => print('Last reorder time updated: $value'),
+///   updateNewLimitedStreams: (streams) => print('Updated new limited streams'),
+///   updateNewLimitedStreamsIDs: (ids) => print('Updated limited stream IDs'),
+///   updateOldSoundIds: (ids) => print('Updated old sound IDs'),
+///   onScreenChanges: (options) async => print('On screen changes called'),
+///   reorderStreams: (options) async => print('Reorder streams called'),
+///   changeVids: (options) async => print('Change vids called'),
+///   getUpdatedAllParams: () => parameters,
+/// );
+///
+/// final options = ReUpdateInterOptions(
+///   name: "JohnDoe",
+///   add: true,
+///   average: 129.0,
+///   parameters: parameters,
+/// );
+///
+/// await reUpdateInter(options);
+/// ```
 
-typedef OnScreenChanges = Future<void> Function(
-    {bool changed, required Map<String, dynamic> parameters});
-typedef ReorderStreams = Future<void> Function({
-  bool add,
-  bool screenChanged,
-  required Map<String, dynamic> parameters,
-});
+Future<void> reUpdateInter(ReUpdateInterOptions options) async {
+  // Destructure options
+  final name = options.name;
+  final add = options.add;
+  final force = options.force;
+  final average = options.average;
+  final parameters = options.parameters;
 
-typedef ChangeVids = Future<void> Function(
-    {bool screenChanged, required Map<String, dynamic> parameters});
-
-typedef UpdateUpdateMainWindowFunction = void Function(bool);
-typedef UpdateSortAudioLoudnessFunction = void Function(bool);
-typedef UpdateLastReOrderTimeFunction = void Function(int);
-typedef UpdateNewLimitedStreamsFunction = void Function(List<dynamic>);
-typedef UpdateNewLimitedStreamsIDsFunction = void Function(List<String>);
-typedef UpdateOldSoundIdsFunction = void Function(List<String>);
-
-Future<void> reUpdateInter(
-    {required String name,
-    bool add = false,
-    bool force = false,
-    double average = 127.0,
-    required Map<String, dynamic> parameters}) async {
   try {
-    int screenPageLimit = parameters['screenPageLimit'];
-    int itemPageLimit = parameters['itemPageLimit'];
-    int reOrderInterval = parameters['reOrderInterval'];
-    int fastReOrderInterval = parameters['fastReOrderInterval'];
-    String eventType = parameters['eventType'];
-    List<dynamic> participants = parameters['participants'];
-    List<dynamic> allVideoStreams = parameters['allVideoStreams'];
-    bool shared = parameters['shared'] ?? false;
-    bool shareScreenStarted = parameters['shareScreenStarted'];
-    String adminNameStream = parameters['adminNameStream'];
-    String screenShareNameStream = parameters['screenShareNameStream'];
-    bool updateMainWindow = parameters['updateMainWindow'];
-    bool sortAudioLoudness = parameters['sortAudioLoudness'] ?? false;
-    int lastReOrderTime = parameters['lastReOrderTime'] ?? 0;
-    List<dynamic> newLimitedStreams = parameters['newLimitedStreams'];
-    List<String> newLimitedStreamsIDs = parameters['newLimitedStreamsIDs'];
-    List<String> oldSoundIds = parameters['oldSoundIds'];
-    UpdateUpdateMainWindowFunction updateUpdateMainWindow =
-        parameters['updateUpdateMainWindow'];
-    UpdateSortAudioLoudnessFunction updateSortAudioLoudness =
-        parameters['updateSortAudioLoudness'];
-    UpdateLastReOrderTimeFunction updateLastReOrderTime =
-        parameters['updateLastReOrderTime'];
-    UpdateNewLimitedStreamsFunction updateNewLimitedStreams =
-        parameters['updateNewLimitedStreams'];
-    UpdateNewLimitedStreamsIDsFunction updateNewLimitedStreamsIDs =
-        parameters['updateNewLimitedStreamsIDs'];
-    UpdateOldSoundIdsFunction updateOldSoundIds =
-        parameters['updateOldSoundIds'];
+    int screenPageLimit = parameters.screenPageLimit;
+    int itemPageLimit = parameters.itemPageLimit;
+    int reorderInterval = parameters.reorderInterval;
+    int fastReorderInterval = parameters.fastReorderInterval;
+    EventType eventType = parameters.eventType;
+    List<Participant> participants = parameters.participants;
+    List<Stream> allVideoStreams = parameters.allVideoStreams;
+    bool shared = parameters.shared;
+    bool shareScreenStarted = parameters.shareScreenStarted;
+    String adminNameStream = parameters.adminNameStream;
+    String screenShareNameStream = parameters.screenShareNameStream;
+    bool updateMainWindow = parameters.updateMainWindow;
+    bool sortAudioLoudness = parameters.sortAudioLoudness;
+    int lastReorderTime = parameters.lastReorderTime;
+    List<Stream> newLimitedStreams = parameters.newLimitedStreams;
+    List<String> newLimitedStreamsIDs = parameters.newLimitedStreamsIDs;
+    List<String> oldSoundIds = parameters.oldSoundIds;
+    void Function(bool) updateUpdateMainWindow =
+        parameters.updateUpdateMainWindow;
+    void Function(bool) updateSortAudioLoudness =
+        parameters.updateSortAudioLoudness;
+    void Function(int) updateLastReorderTime = parameters.updateLastReorderTime;
+    void Function(List<Stream>) updateNewLimitedStreams =
+        parameters.updateNewLimitedStreams;
+    void Function(List<String>) updateNewLimitedStreamsIDs =
+        parameters.updateNewLimitedStreamsIDs;
+    void Function(List<String>) updateOldSoundIds =
+        parameters.updateOldSoundIds;
 
     // mediasfu functions
-    OnScreenChanges onScreenChanges = parameters['onScreenChanges'];
-    ReorderStreams reorderStreams = parameters['reorderStreams'];
-    ChangeVids changeVids = parameters['changeVids'];
+    OnScreenChangesType onScreenChanges = parameters.onScreenChanges;
+    ReorderStreamsType reorderStreams = parameters.reorderStreams;
+    ChangeVidsType changeVids = parameters.changeVids;
 
     int refLimit = screenPageLimit - 1;
 
-    if (eventType == 'broadcast' || eventType == 'chat') {
+    if (eventType == EventType.broadcast || eventType == EventType.chat) {
       return;
     }
 
@@ -90,100 +188,121 @@ Future<void> reUpdateInter(
 
       if (add) {
         final currentTime = DateTime.now().millisecondsSinceEpoch;
-        if (((currentTime - lastReOrderTime >= reOrderInterval) &&
+        if (((currentTime - lastReorderTime >= reorderInterval) &&
                 (average > 128.5)) ||
             (average > 130 &&
-                currentTime - lastReOrderTime >= fastReOrderInterval)) {
-          lastReOrderTime = currentTime;
+                currentTime - lastReorderTime >= fastReorderInterval)) {
+          lastReorderTime = currentTime;
           sortAudioLoudness = true;
-          if (eventType == 'conference') {
-            await onScreenChanges(changed: true, parameters: parameters);
+          if (eventType == EventType.conference) {
+            final optionsOnScreenChanges = OnScreenChangesOptions(
+              changed: true,
+              parameters: parameters,
+            );
+            await onScreenChanges(optionsOnScreenChanges);
           } else {
+            final optionsReorderStreams = ReorderStreamsOptions(
+              add: false,
+              screenChanged: true,
+              parameters: parameters,
+            );
             await reorderStreams(
-                add: false, screenChanged: true, parameters: parameters);
+              optionsReorderStreams,
+            );
           }
           sortAudioLoudness = false;
 
           updateSortAudioLoudness(sortAudioLoudness);
           updateUpdateMainWindow(updateMainWindow);
-          updateLastReOrderTime(lastReOrderTime);
+          updateLastReorderTime(lastReorderTime);
 
           return;
         }
       }
     }
 
-    String videoID;
+    String? videoID;
     if (shareScreenStarted || shared) {
       if (add) {
-        var participant = participants.firstWhere((p) => p['name'] == name,
-            orElse: () => null);
+        Participant? participant = participants.firstWhere(
+            (p) => p.name == name,
+            orElse: () => Participant(name: "", videoID: "", audioID: ""));
 
-        videoID = participant != null ? participant['videoID'] : null;
-        if (videoID == "") {
+        videoID = participant.videoID;
+        if (videoID.isEmpty || videoID == "") {
           return;
         }
 
         if (!newLimitedStreamsIDs.contains(videoID)) {
           if (newLimitedStreams.length > refLimit) {
-            var oldoldSounds = List<String>.from(oldSoundIds);
-            for (int i = 0; i < oldSoundIds.length; i++) {
+            List<String> oldSoundsCopy = List<String>.from(oldSoundIds);
+            for (var oldSoundId in oldSoundIds) {
               if (newLimitedStreams.length > refLimit) {
                 if (newLimitedStreams.length < screenPageLimit) {
                   return;
                 }
-                if (oldSoundIds[i] != screenShareNameStream ||
-                    oldSoundIds[i] != adminNameStream) {
-                  newLimitedStreams.removeWhere(
-                      (stream) => stream['producerId'] == oldSoundIds[i]);
-                  newLimitedStreamsIDs
-                      .removeWhere((id) => id == oldSoundIds[i]);
-                  oldoldSounds.removeWhere((id) => id == oldSoundIds[i]);
+                if (oldSoundId != screenShareNameStream &&
+                    oldSoundId != adminNameStream) {
+                  newLimitedStreams
+                      .removeWhere((stream) => stream.producerId == oldSoundId);
+                  newLimitedStreamsIDs.removeWhere((id) => id == oldSoundId);
+                  oldSoundsCopy.removeWhere((id) => id == oldSoundId);
                 }
               }
             }
-            oldSoundIds = List<String>.from(oldoldSounds);
+            oldSoundIds = List<String>.from(oldSoundsCopy);
           }
 
           var stream = allVideoStreams.firstWhere(
-              (stream) => stream['producerId'] == videoID,
-              orElse: () => null);
-          if (stream != null && newLimitedStreams.length < screenPageLimit) {
+              (stream) => stream.producerId == videoID,
+              orElse: () => Stream(producerId: "", name: "none"));
+          if (stream.name != 'none' &&
+              newLimitedStreams.length < screenPageLimit) {
             newLimitedStreams.add(stream);
             newLimitedStreamsIDs.add(videoID);
             if (!oldSoundIds.contains(name)) {
               oldSoundIds.add(name);
             }
-            await changeVids(parameters: parameters);
+            final optionsChangeVids = ChangeVidsOptions(
+              parameters: parameters,
+            );
+            await changeVids(optionsChangeVids);
           }
         }
       } else {
-        var participant = participants.firstWhere((p) => p['name'] == name,
-            orElse: () => null);
+        Participant? participant = participants.firstWhere(
+            (p) => p.name == name,
+            orElse: () => Participant(name: "", videoID: "", audioID: ""));
 
-        videoID = participant != null ? participant['videoID'] : null;
-        if (videoID == "") {
+        videoID = participant.videoID;
+        if (videoID == "" || videoID.isEmpty) {
           return;
         }
 
         if (!force) {
           try {
             newLimitedStreams
-                .removeWhere((stream) => stream['producerId'] == videoID);
+                .removeWhere((stream) => stream.producerId == videoID);
             newLimitedStreamsIDs.removeWhere((id) => id == videoID);
             oldSoundIds.removeWhere((id) => id == name);
-            await changeVids(parameters: parameters);
-          } catch (error) {}
+            final optionsChangeVids = ChangeVidsOptions(
+              parameters: parameters,
+            );
+            await changeVids(optionsChangeVids);
+          } catch (_) {}
         } else {
-          var mic = participant != null ? participant['muted'] : null;
+          var mic = participant.muted;
           if (mic != null && mic) {
             try {
               newLimitedStreams
-                  .removeWhere((stream) => stream['producerId'] == videoID);
+                  .removeWhere((stream) => stream.producerId == videoID);
               newLimitedStreamsIDs.removeWhere((id) => id == videoID);
               oldSoundIds.removeWhere((id) => id == name);
-              await changeVids(parameters: parameters);
-            } catch (error) {}
+              final optionsChangeVids = ChangeVidsOptions(
+                parameters: parameters,
+              );
+              await changeVids(optionsChangeVids);
+            } catch (_) {}
           }
         }
       }
@@ -192,7 +311,7 @@ Future<void> reUpdateInter(
       updateNewLimitedStreamsIDs(newLimitedStreamsIDs);
       updateOldSoundIds(oldSoundIds);
     }
-  } catch (error) {
+  } catch (_) {
     if (kDebugMode) {
       // print('Error updating UI for active media streams: $error');
     }

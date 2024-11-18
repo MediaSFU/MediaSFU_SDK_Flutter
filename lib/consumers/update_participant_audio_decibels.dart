@@ -1,34 +1,44 @@
-typedef UpdateAudioDecibels = void Function(List<dynamic> audioDecibels);
+import '../types/types.dart' show AudioDecibels;
 
-/// Updates the participant's audio decibels.
+/// Represents the options for updating the audio decibels of a participant.
+class UpdateParticipantAudioDecibelsOptions {
+  final String name;
+  final double averageLoudness;
+  final List<AudioDecibels> audioDecibels;
+  final Function(List<AudioDecibels>) updateAudioDecibels;
+
+  UpdateParticipantAudioDecibelsOptions({
+    required this.name,
+    required this.averageLoudness,
+    required this.audioDecibels,
+    required this.updateAudioDecibels,
+  });
+}
+
+typedef UpdateParticipantAudioDecibelsType = void Function(
+    UpdateParticipantAudioDecibelsOptions options);
+
+/// Updates the audio decibels for a participant.
 ///
-/// This function updates the audio decibels for a participant by either adding a new entry or updating an existing entry in the `audioDecibels` list.
-/// The `name` parameter specifies the name of the participant.
-/// The `averageLoudness` parameter specifies the average loudness of the participant's audio.
-/// The `parameters` parameter is a map that contains the `audioDecibels` list and the `updateAudioDecibels` function.
-/// The `audioDecibels` list contains entries for each participant's audio decibels.
-/// The `updateAudioDecibels` function is used to update the `audioDecibels` list.
-
-void updateParticipantAudioDecibels({
-  required String name,
-  required double averageLoudness,
-  required Map<String, dynamic> parameters,
-}) {
-  List<dynamic> audioDecibels = parameters['audioDecibels'];
-  UpdateAudioDecibels updateAudioDecibels = parameters['updateAudioDecibels'];
-
+/// This function either updates an existing entry or adds a new entry for the participant's audio decibels in the `audioDecibels` list.
+/// - [options]: An instance of [UpdateParticipantAudioDecibelsOptions] containing all the necessary parameters.
+void updateParticipantAudioDecibels(
+    UpdateParticipantAudioDecibelsOptions options) {
   // Check if the entry already exists in audioDecibels
-  int existingIndex =
-      audioDecibels.indexWhere((entry) => entry['name'] == name);
+  AudioDecibels existingEntry = options.audioDecibels.firstWhere(
+    (entry) => entry.name == options.name,
+    orElse: () => AudioDecibels(name: options.name, averageLoudness: 0),
+  );
 
-  if (existingIndex != -1) {
+  if (options.audioDecibels.contains(existingEntry)) {
     // Entry exists, update the averageLoudness
-    audioDecibels[existingIndex]['averageLoudness'] = averageLoudness;
+    existingEntry.averageLoudness = options.averageLoudness;
   } else {
     // Entry doesn't exist, add a new entry to audioDecibels
-    audioDecibels.add({'name': name, 'averageLoudness': averageLoudness});
+    options.audioDecibels.add(AudioDecibels(
+        name: options.name, averageLoudness: options.averageLoudness));
   }
 
   // Update the audioDecibels array
-  updateAudioDecibels(audioDecibels);
+  options.updateAudioDecibels(options.audioDecibels);
 }

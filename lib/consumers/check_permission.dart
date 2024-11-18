@@ -1,73 +1,91 @@
 import 'dart:async';
 
-/// A function that checks the permission for a given permission type and parameters.
-///
-/// The [CheckPermission] typedef represents a function that returns a [Future] of an [int].
-/// It takes in a [permissionType] of type [String] and [parameters] of type [Map<String, dynamic>].
-///
-/// The [checkPermission] function is an implementation of the [CheckPermission] typedef.
-/// It performs a switch case to check for the [permissionType] and returns the corresponding response.
-/// The [parameters] map is used to retrieve the settings for audio, video, screenshare, and chat.
-/// If the settings are not provided, the default value is 'disallow'.
-///
-/// The function returns a [Future] of an [int] representing the permission status:
-/// - 0: Permission is allowed.
-/// - 1: Permission requires approval.
-/// - 2: Permission is disallowed or invalid permissionType.
-///
-/// If an error occurs during the permission check, the function returns 2.
+import 'package:flutter/foundation.dart';
 
-typedef CheckPermission = Future<int> Function(
-    {String permissionType, Map<String, dynamic> parameters});
+/// Options for checking permission based on specific settings.
+///
+/// Contains settings for audio, video, screenshare, and chat, as well as the type of permission to check.
+class CheckPermissionOptions {
+  final String audioSetting;
+  final String videoSetting;
+  final String screenshareSetting;
+  final String chatSetting;
+  final String permissionType;
 
-Future<int> checkPermission(
-    {required String permissionType,
-    required Map<String, dynamic> parameters}) async {
+  CheckPermissionOptions({
+    required this.audioSetting,
+    required this.videoSetting,
+    required this.screenshareSetting,
+    required this.chatSetting,
+    required this.permissionType,
+  });
+}
+
+/// Type definition for the `checkPermission` function.
+///
+/// Represents a function that takes in [CheckPermissionOptions] and returns a `Future<int>`.
+typedef CheckPermissionType = Future<int> Function(
+    CheckPermissionOptions options);
+
+/// Checks the permission based on the provided settings.
+///
+/// ### Parameters:
+/// - `options` (CheckPermissionOptions): The options containing permission settings.
+///
+/// ### Returns:
+/// - A `Future<int>` representing the permission status:
+///   - `0`: Permission is allowed.
+///   - `1`: Permission requires approval.
+///   - `2`: Permission is disallowed or the `permissionType` is invalid.
+///
+/// ### Example:
+/// ```dart
+/// final options = CheckPermissionOptions(
+///   permissionType: 'audioSetting',
+///   audioSetting: 'allow',
+///   videoSetting: 'approval',
+///   screenshareSetting: 'approval',
+///   chatSetting: 'allow',
+/// );
+///
+/// checkPermission(options).then((result) {
+///   print('Permission result: $result');
+/// }).catchError((error) {
+///   print('Error checking permission: $error');
+/// });
+/// ```
+Future<int> checkPermission(CheckPermissionOptions options) async {
   try {
-    String audioSetting = parameters['audioSetting'] ?? 'disallow';
-    String videoSetting = parameters['videoSetting'] ?? 'disallow';
-    String screenshareSetting = parameters['screenshareSetting'] ?? 'disallow';
-    String chatSetting = parameters['chatSetting'] ?? 'disallow';
-
-    // Perform a switch case to check for the permissionType and return the response
-    switch (permissionType) {
+    // Determine the permission type and corresponding setting
+    switch (options.permissionType) {
       case 'audioSetting':
-        if (audioSetting == 'allow') {
-          return 0;
-        } else if (audioSetting == 'approval') {
-          return 1;
-        } else {
-          return 2;
-        }
+        if (options.audioSetting == 'allow') return 0;
+        if (options.audioSetting == 'approval') return 1;
+        return 2;
+
       case 'videoSetting':
-        if (videoSetting == 'allow') {
-          return 0;
-        } else if (videoSetting == 'approval') {
-          return 1;
-        } else {
-          return 2;
-        }
+        if (options.videoSetting == 'allow') return 0;
+        if (options.videoSetting == 'approval') return 1;
+        return 2;
+
       case 'screenshareSetting':
-        if (screenshareSetting == 'allow') {
-          return 0;
-        } else if (screenshareSetting == 'approval') {
-          return 1;
-        } else {
-          return 2;
-        }
+        if (options.screenshareSetting == 'allow') return 0;
+        if (options.screenshareSetting == 'approval') return 1;
+        return 2;
+
       case 'chatSetting':
-        if (chatSetting == 'allow') {
-          return 0;
-        } else if (chatSetting == 'approval') {
-          return 1;
-        } else {
-          return 2;
-        }
+        if (options.chatSetting == 'allow') return 0;
+        if (options.chatSetting == 'approval') return 1;
+        return 2;
+
       default:
-        // throw Exception('Invalid permissionType: $permissionType');
+        // Return 2 for invalid permission type
         return 2;
     }
   } catch (error) {
+    if (kDebugMode) {
+      print('checkPermission error: $error');
+    }
     return 2;
   }
 }

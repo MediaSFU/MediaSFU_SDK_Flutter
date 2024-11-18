@@ -1,158 +1,214 @@
-// ignore_for_file: empty_catches
-
 import 'dart:async';
+import '../../types/types.dart'
+    show
+        Participant,
+        PrepopulateUserMediaType,
+        ReorderStreamsType,
+        ReUpdateInterParameters,
+        ReUpdateInterType,
+        ReorderStreamsParameters,
+        PrepopulateUserMediaParameters,
+        PrepopulateUserMediaOptions,
+        ReUpdateInterOptions,
+        ReorderStreamsOptions;
 
-/// Pauses the audio, video, or screenshare of a participant.
+/// Defines the parameters required for pausing media of a producer.
+abstract class ProducerMediaPausedParameters
+    implements
+        PrepopulateUserMediaParameters,
+        ReorderStreamsParameters,
+        ReUpdateInterParameters {
+  final List<String> activeSounds;
+  final String meetingDisplayType;
+  final bool meetingVideoOptimized;
+  final List<Participant> participants;
+  final List<String> oldSoundIds;
+  final bool shared;
+  final bool shareScreenStarted;
+  final bool updateMainWindow;
+  final String hostLabel;
+  final String islevel;
+
+  // Callback functions
+  final void Function(List<String>) updateActiveSounds;
+  final void Function(bool) updateUpdateMainWindow;
+
+  // mediasfu functions
+  final ReorderStreamsType reorderStreams;
+  final PrepopulateUserMediaType prepopulateUserMedia;
+  final ReUpdateInterType reUpdateInter;
+
+  /// Function to retrieve updated parameters
+  final ProducerMediaPausedParameters Function() getUpdatedAllParams;
+
+  ProducerMediaPausedParameters({
+    required this.activeSounds,
+    required this.meetingDisplayType,
+    required this.meetingVideoOptimized,
+    required this.participants,
+    required this.oldSoundIds,
+    required this.shared,
+    required this.shareScreenStarted,
+    required this.updateMainWindow,
+    required this.hostLabel,
+    required this.islevel,
+    required this.updateActiveSounds,
+    required this.updateUpdateMainWindow,
+    required this.reorderStreams,
+    required this.prepopulateUserMedia,
+    required this.reUpdateInter,
+    required this.getUpdatedAllParams,
+  });
+
+  // dynamic operator [](String key);
+}
+
+/// Encapsulates the options for pausing a producer's media.
+class ProducerMediaPausedOptions {
+  final String producerId;
+  final String kind; // 'audio', 'video', 'screenshare', or 'screen'
+  final String name;
+  final ProducerMediaPausedParameters parameters;
+
+  ProducerMediaPausedOptions({
+    required this.producerId,
+    required this.kind,
+    required this.name,
+    required this.parameters,
+  });
+}
+
+typedef ProducerMediaPausedType = Future<void> Function(
+    ProducerMediaPausedOptions options);
+
+/// Pauses the media for a producer based on specified parameters.
 ///
-/// [producerId] is the ID of the producer.
-/// [kind] is the kind of media (audio, video, screenshare).
-/// [name] is the name of the participant.
-/// [parameters] is a map of additional parameters.
+/// This function handles media pausing operations and UI updates based on the media type,
+/// participant properties, and meeting settings.
 ///
-/// The function iterates through all activeSounds and checks if any participant with the muted property set to true is in it, and removes them.
-/// It also updates the UI based on the mediaDisplayType and optimizes interest levels for audio.
-/// If screenshare is active, it removes the participant from activeSounds and updates the UI accordingly.
-/// If screenshare is not active, it obeys the user display settings.
+/// [options] - The `ProducerMediaPausedOptions` instance containing the producer's ID, media kind, name, and parameters.
 ///
-/// The function also handles updating the UI based on the mediaDisplayType and meetingVideoOptimized.
-/// It checks if the participant's videoID is null or empty and updates the UI accordingly.
+/// Example:
+/// ```dart
+/// final options = ProducerMediaPausedOptions(
+///   producerId: 'abc123',
+///   kind: 'audio',
+///   name: 'Participant1',
+///   parameters: ProducerMediaPausedParameters(
+///     activeSounds: [],
+///     meetingDisplayType: 'media',
+///     meetingVideoOptimized: false,
+///     participants: [Participant(name: 'Participant1', islevel: '2', muted: true, videoID: null)],
+///     oldSoundIds: ['Participant1'],
+///     shared: false,
+///     shareScreenStarted: false,
+///     updateMainWindow: false,
+///     hostLabel: 'Host',
+///     islevel: '1',
+///     updateActiveSounds: (sounds) => print("Active sounds updated: $sounds"),
+///     updateUpdateMainWindow: (update) => print("Main window updated: $update"),
+///     reorderStreams: (params) async => print("Reordered streams: $params"),
+///     prepopulateUserMedia: (params) async => print("Prepopulated user media: $params"),
+///     reUpdateInter: (params) async => print("Re-updated interface: $params"),
+///     getUpdatedAllParams: () => ProducerMediaPausedParameters(...),
+///   ),
+/// );
 ///
-/// If the kind is 'audio', it stops the audio by removing the miniAudio with the specified producerId.
-/// It also checks if the participant's name is in oldSoundIds and updates the UI accordingly.
-///
-/// Throws an error if any exception occurs during the process.
+/// await producerMediaPaused(options);
+/// ```
+Future<void> producerMediaPaused(ProducerMediaPausedOptions options) async {
+  // Retrieve updated parameters if necessary
+  final parameters = options.parameters.getUpdatedAllParams();
 
-typedef ReUpdateInter = Future<void> Function({
-  required String name,
-  bool add,
-  bool force,
-  double average,
-  required Map<String, dynamic> parameters,
-});
+  final activeSounds = parameters.activeSounds;
+  final meetingDisplayType = parameters.meetingDisplayType;
+  final meetingVideoOptimized = parameters.meetingVideoOptimized;
+  final participants = parameters.participants;
+  final oldSoundIds = parameters.oldSoundIds;
+  final shared = parameters.shared;
+  final shareScreenStarted = parameters.shareScreenStarted;
+  final hostLabel = parameters.hostLabel;
+  final islevel = parameters.islevel;
 
-typedef CloseAndResize = Future<void> Function({
-  required String producerId,
-  required String kind,
-  required Map<String, dynamic> parameters,
-});
+  // Callback functions
+  final updateActiveSounds = parameters.updateActiveSounds;
+  final updateUpdateMainWindow = parameters.updateUpdateMainWindow;
 
-typedef PrepopulateUserMedia = List<dynamic> Function({
-  required String name,
-  required Map<String, dynamic> parameters,
-});
+  // mediasfu functions
+  final reorderStreams = parameters.reorderStreams;
+  final prepopulateUserMedia = parameters.prepopulateUserMedia;
+  final reUpdateInter = parameters.reUpdateInter;
 
-typedef ReorderStreams = Future<void> Function({
-  bool add,
-  bool screenChanged,
-  required Map<String, dynamic> parameters,
-});
-
-typedef UpdateActiveSounds = void Function(List<String> activeSounds);
-typedef UpdateOldSoundIds = void Function(List<String> oldSoundIds);
-typedef UpdateShared = void Function(bool shared);
-typedef UpdateShareScreenStarted = void Function(bool shareScreenStarted);
-typedef UpdateUpdateMainWindow = void Function(bool updateMainWindow);
-typedef UpdateParticipants = void Function(List<dynamic> participants);
-
-Future<void> producerMediaPaused(
-    {required String producerId,
-    required String kind,
-    required String name,
-    required Map<String, dynamic> parameters}) async {
-  // Update to pause the audio, video, screenshare of a participant
-  // producerId is the id of the producer
-  // kind is the kind of media (audio, video, screenshare)
-  // name is the name of the participant
-
-  List<String> activeSounds = parameters['activeSounds'];
-  String meetingDisplayType = parameters['meetingDisplayType'];
-  bool meetingVideoOptimized = parameters['meetingVideoOptimized'];
-  List<dynamic> participants = parameters['participants'];
-  List<dynamic> oldSoundIds = parameters['oldSoundIds'];
-  bool shared = parameters['shared'];
-  bool shareScreenStarted = parameters['shareScreenStarted'];
-  String hostLabel = parameters['hostLabel'];
-  String islevel = parameters['islevel'];
-
-  UpdateActiveSounds updateActiveSounds = parameters['updateActiveSounds'];
-
-  //mediasfu functions
-  PrepopulateUserMedia prepopulateUserMedia =
-      parameters['prepopulateUserMedia'];
-  ReorderStreams reorderStreams = parameters['reorderStreams'];
-  ReUpdateInter reUpdateInter = parameters['reUpdateInter'];
-
-  // Iterate through all activeSounds and check if any participant with muted property of true is in it and remove it
-  for (var participant in participants) {
-    // Update the UI for mediaDisplayTypes and re-render
-    if (participant['muted']) {
-      if (participant['islevel'] == '2') {
-        // Look for videoID is null or "" or undefined
-        if (participant['videoID'] == null || participant['videoID'] == "") {
-          if (!shared && !shareScreenStarted && islevel != '2') {
-            prepopulateUserMedia(name: hostLabel, parameters: parameters);
-          }
-        }
+  // Iterate through participants and update UI based on media settings and participant state
+  for (final participant in participants) {
+    if (participant.muted!) {
+      if (participant.islevel == '2' &&
+          participant.videoID.isNotEmpty &&
+          !shared &&
+          !shareScreenStarted &&
+          islevel != '2') {
+        updateUpdateMainWindow(true);
+        final optionsPrepopulate = PrepopulateUserMediaOptions(
+          name: hostLabel,
+          parameters: parameters,
+        );
+        await prepopulateUserMedia(optionsPrepopulate);
+        updateUpdateMainWindow(false);
       }
 
       if (shareScreenStarted || shared) {
-        // Check if the participant is in activeSounds
-        // Remove the participant from activeSounds if need be; others might have both audio and video on
-        if (activeSounds.contains(participant['name'])) {
-          activeSounds.remove(participant['name']);
+        if (activeSounds.contains(participant.name)) {
+          activeSounds.remove(participant.name);
           updateActiveSounds(activeSounds);
         }
 
-        try {
-          reUpdateInter(
-              name: participant['name'],
-              add: false,
-              force: true,
-              parameters: parameters);
-        } catch (error) {}
-      } else {
-        // No screensahre so obey user display settings; show waveforms, ..
+        final optionsReUpdate = ReUpdateInterOptions(
+          name: participant.name,
+          add: false,
+          force: true,
+          parameters: parameters,
+        );
+        await reUpdateInter(optionsReUpdate);
       }
     }
   }
 
-  // Operation to update the UI based on the mediaDisplayType
-  bool checker = false;
-
+  // Update UI based on display type and video optimization settings
   if (meetingDisplayType == 'media' ||
       (meetingDisplayType == 'video' && !meetingVideoOptimized)) {
-    var participant = participants.firstWhere((obj) => obj['name'] == name,
-        orElse: () => null);
-    checker = participant != null &&
-        participant['videoID'] != null &&
-        participant['videoID'] != "";
+    final participant = participants.firstWhere((p) => p.name == options.name,
+        orElse: () => Participant(
+            name: '', islevel: '', videoID: '', audioID: '', muted: false));
+    final hasVideo = participant.videoID.isNotEmpty;
 
-    if (!checker) {
-      if (shareScreenStarted || shared) {
-      } else {
-        reorderStreams(add: false, screenChanged: true, parameters: parameters);
-      }
+    if (!hasVideo && !(shareScreenStarted || shared)) {
+      final optionsReorder = ReorderStreamsOptions(
+        add: false,
+        screenChanged: true,
+        parameters: parameters,
+      );
+      await reorderStreams(
+        optionsReorder,
+      );
     }
   }
 
-  if (kind == 'audio') {
-    // Operation to update UI to optimize interest levels
-    // Stop the audio by removing the miniAudio with id = producerId
-    // Get audio element with id = producerId
-    try {
-      var participant = participants.firstWhere(
-          (obj) => obj['audioID'] == producerId,
-          orElse: () => null);
+  // Handle audio-specific media pausing
+  if (options.kind == 'audio') {
+    final participant = participants.firstWhere(
+      (p) => p.audioID == options.producerId || p.name == options.name,
+      orElse: () => Participant(
+          name: '', islevel: '', videoID: '', audioID: '', muted: false),
+    );
 
-      // Check if the participant name is in oldSoundsIds
-      if (participant != null && oldSoundIds.contains(participant['name'])) {
-        // Remove the participant name from oldSoundsIds
-        reUpdateInter(
-            name: participant['name'],
-            add: false,
-            force: true,
-            parameters: parameters);
-      }
-    } catch (error) {}
+    if (participant.name.isNotEmpty && oldSoundIds.contains(participant.name)) {
+      final optionsReUpdate = ReUpdateInterOptions(
+        name: participant.name,
+        add: false,
+        force: true,
+        parameters: parameters,
+      );
+      await reUpdateInter(optionsReUpdate);
+    }
   }
 }

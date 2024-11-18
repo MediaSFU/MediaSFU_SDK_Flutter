@@ -1,66 +1,81 @@
-// ignore_for_file: empty_catches
+import '../../types/types.dart'
+    show Participant, CoHostResponsibility, ShowAlert;
 
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
-});
+/// Defines options for messaging a participant.
+class MessageParticipantsOptions {
+  final List<CoHostResponsibility> coHostResponsibility;
+  final Participant participant;
+  final String member;
+  final String islevel;
+  final ShowAlert? showAlert;
+  final String coHost;
+  final void Function(bool) updateIsMessagesModalVisible;
+  final void Function(Participant?) updateDirectMessageDetails;
+  final void Function(bool) updateStartDirectMessage;
 
-/// A function that sends a message to participants based on certain parameters.
+  MessageParticipantsOptions({
+    required this.coHostResponsibility,
+    required this.participant,
+    required this.member,
+    required this.islevel,
+    this.showAlert,
+    required this.coHost,
+    required this.updateIsMessagesModalVisible,
+    required this.updateDirectMessageDetails,
+    required this.updateStartDirectMessage,
+  });
+}
+
+/// Type definition for the function that sends a message to participants.
+typedef MessageParticipantsType = void Function(
+    MessageParticipantsOptions options);
+
+/// Sends a direct message to a participant if the current member has the necessary permissions.
 ///
-/// The [parameters] parameter is a map that contains the following keys:
-/// - coHostResponsibility: A list of dynamic values representing co-host responsibilities.
-/// - participant: A dynamic value representing the participant.
-/// - member: A string representing the member.
-/// - islevel: A string representing the level.
-/// - coHost: A string representing the co-host.
-/// - showAlert: A function that shows an alert with the specified message, type, and duration.
-/// - updateIsMessagesModalVisible: A function that updates the visibility of the messages modal.
-/// - updateDirectMessageDetails: A function that updates the details of the direct message.
-/// - updateStartDirectMessage: A function that updates the start of the direct message.
+/// This function checks if the current member has the required permissions based on their level
+/// and co-host responsibilities. If authorized, it initiates a direct message.
 ///
-/// The function checks if the user is allowed to send a message based on the given parameters.
-/// If the user is allowed, it updates the direct message details, starts the direct message,
-/// and shows the messages modal. Otherwise, it shows an alert indicating that the user is not allowed
-/// to send the message.
-
-void messageParticipants({required Map<String, dynamic> parameters}) {
-  final List<dynamic> coHostResponsibility =
-      parameters['coHostResponsibility'] ?? [];
-  final dynamic participant = parameters['participant'];
-  final String member = parameters['member'] ?? '';
-  final String islevel = parameters['islevel'] ?? '1';
-  final String coHost = parameters['coHost'] ?? '';
-  final ShowAlert? showAlert = parameters['showAlert'];
-
-  final void Function(bool) updateIsMessagesModalVisible =
-      parameters['updateIsMessagesModalVisible'] as void Function(bool);
-  final void Function(Map<String, dynamic>) updateDirectMessageDetails =
-      parameters['updateDirectMessageDetails'] as void Function(
-          Map<String, dynamic>);
-  final void Function(bool) updateStartDirectMessage =
-      parameters['updateStartDirectMessage'] as void Function(bool);
-
+/// Example:
+/// ```dart
+/// final options = MessageParticipantsOptions(
+///   coHostResponsibility: [CoHostResponsibility(name: 'chat', value: true)],
+///   participant: Participant(name: 'John Doe', islevel: '1'),
+///   member: 'currentMember',
+///   islevel: '2',
+///   showAlert: (alert) => print(alert.message),
+///   coHost: 'coHostMember',
+///   updateIsMessagesModalVisible: (isVisible) => print('Modal visibility: $isVisible'),
+///   updateDirectMessageDetails: (participant) => print('Direct message details: $participant'),
+///   updateStartDirectMessage: (start) => print('Start direct message: $start'),
+/// );
+///
+/// messageParticipants(options);
+/// ```
+void messageParticipants(MessageParticipantsOptions options) {
   bool chatValue = false;
 
   try {
-    chatValue = coHostResponsibility
-        .firstWhere((item) => item['name'] == 'chat')['value'];
-  } catch (error) {}
+    chatValue = options.coHostResponsibility
+        .firstWhere((item) => item.name == 'chat',
+            orElse: () => CoHostResponsibility(
+                name: 'chat', value: false, dedicated: false))
+        .value;
+  } catch (_) {
+    chatValue = false;
+  }
 
-  if (islevel == '2' || (coHost == member && chatValue == true)) {
-    if (participant['islevel'] != '2') {
-      updateDirectMessageDetails(participant);
-      updateStartDirectMessage(true);
-      updateIsMessagesModalVisible(true);
+  if (options.islevel == '2' ||
+      (options.coHost == options.member && chatValue)) {
+    if (options.participant.islevel != '2') {
+      options.updateDirectMessageDetails(options.participant);
+      options.updateStartDirectMessage(true);
+      options.updateIsMessagesModalVisible(true);
     }
   } else {
-    if (showAlert != null) {
-      showAlert(
-        message: 'You are not allowed to send this message',
-        type: 'danger',
-        duration: 3000,
-      );
-    }
+    options.showAlert?.call(
+      message: 'You are not allowed to send this message',
+      type: 'danger',
+      duration: 3000,
+    );
   }
 }

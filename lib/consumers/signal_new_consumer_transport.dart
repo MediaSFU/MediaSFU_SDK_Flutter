@@ -1,130 +1,165 @@
+// ignore_for_file: empty_catches
+
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
+import '../types/types.dart'
+    show
+        ReorderStreamsParameters,
+        ReorderStreamsType,
+        ConnectRecvTransportType,
+        ConnectRecvTransportParameters,
+        ConnectRecvTransportOptions,
+        GetVideosType,
+        ReorderStreamsOptions,
+        ConsumeResponse;
 
-/// Signals a new consumer transport for consuming media from a remote producer.
+/// Parameters required for signaling a new consumer transport.
+/// Extends [ReorderStreamsParameters] and [ConnectRecvTransportParameters].
+abstract class SignalNewConsumerTransportParameters
+    implements ReorderStreamsParameters, ConnectRecvTransportParameters {
+  // Additional properties as abstract getters
+  List<String> get consumingTransports;
+  bool get lockScreen;
+  Device? get device;
+
+  // Update functions as an abstract getter
+  void Function(List<String>) get updateConsumingTransports;
+
+  // Mediasfu functions as abstract getters
+  ConnectRecvTransportType get connectRecvTransport;
+  ReorderStreamsType get reorderStreams;
+  GetVideosType get getVideos;
+
+  // Method to get updated parameters
+  SignalNewConsumerTransportParameters Function() get getUpdatedAllParams;
+
+  // Allow any other key-value pairs
+  // dynamic operator [](String key);
+}
+
+/// Options required for signaling a new consumer transport.
+class SignalNewConsumerTransportOptions {
+  String remoteProducerId;
+  String islevel;
+  io.Socket nsock;
+  SignalNewConsumerTransportParameters parameters;
+
+  SignalNewConsumerTransportOptions({
+    required this.remoteProducerId,
+    required this.islevel,
+    required this.nsock,
+    required this.parameters,
+  });
+}
+
+/// Function type definition for signaling a new consumer transport.
+typedef SignalNewConsumerTransportType = Future<void> Function(
+    SignalNewConsumerTransportOptions options);
+
+/// Signals the creation of a new consumer transport.
 ///
-/// The [remoteProducerId] is the ID of the remote producer.
-/// The [islevel] is the level of the consumer.
-/// The [nsock] is the socket for communication.
-/// The [parameters] is a map of parameters including callbacks and transports.
+/// This function communicates with the server to create a new WebRTC transport for consuming media from a remote producer.
+/// It handles the transport connection and consumption of media streams.
 ///
-/// This function establishes a connection with the remote producer and consumes media using the received parameters.
-/// It also handles connection state changes and reorders streams based on conditions.
+/// Throws an error if the signaling process fails.
 ///
-/// Throws an error if an error occurs during the process.
+/// Example usage:
+/// ```dart
+/// final options = SignalNewConsumerTransportOptions(
+///   remoteProducerId: 'producer-id',
+///   islevel: '1',
+///   nsock: socketInstance,
+///   parameters: SignalNewConsumerTransportParameters(
+///     device: mediaDevice,
+///     consumingTransports: [],
+///     lockScreen: false,
+///     updateConsumingTransports: (transports) => print('Consuming Transports: $transports'),
+///     connectRecvTransport: connectRecvTransportFunction,
+///     reorderStreams: reorderStreamsFunction,
+///     getVideos: getVideosFunction,
+///     getUpdatedAllParams: () => options.parameters,
+///   ),
+/// );
 ///
-/// Definitions:
-/// - GetUpdatedAllparameters: Function type to retrieve updated parameters.
-/// - ReorderStreams: Function type to reorder streams.
-/// - SignalNewConsumerTransport: Function type to signal a new consumer transport.
-/// - UpdateConsumingTransports: Function type to update consuming transports.
-/// - ConnectRecvTransport: Function type to connect a receiving transport.
+/// await signalNewConsumerTransport(options);
+/// ```
 ///
-
-typedef GetUpdatedAllparameters = Map<String, dynamic> Function();
-
-typedef ReorderStreams = Future<void> Function({
-  bool add,
-  bool screenChanged,
-  required Map<String, dynamic> parameters,
-});
-
-typedef SignalNewConsumerTransport = Future<List<String>> Function({
-  required String remoteProducerId,
-  required String islevel,
-  required io.Socket nsock,
-  required Map<String, dynamic> parameters,
-});
-
-typedef UpdateConsumingTransports = void Function(
-    List<dynamic> consumingTransports);
-
-typedef ConnectRecvTransport = Future<void> Function({
-  required Consumer consumer,
-  required dynamic consumerTransport,
-  required String remoteProducerId,
-  required String serverConsumerTransportId,
-  required io.Socket nsock,
-  required Map<String, dynamic> parameters,
-});
-
 Future<void> signalNewConsumerTransport(
-    {required String remoteProducerId,
-    required String islevel,
-    required io.Socket nsock,
-    required Map<String, dynamic> parameters}) async {
+    SignalNewConsumerTransportOptions options) async {
+  var parameters = options.parameters;
+  final updatedParameters = options.parameters.getUpdatedAllParams();
+  Device? device = updatedParameters.device;
+  List<String> consumingTransports =
+      List<String>.from(updatedParameters.consumingTransports);
+  bool lockScreen = parameters.lockScreen;
+
+  // Update functions
+  void Function(List<String>) updateConsumingTransports =
+      parameters.updateConsumingTransports;
+
+  // mediasfu functions
+  ConnectRecvTransportType connectRecvTransport =
+      parameters.connectRecvTransport;
+  ReorderStreamsType reorderStreams = parameters.reorderStreams;
+
   try {
-    // Get parameters from the parameters map
-    GetUpdatedAllparameters getUpdatedAllParams =
-        parameters['getUpdatedAllParams'];
-
-    Device? device = getUpdatedAllParams()['device'];
-    List<dynamic> consumingTransports =
-        getUpdatedAllParams()['consumingTransports'];
-    bool? lockScreen = parameters['lockScreen'];
-    UpdateConsumingTransports updateConsumingTransports =
-        parameters['updateConsumingTransports'];
-
-    // mediasfu functions
-    ConnectRecvTransport connectRecvTransport =
-        parameters['connectRecvTransport'];
-    ReorderStreams reorderStreams = parameters['reorderStreams'];
-
     // Check if already consuming
-    if (consumingTransports.contains(remoteProducerId)) {
+    if (consumingTransports.contains(options.remoteProducerId)) {
       return;
     }
 
     // Add remote producer ID to consumingTransports array
-    consumingTransports.add(remoteProducerId);
+    consumingTransports.add(options.remoteProducerId);
     updateConsumingTransports(consumingTransports);
 
     // Emit createWebRtcTransport event to signal a new consumer
-    Completer completer = Completer();
-    nsock.emitWithAck(
-        'createWebRtcTransport', {'consumer': true, 'islevel': islevel},
-        ack: (dynamic params) {
-      if (params['error'] != null) {
-        // Handle error
-        completer.completeError('Error occurred: ${params['error']}');
+    Completer<Map<String, dynamic>> completer = Completer();
+
+    options.nsock.emitWithAck(
+        "createWebRtcTransport", {"consumer": true, "islevel": options.islevel},
+        ack: (response) {
+      if (response['params'] == null || response['params']['error'] != null) {
+        completer.completeError(response['params']['error'] ?? 'Unknown error');
       } else {
-        completer.complete(params);
+        completer.complete(response['params']);
       }
     });
-    var webrtcTransport = await completer.future;
+
+    Map<String, dynamic> webrtcTransportMap = await completer.future;
 
     // Proceed with the result
     late Transport consumerTransport;
-    late dynamic params;
 
     // Consumer callback function
     void consumerCallbackFunction(Consumer consumer, [dynamic accept]) async {
       accept({});
 
-      // // Connect the receiving transport
-      await connectRecvTransport(
+      // Connect the receiving transport
+      final optionsConnect = ConnectRecvTransportOptions(
         consumer: consumer,
         consumerTransport: consumerTransport,
-        remoteProducerId: remoteProducerId,
-        serverConsumerTransportId: params['params']['id'],
-        nsock: nsock,
-        parameters: parameters,
+        remoteProducerId: options.remoteProducerId,
+        serverConsumerTransportId: webrtcTransportMap['id'],
+        nsock: options.nsock,
+        parameters: updatedParameters,
+      );
+      await connectRecvTransport(
+        optionsConnect,
       );
     }
 
-    consumerTransport = device!.createRecvTransportFromMap(
-        webrtcTransport['params'],
+    consumerTransport = device!.createRecvTransportFromMap(webrtcTransportMap,
         consumerCallback: consumerCallbackFunction);
-
     // Handle 'connect' event for the consumer transport
+    // Note consumer id changes from serverConsumerTransportId to consumer.id -- very important
     consumerTransport.on('connect', (data) async {
       try {
         // Emit transport-recv-connect event to signal connection
-        nsock.emit('transport-recv-connect', {
+        options.nsock.emit('transport-recv-connect', {
           'dtlsParameters': data['dtlsParameters'].toMap(),
-          'serverConsumerTransportId': webrtcTransport['params']['id'],
+          'serverConsumerTransportId': webrtcTransportMap['id'],
         });
 
         data['callback']();
@@ -154,12 +189,20 @@ Future<void> signalNewConsumerTransport(
           await consumerTransport.close();
 
           //Reorder streams based on conditions
-          if (lockScreen!) {
-            await reorderStreams(
-                add: true, screenChanged: false, parameters: parameters);
+          if (lockScreen) {
+            final optionsReorder = ReorderStreamsOptions(
+              add: true,
+              screenChanged: false,
+              parameters: updatedParameters,
+            );
+            await reorderStreams(optionsReorder);
           } else {
+            final optionsReorder = ReorderStreamsOptions(
+              parameters: updatedParameters,
+            );
             await reorderStreams(
-                add: false, screenChanged: false, parameters: parameters);
+              optionsReorder,
+            );
           }
           break;
 
@@ -169,19 +212,20 @@ Future<void> signalNewConsumerTransport(
     });
 
     // Emit consume event to signal consumption
-    Completer completer_ = Completer();
+    Completer<ConsumeResponse> consumeCompleter = Completer();
     try {
-      nsock.emitWithAck('consume', {
+      options.nsock.emitWithAck('consume', {
         'rtpCapabilities': device.rtpCapabilities.toMap(),
-        'remoteProducerId': remoteProducerId,
-        'serverConsumerTransportId': webrtcTransport['params']['id'],
-      }, ack: (dynamic params) {
-        if (params['error'] != null) {
+        'remoteProducerId': options.remoteProducerId,
+        'serverConsumerTransportId': webrtcTransportMap['id'],
+      }, ack: (dynamic response) {
+        if (response['error'] != null) {
           // Handle error
-          completer_.completeError(params['error']);
+          consumeCompleter.completeError(response['error']);
           return;
         } else {
-          completer_.complete(params);
+          consumeCompleter
+              .complete(ConsumeResponse.fromMap(response['params']));
         }
       });
     } catch (error) {
@@ -193,15 +237,15 @@ Future<void> signalNewConsumerTransport(
     }
 
     // Wait for acknowledgment
-    params = await completer_.future;
+    ConsumeResponse consumeParams = await consumeCompleter.future;
 
     // Consume media using received parameters
     consumerTransport.consume(
-        id: params['params']['id'],
-        producerId: params['params']['producerId'],
-        peerId: params['params']['producerId'],
-        kind: RTCRtpMediaTypeExtension.fromString(params['params']['kind']),
-        rtpParameters: RtpParameters.fromMap(params['params']['rtpParameters']),
+        id: consumeParams.id,
+        producerId: consumeParams.producerId,
+        peerId: consumeParams.producerId,
+        kind: RTCRtpMediaTypeExtension.fromString(consumeParams.kind),
+        rtpParameters: consumeParams.rtpParameters,
         accept: (param) {});
   } catch (error) {
     if (kDebugMode) {

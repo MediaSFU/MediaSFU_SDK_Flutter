@@ -1,20 +1,37 @@
-typedef UpdateIsDisplaySettingsModalVisible = void Function(bool);
-typedef IsDisplaySettingsModalVisible = bool;
+/// Defines options for launching the display settings modal, including the function to
+/// update visibility and the current modal visibility state.
+class LaunchDisplaySettingsOptions {
+  final void Function(bool isVisible) updateIsDisplaySettingsModalVisible;
+  final bool isDisplaySettingsModalVisible;
 
-/// Launches the display settings modal and toggles its visibility.
-///
-/// This function takes two required parameters:
-/// - [updateIsDisplaySettingsModalVisible]: A callback function that updates the visibility of the display settings modal.
-/// - [isDisplaySettingsModalVisible]: A getter function that returns the current visibility of the display settings modal.
-///
-/// When called, this function will toggle the visibility of the display settings modal by calling the [updateIsDisplaySettingsModalVisible] function
-/// with the negation of the current visibility value obtained from [isDisplaySettingsModalVisible].
+  LaunchDisplaySettingsOptions({
+    required this.updateIsDisplaySettingsModalVisible,
+    required this.isDisplaySettingsModalVisible,
+  });
+}
 
-void launchDisplaySettings({
-  required UpdateIsDisplaySettingsModalVisible
-      updateIsDisplaySettingsModalVisible,
-  required IsDisplaySettingsModalVisible isDisplaySettingsModalVisible,
-}) {
-  // Toggle the visibility of the display settings modal.
-  updateIsDisplaySettingsModalVisible(!isDisplaySettingsModalVisible);
+/// Type definition for the function that launches the display settings modal.
+typedef LaunchDisplaySettingsType = void Function(
+    LaunchDisplaySettingsOptions options);
+
+/// Toggles the visibility of the display settings modal.
+///
+/// This function calls `updateIsDisplaySettingsModalVisible` with the negated value of
+/// `isDisplaySettingsModalVisible` to toggle the modal's visibility.
+///
+/// Example:
+/// ```dart
+/// final options = LaunchDisplaySettingsOptions(
+///   updateIsDisplaySettingsModalVisible: (bool isVisible) {
+///     // Update visibility here
+///   },
+///   isDisplaySettingsModalVisible: false,
+/// );
+///
+/// launchDisplaySettings(options);
+/// // This will open the display settings modal if it's currently closed, or close it if it's open.
+/// ```
+void launchDisplaySettings(LaunchDisplaySettingsOptions options) {
+  options.updateIsDisplaySettingsModalVisible(
+      !options.isDisplaySettingsModalVisible);
 }

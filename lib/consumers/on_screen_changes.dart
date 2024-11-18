@@ -1,89 +1,131 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import '../types/types.dart'
+    show
+        ReorderStreamsType,
+        ReorderStreamsParameters,
+        EventType,
+        ReorderStreamsOptions;
 
-/// Handles on-screen changes based on the given parameters.
-///
-/// The [changed] parameter indicates whether the screen has changed or not.
-/// The [parameters] parameter is a map containing various parameters related to the screen changes.
-/// The map should include the following keys:
-///   - 'eventType': The type of event that triggered the screen change.
-///   - 'shareScreenStarted': A boolean indicating whether screen sharing has started.
-///   - 'shared': A boolean indicating whether the screen has been shared.
-///   - 'addForBasic': A boolean indicating whether to add for basic.
-///   - 'updateMainHeightWidth': A function that updates the main height and width.
-///   - 'updateAddForBasic': A function that updates the addForBasic flag.
-///   - 'itemPageLimit': The limit for the item page.
-///   - 'updateItemPageLimit': A function that updates the item page limit.
-///   - 'reorderStreams': A function that reorders streams.
-///
-/// This function performs various operations based on the given parameters, such as updating flags, calling update functions,
-/// and reordering streams. It also handles errors during the process and prints them in debug mode.
+/// Parameters for handling screen changes.
+abstract class OnScreenChangesParameters implements ReorderStreamsParameters {
+  // Properties as abstract getters
+  EventType get eventType;
+  bool get shareScreenStarted;
+  bool get shared;
+  bool get addForBasic;
+  UpdateMainHeightWidth get updateMainHeightWidth;
+  UpdateAddForBasic get updateAddForBasic;
+  int get itemPageLimit;
+  UpdateItemPageLimit get updateItemPageLimit;
+  ReorderStreamsType get reorderStreams;
 
-// Custom typedef for a function that updates main height and width
+  OnScreenChangesParameters Function() get getUpdatedAllParams;
+
+  // Dynamic key-value support
+  // dynamic operator [](String key);
+}
+
+/// Options for handling screen changes.
+class OnScreenChangesOptions {
+  final bool changed;
+  final OnScreenChangesParameters parameters;
+
+  OnScreenChangesOptions({
+    this.changed = false,
+    required this.parameters,
+  });
+}
+
+typedef OnScreenChangesType = Future<void> Function(
+    OnScreenChangesOptions options);
+
+// Custom typedef for a function that updates main height and width.
 typedef UpdateMainHeightWidth = void Function(double value);
 
-// Custom typedef for a function that updates the addForBasic flag
+// Custom typedef for a function that updates the addForBasic flag.
 typedef UpdateAddForBasic = void Function(bool value);
 
-// Custom typedef for a function that updates the item page limit
+// Custom typedef for a function that updates the item page limit.
 typedef UpdateItemPageLimit = void Function(int value);
 
-// Custom typedef for a function that reorders streams
-typedef ReorderStreams = Future<void> Function({
-  bool add,
-  bool screenChanged,
-  required Map<String, dynamic> parameters,
-});
+/// Handles screen changes and adjusts the display settings based on event type and screen sharing status.
+///
+/// This function updates the layout parameters, such as the main height/width and item page limit, based on the
+/// current event type (e.g., broadcast, chat, conference) and the screen sharing status. It also invokes the
+/// reordering of streams if a screen change is detected.
+///
+/// Parameters:
+/// - [options] (`OnScreenChangesOptions`): Options for managing screen changes:
+///   - [changed] (`bool`): Indicates if a screen change occurred.
+///   - [parameters] (`OnScreenChangesParameters`): Parameters that define display behaviors and update functions.
+///
+/// Example:
+/// ```dart
+/// final parameters = OnScreenChangesParameters(
+///   eventType: EventType.conference,
+///   shareScreenStarted: false,
+///   shared: false,
+///   addForBasic: false,
+///   updateMainHeightWidth: (value) => print('Main height width updated: $value'),
+///   updateAddForBasic: (value) => print('Add for basic updated: $value'),
+///   itemPageLimit: 4,
+///   updateItemPageLimit: (value) => print('Item page limit updated: $value'),
+///   reorderStreams: (ReorderStreamsOptions options) async {
+///     print('Reordering streams with options: ${options.screenChanged}');
+///   },
+/// );
+///
+/// final options = OnScreenChangesOptions(
+///   changed: true,
+///   parameters: parameters,
+/// );
+///
+/// await onScreenChanges(options);
+/// ```
 
-Future<void> onScreenChanges({
-  bool changed = false,
-  required Map<String, dynamic> parameters,
-}) async {
+Future<void> onScreenChanges(OnScreenChangesOptions options) async {
   try {
+    final parameters = options.parameters;
+
     // Destructure parameters
-    String eventType = parameters['eventType'];
-    bool shareScreenStarted = parameters['shareScreenStarted'];
-    bool shared = parameters['shared'];
-    bool addForBasic = parameters['addForBasic'];
-
-    // Updated function typedefs
-    UpdateMainHeightWidth updateMainHeightWidth =
-        parameters['updateMainHeightWidth'] as UpdateMainHeightWidth;
-    UpdateAddForBasic updateAddForBasic =
-        parameters['updateAddForBasic'] as UpdateAddForBasic;
-    int itemPageLimit = parameters['itemPageLimit'];
-    UpdateItemPageLimit updateItemPageLimit =
-        parameters['updateItemPageLimit'] as UpdateItemPageLimit;
-
-    // mediasfu functions
-    ReorderStreams reorderStreams =
-        parameters['reorderStreams'] as ReorderStreams;
+    bool addForBasic = parameters.addForBasic;
+    final updateMainHeightWidth = parameters.updateMainHeightWidth;
+    final updateAddForBasic = parameters.updateAddForBasic;
+    int itemPageLimit = parameters.itemPageLimit;
+    final updateItemPageLimit = parameters.updateItemPageLimit;
+    final reorderStreams = parameters.reorderStreams;
 
     // Remove element with id 'controlButtons'
     addForBasic = false;
     updateAddForBasic(addForBasic);
 
-    if (eventType == 'broadcast' || eventType == 'chat') {
+    if (parameters.eventType == EventType.broadcast ||
+        parameters.eventType == EventType.chat) {
       addForBasic = true;
       updateAddForBasic(addForBasic);
 
-      itemPageLimit = eventType == 'broadcast' ? 1 : 2;
+      itemPageLimit = parameters.eventType == EventType.broadcast ? 1 : 2;
       updateItemPageLimit(itemPageLimit);
-      updateMainHeightWidth(eventType == 'broadcast' ? 100 : 0);
-    } else {
-      if (eventType == 'conference' && !(shareScreenStarted || shared)) {
-        updateMainHeightWidth(0);
-      }
+      updateMainHeightWidth(
+          parameters.eventType == EventType.broadcast ? 100 : 0);
+    } else if (parameters.eventType == EventType.conference &&
+        !(parameters.shareScreenStarted || parameters.shared)) {
+      updateMainHeightWidth(0);
     }
 
     // Update the mini cards grid
+    final optionsReorderStreams = ReorderStreamsOptions(
+      add: false,
+      screenChanged: options.changed,
+      parameters: parameters,
+    );
     await reorderStreams(
-        add: false, screenChanged: changed, parameters: parameters);
+      optionsReorderStreams,
+    );
   } catch (error) {
-    // Handle errors during the process of handling screen changes
     if (kDebugMode) {
       print('Error handling screen changes: ${error.toString()}');
     }
-    // throw error;
   }
 }

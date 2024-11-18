@@ -1,56 +1,128 @@
 import 'package:flutter/material.dart';
-import '../../methods/utils/get_modal_position.dart' show getModalPosition;
+import 'package:socket_io_client/socket_io_client.dart' as io;
+import '../../methods/utils/get_modal_position.dart'
+    show getModalPosition, GetModalPositionOptions;
 import '../../methods/settings_methods/modify_settings.dart'
-    show modifySettings;
+    show modifySettings, ModifySettingsType, ModifySettingsOptions;
+import '../../types/types.dart' show ShowAlert;
 
-/// EventSettingsModal - A modal widget for configuring event settings.
-///
-/// This widget allows users to modify event settings such as audio, video, screenshare, and chat settings.
-///
-/// Whether the event settings modal is visible.
-///final bool isEventSettingsModalVisible;
-///
-/// A callback function called when the event settings modal is closed.
-///final EventSettingsCloseCallback onEventSettingsClose;
-///
-/// A function for modifying event settings.
-///final ModifySettings onModifyEventSettings;
-///
-/// The parameters associated with the event settings.
-///final Map<String, dynamic> parameters;
-///
-/// The position of the modal.
-///final String position;
-///
-/// The background color of the modal.
-///final Color backgroundColor;
-
-typedef ModifySettings = void Function({
-  required Map<String, dynamic> parameters,
-});
-
-typedef EventSettingsCloseCallback = void Function();
-
-class EventSettingsModal extends StatefulWidget {
-  final bool isEventSettingsModalVisible;
-  final EventSettingsCloseCallback onEventSettingsClose;
-  final ModifySettings onModifyEventSettings;
-  final Map<String, dynamic> parameters;
+/// EventSettingsModalOptions - Defines configuration options for the `EventSettingsModal`.
+class EventSettingsModalOptions {
+  final bool isVisible;
+  final VoidCallback onClose;
+  final ModifySettingsType onModifySettings;
   final String position;
   final Color backgroundColor;
+  final String audioSetting;
+  final String videoSetting;
+  final String screenshareSetting;
+  final String chatSetting;
+  final String roomName;
+  final io.Socket? socket;
+  final ShowAlert? showAlert;
+  final void Function(String) updateAudioSetting;
+  final void Function(String) updateVideoSetting;
+  final void Function(String) updateScreenshareSetting;
+  final void Function(String) updateChatSetting;
+  final void Function(bool) updateIsSettingsModalVisible;
 
-  const EventSettingsModal({
-    super.key,
-    required this.isEventSettingsModalVisible,
-    required this.onEventSettingsClose,
-    this.onModifyEventSettings = modifySettings,
-    required this.parameters,
+  EventSettingsModalOptions({
+    required this.isVisible,
+    required this.onClose,
+    this.onModifySettings = modifySettings,
     this.position = 'topRight',
     this.backgroundColor = const Color(0xFF83C0E9),
+    required this.audioSetting,
+    required this.videoSetting,
+    required this.screenshareSetting,
+    required this.chatSetting,
+    required this.roomName,
+    this.socket,
+    required this.showAlert,
+    required this.updateAudioSetting,
+    required this.updateVideoSetting,
+    required this.updateScreenshareSetting,
+    required this.updateChatSetting,
+    required this.updateIsSettingsModalVisible,
   });
+}
+
+typedef EventSettingsModalType = Widget Function({
+  required EventSettingsModalOptions options,
+});
+
+/// `EventSettingsModalOptions` - Configuration options for `EventSettingsModal`.
+///
+/// ### Properties:
+/// - `isVisible`: Boolean indicating the modal's visibility.
+/// - `onClose`: Callback to close the modal.
+/// - `onModifySettings`: Callback for modifying the settings, with `modifySettings` as the default function.
+/// - `position`: Position of the modal on the screen (default is 'topRight').
+/// - `backgroundColor`: Background color of the modal (default is `Color(0xFF83C0E9)`).
+/// - `audioSetting`, `videoSetting`, `screenshareSetting`, `chatSetting`: Initial settings for each media type.
+/// - `roomName`: Name of the room or event.
+/// - `socket`: Socket connection for sending settings updates.
+/// - `showAlert`: Function to display alert messages.
+/// - `updateAudioSetting`, `updateVideoSetting`, `updateScreenshareSetting`, `updateChatSetting`: Functions to update individual settings.
+/// - `updateIsSettingsModalVisible`: Function to update the visibility of the modal.
+///
+/// ### Example Usage:
+/// ```dart
+/// EventSettingsModal(
+///   options: EventSettingsModalOptions(
+///     isVisible: true,
+///     onClose: () => print("Modal closed"),
+///     audioSetting: 'allow',
+///     videoSetting: 'approval',
+///     screenshareSetting: 'disallow',
+///     chatSetting: 'allow',
+///     roomName: 'eventRoom',
+///     socket: socket,
+///     showAlert: (msg, type, duration) => print(msg),
+///     updateAudioSetting: (val) => print("Audio setting: $val"),
+///     updateVideoSetting: (val) => print("Video setting: $val"),
+///     updateScreenshareSetting: (val) => print("Screenshare setting: $val"),
+///     updateChatSetting: (val) => print("Chat setting: $val"),
+///     updateIsSettingsModalVisible: (val) => print("Settings modal visible: $val"),
+///   ),
+/// );
+/// ```
+
+/// `EventSettingsModal` - A modal widget for configuring event-specific media settings.
+///
+/// This widget provides options to control participant permissions for audio, video, screenshare, and chat.
+/// The settings are saved and applied using the `onModifySettings` callback, which updates the settings on the server.
+///
+/// ### Parameters:
+/// - `options` (`EventSettingsModalOptions`): Configuration options for the modal.
+///
+/// ### Structure:
+/// - Header with title ("Event Settings") and close icon.
+/// - Dropdown selectors for each setting (audio, video, screenshare, and chat).
+/// - Save button to confirm and apply the settings.
+///
+/// ### Example Usage:
+/// ```dart
+/// EventSettingsModal(
+///   options: EventSettingsModalOptions(
+///     isVisible: true,
+///     onClose: () => print("Modal closed"),
+///     audioSetting: 'allow',
+///     videoSetting: 'approval',
+///     screenshareSetting: 'disallow',
+///     chatSetting: 'allow',
+///     roomName: 'eventRoom',
+///     socket: socket,
+///   ),
+/// );
+/// ```
+
+class EventSettingsModal extends StatefulWidget {
+  final EventSettingsModalOptions options;
+
+  const EventSettingsModal({super.key, required this.options});
 
   @override
-  // ignore: library_private_types_in_public_api
   _EventSettingsModalState createState() => _EventSettingsModalState();
 }
 
@@ -63,38 +135,42 @@ class _EventSettingsModalState extends State<EventSettingsModal> {
   @override
   void initState() {
     super.initState();
-    _audioState = widget.parameters['audioSetting'];
-    _videoState = widget.parameters['videoSetting'];
-    _screenshareState = widget.parameters['screenshareSetting'];
-    _chatState = widget.parameters['chatSetting'];
+    _audioState = widget.options.audioSetting;
+    _videoState = widget.options.videoSetting;
+    _screenshareState = widget.options.screenshareSetting;
+    _chatState = widget.options.chatSetting;
   }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    var modalWidth = 0.8 * screenWidth;
-    if (modalWidth > 400) {
-      modalWidth = 400;
-    }
+    double modalWidth = screenWidth * 0.8 > 400 ? 400 : screenWidth * 0.8;
     final modalHeight = MediaQuery.of(context).size.height * 0.6;
 
     return Visibility(
-      visible: widget.isEventSettingsModalVisible,
+      visible: widget.options.isVisible,
       child: Stack(
         children: [
           Positioned(
-            top: getModalPosition(
-                widget.position, context, modalWidth, modalHeight)['top'],
-            right: getModalPosition(
-                widget.position, context, modalWidth, modalHeight)['right'],
+            top: getModalPosition(GetModalPositionOptions(
+              position: widget.options.position,
+              modalWidth: modalWidth,
+              modalHeight: modalHeight,
+              context: context,
+            ))['top'],
+            right: getModalPosition(GetModalPositionOptions(
+                position: widget.options.position,
+                modalWidth: modalWidth,
+                modalHeight: modalHeight,
+                context: context))['right'],
             child: AnimatedOpacity(
-              opacity: widget.isEventSettingsModalVisible ? 1.0 : 0.0,
+              opacity: widget.options.isVisible ? 1.0 : 0.0,
               duration: const Duration(milliseconds: 300),
               child: Container(
                 width: modalWidth,
                 height: modalHeight,
                 padding: const EdgeInsets.all(20.0),
-                color: widget.backgroundColor,
+                color: widget.options.backgroundColor,
                 child: SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -112,7 +188,7 @@ class _EventSettingsModalState extends State<EventSettingsModal> {
                           ),
                           IconButton(
                             icon: const Icon(Icons.close),
-                            onPressed: widget.onEventSettingsClose,
+                            onPressed: widget.options.onClose,
                             color: Colors.black,
                           ),
                         ],
@@ -149,14 +225,26 @@ class _EventSettingsModalState extends State<EventSettingsModal> {
                       const SizedBox(height: 10),
                       ElevatedButton(
                         onPressed: () {
-                          widget.onModifyEventSettings(
-                            parameters: {
-                              ...widget.parameters,
-                              'audioSet': _audioState,
-                              'videoSet': _videoState,
-                              'screenshareSet': _screenshareState,
-                              'chatSet': _chatState,
-                            },
+                          final optionsModify = ModifySettingsOptions(
+                            audioSet: _audioState,
+                            videoSet: _videoState,
+                            screenshareSet: _screenshareState,
+                            chatSet: _chatState,
+                            updateAudioSetting:
+                                widget.options.updateAudioSetting,
+                            updateVideoSetting:
+                                widget.options.updateVideoSetting,
+                            updateScreenshareSetting:
+                                widget.options.updateScreenshareSetting,
+                            updateChatSetting: widget.options.updateChatSetting,
+                            updateIsSettingsModalVisible:
+                                widget.options.updateIsSettingsModalVisible,
+                            roomName: widget.options.roomName,
+                            socket: widget.options.socket,
+                            showAlert: widget.options.showAlert,
+                          );
+                          widget.options.onModifySettings(
+                            optionsModify,
                           );
                         },
                         child: const Text('Save'),
@@ -172,13 +260,16 @@ class _EventSettingsModalState extends State<EventSettingsModal> {
     );
   }
 
-  Widget _buildSettingDropdown(String label, String value, Function onChanged) {
+  Widget _buildSettingDropdown(
+    String label,
+    String value,
+    void Function(String) onChanged,
+  ) {
     List<DropdownMenuItem<String>> dropdownItems = [
       const DropdownMenuItem(
         value: 'disallow',
         child: Text('Disallow', style: TextStyle(fontSize: 14)),
       ),
-      //if not chat add approval
       if (label != 'User chat:')
         const DropdownMenuItem(
           value: 'approval',
@@ -196,7 +287,7 @@ class _EventSettingsModalState extends State<EventSettingsModal> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            flex: 1,
+            flex: 4,
             child: Text(
               label,
               style: const TextStyle(
@@ -206,13 +297,13 @@ class _EventSettingsModalState extends State<EventSettingsModal> {
               ),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 15),
           Expanded(
-            flex: 2,
+            flex: 2, // Decrease flex here if needed
             child: DropdownButton<String>(
               value: value,
               onChanged: (String? newValue) {
-                onChanged(newValue);
+                onChanged(newValue!);
               },
               items: dropdownItems,
             ),

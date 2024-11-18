@@ -1,77 +1,106 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
+import '../types/types.dart' show ProducerOptionsType;
 
-/// Connects the send transport for screen sharing by producing screen video data.
+abstract class ConnectSendTransportScreenParameters {
+  Producer? get screenProducer;
+  Device? get device;
+  ProducerOptionsType? get screenParams;
+  Transport? get producerTransport;
+  ProducerOptionsType? get params;
+
+  void Function(Producer screenProducer) get updateScreenProducer;
+  void Function(Transport producerTransport) get updateProducerTransport;
+
+  ConnectSendTransportScreenParameters Function() get getUpdatedAllParams;
+  // dynamic operator [](String key);
+}
+
+class ConnectSendTransportScreenOptions {
+  final MediaStream stream;
+  final ConnectSendTransportScreenParameters parameters;
+
+  ConnectSendTransportScreenOptions(
+      {required this.stream, required this.parameters});
+}
+
+typedef ConnectSendTransportScreenType = Future<void> Function(
+    ConnectSendTransportScreenOptions options);
+
+/// Sets up and initiates the screen-sharing transport connection, configuring codec options and producing a video track for screen sharing.
 ///
-/// This function takes a [stream] and [parameters] as input. The [stream] is the media stream containing the screen video track to be shared.
-/// The [parameters] is a map containing the necessary parameters for the screen sharing process, including the screen producer, device, screen parameters, producer transport, and other options.
+/// ### Parameters:
+/// - `options` (`ConnectSendTransportScreenOptions`): Contains:
+///   - `stream` (`MediaStream`): The media stream that includes the screen video track for sharing.
+///   - `parameters` (`ConnectSendTransportScreenParameters`): Contains necessary configurations, such as codec options, transport, and update functions.
 ///
-/// The function connects the send transport for screen sharing by producing the screen video data using the producer transport. It retrieves the VP9 codec from the available video codecs and uses it to encode the screen video data.
-/// The produced screen video data is then associated with the screen producer and the producer transport objects are updated accordingly.
+/// ### Workflow:
+/// 1. **Codec Selection**:
+///    - Attempts to select the VP9 codec for optimized video sharing.
+///    - If VP9 is unavailable, defaults to the first available video codec in device capabilities.
+/// 2. **Producer Transport Setup**:
+///    - Uses `producerTransport` to initiate screen sharing with the selected codec and screen-sharing settings.
+/// 3. **Transport and Producer Updates**:
+///    - Updates the `producerTransport` and `screenProducer` in the provided `parameters` to reflect the active screen-sharing session.
 ///
-/// The function handles any errors that occur during the process and prints the error message in debug mode.
+/// ### Returns:
+/// - A `Future<void>` that completes when the screen-sharing transport is successfully established.
 ///
-/// Example usage:
+/// ### Example Usage:
 /// ```dart
-/// await connectSendTransportScreen(
-///   stream: myMediaStream,
-///   parameters: {
-///     'screenProducer': myScreenProducer,
-///     'device': myDevice,
-///     'screenParams': myScreenParams,
-///     'producerTransport': myProducerTransport,
-///     'params': myParams,
-///     'updateScreenProducer': myUpdateScreenProducerFunction,
-///     'updateProducerTransport': myUpdateProducerTransportFunction,
-///   },
+/// final screenOptions = ConnectSendTransportScreenOptions(
+///   stream: screenStream,
+///   parameters: myConnectSendTransportScreenParameters,
 /// );
+///
+/// connectSendTransportScreen(screenOptions).then(() {
+///   print("Screen-sharing transport connected.");
+/// }).catchError((error) {
+///   print("Error connecting screen-sharing transport: $error");
+/// });
+/// ```
+///
+/// ### Error Handling:
+/// - Logs errors to the console in debug mode if an issue occurs during transport setup.
 
-typedef UpdateScreenProducerFunction = void Function(dynamic screenProducer);
-typedef UpdateProducerTransportFunction = void Function(
-    dynamic producerTransport);
-typedef UpdateLocalStreamScreenFunction = void Function(MediaStream stream);
+Future<void> connectSendTransportScreen(
+    ConnectSendTransportScreenOptions options) async {
+  final MediaStream stream = options.stream;
+  final ConnectSendTransportScreenParameters parameters = options.parameters;
 
-Future<void> connectSendTransportScreen({
-  required MediaStream stream,
-  required Map<String, dynamic> parameters,
-}) async {
   try {
-    dynamic screenProducer = parameters['screenProducer'];
-    Device device = parameters['device'];
-    dynamic screenParams = parameters['screenParams'];
-    Transport producerTransport = parameters['producerTransport'];
-    dynamic params = parameters['params'];
+    // Retrieve and update latest parameters
+    Device? device = parameters.getUpdatedAllParams().device;
+    Transport? producerTransport = parameters.producerTransport;
+    ProducerOptionsType? screenParams = parameters.screenParams;
 
-    UpdateScreenProducerFunction updateScreenProducer =
-        parameters['updateScreenProducer'];
-    UpdateProducerTransportFunction updateProducerTransport =
-        parameters['updateProducerTransport'];
+    // Update parameters for the codec and screen production
+    ProducerOptionsType producerParams = screenParams!;
 
-    // Connect the send transport for screen share by producing screen video data
-    params = screenParams;
+    // Find VP9 codec in device capabilities
+    RtpCodecCapability? codec = device?.rtpCapabilities.codecs
+        .firstWhere((codec) => codec.mimeType.toLowerCase() == 'video/vp9');
 
-    // Get VP9 codec from the video codecs
-    RtpCodecCapability? codec = device.rtpCapabilities.codecs
-        .where((codec) => codec.mimeType.toLowerCase() == 'video/vp9')
-        .first;
+    // If no VP9 codec is found, get the first video codec
+    codec ??= device?.rtpCapabilities.codecs.firstWhere(
+        (codec) => codec.kind == RTCRtpMediaType.RTCRtpMediaTypeVideo);
 
-    // Produce screen share data using the producer transport
-    producerTransport.produce(
+    // Produce screen share video using the transport and codec
+    producerTransport!.produce(
       track: stream.getVideoTracks()[0],
       stream: stream,
       codecOptions: ProducerCodecOptions(
-        videoGoogleStartBitrate: params['codecOptions']
-            ['videoGoogleStartBitrate'],
+        videoGoogleStartBitrate:
+            producerParams.codecOptions!.videoGoogleStartBitrate,
       ),
       codec: codec,
       appData: {'mediaTag': 'screen-video'},
       source: 'screen',
     );
 
-    // Update the screen producer and producer transport objects
-    updateScreenProducer(screenProducer);
-    updateProducerTransport(producerTransport);
+    // Update screenProducer and producerTransport in parameters
+    parameters.updateProducerTransport(producerTransport);
   } catch (error) {
     if (kDebugMode) {
       print('connectSendTransportScreen error: $error');

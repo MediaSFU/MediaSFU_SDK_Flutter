@@ -2,82 +2,121 @@ import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'dart:async';
 
-io.Socket? socket; // Initialize socket as nullable
-
-/// Validates the API key or token.
-/// Returns `true` if the value is a valid API key or token, otherwise throws an exception.
+/// Validates the provided API key or token.
+/// Returns `true` if the API key or token is valid, otherwise throws an exception.
 Future<bool> validateApiKeyToken(String value) async {
-  // Validate inputs
-  // API key or token must be alphanumeric and length 64
+  // Ensure alphanumeric and exactly 64 characters
   if (!RegExp(r'^[a-zA-Z0-9]{64}$').hasMatch(value)) {
     throw Exception('Invalid API key or token.');
   }
-
   return true;
 }
 
-/// Connects to the socket using the provided API credentials and link.
-/// Returns a future that completes with the connected socket.
-/// Throws an exception if any of the required inputs are empty or if the API key or token is invalid.
-Future<io.Socket> connectSocket(
-    String apiUserName, String apiKey, String apiToken, String link) async {
-  // Validate inputs
-  if (apiUserName.isEmpty) {
-    throw Exception('API username required.');
-  }
-  if (apiKey.isEmpty && apiToken.isEmpty) {
+class ConnectSocketOptions {
+  final String apiUserName;
+  final String? apiKey;
+  final String? apiToken;
+  final String link;
+
+  ConnectSocketOptions({
+    required this.apiUserName,
+    this.apiKey,
+    this.apiToken,
+    required this.link,
+  });
+}
+
+typedef ConnectSocketType = Future<io.Socket> Function(
+    ConnectSocketOptions options);
+
+class DisconnectSocketOptions {
+  final io.Socket? socket;
+
+  DisconnectSocketOptions({this.socket});
+}
+
+typedef DisconnectSocketType = Future<bool> Function(
+    DisconnectSocketOptions options);
+
+/// Connects to a media socket with the specified options.
+/// Validates the API key or token and initiates a socket connection.
+///
+/// Throws an exception if inputs are invalid or if connection fails.
+///
+/// Example usage:
+/// ```dart
+/// final options = ConnectSocketOptions(
+///   apiUserName: "user123",
+///   apiKey: "yourApiKeyHere",
+///   link: "https://socketlink.com",
+/// );
+///
+/// try {
+///   final socket = await connectSocket(options);
+///   print("Connected to socket with ID: ${socket.id}");
+/// } catch (error) {
+///   print("Failed to connect to socket: $error");
+/// }
+/// ```
+Future<io.Socket> connectSocket(ConnectSocketOptions options) async {
+  // Input validation
+  if (options.apiUserName.isEmpty) throw Exception('API username required.');
+  if ((options.apiKey?.isEmpty ?? true) &&
+      (options.apiToken?.isEmpty ?? true)) {
     throw Exception('API key or token required.');
   }
-  if (link.isEmpty) {
-    throw Exception('Socket link required.');
-  }
+  if (options.link.isEmpty) throw Exception('Socket link required.');
 
-  // Validate the API key or token
+  // Validate API key or token format
   bool useKey = false;
   try {
-    if (apiKey.isNotEmpty && apiKey.length == 64) {
-      await validateApiKeyToken(apiKey);
+    if (options.apiKey?.length == 64 &&
+        await validateApiKeyToken(options.apiKey!)) {
       useKey = true;
-    } else {
-      await validateApiKeyToken(apiToken);
+    } else if (options.apiToken?.length == 64 &&
+        await validateApiKeyToken(options.apiToken!)) {
       useKey = false;
+    } else {
+      throw Exception('Invalid API key or token format.');
     }
   } catch (error) {
     throw Exception('Invalid API key or token.');
   }
 
-  socket = io.io('$link/media', <String, dynamic>{
+  // Configure socket options based on whether apiKey or apiToken is used
+  final query = useKey
+      ? {'apiUserName': options.apiUserName, 'apiKey': options.apiKey}
+      : {'apiUserName': options.apiUserName, 'apiToken': options.apiToken};
+
+  final socket = io.io('${options.link}/media', {
     'transports': ['websocket'],
-    'query': useKey
-        ? {'apiUserName': apiUserName, 'apiKey': apiKey}
-        : {'apiUserName': apiUserName, 'apiToken': apiToken},
+    'query': query,
   });
 
-  // Create a completer to await the connection
-  Completer<io.Socket> completer = Completer<io.Socket>();
+  final completer = Completer<io.Socket>();
 
-  // Handle socket connection events
-  socket!.onConnect((_) {
-    if (kDebugMode) {
-      print('Connected to media socket with ID: ${socket!.id}');
-    }
-    completer.complete(socket); // Complete the future when connected
+  // Handle connection success
+  socket.onConnect((_) {
+    if (kDebugMode) print('Connected to media socket with ID: ${socket.id}');
+    completer.complete(socket);
   });
 
-  socket!.onError((error) {
-    throw Exception('Error connecting to media socket.');
+  // Handle connection error
+  socket.onConnectError((error) {
+    completer
+        .completeError(Exception('Error connecting to media socket: $error'));
   });
 
-  // Return the future from the completer
   return completer.future;
 }
 
-/// Disconnects the socket if it is not null.
-/// Returns `true` if the socket was disconnected successfully, otherwise returns `false`.
-Future<bool> disconnectSocket(io.Socket? socket) async {
-  if (socket != null) {
+/// Disconnects the given socket instance.
+/// Returns `true` upon successful disconnection.
+Future<bool> disconnectSocket(DisconnectSocketOptions options) async {
+  final socket = options.socket;
+  if (socket!.connected) {
     socket.disconnect();
+    return true;
   }
-
-  return true;
+  return false;
 }

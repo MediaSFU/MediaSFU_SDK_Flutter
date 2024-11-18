@@ -1,87 +1,83 @@
-/// Updates the screen producer ID and related UI states.
+import '../../types/types.dart' show Participant;
+
+/// Options for managing and updating screen sharing based on the producer ID.
+class ScreenProducerIdOptions {
+  final String producerId;
+  final String screenId;
+  final bool membersReceived;
+  final bool shareScreenStarted;
+  final bool deferScreenReceived;
+  final List<Participant> participants;
+  final void Function(String) updateScreenId;
+  final void Function(bool) updateShareScreenStarted;
+  final void Function(bool) updateDeferScreenReceived;
+
+  ScreenProducerIdOptions({
+    required this.producerId,
+    required this.screenId,
+    required this.membersReceived,
+    required this.shareScreenStarted,
+    required this.deferScreenReceived,
+    required this.participants,
+    required this.updateScreenId,
+    required this.updateShareScreenStarted,
+    required this.updateDeferScreenReceived,
+  });
+}
+
+/// Type definition for the screen producer ID function.
+typedef ScreenProducerIdType = void Function(ScreenProducerIdOptions options);
+
+/// Manages and updates screen sharing based on the producer ID.
 ///
-/// This function takes in a [producerId] and a [parameters] map, which contains
-/// various parameters related to the screen producer. The [parameters] map should
-/// include the following keys:
-///   - 'screenId': The ID of the screen.
-///   - 'membersReceived': A boolean indicating whether members data has been received.
-///   - 'shareScreenStarted': A boolean indicating whether screen sharing has started.
-///   - 'deferScreenReceived': A boolean indicating whether screen deferment has been received.
-///   - 'participants': A list of participants.
-///   - 'updateScreenId': A function to update the screen ID.
-///   - 'updateShareScreenStarted': A function to update the screen sharing status.
-///   - 'updateDeferScreenReceived': A function to update the screen deferment status.
-///
-/// The function checks if the members data has been received with the screenId participant
-/// in it. If so, it updates the screen ID, sets the screen sharing status to true, and
-/// sets the screen deferment status to false. It then calls the appropriate update functions
-/// to reflect these changes in the UI.
-///
-/// If the members data has not been received or the screenId participant is not found,
-/// it sets the screen deferment status to true and updates the screen ID accordingly.
+/// @param [ScreenProducerIdOptions] options - The configuration options.
+/// - `producerId`: The producer's unique ID for screen sharing.
+/// - `screenId`: The current screen ID.
+/// - `membersReceived`: Indicates if member data has been received.
+/// - `shareScreenStarted`: Indicates if screen sharing has started.
+/// - `deferScreenReceived`: Indicates if screen sharing should be deferred.
+/// - `participants`: List of participants.
+/// - `updateScreenId`: Function to update the screen ID.
+/// - `updateShareScreenStarted`: Function to update the screen sharing status.
+/// - `updateDeferScreenReceived`: Function to update the defer screen sharing status.
 ///
 /// Example usage:
 /// ```dart
-/// screenProducerId(
-///   producerId: '12345',
-///   parameters: {
-///     'screenId': 'screen123',
-///     'membersReceived': true,
-///     'shareScreenStarted': false,
-///     'deferScreenReceived': false,
-///     'participants': [
-///       {'ScreenID': 'screen123', 'ScreenOn': true},
-///       {'ScreenID': 'screen456', 'ScreenOn': false},
-///     ],
-///     'updateScreenId': (String screenId) {
-///       // Update screen ID in UI
-///     },
-///     'updateShareScreenStarted': (bool shareScreenStarted) {
-///       // Update screen sharing status in UI
-///     },
-///     'updateDeferScreenReceived': (bool deferScreenReceived) {
-///       // Update screen deferment status in UI
-///     },
-///   },
+/// final options = ScreenProducerIdOptions(
+///   producerId: 'abc123',
+///   screenId: 'screen1',
+///   membersReceived: true,
+///   shareScreenStarted: false,
+///   deferScreenReceived: false,
+///   participants: [Participant(screenId: 'screen1', screenOn: true)],
+///   updateScreenId: (id) => print('Screen ID updated to: $id'),
+///   updateShareScreenStarted: (started) => print('Share screen started: $started'),
+///   updateDeferScreenReceived: (received) => print('Defer screen received: $received'),
 /// );
 ///
-void screenProducerId({
-  required String producerId,
-  required Map<String, dynamic> parameters,
-}) {
-  // Update screen producer ID and related UI states
-  String? screenId = parameters['screenId'];
-  bool membersReceived = parameters['membersReceived'] ?? false;
-  bool shareScreenStarted = parameters['shareScreenStarted'] ?? false;
-  bool deferScreenReceived = parameters['deferScreenReceived'] ?? false;
-  List<dynamic> participants = parameters['participants'];
-  Function(String)? updateScreenId = parameters['updateScreenId'];
-  Function(bool)? updateShareScreenStarted =
-      parameters['updateShareScreenStarted'];
-  Function(bool)? updateDeferScreenReceived =
-      parameters['updateDeferScreenReceived'];
-
+/// screenProducerId(options);
+/// ```
+void screenProducerId(ScreenProducerIdOptions options) {
   // Check if members data has been received with the screenId participant in it
-  dynamic host = participants.firstWhere(
+  final host = options.participants.firstWhere(
     (participant) =>
-        participant['ScreenID'] == screenId && participant['ScreenOn'] == true,
-    orElse: () => null,
+        participant.ScreenID == options.screenId &&
+        participant.ScreenOn == true,
+    orElse: () => Participant(
+        ScreenID: '',
+        ScreenOn: false,
+        audioID: 'none',
+        videoID: 'none',
+        name: ''),
   );
 
-  // Operations to update the UI
-  if (host != null && membersReceived) {
-    screenId = producerId;
-    shareScreenStarted = true;
-    deferScreenReceived = false;
-
-    updateScreenId?.call(screenId);
-    updateShareScreenStarted?.call(shareScreenStarted);
-    updateDeferScreenReceived?.call(deferScreenReceived);
+  // Update UI state based on conditions
+  if (host.name.isNotEmpty && options.membersReceived) {
+    options.updateScreenId(options.producerId);
+    options.updateShareScreenStarted(true);
+    options.updateDeferScreenReceived(false);
   } else {
-    deferScreenReceived = true;
-    screenId = producerId;
-
-    updateScreenId?.call(screenId);
-    updateDeferScreenReceived?.call(deferScreenReceived);
+    options.updateScreenId(options.producerId);
+    options.updateDeferScreenReceived(true);
   }
 }

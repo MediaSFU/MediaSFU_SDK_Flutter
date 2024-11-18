@@ -1,40 +1,62 @@
+import '../../types/types.dart' show ShowAlert;
+
+/// Type definition for updating the chat modal's visibility.
 typedef UpdateIsMessagesModalVisible = void Function(bool isVisible);
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
-});
 
-/// Handles the click event on the chat button.
+/// Parameters for the `clickChat` function.
+class ClickChatOptions {
+  final bool isMessagesModalVisible;
+  final UpdateIsMessagesModalVisible updateIsMessagesModalVisible;
+  final String chatSetting;
+  final String islevel;
+  final ShowAlert? showAlert;
+
+  ClickChatOptions({
+    required this.isMessagesModalVisible,
+    required this.updateIsMessagesModalVisible,
+    required this.chatSetting,
+    required this.islevel,
+    this.showAlert,
+  });
+}
+
+typedef ClickChatType = void Function({required ClickChatOptions options});
+
+/// Toggles the visibility of the chat modal based on the current state and event settings.
 ///
-/// This function takes a map of parameters and performs the following actions:
-/// - Extracts the necessary parameters from the map.
-/// - Toggles the visibility of the messages modal based on the current state.
-/// - Checks if chat is allowed based on event settings and participant level.
-/// - Shows an alert if chat is not allowed.
+/// - If the modal is already visible, it will be closed.
+/// - If the modal is not visible, it checks whether chat is allowed based on the event settings and participant level.
+/// - If chat is not allowed, an alert will be shown.
 ///
-/// Parameters:
-/// - `parameters`: A map containing the necessary parameters for the function.
+/// ### Example Usage:
+/// ```dart
+/// clickChat(
+///   options: ClickChatOptions(
+///     isMessagesModalVisible: false,
+///     updateIsMessagesModalVisible: (isVisible) => setIsMessagesModalVisible(isVisible),
+///     chatSetting: 'allow',
+///     islevel: '1',
+///     showAlert: (message, type, duration) => showAlertFunction(message, type, duration),
+///   ),
+/// );
+/// ```
+void clickChat({required ClickChatOptions options}) {
+  final isMessagesModalVisible = options.isMessagesModalVisible;
+  final updateIsMessagesModalVisible = options.updateIsMessagesModalVisible;
+  final chatSetting = options.chatSetting;
+  final islevel = options.islevel;
+  final showAlert = options.showAlert;
 
-void clickChat({required Map<String, dynamic> parameters}) {
-  // Extracting parameters from the map
-  bool isMessagesModalVisible = parameters['isMessagesModalVisible'];
-  UpdateIsMessagesModalVisible updateIsMessagesModalVisible =
-      parameters['updateIsMessagesModalVisible'];
-  String chatSetting = parameters['chatSetting'];
-  String islevel = parameters['islevel'];
-  ShowAlert showAlert = parameters['showAlert'];
-
-  // Toggle chat modal visibility
   if (isMessagesModalVisible) {
+    // Close the chat modal if it's currently visible
     updateIsMessagesModalVisible(false);
   } else {
-    // Check if chat is allowed based on event settings and participant level
+    // Check if chat is allowed based on the chat setting and participant level
     if (chatSetting != 'allow' && islevel != '2') {
       updateIsMessagesModalVisible(false);
-      showAlert(
+      showAlert?.call(
         message: 'Chat is disabled for this event.',
-        type: 'error',
+        type: 'danger',
         duration: 3000,
       );
     } else {

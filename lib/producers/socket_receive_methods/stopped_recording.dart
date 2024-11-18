@@ -1,54 +1,55 @@
 import 'package:flutter/foundation.dart';
+import '../../types/types.dart' show ShowAlert;
 
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
-});
+/// Options for showing the recording stopped alert message.
+class StoppedRecordingOptions {
+  final String state;
+  final String reason;
+  final ShowAlert? showAlert;
 
-/// Displays an alert message indicating that the recording has stopped.
+  StoppedRecordingOptions({
+    required this.state,
+    required this.reason,
+    this.showAlert,
+  });
+}
+
+/// Function type for `stoppedRecording` to define consistency in function signature.
+typedef StoppedRecordingType = Future<void> Function(
+    StoppedRecordingOptions options);
+
+/// Displays an alert message when the recording has stopped, indicating the reason.
 ///
-/// The [stoppedRecording] function takes in the following parameters:
-/// - [state]: The state of the recording.
-/// - [reason]: The reason for stopping the recording.
-/// - [parameters]: Additional parameters, including the [showAlert] function.
+/// @param [StoppedRecordingOptions] options - Options for showing the recording stopped alert.
+/// - `state`: Should be "stop" to trigger the alert.
+/// - `reason`: Reason why the recording stopped.
+/// - `showAlert`: Optional function to display the alert message.
 ///
-/// The [showAlert] function is used to display the alert message. It takes in the following parameters:
-/// - [message]: The message to be displayed in the alert.
-/// - [type]: The type of the alert (e.g., 'danger', 'warning', 'success').
-/// - [duration]: The duration for which the alert should be displayed (in milliseconds).
+/// @returns [Future<void>] Resolves once the alert is shown, if applicable.
 ///
 /// Example usage:
 /// ```dart
-/// stoppedRecording(
-///   state: 'stopped',
-///   reason: 'User stopped the recording',
-///   parameters: {
-///     'showAlert': showAlertFunction,
-///   },
+/// final options = StoppedRecordingOptions(
+///   state: "stop",
+///   reason: "The session ended",
+///   showAlert: (message, type, duration) => print("Alert: $message"),
 /// );
+/// stoppedRecording(options);
+/// // Output: "The recording has stopped - The session ended."
 /// ```
-void stoppedRecording({
-  required String state,
-  required String reason,
-  required Map<String, dynamic> parameters,
-}) async {
+Future<void> stoppedRecording(StoppedRecordingOptions options) async {
   try {
-    // Extract showAlert from parameters
-    final ShowAlert? showAlert = parameters['showAlert'];
-
-    // Display alert message
-    if (showAlert != null) {
-      showAlert(
-        message: 'Recording stopped: $reason',
+    // Ensure the state is 'stop' before showing the alert
+    if (options.state == 'stop') {
+      options.showAlert?.call(
+        message: 'The recording has stopped - ${options.reason}.',
         type: 'danger',
-        duration: 2000,
+        duration: 3000,
       );
     }
   } catch (error) {
     if (kDebugMode) {
-      // print("Error in stoppedRecording: $error");
+      print("Error in stoppedRecording: $error");
     }
-    // throw Exception("Failed to display the recording stopped alert message.");
   }
 }

@@ -1,8 +1,72 @@
-import 'package:flutter/foundation.dart';
+import '../../types/types.dart'
+    show
+        ShowAlert,
+        MainSpecs,
+        DispSpecs,
+        TextSpecs,
+        EventType,
+        UserRecordingParams;
+
+/// Class for recording parameters used in confirming recording settings.
+abstract class ConfirmRecordingParameters {
+  // Core properties as abstract getters
+  ShowAlert? get showAlert;
+  String get recordingMediaOptions;
+  String get recordingAudioOptions;
+  String get recordingVideoOptions;
+  String get recordingVideoType;
+  String get recordingDisplayType;
+  bool get recordingNameTags;
+  String get recordingBackgroundColor;
+  String get recordingNameTagsColor;
+  String get recordingOrientationVideo;
+  bool get recordingAddHLS;
+  bool get recordingAddText;
+  String get recordingCustomText;
+  String get recordingCustomTextPosition;
+  String get recordingCustomTextColor;
+  String get meetingDisplayType;
+  bool get recordingVideoParticipantsFullRoomSupport;
+  bool get recordingAllParticipantsSupport;
+  bool get recordingVideoParticipantsSupport;
+  bool get recordingSupportForOtherOrientation;
+  String get recordingPreferredOrientation;
+  bool get recordingMultiFormatsSupport;
+  bool get recordingVideoOptimized;
+  bool get recordingAllParticipantsFullRoomSupport;
+  bool get meetingVideoOptimized;
+  EventType get eventType;
+  bool get breakOutRoomStarted;
+  bool get breakOutRoomEnded;
+
+  // Update functions as abstract getters returning functions
+  void Function(String displayType) get updateRecordingDisplayType;
+  void Function(bool optimized) get updateRecordingVideoOptimized;
+  void Function(UserRecordingParams params) get updateUserRecordingParams;
+  void Function(bool confirmed) get updateConfirmedToRecord;
+
+  // Mediasfu function to get updated parameters as an abstract getter
+  ConfirmRecordingParameters Function() get getUpdatedAllParams;
+
+  // dynamic operator [](String key);
+}
+
+/// Class encapsulating options for confirming recording.
+class ConfirmRecordingOptions {
+  final ConfirmRecordingParameters parameters;
+
+  ConfirmRecordingOptions({
+    required this.parameters,
+  });
+}
+
+/// Type alias for confirm recording function.
+typedef ConfirmRecordingType = Future<void> Function(
+    ConfirmRecordingOptions options);
 
 /// Confirms the recording based on the provided parameters.
 ///
-/// The [parameters] map contains various options and settings related to the recording.
+/// The [options] parameter contains various settings and callbacks related to the recording.
 /// The function performs validation checks on the parameters and displays appropriate alerts if any invalid options are selected.
 /// It also updates the recording display type and other related settings based on the meeting display type.
 ///
@@ -10,311 +74,259 @@ import 'package:flutter/foundation.dart';
 /// - [showAlert]: A function that displays an alert with the specified message, type, and duration.
 /// - [updateRecordingDisplayType]: A function that updates the recording display type.
 /// - [updateRecordingVideoOptimized]: A function that updates the recording video optimization setting.
-/// - [updateRecordingVideoParticipantsFullRoomSupport]: A function that updates the recording video participants full room support setting.
-/// - [updateRecordingAllParticipantsSupport]: A function that updates the recording all participants support setting.
-/// - [updateRecordingVideoParticipantsSupport]: A function that updates the recording video participants support setting.
-/// - [updateRecordingSupportForOtherOrientation]: A function that updates the recording support for other orientation setting.
-/// - [updateRecordingPreferredOrientation]: A function that updates the recording preferred orientation setting.
-/// - [updateRecordingMultiFormatsSupport]: A function that updates the recording multi formats support setting.
 /// - [updateUserRecordingParams]: A function that updates the user recording parameters.
 /// - [updateConfirmedToRecord]: A function that updates the confirmed to record setting.
 ///
 /// The function returns void.
+///
+/// Example usage:
+/// ```dart
+/// confirmRecording(ConfirmRecordingOptions(
+///   parameters: ConfirmRecordingParameters(
+///     showAlert: ({required String message, required String type, required int duration}) {
+///       print(message);
+///     },
+///     recordingMediaOptions: 'video',
+///     recordingAudioOptions: 'high',
+///     recordingVideoOptions: 'all',
+///     recordingVideoType: 'HD',
+///     recordingDisplayType: 'video',
+///     recordingNameTags: true,
+///     recordingBackgroundColor: '#000000',
+///     recordingNameTagsColor: '#ffffff',
+///     recordingOrientationVideo: 'landscape',
+///     recordingAddHLS: true,
+///     recordingAddText: true,
+///     recordingCustomText: 'Meeting',
+///     recordingCustomTextPosition: 'top-right',
+///     recordingCustomTextColor: '#ffffff',
+///     meetingDisplayType: 'video',
+///     recordingVideoParticipantsFullRoomSupport: true,
+///     recordingAllParticipantsSupport: true,
+///     recordingVideoParticipantsSupport: true,
+///     recordingSupportForOtherOrientation: true,
+///     recordingPreferredOrientation: 'landscape',
+///     recordingMultiFormatsSupport: true,
+///     recordingVideoOptimized: true,
+///     recordingAllParticipantsFullRoomSupport: true,
+///     meetingVideoOptimized: false,
+///     eventType: EventType.broadcast,
+///     breakOutRoomStarted: false,
+///     breakOutRoomEnded: true,
+///     updateRecordingDisplayType: (displayType) {
+///       print('Updated display type: $displayType');
+///     },
+///     updateRecordingVideoOptimized: (optimized) {
+///       print('Updated video optimized: $optimized');
+///     },
+///     updateUserRecordingParams: (params) {
+///       print('Updated recording params: $params');
+///     },
+///     updateConfirmedToRecord: (confirmed) {
+///       print('Confirmed to record: $confirmed');
+///     },
+///     getUpdatedAllParams: () => updatedParameters, // Define how to get updated parameters
+///   ),
+/// ));
+/// ```
 
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
-});
+Future<void> confirmRecording(ConfirmRecordingOptions options) async {
+  // Retrieve the latest parameters if needed
+  ConfirmRecordingParameters parameters =
+      options.parameters.getUpdatedAllParams();
 
-typedef UpdateRecordingDisplayType = void Function(String displayType);
-typedef UpdateRecordingVideoOptimized = void Function(bool optimized);
-typedef UpdateRecordingVideoParticipantsFullRoomSupport = void Function(
-    bool support);
-typedef UpdateRecordingAllParticipantsSupport = void Function(bool support);
-typedef UpdateRecordingVideoParticipantsSupport = void Function(bool support);
-typedef UpdateRecordingSupportForOtherOrientation = void Function(bool support);
-typedef UpdateRecordingPreferredOrientation = void Function(String orientation);
-typedef UpdateRecordingMultiFormatsSupport = void Function(bool support);
-typedef UpdateUserRecordingParams = void Function(Map<String, dynamic> params);
-typedef UpdateConfirmedToRecord = void Function(bool confirmed);
-typedef UpdateIsRecordingModalVisible = void Function(bool visible);
+  // Destructure parameters
+  final showAlert = parameters.showAlert;
+  final recordingMediaOptions = parameters.recordingMediaOptions;
+  final recordingAudioOptions = parameters.recordingAudioOptions;
+  final recordingVideoOptions = parameters.recordingVideoOptions;
+  final recordingVideoType = parameters.recordingVideoType;
+  final recordingDisplayType = parameters.recordingDisplayType;
+  final recordingNameTags = parameters.recordingNameTags;
+  final recordingBackgroundColor = parameters.recordingBackgroundColor;
+  final recordingNameTagsColor = parameters.recordingNameTagsColor;
+  final recordingOrientationVideo = parameters.recordingOrientationVideo;
+  final recordingAddHLS = parameters.recordingAddHLS;
+  final recordingAddText = parameters.recordingAddText;
+  final recordingCustomText = parameters.recordingCustomText;
+  final recordingCustomTextPosition = parameters.recordingCustomTextPosition;
+  final recordingCustomTextColor = parameters.recordingCustomTextColor;
+  final meetingDisplayType = parameters.meetingDisplayType;
+  final recordingVideoParticipantsFullRoomSupport =
+      parameters.recordingVideoParticipantsFullRoomSupport;
+  final recordingAllParticipantsSupport =
+      parameters.recordingAllParticipantsSupport;
+  final recordingVideoParticipantsSupport =
+      parameters.recordingVideoParticipantsSupport;
+  final recordingSupportForOtherOrientation =
+      parameters.recordingSupportForOtherOrientation;
+  final recordingPreferredOrientation =
+      parameters.recordingPreferredOrientation;
+  final recordingMultiFormatsSupport = parameters.recordingMultiFormatsSupport;
+  final recordingVideoOptimized = parameters.recordingVideoOptimized;
+  final recordingAllParticipantsFullRoomSupport =
+      parameters.recordingAllParticipantsFullRoomSupport;
+  final meetingVideoOptimized = parameters.meetingVideoOptimized;
+  final eventType = parameters.eventType;
+  final breakOutRoomStarted = parameters.breakOutRoomStarted;
+  final breakOutRoomEnded = parameters.breakOutRoomEnded;
 
-void confirmRecording({required Map<String, dynamic> parameters}) {
-  try {
-    // Extract variables from the parameters object
-    String recordingMediaOptions = parameters['recordingMediaOptions'];
-    String recordingAudioOptions = parameters['recordingAudioOptions'];
-    String recordingVideoOptions = parameters['recordingVideoOptions'];
-    String recordingVideoType = parameters['recordingVideoType'];
-    String recordingDisplayType = parameters['recordingDisplayType'];
-    bool recordingNameTags = parameters['recordingNameTags'];
-    String recordingBackgroundColor = parameters['recordingBackgroundColor'];
-    String recordingNameTagsColor = parameters['recordingNameTagsColor'];
-    String recordingOrientationVideo = parameters['recordingOrientationVideo'];
-    bool recordingAddHLS = parameters['recordingAddHLS'];
-    bool recordingAddText = parameters['recordingAddText'];
-    String recordingCustomText = parameters['recordingCustomText'];
-    String recordingCustomTextPosition =
-        parameters['recordingCustomTextPosition'];
-    String recordingCustomTextColor = parameters['recordingCustomTextColor'];
+  // Callback functions for updating recording settings
+  final updateRecordingDisplayType = parameters.updateRecordingDisplayType;
+  final updateRecordingVideoOptimized =
+      parameters.updateRecordingVideoOptimized;
+  final updateUserRecordingParams = parameters.updateUserRecordingParams;
+  final updateConfirmedToRecord = parameters.updateConfirmedToRecord;
 
-    String meetingDisplayType = parameters['meetingDisplayType'];
-    bool recordingVideoParticipantsFullRoomSupport =
-        parameters['recordingVideoParticipantsFullRoomSupport'];
-    bool recordingAllParticipantsSupport =
-        parameters['recordingAllParticipantsSupport'];
-    bool recordingVideoParticipantsSupport =
-        parameters['recordingVideoParticipantsSupport'];
-    bool recordingSupportForOtherOrientation =
-        parameters['recordingSupportForOtherOrientation'];
-    String recordingPreferredOrientation =
-        parameters['recordingPreferredOrientation'];
-    bool recordingMultiFormatsSupport =
-        parameters['recordingMultiFormatsSupport'];
-    bool recordingVideoOptimized = parameters['recordingVideoOptimized'];
-    bool recordingAllParticipantsFullRoomSupport =
-        parameters['recordingAllParticipantsFullRoomSupport'];
-    bool meetingVideoOptimized = parameters['meetingVideoOptimized'];
-    String eventType = parameters['eventType'];
-    bool breakOutRoomStarted = parameters['breakOutRoomStarted'] ?? false;
-    bool breakOutRoomEnded = parameters['breakOutRoomEnded'] ?? false;
-
-    // Extract variables from the parameters object
-    final ShowAlert? showAlert = parameters['showAlert'];
-    final UpdateRecordingDisplayType updateRecordingDisplayType =
-        parameters['updateRecordingDisplayType'];
-    final UpdateRecordingVideoOptimized updateRecordingVideoOptimized =
-        parameters['updateRecordingVideoOptimized'];
-    final UpdateRecordingVideoParticipantsFullRoomSupport
-        updateRecordingVideoParticipantsFullRoomSupport =
-        parameters['updateRecordingVideoParticipantsFullRoomSupport'];
-    final UpdateRecordingAllParticipantsSupport
-        updateRecordingAllParticipantsSupport =
-        parameters['updateRecordingAllParticipantsSupport'];
-    final UpdateRecordingVideoParticipantsSupport
-        updateRecordingVideoParticipantsSupport =
-        parameters['updateRecordingVideoParticipantsSupport'];
-    final UpdateRecordingSupportForOtherOrientation
-        updateRecordingSupportForOtherOrientation =
-        parameters['updateRecordingSupportForOtherOrientation'];
-    final UpdateRecordingPreferredOrientation
-        updateRecordingPreferredOrientation =
-        parameters['updateRecordingPreferredOrientation'];
-    final UpdateRecordingMultiFormatsSupport
-        updateRecordingMultiFormatsSupport =
-        parameters['updateRecordingMultiFormatsSupport'];
-    final UpdateUserRecordingParams updateUserRecordingParams =
-        parameters['updateUserRecordingParams'];
-    final UpdateConfirmedToRecord updateConfirmedToRecord =
-        parameters['updateConfirmedToRecord'];
-
-    final String mediaOptions = recordingMediaOptions;
-
-// Other variables not provided in the guide
-    final String selectedRecordOption = recordingDisplayType;
-
-// Additional logic similar to the provided guide
-// recordingVideoParticipantsFullRoomSupport = minigrid and main video
-    if (eventType != 'broadcast') {
-      if (!recordingVideoParticipantsFullRoomSupport &&
-          recordingVideoOptions == 'all' &&
-          mediaOptions == 'video') {
-        if (meetingDisplayType == 'all') {
-          if (breakOutRoomStarted && !breakOutRoomEnded) {
-          } else {
-            if (showAlert != null) {
-              showAlert(
-                message:
-                    'You are not allowed to record videos of all participants; change the meeting display type to video or video optimized.',
-                type: 'danger',
-                duration: 3000,
-              );
-            }
-            return;
-          }
-        }
-      }
-
-      // recordingAllParticipantsSupport  = others other than host screen (video + audio)
-      if (!recordingAllParticipantsSupport && recordingVideoOptions == 'all') {
-        if (showAlert != null) {
-          showAlert(
-            message: 'You are only allowed to record yourself.',
-            type: 'danger',
-            duration: 3000,
-          );
-        }
-        return;
-      }
-
-      // recordingVideoParticipantsSupport (maingrid + non-host screenshare person)
-      if (!recordingVideoParticipantsSupport &&
-          recordingDisplayType == 'video') {
-        if (showAlert != null) {
-          showAlert(
-            message: 'You are not allowed to record other video participants.',
-            type: 'danger',
-            duration: 3000,
-          );
-        }
-        return;
-      }
-    }
-
-    if (!recordingSupportForOtherOrientation &&
-        recordingOrientationVideo == 'all') {
-      if (showAlert != null) {
-        showAlert(
-          message: 'You are not allowed to record all orientations.',
-          type: 'danger',
-          duration: 3000,
-        );
-      }
+  // Perform validation checks similar to TypeScript logic
+  if (!recordingVideoParticipantsFullRoomSupport &&
+      recordingVideoOptions == 'all' &&
+      recordingMediaOptions == 'video') {
+    if (meetingDisplayType == 'all' &&
+        !(breakOutRoomStarted && !breakOutRoomEnded)) {
+      showAlert?.call(
+        message:
+            'You are not allowed to record videos of all participants; change the meeting display type to video or video optimized.',
+        type: 'danger',
+        duration: 3000,
+      );
       return;
-    }
-
-    if (recordingPreferredOrientation == 'landscape' &&
-        recordingOrientationVideo == 'portrait' &&
-        !recordingSupportForOtherOrientation) {
-      if (showAlert != null) {
-        showAlert(
-          message: 'You are not allowed to record portrait orientation.',
-          type: 'danger',
-          duration: 3000,
-        );
-      }
-      return;
-    } else if (recordingPreferredOrientation == 'portrait' &&
-        recordingOrientationVideo == 'landscape' &&
-        !recordingSupportForOtherOrientation) {
-      if (showAlert != null) {
-        showAlert(
-          message: 'You are not allowed to record landscape orientation.',
-          type: 'danger',
-          duration: 3000,
-        );
-      }
-      return;
-    }
-
-    if (!recordingMultiFormatsSupport && recordingVideoType == 'all') {
-      if (showAlert != null) {
-        showAlert(
-          message: 'You are not allowed to record all formats.',
-          type: 'danger',
-          duration: 3000,
-        );
-      }
-      return;
-    }
-
-    if (eventType != 'broadcast') {
-      if (recordingMediaOptions == 'video') {
-        if (meetingDisplayType == 'media') {
-          if (recordingDisplayType == 'all') {
-            if (showAlert != null) {
-              showAlert(
-                message:
-                    'Recording display type can be either video, video optimized, or media when meeting display type is media.',
-                type: 'danger',
-                duration: 3000,
-              );
-            }
-            recordingDisplayType = meetingDisplayType;
-            return;
-          }
-        } else if (meetingDisplayType == 'video') {
-          if (recordingDisplayType == 'all' ||
-              recordingDisplayType == 'media') {
-            if (showAlert != null) {
-              showAlert(
-                message:
-                    'Recording display type can be either video or video optimized when meeting display type is video.',
-                type: 'danger',
-                duration: 3000,
-              );
-            }
-            recordingDisplayType = meetingDisplayType;
-            return;
-          }
-
-          if (meetingVideoOptimized && !recordingVideoOptimized) {
-            if (showAlert != null) {
-              showAlert(
-                message:
-                    'Recording display type can be only video optimized when meeting display type is video optimized.',
-                type: 'danger',
-                duration: 3000,
-              );
-            }
-            recordingVideoOptimized = meetingVideoOptimized;
-            return;
-          }
-        }
-      } else {
-        if (recordingDisplayType == 'all' || recordingDisplayType == 'media') {
-        } else {
-          recordingDisplayType = 'media';
-        }
-        recordingVideoOptimized = false;
-      }
-    }
-
-    if (recordingDisplayType == 'all' &&
-        !recordingAllParticipantsFullRoomSupport) {
-      if (showAlert != null) {
-        showAlert(
-          message: 'You can only record all participants with media.',
-          type: 'danger',
-          duration: 3000,
-        );
-      }
-      return;
-    }
-
-    // Additional logic similar to the provided guide
-    // Construct userRecordingParams object
-    final Map<String, dynamic> userRecordingParams = {
-      'mainSpecs': {
-        'mediaOptions': recordingMediaOptions,
-        'audioOptions': recordingAudioOptions,
-        'videoOptions': recordingVideoOptions,
-        'videoType': recordingVideoType,
-        'videoOptimized': recordingVideoOptimized,
-        'recordingDisplayType': recordingDisplayType,
-        'addHLS': recordingAddHLS,
-      },
-      'dispSpecs': {
-        'nameTags': recordingNameTags,
-        'backgroundColor': recordingBackgroundColor,
-        'nameTagsColor': recordingNameTagsColor,
-        'orientationVideo': recordingOrientationVideo,
-      },
-      'textSpecs': {
-        'addText': recordingAddText,
-        'customText': recordingCustomText,
-        'customTextPosition': recordingCustomTextPosition,
-        'customTextColor': recordingCustomTextColor,
-      },
-    };
-
-    // Update state variables based on the logic
-    updateUserRecordingParams(userRecordingParams);
-    updateConfirmedToRecord(true);
-    updateRecordingDisplayType(selectedRecordOption);
-    updateRecordingVideoOptimized(recordingVideoOptimized);
-    updateRecordingVideoParticipantsFullRoomSupport(
-        recordingVideoParticipantsFullRoomSupport);
-    updateRecordingAllParticipantsSupport(recordingAllParticipantsSupport);
-    updateRecordingVideoParticipantsSupport(recordingVideoParticipantsSupport);
-    updateRecordingSupportForOtherOrientation(
-        recordingSupportForOtherOrientation);
-    updateRecordingPreferredOrientation(recordingPreferredOrientation);
-    updateRecordingMultiFormatsSupport(recordingMultiFormatsSupport);
-  } catch (error) {
-    if (kDebugMode) {
-      print('Error in confirmRecording: $error');
     }
   }
+
+  if (!recordingAllParticipantsSupport && recordingVideoOptions == 'all') {
+    showAlert?.call(
+      message: 'You are only allowed to record yourself.',
+      type: 'danger',
+      duration: 3000,
+    );
+    return;
+  }
+
+  if (!recordingVideoParticipantsSupport && recordingDisplayType == 'video') {
+    showAlert?.call(
+      message: 'You are not allowed to record other video participants.',
+      type: 'danger',
+      duration: 3000,
+    );
+    return;
+  }
+
+  if (!recordingSupportForOtherOrientation &&
+      recordingOrientationVideo == 'all') {
+    showAlert?.call(
+      message: 'You are not allowed to record all orientations.',
+      type: 'danger',
+      duration: 3000,
+    );
+    return;
+  }
+
+  if ((recordingPreferredOrientation == 'landscape' &&
+          recordingOrientationVideo == 'portrait') ||
+      (recordingPreferredOrientation == 'portrait' &&
+          recordingOrientationVideo == 'landscape')) {
+    if (!recordingSupportForOtherOrientation) {
+      showAlert?.call(
+        message: 'You are not allowed to record this orientation.',
+        type: 'danger',
+        duration: 3000,
+      );
+      return;
+    }
+  }
+
+  if (!recordingMultiFormatsSupport && recordingVideoType == 'all') {
+    showAlert?.call(
+      message: 'You are not allowed to record all formats.',
+      type: 'danger',
+      duration: 3000,
+    );
+    return;
+  }
+
+  if (eventType != EventType.broadcast) {
+    if (recordingMediaOptions == 'video') {
+      if (meetingDisplayType == 'media' && recordingDisplayType == 'all') {
+        showAlert?.call(
+          message:
+              'Recording display type can be either video, video optimized, or media when meeting display type is media.',
+          type: 'danger',
+          duration: 3000,
+        );
+        updateRecordingDisplayType(meetingDisplayType);
+        return;
+      }
+
+      if (meetingDisplayType == 'video' &&
+          (recordingDisplayType == 'all' || recordingDisplayType == 'media')) {
+        showAlert?.call(
+          message:
+              'Recording display type can be either video or video optimized when meeting display type is video.',
+          type: 'danger',
+          duration: 3000,
+        );
+        updateRecordingDisplayType(meetingDisplayType);
+        return;
+      }
+
+      if (meetingVideoOptimized && !recordingVideoOptimized) {
+        showAlert?.call(
+          message:
+              'Recording display type can only be video optimized when meeting display type is video optimized.',
+          type: 'danger',
+          duration: 3000,
+        );
+        updateRecordingVideoOptimized(meetingVideoOptimized);
+        return;
+      }
+    } else {
+      updateRecordingDisplayType('media');
+      updateRecordingVideoOptimized(false);
+    }
+  }
+
+  if (recordingDisplayType == 'all' &&
+      !recordingAllParticipantsFullRoomSupport) {
+    showAlert?.call(
+      message: 'You can only record all participants with media.',
+      type: 'danger',
+      duration: 3000,
+    );
+    return;
+  }
+
+  // Build recording parameter specs and update state
+  final mainSpecs = MainSpecs(
+    mediaOptions: recordingMediaOptions,
+    audioOptions: recordingAudioOptions,
+    videoOptions: recordingVideoOptions,
+    videoType: recordingVideoType,
+    videoOptimized: recordingVideoOptimized,
+    recordingDisplayType: recordingDisplayType,
+    addHLS: recordingAddHLS,
+  );
+
+  final dispSpecs = DispSpecs(
+    nameTags: recordingNameTags,
+    backgroundColor: recordingBackgroundColor,
+    nameTagsColor: recordingNameTagsColor,
+    orientationVideo: recordingOrientationVideo,
+  );
+
+  final textSpecs = TextSpecs(
+    addText: recordingAddText,
+    customText: recordingCustomText,
+    customTextPosition: recordingCustomTextPosition,
+    customTextColor: recordingCustomTextColor,
+  );
+
+  final userRecordingParams = UserRecordingParams(
+    mainSpecs: mainSpecs,
+    dispSpecs: dispSpecs,
+    textSpecs: textSpecs,
+  );
+
+  updateUserRecordingParams(userRecordingParams);
+  updateConfirmedToRecord(true);
 }

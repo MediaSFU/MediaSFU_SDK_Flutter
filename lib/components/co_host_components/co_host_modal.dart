@@ -1,168 +1,269 @@
 import 'package:flutter/material.dart';
-import '../../methods/utils/get_modal_position.dart' show getModalPosition;
+import '../../methods/utils/get_modal_position.dart'
+    show getModalPosition, GetModalPositionOptions;
 import '../../methods/co_host_methods/modify_co_host_settings.dart'
-    show modifyCoHostSettings;
+    show
+        modifyCoHostSettings,
+        ModifyCoHostSettingsOptions,
+        ModifyCoHostSettingsType;
+import 'package:socket_io_client/socket_io_client.dart' as io;
+import '../../types/types.dart'
+    show Participant, CoHostResponsibility, ShowAlert;
 
-/// CoHostModal - A modal widget for managing co-host settings.
-///
-/// This widget displays a modal for managing co-host settings, allowing users
-/// to select a co-host, assign responsibilities, and save the changes.
-///
-/// Required parameters:
-/// - [isCoHostModalVisible]: A boolean to control the visibility of the co-host modal.
-/// - [onCoHostClose]: A function to handle closing the co-host modal.
-/// - [participants]: The list of participants in the meeting.
-/// - [coHostResponsibility]: The list of co-host responsibilities.
-/// - [parameters]: Additional parameters for co-host modal functionality.
-///
-/// Optional parameters:
-/// - [onModifyCoHostSettings]: A function to modify co-host settings. Defaults to `modifyCoHostSettings`.
-/// - [currentCohost]: The current co-host. Defaults to 'No coHost'.
-/// - [position]: The position of the modal. Defaults to 'topRight'.
-/// - [backgroundColor]: The background color of the modal. Defaults to Color(0xFF83C0E9).
+/// Configuration options for the `CoHostModal` widget.
 ///
 /// Example:
 /// ```dart
 /// CoHostModal(
-///   isCoHostModalVisible: true,
-///   onCoHostClose: () {
-///     // Close co-host modal logic
-///   },
-///   participants: [...],
-///   coHostResponsibility: [...],
-///   parameters: {...},
+///   options: CoHostModalOptions(
+///     isCoHostModalVisible: true,
+///     onCoHostClose: () {
+///       // Logic for closing the modal
+///     },
+///     participants: participantsList,
+///     coHostResponsibility: responsibilitiesList,
+///     roomName: "MyRoom",
+///     socket: mySocket,
+///     updateCoHostResponsibility: (newResponsibilities) => print(newResponsibilities),
+///     updateCoHost: (coHost) => print("Updated co-host: $coHost"),
+///     updateIsCoHostModalVisible: (isVisible) => print("Modal visibility: $isVisible"),
+///   ),
 /// );
 /// ```
-
-class CoHostModal extends StatefulWidget {
+class CoHostModalOptions {
+  /// Determines if the co-host modal is visible.
   final bool isCoHostModalVisible;
+
+  /// Function to handle closing the co-host modal.
   final VoidCallback onCoHostClose;
-  final Function({required Map<String, dynamic> parameters})
-      onModifyCoHostSettings;
+
+  /// Function to modify co-host settings.
+  final ModifyCoHostSettingsType onModifyCoHostSettings;
+
+  /// Current co-host name.
   final String currentCohost;
-  final List<dynamic> participants;
-  final List<dynamic> coHostResponsibility;
-  final Map<String, dynamic> parameters;
+
+  /// List of participants in the meeting.
+  final List<Participant> participants;
+
+  /// List of co-host responsibilities.
+  final List<CoHostResponsibility> coHostResponsibility;
+
+  /// Position of the modal ('topLeft', 'topRight', 'bottomLeft', 'bottomRight').
   final String position;
+
+  /// Background color of the modal.
   final Color backgroundColor;
 
-  const CoHostModal({
-    super.key,
+  /// Name of the room.
+  final String roomName;
+
+  /// Function to display alerts.
+  final ShowAlert? showAlert;
+
+  /// Update function for co-host responsibilities.
+  final Function(List<CoHostResponsibility>) updateCoHostResponsibility;
+
+  /// Update function for co-host.
+  final Function(String) updateCoHost;
+
+  /// Update function for co-host modal visibility.
+  final Function(bool) updateIsCoHostModalVisible;
+
+  /// Socket instance for real-time communication.
+  final io.Socket? socket;
+
+  CoHostModalOptions({
     required this.isCoHostModalVisible,
     required this.onCoHostClose,
     this.onModifyCoHostSettings = modifyCoHostSettings,
     this.currentCohost = 'No coHost',
     required this.participants,
     required this.coHostResponsibility,
-    required this.parameters,
     this.position = 'topRight',
-    this.backgroundColor = const Color(0xFF83C0E9),
+    this.backgroundColor = const Color.fromARGB(255, 179, 214, 237),
+    required this.roomName,
+    this.showAlert,
+    required this.updateCoHostResponsibility,
+    required this.updateCoHost,
+    required this.updateIsCoHostModalVisible,
+    this.socket,
+  });
+}
+
+typedef CoHostModalType = Widget Function(
+    {required CoHostModalOptions options});
+
+/// CoHostModal - A modal widget for managing co-host settings.
+///
+/// This widget displays a modal for managing co-host settings, allowing users
+/// to select a co-host, assign responsibilities, and save the changes.
+///
+/// Example:
+/// ```dart
+/// CoHostModal(
+///   options: CoHostModalOptions(
+///     isCoHostModalVisible: true,
+///     onCoHostClose: () {
+///       // Close co-host modal logic
+///     },
+///     participants: [...],
+///     coHostResponsibility: [...],
+///     parameters: {...},
+///   ),
+/// )
+/// ```
+class CoHostModal extends StatefulWidget {
+  final CoHostModalOptions options;
+
+  const CoHostModal({
+    super.key,
+    required this.options,
   });
 
   @override
-  // ignore: library_private_types_in_public_api
   _CoHostModalState createState() => _CoHostModalState();
 }
 
 class _CoHostModalState extends State<CoHostModal> {
   late String selectedCohost;
-  late Map<String, dynamic> responsibilities;
-  late List coHostResponsibilityCopy;
-  late String position;
+  late List<CoHostResponsibility> coHostResponsibilityCopy;
+  late Map<String, bool> responsibilities;
 
   @override
   void initState() {
     super.initState();
-    selectedCohost = widget.currentCohost;
-    coHostResponsibilityCopy = List.from(widget.coHostResponsibility);
-    responsibilities = widget.coHostResponsibility.fold<Map<String, dynamic>>(
-      {},
-      (acc, item) {
-        final str = item['name'];
-        final str2 = _capitalize(str);
-        final keyed = 'manage$str2';
-        acc[keyed] = item['value'];
-        acc['dedicateTo$keyed'] = item['dedicated'];
-        return acc;
-      },
-    );
+    selectedCohost = widget.options.currentCohost;
+    coHostResponsibilityCopy = List.from(widget.options.coHostResponsibility);
+    responsibilities = _initializeResponsibilities(coHostResponsibilityCopy);
   }
 
+  /// Initializes the responsibilities map based on the list of responsibilities.
+  Map<String, bool> _initializeResponsibilities(
+      List<CoHostResponsibility> responsibilitiesList) {
+    Map<String, bool> map = {};
+    for (var responsibility in responsibilitiesList) {
+      String capitalizedName = _capitalize(responsibility.name);
+      map['manage$capitalizedName'] = responsibility.value;
+      map['dedicateToManage$capitalizedName'] = responsibility.dedicated;
+    }
+    return map;
+  }
+
+  /// Capitalizes the first letter of a given string.
   String _capitalize(String input) {
-    return input.substring(0, 1).toUpperCase() + input.substring(1);
+    if (input.isEmpty) return input;
+    return input[0].toUpperCase() + input.substring(1);
   }
 
-  void handleToggleSwitch(String responsibility) {
-    // Extract the responsibility name and lowercase the first letter
-    String responsibilityName = '';
-    if (responsibility.startsWith('dedicateTo')) {
-      responsibilityName =
-          responsibility.replaceAll('dedicateToManage', '').toLowerCase();
-    } else if (responsibility.startsWith('manage')) {
-      responsibilityName =
-          responsibility.replaceAll('manageManage', '').toLowerCase();
-    }
-
-    // Find the index of the item in the coHostResponsibilityCopy list
-    int index = coHostResponsibilityCopy
-        .indexWhere((item) => item['name'] == responsibilityName);
-    // Check if the responsibility starts with 'dedicateTo'
-    if (responsibility.startsWith('dedicateTo')) {
-      // Toggle the 'dedicated' property of the item
-      if (coHostResponsibilityCopy[index]['dedicated'] == true) {
-        coHostResponsibilityCopy[index]['dedicated'] = false;
-      } else {
-        coHostResponsibilityCopy[index]['dedicated'] = true;
-      }
-    } else if (responsibility.startsWith('manage')) {
-      // Toggle the 'value' property of the item
-      coHostResponsibilityCopy[index]['value'] =
-          !coHostResponsibilityCopy[index]['value'];
-    }
-
-    // Update the state by creating a new list with the modified item
+  /// Handles toggling of switches for responsibilities.
+  void handleToggleSwitch(String key) {
     setState(() {
-      coHostResponsibilityCopy = List.from(coHostResponsibilityCopy);
+      responsibilities[key] = !responsibilities[key]!;
+      _updateResponsibilityList(key);
     });
+  }
+
+  /// Updates the co-host responsibility list based on the toggled key.
+  void _updateResponsibilityList(String key) {
+    String responsibilityName = '';
+    bool? newValue;
+
+    if (key.startsWith('dedicateToManage')) {
+      responsibilityName = key.replaceAll('dedicateToManage', '').toLowerCase();
+      newValue = responsibilities[key];
+      _setCoHostResponsibilityValue(responsibilityName,
+          dedicated: newValue ?? false);
+    } else if (key.startsWith('manage')) {
+      responsibilityName = key.replaceAll('manage', '').toLowerCase();
+      newValue = responsibilities[key];
+      _setCoHostResponsibilityValue(responsibilityName,
+          value: newValue ?? false);
+      if (!newValue!) {
+        // If manage is turned off, also turn off dedicateToManage
+        String dedicatedKey =
+            'dedicateToManage${_capitalize(responsibilityName)}';
+        responsibilities[dedicatedKey] = false;
+        _setCoHostResponsibilityValue(responsibilityName, dedicated: false);
+      }
+    }
+  }
+
+  /// Updates the co-host responsibility list based on changes.
+  void _setCoHostResponsibilityValue(String name,
+      {bool? value, bool? dedicated}) {
+    int index =
+        coHostResponsibilityCopy.indexWhere((item) => item.name == name);
+    if (index != -1) {
+      if (value != null) coHostResponsibilityCopy[index].value = value;
+      if (dedicated != null) {
+        coHostResponsibilityCopy[index].dedicated = dedicated;
+      }
+    }
+  }
+
+  /// Saves the modified co-host settings.
+  void _saveCoHostSettings() {
+    widget.options.onModifyCoHostSettings(
+      ModifyCoHostSettingsOptions(
+        roomName: widget.options.roomName,
+        showAlert: widget.options.showAlert,
+        selectedParticipant: selectedCohost,
+        coHost: widget.options.currentCohost,
+        coHostResponsibility: coHostResponsibilityCopy,
+        updateCoHostResponsibility: widget.options.updateCoHostResponsibility,
+        updateCoHost: widget.options.updateCoHost,
+        updateIsCoHostModalVisible: widget.options.updateIsCoHostModalVisible,
+        socket: widget.options.socket,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, String>> responsibilityItems = [
-      {'name': 'manageParticipants', 'label': 'Manage Participants'},
-      {'name': 'manageMedia', 'label': 'Manage Media'},
-      {'name': 'manageWaiting', 'label': 'Manage Waiting Room'},
-      {'name': 'manageChat', 'label': 'Manage Chat'},
-    ];
-
+    // Calculate modal size
     final screenWidth = MediaQuery.of(context).size.width;
-    var modalWidth = 0.85 * screenWidth;
-    if (modalWidth > 450) {
-      modalWidth = 450;
-    }
+    final modalWidth = screenWidth > 450 ? 450.0 : 0.85 * screenWidth;
     final modalHeight = MediaQuery.of(context).size.height * 0.75;
 
-    final filteredParticipants = widget.participants
-        .where((participant) => participant['islevel'] != '2');
+    // Filter participants excluding current co-host and those with islevel '2'
+    final filteredParticipants = widget.options.participants.where(
+      (participant) => participant.islevel != '2',
+    );
+
+    // Ensure selectedCohost is valid, or default to 'No coHost'
+    if (filteredParticipants
+        .where((participant) => participant.name == selectedCohost)
+        .isEmpty) {
+      selectedCohost = 'No coHost';
+    }
 
     return Visibility(
-      visible: widget.isCoHostModalVisible,
+      visible: widget.options.isCoHostModalVisible,
       child: SizedBox(
         width: MediaQuery.of(context).size.width,
         height: MediaQuery.of(context).size.height,
         child: Stack(
           children: [
             Positioned(
-              top: getModalPosition(
-                  widget.position, context, modalWidth, modalHeight)['top'],
-              right: getModalPosition(
-                  widget.position, context, modalWidth, modalHeight)['right'],
+              top: getModalPosition(GetModalPositionOptions(
+                position: widget.options.position,
+                modalWidth: modalWidth,
+                modalHeight: modalHeight,
+                context: context,
+              ))['top'],
+              right: getModalPosition(GetModalPositionOptions(
+                position: widget.options.position,
+                modalWidth: modalWidth,
+                modalHeight: modalHeight,
+                context: context,
+              ))['right'],
               child: AnimatedContainer(
                 width: modalWidth,
                 height: modalHeight,
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: widget.backgroundColor,
+                  color: widget.options.backgroundColor,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 duration: const Duration(milliseconds: 300),
@@ -175,12 +276,13 @@ class _CoHostModalState extends State<CoHostModal> {
                         height: modalHeight,
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: widget.backgroundColor,
+                          color: widget.options.backgroundColor,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
+                            // Header
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -193,7 +295,7 @@ class _CoHostModalState extends State<CoHostModal> {
                                   ),
                                 ),
                                 IconButton(
-                                  onPressed: widget.onCoHostClose,
+                                  onPressed: widget.options.onCoHostClose,
                                   icon: const Icon(Icons.close),
                                   color: Colors.black,
                                 ),
@@ -204,6 +306,7 @@ class _CoHostModalState extends State<CoHostModal> {
                               thickness: 1,
                               height: 20,
                             ),
+                            // Co-Host Selection
                             SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
                               child: DropdownButton<String>(
@@ -219,11 +322,12 @@ class _CoHostModalState extends State<CoHostModal> {
                                     child: Text('No Co-Host'),
                                   ),
                                   ...filteredParticipants
+                                      .toSet()
                                       .map<DropdownMenuItem<String>>(
                                     (participant) {
                                       return DropdownMenuItem<String>(
-                                        value: participant['name'],
-                                        child: Text(participant['name']),
+                                        value: participant.name,
+                                        child: Text(participant.name),
                                       );
                                     },
                                   ),
@@ -236,34 +340,41 @@ class _CoHostModalState extends State<CoHostModal> {
                               thickness: 1,
                               height: 20,
                             ),
+                            // Responsibilities Header
                             const Row(
                               children: [
                                 Expanded(
                                   flex: 6,
-                                  child: Text('Responsibility',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
-                                      )),
+                                  child: Text(
+                                    'Responsibility',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
                                 ),
                                 Expanded(
                                   flex: 3,
-                                  child: Text('Select',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
-                                      )),
+                                  child: Text(
+                                    'Select',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
                                 ),
                                 Expanded(
                                   flex: 3,
-                                  child: Text('Dedicated',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
-                                      )),
+                                  child: Text(
+                                    'Dedicated',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -272,70 +383,61 @@ class _CoHostModalState extends State<CoHostModal> {
                               thickness: 1,
                               height: 20,
                             ),
-                            ListView.builder(
-                              shrinkWrap: true,
-                              itemCount: responsibilityItems.length,
-                              itemBuilder: (context, index) {
-                                final item = responsibilityItems[index];
+                            // Responsibilities List
+                            Expanded(
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                itemCount: coHostResponsibilityCopy.length,
+                                itemBuilder: (context, index) {
+                                  final responsibility =
+                                      coHostResponsibilityCopy[index];
+                                  final capitalizedName =
+                                      _capitalize(responsibility.name);
+                                  final manageKey = 'manage$capitalizedName';
+                                  final dedicateKey =
+                                      'dedicateToManage$capitalizedName';
 
-                                return Row(
-                                  children: [
-                                    Expanded(
-                                      flex: 6,
-                                      child: Text(
-                                        item['label']!,
-                                        style: const TextStyle(fontSize: 16),
+                                  return Row(
+                                    children: [
+                                      // Responsibility Label
+                                      Expanded(
+                                        flex: 6,
+                                        child: Text(
+                                          _formatResponsibilityLabel(
+                                              responsibility.name),
+                                          style: const TextStyle(fontSize: 16),
+                                        ),
                                       ),
-                                    ),
-                                    Expanded(
-                                      flex: 3,
-                                      child: Switch(
-                                        value: responsibilities[
-                                                'manage${_capitalize(item['name']!)}'] ??
-                                            false,
-                                        onChanged: (value) {
-                                          setState(() {
-                                            responsibilities[
-                                                    'manage${_capitalize(item['name']!)}'] =
-                                                value;
-                                            if (!value) {
-                                              responsibilities[
-                                                      'dedicateToManage${_capitalize(item['name']!)}'] =
-                                                  false;
-                                              handleToggleSwitch(
-                                                  'manage${_capitalize(item['name']!)}');
-                                            } else {
-                                              handleToggleSwitch(
-                                                  'manage${_capitalize(item['name']!)}');
+                                      // Manage Switch
+                                      Expanded(
+                                        flex: 3,
+                                        child: Switch(
+                                          value: responsibilities[manageKey] ??
+                                              false,
+                                          onChanged: (value) {
+                                            handleToggleSwitch(manageKey);
+                                          },
+                                        ),
+                                      ),
+                                      // Dedicate Switch
+                                      Expanded(
+                                        flex: 3,
+                                        child: Switch(
+                                          value:
+                                              responsibilities[dedicateKey] ??
+                                                  false,
+                                          onChanged: (value) {
+                                            if (responsibilities[manageKey] ==
+                                                true) {
+                                              handleToggleSwitch(dedicateKey);
                                             }
-                                          });
-                                        },
+                                          },
+                                        ),
                                       ),
-                                    ),
-                                    Expanded(
-                                      flex: 3,
-                                      child: Switch(
-                                        value: responsibilities[
-                                                'dedicateToManage${_capitalize(item['name']!)}'] ??
-                                            false,
-                                        onChanged: (value) {
-                                          if (responsibilities[
-                                                  'manage${_capitalize(item['name']!)}'] ==
-                                              true) {
-                                            setState(() {
-                                              responsibilities[
-                                                      'dedicateToManage${_capitalize(item['name']!)}'] =
-                                                  value;
-                                            });
-                                            handleToggleSwitch(
-                                                'dedicateTo${_capitalize(item['name']!)}');
-                                          }
-                                        },
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              },
+                                    ],
+                                  );
+                                },
+                              ),
                             ),
                             const Divider(
                               color: Colors.black,
@@ -343,19 +445,9 @@ class _CoHostModalState extends State<CoHostModal> {
                               height: 10,
                             ),
                             const SizedBox(height: 10),
+                            // Save Button
                             ElevatedButton(
-                              onPressed: () {
-                                widget.onModifyCoHostSettings(
-                                  parameters: {
-                                    ...widget.parameters,
-                                    'selectedParticipant': selectedCohost,
-                                    'coHost': widget.currentCohost,
-                                    'coHostResponsibility':
-                                        coHostResponsibilityCopy,
-                                    'responsibilities': responsibilities,
-                                  },
-                                );
-                              },
+                              onPressed: _saveCoHostSettings,
                               child: const Text('Save'),
                             ),
                           ],
@@ -370,5 +462,15 @@ class _CoHostModalState extends State<CoHostModal> {
         ),
       ),
     );
+  }
+
+  /// Formats the responsibility label by replacing camelCase with spaced words.
+  String _formatResponsibilityLabel(String name) {
+    // Example: 'manageParticipants' -> 'Manage Participants'
+    final regex = RegExp(r'(?=[A-Z])');
+    final splitName = name.split(regex).join(' ');
+
+    // Capitalize the first letter of the split name
+    return splitName[0].toUpperCase() + splitName.substring(1);
   }
 }

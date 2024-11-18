@@ -1,24 +1,36 @@
-/// Type definition for a function that shows an alert/notification.
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
-});
+import '../../types/types.dart' show ShowAlert;
+
+/// Options for handling the event when a person joins.
+class PersonJoinedOptions {
+  final String name;
+  final ShowAlert? showAlert;
+
+  PersonJoinedOptions({
+    required this.name,
+    this.showAlert,
+  });
+}
+
+typedef PersonJoinedType = void Function(PersonJoinedOptions options);
 
 /// Function that handles a person joining an event.
 ///
 /// This function displays an alert/notification about the person joining the event.
-/// It takes in the person's name and a map of parameters, which should include a [ShowAlert] function
+/// It takes a [PersonJoinedOptions] instance, which includes the person's name and an optional [ShowAlert] function
 /// to display the alert/notification.
-void personJoined(
-    {required String name, required Map<String, dynamic> parameters}) async {
-  ShowAlert? showAlert = parameters['showAlert'];
-
-  if (showAlert != null) {
-    showAlert(
-      message: '$name has joined the event.',
-      type: 'success',
-      duration: 2000,
-    );
-  }
+///
+/// Example usage:
+/// ```dart
+/// final options = PersonJoinedOptions(
+///   name: "Alice",
+///   showAlert: (message: "Alice joined the event.", type: "success", duration: 3000),
+/// );
+/// personJoined(options);
+/// ```
+void personJoined(PersonJoinedOptions options) {
+  options.showAlert?.call(
+    message: '${options.name} has joined the event.',
+    type: 'success',
+    duration: 3000,
+  );
 }

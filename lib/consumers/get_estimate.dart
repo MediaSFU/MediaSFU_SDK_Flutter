@@ -1,69 +1,112 @@
-typedef CalculateRowsAndColumns = List<int> Function(int n);
-typedef UpdateFunction<T> = void Function(T value);
+import 'package:flutter/foundation.dart';
+import '../types/types.dart'
+    show EventType, CalculateRowsAndColumnsType, CalculateRowsAndColumnsOptions;
 
-/// Calculates the estimate for the number of rows and columns based on the given parameters.
-///
-/// The [n] parameter represents the total number of items.
-/// The [parameters] parameter is a map that contains the following keys:
-///   - 'fixedPageLimit': The maximum number of items per page.
-///   - 'screenPageLimit': The maximum number of items per page when sharing the screen.
-///   - 'shareScreenStarted': A boolean indicating whether the screen sharing has started.
-///   - 'shared': A boolean indicating whether the screen is being shared.
-///   - 'eventType': The type of event ('chat' or 'conference').
-///   - 'isWideScreen': A boolean indicating whether the screen is wide.
-///   - 'isMediumScreen': A boolean indicating whether the screen is medium-sized.
-///   - 'updateRemoveAltGrid': A function to update the value of 'removeAltGrid'.
-///
-/// The function returns a list containing the estimated number of items, rows, and columns.
-/// If an error occurs during estimation, it returns a list with the original number of items and 1 row and column.
+/// Parameters for estimating rows and columns based on given configurations.
+abstract class GetEstimateParameters {
+  // Properties as abstract getters
+  int get fixedPageLimit;
+  int get screenPageLimit;
+  bool get shareScreenStarted;
+  bool get shared;
+  EventType get eventType;
+  bool get removeAltGrid;
+  bool get isWideScreen;
+  bool get isMediumScreen;
 
-List<dynamic> getEstimate(
-    {required int n, required Map<String, dynamic> parameters}) {
+  // Update function as an abstract getter
+  void Function(bool) get updateRemoveAltGrid;
+
+  // Mediasfu function as an abstract getter
+  CalculateRowsAndColumnsType get calculateRowsAndColumns;
+}
+
+class GetEstimateOptions {
+  int n;
+  GetEstimateParameters parameters;
+
+  GetEstimateOptions({
+    required this.n,
+    required this.parameters,
+  });
+}
+
+typedef GetEstimateType = List<int> Function(GetEstimateOptions options);
+
+/// Estimates the number of rows and columns based on the provided options.
+///
+/// - [options] The options containing the number of items and parameters to use in the estimation.
+/// - Returns a list `[totalItems, rows, columns]` representing the calculated number of items, rows, and columns.
+///
+/// Example usage:
+/// ```dart
+/// final parameters = GetEstimateParameters(
+///   fixedPageLimit: 5,
+///   screenPageLimit: 8,
+///   shareScreenStarted: false,
+///   shared: false,
+///   eventType: EventType.conference,
+///   removeAltGrid: false,
+///   isWideScreen: true,
+///   isMediumScreen: false,
+///   updateRemoveAltGrid: (value) => print('Remove Alt Grid: $value'),
+///   calculateRowsAndColumns: (n) => [3, 4],
+/// );
+///
+/// final options = GetEstimateOptions(n: 10, parameters: parameters);
+/// final estimate = getEstimate(options);
+/// print('Estimated: $estimate'); // Output: Estimated: [10, 3, 4]
+/// ```
+///
+List<int> getEstimate(GetEstimateOptions options) {
   try {
     // Destructure parameters
-    int fixedPageLimit = parameters['fixedPageLimit'];
-    int screenPageLimit = parameters['screenPageLimit'];
-    bool shareScreenStarted = parameters['shareScreenStarted'];
-    bool shared = parameters['shared'];
-    String eventType = parameters['eventType'];
-    bool isWideScreen = parameters['isWideScreen'];
-    bool isMediumScreen = parameters['isMediumScreen'];
-    UpdateFunction<bool> updateRemoveAltGrid =
-        parameters['updateRemoveAltGrid'];
-
-    // mediasfu functions
-    CalculateRowsAndColumns calculateRowsAndColumns =
-        parameters['calculateRowsAndColumns'];
+    var params = options.parameters;
+    int fixedPageLimit = params.fixedPageLimit;
+    int screenPageLimit = params.screenPageLimit;
+    bool shareScreenStarted = params.shareScreenStarted;
+    bool shared = params.shared;
+    EventType eventType = params.eventType;
+    bool removeAltGrid = params.removeAltGrid;
+    bool isWideScreen = params.isWideScreen;
+    bool isMediumScreen = params.isMediumScreen;
+    var updateRemoveAltGrid = params.updateRemoveAltGrid;
+    CalculateRowsAndColumnsType calculateRowsAndColumns =
+        params.calculateRowsAndColumns;
 
     // Calculate rows and columns
-    var rowsAndColumns = calculateRowsAndColumns(n);
-    var rows = rowsAndColumns[0];
-    var cols = rowsAndColumns[1];
+    final optionCal = CalculateRowsAndColumnsOptions(n: options.n);
+    List<int> rowsAndCols = calculateRowsAndColumns(optionCal);
+    int rows = rowsAndCols[0];
+    int cols = rowsAndCols[1];
 
     // Check conditions for removing alt grid
-    if (n < fixedPageLimit ||
-        ((shareScreenStarted || shared) && n < screenPageLimit + 1)) {
-      var removeAltGrid = true;
+    if (options.n < fixedPageLimit ||
+        ((shareScreenStarted || shared) && options.n < screenPageLimit + 1)) {
+      removeAltGrid = true;
       updateRemoveAltGrid(removeAltGrid);
 
-      // Return estimated values based on screen width
+      // Return estimated values based on screen width and event type
       if (!(isMediumScreen || isWideScreen)) {
-        return eventType == 'chat' ||
-                (eventType == 'conference' && !(shareScreenStarted || shared))
-            ? [n, n, 1]
-            : [n, 1, n];
+        return eventType == EventType.chat ||
+                (eventType == EventType.conference &&
+                    !(shareScreenStarted || shared))
+            ? [options.n, options.n, 1]
+            : [options.n, 1, options.n];
       } else {
-        return eventType == 'chat' ||
-                (eventType == 'conference' && !(shareScreenStarted || shared))
-            ? [n, 1, n]
-            : [n, n, 1];
+        return eventType == EventType.chat ||
+                (eventType == EventType.conference &&
+                    !(shareScreenStarted || shared))
+            ? [options.n, 1, options.n]
+            : [options.n, options.n, 1];
       }
     }
 
     return [rows * cols, rows, cols];
   } catch (error) {
-    // Handle errors during estimation
-    return [n, 1, n];
-    // rethrow;
+    if (kDebugMode) {
+      // print("Error estimating rows and columns: ${error.toString()}");
+    }
+    return [options.n, 1, options.n];
   }
 }

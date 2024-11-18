@@ -1,21 +1,34 @@
 typedef UpdateIsPollModalVisible = void Function(bool isVisible);
 
-/// Launches the polls with the given parameters.
-///
-/// The [parameters] map should contain the following keys:
-/// - 'updateIsPollModalVisible': A function that updates the visibility state of the polls modal.
-/// - 'isPollModalVisible': A boolean indicating the current visibility state of the polls modal.
-///
-/// This function toggles the visibility state of the polls modal by calling the [updateIsPollModalVisible]
-/// function with the negation of the current visibility state.
+/// Defines options for toggling the poll modal visibility.
+class LaunchPollOptions {
+  final UpdateIsPollModalVisible updateIsPollModalVisible;
+  final bool isPollModalVisible;
 
-void launchPoll({
-  required Map<String, dynamic> parameters,
-}) {
-  final UpdateIsPollModalVisible updateIsPollModalVisible =
-      parameters['updateIsPollModalVisible'];
-  final bool isPollModalVisible = parameters['isPollModalVisible'];
+  LaunchPollOptions({
+    required this.updateIsPollModalVisible,
+    required this.isPollModalVisible,
+  });
+}
 
-  // Toggle the visibility state of the polls modal
-  updateIsPollModalVisible(!isPollModalVisible);
+/// Type definition for the function that toggles the poll modal visibility.
+typedef LaunchPollType = void Function(LaunchPollOptions options);
+
+/// Toggles the visibility of the poll modal based on the current state.
+///
+/// This function accepts [LaunchPollOptions] and toggles the visibility state
+/// by calling [updateIsPollModalVisible] with the negation of [isPollModalVisible].
+///
+/// Example:
+/// ```dart
+/// final options = LaunchPollOptions(
+///   updateIsPollModalVisible: (visible) => setPollModalVisible(visible),
+///   isPollModalVisible: false,
+/// );
+///
+/// launchPoll(options);
+/// ```
+void launchPoll(LaunchPollOptions options) {
+  // Toggle the visibility state of the poll modal
+  options.updateIsPollModalVisible(!options.isPollModalVisible);
 }

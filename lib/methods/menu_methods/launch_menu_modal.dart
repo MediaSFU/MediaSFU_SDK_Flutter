@@ -1,15 +1,32 @@
-/// Launches the menu modal and updates its visibility state.
-///
-/// This function takes two parameters:
-/// - `updateIsMenuModalVisible`: A required function that takes a boolean parameter and updates the visibility state of the menu modal.
-/// - `isMenuModalVisible`: A required boolean parameter that represents the current visibility state of the menu modal.
-///
-/// When called, this function will open or close the menu modal based on the current visibility state.
-library;
+/// Defines options for toggling the visibility of the menu modal.
+class LaunchMenuModalOptions {
+  final void Function(bool isVisible) updateIsMenuModalVisible;
+  final bool isMenuModalVisible;
 
-void launchMenuModal(
-    {required Function(bool) updateIsMenuModalVisible,
-    required bool isMenuModalVisible}) {
-  // Open or close the menu modal based on the current visibility state
-  updateIsMenuModalVisible(!isMenuModalVisible);
+  LaunchMenuModalOptions({
+    required this.updateIsMenuModalVisible,
+    required this.isMenuModalVisible,
+  });
+}
+
+/// Type definition for the function that toggles the menu modal.
+typedef LaunchMenuModalType = void Function(LaunchMenuModalOptions options);
+
+/// Toggles the visibility of the menu modal.
+///
+/// This function calls `updateIsMenuModalVisible` with the negated value of
+/// `isMenuModalVisible` to toggle the modal's visibility.
+///
+/// Example:
+/// ```dart
+/// final options = LaunchMenuModalOptions(
+///   updateIsMenuModalVisible: (isVisible) => print("Menu modal visibility: $isVisible"),
+///   isMenuModalVisible: false,
+/// );
+///
+/// launchMenuModal(options);
+/// // This will open the modal if it's currently closed, or close it if it's open.
+/// ```
+void launchMenuModal(LaunchMenuModalOptions options) {
+  options.updateIsMenuModalVisible(!options.isMenuModalVisible);
 }

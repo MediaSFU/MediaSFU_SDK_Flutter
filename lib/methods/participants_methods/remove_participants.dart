@@ -1,87 +1,95 @@
 import 'package:socket_io_client/socket_io_client.dart' as io;
-import 'dart:async';
+import '../../types/types.dart'
+    show ShowAlert, CoHostResponsibility, Participant;
 
-/// A function that removes participants from a room.
+/// Defines options for removing a participant from a room.
+class RemoveParticipantsOptions {
+  final List<CoHostResponsibility> coHostResponsibility;
+  final Participant participant;
+  final String member;
+  final String islevel;
+  final ShowAlert? showAlert;
+  final String coHost;
+  final List<Participant> participants;
+  final io.Socket? socket;
+  final String roomName;
+  final void Function(List<Participant>) updateParticipants;
+
+  RemoveParticipantsOptions({
+    required this.coHostResponsibility,
+    required this.participant,
+    required this.member,
+    required this.islevel,
+    this.showAlert,
+    required this.coHost,
+    required this.participants,
+    this.socket,
+    required this.roomName,
+    required this.updateParticipants,
+  });
+}
+
+/// Type definition for the function that removes a participant.
+typedef RemoveParticipantsType = Future<void> Function(
+    RemoveParticipantsOptions options);
+
+/// Removes a participant from the room if the user has the necessary permissions.
 ///
-/// The [removeParticipants] function takes a map of parameters as input and removes participants from a room based on certain conditions.
-/// It requires the following parameters:
-/// - `parameters`: A map containing the necessary parameters for removing participants.
+/// This function checks if the current user has the required permissions based on their level and co-host responsibilities.
+/// If authorized, it emits a socket event to remove the participant and updates the local participant list.
 ///
-/// The function performs the following steps:
-/// 1. Extracts the necessary parameters from the `parameters` map.
-/// 2. Checks if the user has the permission to remove participants based on their role and the value of `coHostResponsibility`.
-/// 3. If the user has the permission, it disconnects the participant from the room using a socket event and removes them from the local array.
-/// 4. Finally, it updates the participants array.
-///
-/// Example usage:
+/// Example:
 /// ```dart
-/// await removeParticipants(parameters: {
-///   'coHostResponsibility': [],
-///   'participant': {},
-///   'member': '',
-///   'islevel': '1',
-///   'showAlert': null,
-///   'coHost': '',
-///   'participants': [],
-///   'socket': io.Socket,
-///   'roomName': '',
-///   'updateParticipants': (List<dynamic>) {},
-/// });
+/// final options = RemoveParticipantsOptions(
+///   coHostResponsibility: [{'name': 'participants', 'value': true}],
+///   participant: {'id': '123', 'name': 'John Doe', 'islevel': '1'},
+///   member: 'currentMember',
+///   islevel: '2',
+///   showAlert: (alert) => print(alert.message),
+///   coHost: 'coHostMember',
+///   participants: [{'id': '123', 'name': 'John Doe', 'islevel': '1'}],
+///   socket: socketInstance,
+///   roomName: 'room1',
+///   updateParticipants: (updatedParticipants) => print(updatedParticipants),
+/// );
 ///
-
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
-});
-
-Future<void> removeParticipants(
-    {required Map<String, dynamic> parameters}) async {
-  final List<dynamic> coHostResponsibility =
-      parameters['coHostResponsibility'] ?? [];
-  final dynamic participant = parameters['participant'] ?? {};
-  final String member = parameters['member'] ?? '';
-  final String islevel = parameters['islevel'] ?? '1';
-  final ShowAlert? showAlert = parameters['showAlert'];
-  final String coHost = parameters['coHost'] ?? '';
-  final List<dynamic> participants = parameters['participants'] ?? [];
-  final io.Socket socket = parameters['socket'];
-  final String roomName = parameters['roomName'] ?? '';
-  final void Function(List<dynamic>) updateParticipants =
-      parameters['updateParticipants'];
-
+/// await removeParticipants(options);
+/// ```
+Future<void> removeParticipants(RemoveParticipantsOptions options) async {
   bool participantsValue = false;
 
   try {
-    participantsValue = coHostResponsibility
-        .firstWhere((item) => item['name'] == 'participants')['value'];
-    // ignore: empty_catches
-  } catch (error) {}
+    participantsValue = options.coHostResponsibility
+        .firstWhere((item) => item.name == 'participants')
+        .value;
+  } catch (_) {
+    participantsValue = false;
+  }
 
-  if (islevel == '2' || (coHost == member && participantsValue == true)) {
-    if (participant['islevel'] != '2') {
-      final participantId = participant['id'];
+  if (options.islevel == '2' ||
+      (options.coHost == options.member && participantsValue)) {
+    if (options.participant.islevel != '2') {
+      final participantId = options.participant.id;
 
       // Emit a socket event to disconnect the user
-      socket.emit('disconnectUserInitiate', {
-        'member': participant['name'],
-        'roomName': roomName,
-        'id': participantId
+      options.socket!.emit('disconnectUserInitiate', {
+        'member': options.participant.name,
+        'roomName': options.roomName,
+        'id': participantId,
       });
 
       // Remove the participant from the local array
-      participants.removeWhere((obj) => obj['name'] == participant['name']);
+      options.participants
+          .removeWhere((obj) => obj.name == options.participant.name);
 
       // Update the participants array
-      updateParticipants(participants);
+      options.updateParticipants(options.participants);
     }
   } else {
-    if (showAlert != null) {
-      showAlert(
-        message: 'You are not allowed to remove other participants',
-        type: 'danger',
-        duration: 3000,
-      );
-    }
+    options.showAlert?.call(
+      message: 'You are not allowed to remove other participants',
+      type: 'danger',
+      duration: 3000,
+    );
   }
 }

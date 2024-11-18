@@ -1,42 +1,57 @@
 import 'package:flutter/material.dart';
 
-/// MenuItemComponent - A component for displaying a menu item with an icon and name.
-///
-/// This component displays a menu item with an icon and name. Tapping on the item triggers a callback function.
-///
-/// The icon to be displayed.
-/// final IconData icon;
-///
-/// The name of the menu item.
-/// final String name;
-///
-/// The callback function to be executed when the menu item is pressed.
-/// final VoidCallback onPress;
-
-class MenuItemComponent extends StatelessWidget {
-  final IconData icon;
+/// MenuItemOptions - Defines configuration options for the `MenuItemComponent`.
+class MenuItemOptions {
+  final IconData? icon;
   final String name;
   final VoidCallback onPress;
 
-  const MenuItemComponent({
-    super.key,
-    required this.icon,
+  MenuItemOptions({
     required this.name,
     required this.onPress,
+    this.icon,
   });
+}
+
+/// MenuItemComponent - A component for displaying a customizable menu item with an icon and name.
+///
+/// This component allows you to specify an icon, a label, and an action for each menu item,
+/// making it ideal for constructing flexible and reusable menu lists.
+///
+/// ### Parameters:
+/// - `options`: An instance of `MenuItemOptions`, containing:
+///   - `icon` (optional): The icon to be displayed alongside the menu item name.
+///   - `name`: The text label for the menu item.
+///   - `onPress`: The callback function triggered when the menu item is tapped.
+///
+/// ### Example Usage:
+/// ```dart
+/// MenuItemComponent(
+///   options: MenuItemOptions(
+///     icon: Icons.coffee,
+///     name: "Coffee",
+///     onPress: () => print("Coffee selected"),
+///   ),
+/// );
+/// ```
+class MenuItemComponent extends StatelessWidget {
+  final MenuItemOptions options;
+
+  const MenuItemComponent({super.key, required this.options});
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onPress,
+      onTap: options.onPress,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: Colors.white),
-            const SizedBox(width: 10),
+            if (options.icon != null)
+              Icon(options.icon, size: 20, color: Colors.white),
+            if (options.icon != null) const SizedBox(width: 10),
             Text(
-              name,
+              options.name,
               style: const TextStyle(color: Colors.white, fontSize: 16),
             ),
           ],

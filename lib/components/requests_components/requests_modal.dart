@@ -1,57 +1,40 @@
 import 'package:flutter/material.dart';
-
-// Import the respondToRequests function
+import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../../methods/requests_methods/respond_to_requests.dart'
     show respondToRequests;
-import './render_request_component.dart' show RenderRequestComponent;
-import '../../methods/utils/get_modal_position.dart' show getModalPosition;
+import './render_request_component.dart'
+    show
+        RenderRequestComponent,
+        RenderRequestComponentOptions,
+        RenderRequestComponentType;
+import '../../methods/utils/get_modal_position.dart'
+    show getModalPosition, GetModalPositionOptions;
+import '../../types/types.dart' show Request, RespondToRequestsType;
 
-/// RequestsModal is a StatelessWidget that displays a modal for managing requests.
-///
-/// `isRequestsModalVisible`: Flag to control the visibility of the modal.
-/// `onRequestClose`: Callback function to close the modal.
-/// `requestCounter`: Counter for the number of requests.
-/// `onRequestFilterChange`: Callback function for filtering requests.
-/// `requestList`: List of requests to display.
-/// `onRequestItemPress`: Callback function to respond to a request item press.
-/// `updateRequestList`: Function to update the list of requests.
-/// `roomName`: The name of the room.
-/// `socket`: Socket for communication.
-/// `backgroundColor`: Background color of the modal.
-/// `position`: Position of the modal.
-/// `parameters`: Additional parameters.
-/// `renderRequestComponent`: Function to render each request item.
+abstract class RequestsModalParameters {
+  /// Function to get updated parameters.
+  RequestsModalParameters Function() get getUpdatedAllParams;
 
-typedef RespondToRequests = void Function(
-    {required Map<String, dynamic> parameters});
+  // dynamic operator [](String key);
+}
 
-// Define the RequestsModal widget
-class RequestsModal extends StatelessWidget {
-  // Define the properties of the widget
+/// Options for the RequestsModal widget.
+class RequestsModalOptions {
   final bool isRequestsModalVisible;
-  final Function() onRequestClose;
+  final VoidCallback onRequestClose;
   final int requestCounter;
   final Function(String) onRequestFilterChange;
-  final List<dynamic> requestList;
-  final RespondToRequests onRequestItemPress;
-  final Function(List<dynamic>) updateRequestList;
+  final List<Request> requestList;
+  RespondToRequestsType onRequestItemPress;
+  final Function(List<Request>) updateRequestList;
   final String roomName;
-  final dynamic socket;
+  final io.Socket? socket;
   final Color backgroundColor;
   final String position;
-  final Map<String, dynamic> parameters;
-  final Widget Function(
-    Map<String, dynamic>, // request
-    RespondToRequests, // onRequestItemPress
-    List<dynamic>, // requestList
-    Function(List<dynamic>), // updateRequestList
-    String, // roomName
-    dynamic, // socket
-  ) renderRequestComponent;
+  RenderRequestComponentType renderRequestComponent;
+  final RequestsModalParameters parameters;
 
-  // Constructor for the widget
-  const RequestsModal({
-    super.key,
+  RequestsModalOptions({
     required this.isRequestsModalVisible,
     required this.onRequestClose,
     required this.requestCounter,
@@ -60,55 +43,102 @@ class RequestsModal extends StatelessWidget {
     this.onRequestItemPress = respondToRequests,
     required this.updateRequestList,
     required this.roomName,
-    required this.socket,
+    this.socket,
     this.backgroundColor = const Color(0xFF83C0E9),
     this.position = 'topRight',
     required this.parameters,
-    this.renderRequestComponent = _defaultRenderRequestComponent,
+    this.renderRequestComponent =
+        _defaultRenderRequestComponent, // Default rendering function
   });
 
-  // Default renderRequestComponent function
+  // Default rendering function for individual request components.
   static Widget _defaultRenderRequestComponent(
-    Map<String, dynamic> request,
-    RespondToRequests onRequestItemPress,
-    List<dynamic> requestList,
-    Function(List<dynamic>) updateRequestList,
-    String roomName,
-    dynamic socket,
-  ) {
-    return RenderRequestComponent(
-      request: request,
-      onRequestItemPress: onRequestItemPress,
-      requestList: requestList,
-      updateRequestList: updateRequestList,
-      roomName: roomName,
-      socket: socket,
-    );
+      {required RenderRequestComponentOptions options}) {
+    return RenderRequestComponent(options: options);
   }
+}
+
+typedef RequestsModalType = Widget Function({RequestsModalOptions options});
+
+/// `RequestsModal` displays a modal window containing a list of requests and
+/// provides search and filter functionality. The modal allows users to accept
+/// or reject each request using real-time actions through a socket connection.
+///
+/// ### Parameters:
+/// - [options] (`RequestsModalOptions`): A configuration object with properties:
+///   - `isRequestsModalVisible` (bool): Controls modal visibility.
+///   - `onRequestClose` (VoidCallback): Closes the modal.
+///   - `requestCounter` (int): Count of active requests, displayed in the header.
+///   - `onRequestFilterChange` (Function): Updates the filter query for the request list.
+///   - `requestList` (List<Request>): List of current requests to display.
+///   - `onRequestItemPress` (RespondToRequestsType): Callback for handling request item actions.
+///   - `updateRequestList` (Function): Updates the list of requests.
+///   - `roomName` (String): Name of the room associated with the requests.
+///   - `socket` (io.Socket): Socket instance for emitting responses.
+///   - `backgroundColor` (Color): Background color of the modal.
+///   - `position` (String): Controls the modal position on the screen (e.g., 'topRight').
+///   - `parameters` (RequestsModalParameters): Additional parameters.
+///   - `renderRequestComponent` (RenderRequestComponentType): Function to render each request item.
+///
+/// ### Example:
+/// ```dart
+/// RequestsModal(
+///   options: RequestsModalOptions(
+///     isRequestsModalVisible: true,
+///     onRequestClose: () => print('Modal closed'),
+///     requestCounter: 5,
+///     onRequestFilterChange: (query) => print('Filtering requests with: $query'),
+///     requestList: [Request(id: '1', name: 'John', icon: 'fa-microphone')],
+///     updateRequestList: (newList) => setState(() => requests = newList),
+///     roomName: 'MainRoom',
+///     socket: socket,
+///     position: 'topRight',
+///     parameters: {},
+///   ),
+/// );
+/// ```
+///
+/// ### Workflow:
+/// 1. **Visibility**: The `isRequestsModalVisible` controls whether the modal is shown.
+/// 2. **Filtering**: Text input filters requests via `onRequestFilterChange`.
+/// 3. **Request List**: Each request is rendered using `renderRequestComponent`, which supports custom UI.
+
+class RequestsModal extends StatelessWidget {
+  final RequestsModalOptions options;
+
+  const RequestsModal({super.key, required this.options});
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
+    final screenWidth = MediaQuery.of(context).size.width;
     double modalWidth = 0.8 * screenWidth;
-    if (modalWidth > 400) {
-      modalWidth = 400;
-    }
+    if (modalWidth > 400) modalWidth = 400;
 
-    double modalHeight = MediaQuery.of(context).size.height * 0.65;
+    final modalHeight = MediaQuery.of(context).size.height * 0.65;
 
     return Visibility(
-      visible: isRequestsModalVisible,
+      visible: options.isRequestsModalVisible,
       child: Stack(
         children: [
           Positioned(
-            top: getModalPosition(
-                position, context, modalWidth, modalHeight)['top'],
-            right: getModalPosition(
-                position, context, modalWidth, modalHeight)['right'],
+            top: getModalPosition(GetModalPositionOptions(
+                position: options.position,
+                modalWidth: modalWidth,
+                modalHeight: modalHeight,
+                context: context))['top'],
+            right: getModalPosition(GetModalPositionOptions(
+                position: options.position,
+                modalWidth: modalWidth,
+                modalHeight: modalHeight,
+                context: context))['right'],
             child: Container(
               width: modalWidth,
-              height: MediaQuery.of(context).size.height * 0.65,
-              color: backgroundColor,
+              height: modalHeight,
+              decoration: BoxDecoration(
+                color: options.backgroundColor,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              padding: const EdgeInsets.all(10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -118,7 +148,7 @@ class RequestsModal extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
-                          'Requests $requestCounter',
+                          'Requests ${options.requestCounter}',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -127,7 +157,7 @@ class RequestsModal extends StatelessWidget {
                         ),
                       ),
                       IconButton(
-                        onPressed: onRequestClose,
+                        onPressed: options.onRequestClose,
                         icon: const Icon(Icons.close),
                         color: Colors.black,
                       ),
@@ -144,23 +174,24 @@ class RequestsModal extends StatelessWidget {
                         hintText: 'Search ...',
                         border: OutlineInputBorder(),
                       ),
-                      onChanged: onRequestFilterChange,
+                      onChanged: options.onRequestFilterChange,
                     ),
                   ),
                   Expanded(
                     child: ListView.builder(
-                      itemCount: requestList.length,
+                      itemCount: options.requestList.length,
                       itemBuilder: (BuildContext context, int index) {
+                        final request = options.requestList[index];
                         return Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: renderRequestComponent(
-                            requestList[
-                                index], // Pass the request object directly
-                            onRequestItemPress, // Pass onRequestItemPress here
-                            requestList,
-                            updateRequestList,
-                            roomName,
-                            socket,
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: options.renderRequestComponent(
+                            options: RenderRequestComponentOptions(
+                              request: request,
+                              requestList: options.requestList,
+                              updateRequestList: options.updateRequestList,
+                              roomName: options.roomName,
+                              socket: options.socket,
+                            ),
                           ),
                         );
                       },

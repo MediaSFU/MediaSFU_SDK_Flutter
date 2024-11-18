@@ -1,44 +1,68 @@
 import 'package:flutter/material.dart';
+import '../../../types/types.dart' show Participant;
 
-/// ParticipantListOthersItem - Represents a single participant item in a participant list for other participants (not the current user).
+/// `ParticipantListOthersItemOptions` represents the options for configuring the display of a participant item.
 ///
-/// This widget displays information about a participant and indicates whether they are muted.
-///
-/// participant - A map containing information about the participant.
-///
-/// parameters - Additional parameters such as member, co-host, and islevel for displaying participant details.
+/// Parameters:
+/// - `participant`: The participant object.
+/// - `member`: The name of the current user.
+/// - `coHost`: The name of the co-host.
+class ParticipantListOthersItemOptions {
+  final Participant participant;
+  final String member;
+  final String coHost;
 
+  ParticipantListOthersItemOptions({
+    required this.participant,
+    required this.member,
+    required this.coHost,
+  });
+}
+
+typedef ParticipantListOthersItemType = Widget Function(
+    {required ParticipantListOthersItemOptions options});
+
+/// `ParticipantListOthersItem` displays a single participant in a list, including their role and muted status.
+///
+/// This widget differentiates between the participant roles (`host`, `co-host`, `you`) based on their level and status.
+///
+/// Example Usage:
+/// ```dart
+/// ParticipantListOthersItem(
+///   options: ParticipantListOthersItemOptions(
+///     participant: Participant(name: 'John Doe', islevel: '2', muted: false),
+///     member: 'Jane Doe',
+///     coHost: 'John Doe',
+///   ),
+/// );
+/// ```
 class ParticipantListOthersItem extends StatelessWidget {
-  final Map<String, dynamic> participant;
-  final Map<String, dynamic> parameters;
+  final ParticipantListOthersItemOptions options;
 
-  const ParticipantListOthersItem(
-      {super.key, required this.participant, required this.parameters});
+  const ParticipantListOthersItem({super.key, required this.options});
 
   @override
   Widget build(BuildContext context) {
-    final String member = parameters['member'];
-    final String coHost = parameters['coHost'];
-    final String islevel = parameters['islevel'];
+    final participant = options.participant;
+    String displayName = participant.name;
 
-    String displayName = participant['name'];
-
-    if (islevel == '2') {
-      if (participant['name'] == member) {
+    // Determine display name with role
+    if (participant.islevel == '2') {
+      if (participant.name == options.member) {
         displayName = '$displayName (you)';
-      } else if (participant['name'] == coHost) {
-        displayName = '$displayName (co-host)';
+      } else if (participant.name == options.coHost) {
+        displayName = '$displayName (host)';
       } else {
         displayName = '$displayName (host)';
       }
-    } else {
-      if (participant['name'] == member) {
-        displayName = '$displayName (you)';
-      }
+    } else if (options.coHost == participant.name) {
+      displayName = '$displayName (co-host)';
+    } else if (participant.name == options.member) {
+      displayName = '$displayName (you)';
     }
 
     return Padding(
-      padding: const EdgeInsets.only(left: 15), // Adjust the value as needed
+      padding: const EdgeInsets.only(left: 15),
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         child: Row(
@@ -53,9 +77,8 @@ class ParticipantListOthersItem extends StatelessWidget {
             Expanded(
               flex: 4,
               child: Icon(
-                // Add the dot icon here
-                participant['muted'] ? Icons.circle : Icons.circle,
-                color: participant['muted'] ? Colors.red : Colors.green,
+                Icons.circle,
+                color: participant.muted! ? Colors.red : Colors.green,
                 size: 20,
               ),
             ),

@@ -1,72 +1,111 @@
-import 'dart:async';
+import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
+import 'package:flutter/foundation.dart';
+import '../types/types.dart'
+    show
+        PrepopulateUserMediaParameters,
+        PrepopulateUserMediaType,
+        PrepopulateUserMediaOptions;
 
-/// Resumes the send transport for audio.
-///
-/// This function takes a [parameters] map as input, which should contain the following keys:
-/// - 'audioProducer': The audio producer to resume.
-/// - 'islevel': The level of the audio (default is '1').
-/// - 'updateMainWindow': A boolean value indicating whether to update the main window.
-/// - 'hostLabel': The label for the host (default is 'Host').
-/// - 'lockScreen': A boolean value indicating whether to lock the screen (default is false).
-/// - 'shared': A boolean value indicating whether the audio is shared (default is false).
-/// - 'updateAudioProducer': A function to update the audio producer.
-/// - 'videoAlreadyOn': A boolean value indicating whether the video is already on (default is false).
-/// - 'updateUpdateMainWindow': A function to update the main window.
-/// - 'prepopulateUserMedia': A function to prepopulate user media.
-///
-/// This function resumes the send transport for audio by calling the `resume()` method on the audio producer.
-/// It also updates the UI based on the provided parameters, and updates the audio producer state.
-///
-/// Throws an error if there is an error during the process of resuming the audio send transport.
+abstract class ResumeSendTransportAudioParameters
+    implements PrepopulateUserMediaParameters {
+  // Properties as abstract getters
+  Producer? get audioProducer;
+  String get islevel;
+  String get hostLabel;
+  bool get lockScreen;
+  bool get shared;
+  bool get videoAlreadyOn;
 
-typedef UpdateMainWindow = void Function(bool);
-typedef PrepopulateUserMedia = List<dynamic> Function({
-  required String name,
-  required Map<String, dynamic> parameters,
-});
-typedef UpdateAudioProducer = void Function(dynamic audioProducer);
-typedef UpdateVideoAlreadyOn = void Function(bool);
-typedef UpdateIsLevel = void Function(String islevel);
-typedef UpdateLockScreen = void Function(bool);
-typedef UpdateShared = void Function(bool);
-typedef UpdateUpdateMainWindow = void Function(bool);
+  // Update functions as abstract getters
+  void Function(Producer?) get updateAudioProducer;
+  void Function(bool) get updateUpdateMainWindow;
+
+  // Mediasfu function as an abstract getter
+  PrepopulateUserMediaType get prepopulateUserMedia;
+
+  // Method to retrieve updated parameters
+  ResumeSendTransportAudioParameters Function() get getUpdatedAllParams;
+
+  // Dynamic key-value support
+  // dynamic operator [](String key);
+}
+
+class ResumeSendTransportAudioOptions {
+  final ResumeSendTransportAudioParameters parameters;
+
+  ResumeSendTransportAudioOptions({required this.parameters});
+}
+
+typedef ResumeSendTransportAudioType = Future<void> Function(
+    {required ResumeSendTransportAudioOptions options});
+
+/// Resumes the audio send transport in the application.
+///
+/// This function handles resuming an audio producer, which enables audio streaming from the user’s device in a meeting or session.
+/// It resumes the audio stream, updates the main window state, and potentially initiates video preloading based on user level and
+/// screen lock status.
+///
+/// - If an audio producer is available, it resumes the audio stream.
+/// - If the user is a host (indicated by `islevel` being "2"), has not locked their screen, and is not sharing content, it updates the main window
+///   and preloads user media.
+/// - After processing, it updates the audio producer state to reflect any changes.
+///
+/// Parameters:
+/// - [options]: An instance of `ResumeSendTransportAudioOptions` containing transport parameters, user state, and functions for updating the UI.
+///
+/// Example:
+/// ```dart
+/// final options = ResumeSendTransportAudioOptions(
+///   parameters: ResumeSendTransportAudioParameters(
+///     audioProducer: currentAudioProducer,
+///     islevel: '2',
+///     hostLabel: 'MainHost',
+///     lockScreen: false,
+///     shared: false,
+///     videoAlreadyOn: false,
+///     updateAudioProducer: (producer) => setAudioProducer(producer),
+///     updateUpdateMainWindow: (value) => setMainWindowUpdate(value),
+///     prepopulateUserMedia: (name, params) => initializeMedia(name, params),
+///   ),
+/// );
+///
+/// await resumeSendTransportAudio(options: options);
+/// ```
 
 Future<void> resumeSendTransportAudio(
-    {required Map<String, dynamic> parameters}) async {
-  dynamic audioProducer = parameters['audioProducer'];
-  String islevel = parameters['islevel'] ?? '1';
-  bool updateMainWindow = parameters['updateMainWindow'];
-  String hostLabel = parameters['hostLabel'] ?? 'Host';
-  bool lockScreen = parameters['lockScreen'] ?? false;
-  bool shared = parameters['shared'] ?? false;
-  UpdateAudioProducer updateAudioProducer = parameters['updateAudioProducer'];
-  bool videoAlreadyOn = parameters['videoAlreadyOn'] ?? false;
-  UpdateUpdateMainWindow updateUpdateMainWindow =
-      parameters['updateUpdateMainWindow'];
+    {required ResumeSendTransportAudioOptions options}) async {
+  final parameters = options.parameters;
 
-  // mediasfu functions
-  PrepopulateUserMedia prepopulateUserMedia =
-      parameters['prepopulateUserMedia'];
+  final audioProducer = parameters.audioProducer;
+  final islevel = parameters.islevel;
+  final hostLabel = parameters.hostLabel;
+  final lockScreen = parameters.lockScreen;
+  final shared = parameters.shared;
+  final videoAlreadyOn = parameters.videoAlreadyOn;
+  final updateAudioProducer = parameters.updateAudioProducer;
+  final updateUpdateMainWindow = parameters.updateUpdateMainWindow;
+  final prepopulateUserMedia = parameters.prepopulateUserMedia;
 
   try {
-    // Resume send transport for audio
-    await audioProducer.resume();
+    // Resume audio producer if available
+    audioProducer?.resume();
 
-    // Update the UI
     if (!videoAlreadyOn && islevel == '2') {
       if (!lockScreen && !shared) {
-        updateMainWindow = true;
-        updateUpdateMainWindow(updateMainWindow);
-        prepopulateUserMedia(name: hostLabel, parameters: parameters);
-        updateMainWindow = false;
-        updateUpdateMainWindow(updateMainWindow);
+        updateUpdateMainWindow(true);
+        final optionsPrepopulate = PrepopulateUserMediaOptions(
+          name: hostLabel,
+          parameters: parameters,
+        );
+        prepopulateUserMedia(optionsPrepopulate);
+        updateUpdateMainWindow(false);
       }
     }
 
-    // Update audio producer state
     updateAudioProducer(audioProducer);
   } catch (error) {
-    // Handle errors during the process of resuming the audio send transport
-    // throw ('Error during resuming audio send transport: $error');
+    if (kDebugMode) {
+      print('Error during resuming audio send transport: $error');
+    }
   }
 }

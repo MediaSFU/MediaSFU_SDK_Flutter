@@ -1,45 +1,66 @@
 import 'dart:async';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:flutter/material.dart';
-import '../../methods/utils/get_modal_position.dart' show getModalPosition;
+import '../../methods/utils/get_modal_position.dart'
+    show getModalPosition, GetModalPositionOptions;
 
-/// A modal widget that displays a confirmation message and countdown timer.
+/// `ConfirmHereModalOptions` defines the configuration for `ConfirmHereModal`,
+/// including visibility, callbacks, countdown, and socket settings.
 ///
-/// This widget is used to prompt the user to confirm their presence within a certain time limit.
-/// It displays a circular progress indicator, a message asking the user if they are still there,
-/// and a countdown timer showing the remaining time.
-///
-/// The modal can be customized with different background and display colors, and can be positioned
-/// at the center or at a specific position on the screen.
-///
-/// To use this widget, provide the following parameters:
-/// - [isConfirmHereModalVisible]: A boolean value indicating whether the modal is visible or not.
-/// - [onConfirmHereClose]: A callback function that will be called when the modal is closed.
-/// - [parameters]: A map of additional parameters that can be used by the widget.
-/// - [position]: The position of the modal on the screen. Defaults to 'center'.
-/// - [backgroundColor]: The background color of the modal. Defaults to Color(0xFF83c0e9).
-/// - [displayColor]: The color of the text and progress indicator. Defaults to Colors.black.
+/// - `isConfirmHereModalVisible`: Controls visibility.
+/// - `onConfirmHereClose`: Callback to handle closing.
+/// - `backgroundColor`: Modal background color.
+/// - `countdownDuration`: Duration for countdown in seconds.
+/// - `socket`: WebSocket connection.
+/// - `roomName`: Room name for session.
+/// - `member`: Member ID for user.
 
-class ConfirmHereModal extends StatefulWidget {
+class ConfirmHereModalOptions {
   final bool isConfirmHereModalVisible;
-  final Function() onConfirmHereClose;
-  final Map<String, dynamic> parameters;
-  final String position;
+  final VoidCallback onConfirmHereClose;
+  final io.Socket? socket;
+  final String roomName;
+  final String member;
   final Color backgroundColor;
   final Color displayColor;
+  final int countdownDuration;
 
-  const ConfirmHereModal({
-    super.key,
+  ConfirmHereModalOptions({
     required this.isConfirmHereModalVisible,
     required this.onConfirmHereClose,
-    required this.parameters,
-    this.position = 'center',
+    this.socket,
+    required this.roomName,
+    required this.member,
     this.backgroundColor = const Color(0xFF83c0e9),
     this.displayColor = Colors.black,
+    this.countdownDuration = 120,
   });
+}
+
+typedef ConfirmHereModalType = Widget Function(
+    {required ConfirmHereModalOptions options});
+
+/// `ConfirmHereModal` prompts the user to confirm presence with a countdown timer and action button.
+///
+/// Example Usage:
+/// ```dart
+/// ConfirmHereModal(
+///   options: ConfirmHereModalOptions(
+///     isConfirmHereModalVisible: true,
+///     onConfirmHereClose: () => print("Modal closed"),
+///     socket: io.Socket(),
+///     roomName: "room1",
+///     member: "user1",
+///   ),
+/// );
+/// ```
+
+class ConfirmHereModal extends StatefulWidget {
+  final ConfirmHereModalOptions options;
+
+  const ConfirmHereModal({super.key, required this.options});
 
   @override
-  // ignore: library_private_types_in_public_api
   _ConfirmHereModalState createState() => _ConfirmHereModalState();
 }
 
@@ -50,8 +71,8 @@ class _ConfirmHereModalState extends State<ConfirmHereModal> {
   @override
   void initState() {
     super.initState();
-    counter = widget.parameters['countdownDuration'] ?? 120;
-    if (widget.isConfirmHereModalVisible) {
+    counter = widget.options.countdownDuration;
+    if (widget.options.isConfirmHereModalVisible) {
       startCountdown();
     }
   }
@@ -59,9 +80,9 @@ class _ConfirmHereModalState extends State<ConfirmHereModal> {
   @override
   void didUpdateWidget(covariant ConfirmHereModal oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.isConfirmHereModalVisible !=
-        oldWidget.isConfirmHereModalVisible) {
-      if (widget.isConfirmHereModalVisible) {
+    if (widget.options.isConfirmHereModalVisible !=
+        oldWidget.options.isConfirmHereModalVisible) {
+      if (widget.options.isConfirmHereModalVisible) {
         startCountdown();
       } else {
         stopCountdown();
@@ -76,63 +97,62 @@ class _ConfirmHereModalState extends State<ConfirmHereModal> {
   }
 
   void startCountdown() {
-    final Map<String, dynamic> parameters = widget.parameters;
-    final io.Socket socket = parameters['socket'] as io.Socket;
-    final roomName = parameters['roomName'];
-    final member = parameters['member'];
-
     countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         counter--;
       });
       if (counter <= 0) {
         stopCountdown();
-        widget.onConfirmHereClose();
-        // Emit the event to disconnect the user
-        socket.emit('disconnectUser',
-            {'member': member, 'roomName': roomName, 'ban': false});
+        widget.options.onConfirmHereClose();
+        widget.options.socket!.emit('disconnectUser', {
+          'member': widget.options.member,
+          'roomName': widget.options.roomName,
+          'ban': false
+        });
       }
     });
   }
 
   void stopCountdown() {
-    counter = widget.parameters['countdownDuration'] ?? 120;
+    counter = widget.options.countdownDuration;
     countdownTimer.cancel();
   }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    var modalWidth = 0.8 * screenWidth;
-    if (modalWidth > 400) {
-      modalWidth = 400;
-    }
-
+    double modalWidth = 0.8 * screenWidth > 400 ? 400 : 0.8 * screenWidth;
     final modalHeight = MediaQuery.of(context).size.height * 0.65;
 
     return Visibility(
-      visible: widget.isConfirmHereModalVisible,
+      visible: widget.options.isConfirmHereModalVisible,
       child: Stack(
         children: [
           Positioned(
-            top: getModalPosition(
-                widget.position, context, modalWidth, modalHeight)['top'],
-            right: getModalPosition(
-                widget.position, context, modalWidth, modalHeight)['right'],
+            top: getModalPosition(GetModalPositionOptions(
+              position: 'center',
+              modalWidth: modalWidth,
+              modalHeight: modalHeight,
+              context: context,
+            ))['top'],
+            right: getModalPosition(GetModalPositionOptions(
+                position: 'center',
+                modalWidth: modalWidth,
+                modalHeight: modalHeight,
+                context: context))['right'],
             child: Container(
               decoration: BoxDecoration(
-                color: widget.backgroundColor,
+                color: widget.options.backgroundColor,
                 borderRadius: BorderRadius.circular(10),
               ),
               width: modalWidth,
               height: modalHeight,
               child: Column(
-                mainAxisAlignment:
-                    MainAxisAlignment.center, // Center vertically
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   CircularProgressIndicator(
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(widget.displayColor),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                        widget.options.displayColor),
                   ),
                   const SizedBox(height: 20),
                   Text(
@@ -140,7 +160,7 @@ class _ConfirmHereModalState extends State<ConfirmHereModal> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: widget.displayColor,
+                      color: widget.options.displayColor,
                     ),
                   ),
                   const SizedBox(height: 15),
@@ -148,7 +168,7 @@ class _ConfirmHereModalState extends State<ConfirmHereModal> {
                     'Please confirm if you are still present.',
                     style: TextStyle(
                       fontSize: 16,
-                      color: widget.displayColor,
+                      color: widget.options.displayColor,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -157,27 +177,21 @@ class _ConfirmHereModalState extends State<ConfirmHereModal> {
                     'Time remaining: $counter',
                     style: TextStyle(
                       fontSize: 14,
-                      color: widget.displayColor,
+                      color: widget.options.displayColor,
                     ),
                   ),
                   const SizedBox(height: 10),
                   ElevatedButton(
                     onPressed: () {
                       stopCountdown();
-                      widget
-                          .onConfirmHereClose(); // Close the modal after confirming
+                      widget.options.onConfirmHereClose();
                     },
-                    style: ButtonStyle(
-                      backgroundColor:
-                          WidgetStateProperty.all<Color>(Colors.red),
-                      padding: WidgetStateProperty.all<EdgeInsets>(
-                        const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 10),
-                      ),
-                      shape: WidgetStateProperty.all<OutlinedBorder>(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
-                        ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(5),
                       ),
                     ),
                     child: const Text(

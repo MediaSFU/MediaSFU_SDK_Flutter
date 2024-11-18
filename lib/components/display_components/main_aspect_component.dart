@@ -1,74 +1,123 @@
+// ignore_for_file: unused_local_variable
+
 import 'package:flutter/material.dart';
 
-/// A widget that maintains aspect ratio based on the screen size and updates its dimensions dynamically.
+/// `MainAspectComponentOptions` - Configuration options for the `MainAspectComponent`.
 ///
-/// Parameters:
-/// - backgroundColor: The background color of the component.
-/// - children: The widgets to be displayed inside the component.
-/// - showControls: A boolean indicating whether to show controls.
-/// - containerWidthFraction: The width fraction of the container.
-/// - containerHeightFraction: The height fraction of the container.
-/// - defaultFraction: The default fraction value.
-/// - updateIsWideScreen: A function to update whether the screen is wide.
-/// - updateIsMediumScreen: A function to update whether the screen is medium-sized.
-/// - updateIsSmallScreen: A function to update whether the screen is small.
+/// ### Properties:
+/// - `backgroundColor` (`Color`): Background color of the component.
+/// - `children` (`List<Widget>`): List of child widgets displayed inside the component.
+/// - `showControls` (`bool`): Determines if additional UI controls are displayed (default is `true`).
+/// - `containerWidthFraction` (`double`): Fraction of the screen width that the container occupies (default is `1.0`).
+/// - `containerHeightFraction` (`double`): Fraction of the screen height that the container occupies (default is `1.0`).
+/// - `defaultFraction` (`double`): Default fraction value used to adjust dimensions when `showControls` is enabled (default is `0.94`).
+/// - `updateIsWideScreen`, `updateIsMediumScreen`, `updateIsSmallScreen`: Callback functions for screen size changes, providing updates based on screen width breakpoints.
 ///
-/// Example:
+/// ### Example Usage:
 /// ```dart
-/// MainAspectComponent(
+/// MainAspectComponentOptions(
 ///   backgroundColor: Colors.blue,
 ///   children: [
-///     // Your widgets here
+///     Text("Sample Text"),
 ///   ],
 ///   showControls: true,
 ///   containerWidthFraction: 0.8,
 ///   containerHeightFraction: 0.6,
 ///   defaultFraction: 0.9,
-///   updateIsWideScreen: (isWide) {},
-///   updateIsMediumScreen: (isMedium) {},
-///   updateIsSmallScreen: (isSmall) {},
-/// )
+///   updateIsWideScreen: (isWide) => print('Wide screen: $isWide'),
+///   updateIsMediumScreen: (isMedium) => print('Medium screen: $isMedium'),
+///   updateIsSmallScreen: (isSmall) => print('Small screen: $isSmall'),
+/// );
 /// ```
-
-class MainAspectComponent extends StatefulWidget {
+///
+class MainAspectComponentOptions {
+  /// The background color of the component.
   final Color backgroundColor;
+
+  /// The list of child widgets to be displayed inside the component.
   final List<Widget> children;
+
+  /// A flag indicating whether to show controls.
   final bool showControls;
+
+  /// The fraction of the screen width that the container should occupy.
   final double containerWidthFraction;
+
+  /// The fraction of the screen height that the container should occupy.
   final double containerHeightFraction;
+
+  /// The default fraction value used when [showControls] is true.
   final double defaultFraction;
+
+  /// Callback to update whether the screen is wide.
   final Function(bool) updateIsWideScreen;
+
+  /// Callback to update whether the screen is medium-sized.
   final Function(bool) updateIsMediumScreen;
+
+  /// Callback to update whether the screen is small.
   final Function(bool) updateIsSmallScreen;
 
-  // ignore: prefer_const_constructors_in_immutables
-  MainAspectComponent({
-    super.key,
+  /// Constructs a MainAspectComponentOptions object.
+  const MainAspectComponentOptions({
     required this.backgroundColor,
     required this.children,
     this.showControls = true,
-    this.containerWidthFraction = 1,
-    this.containerHeightFraction = 1,
+    this.containerWidthFraction = 1.0,
+    this.containerHeightFraction = 1.0,
     this.defaultFraction = 0.94,
     required this.updateIsWideScreen,
     required this.updateIsMediumScreen,
     required this.updateIsSmallScreen,
   });
+}
+
+typedef MainAspectComponentType = Widget Function(
+    {required MainAspectComponentOptions options});
+
+/// `MainAspectComponent` - A responsive component adjusting dimensions based on screen size and optional controls.
+///
+/// ### Features:
+/// - Resizes according to screen width and height, with optional padding and control visibility.
+/// - Provides real-time screen size updates (e.g., `isWideScreen`, `isMediumScreen`, `isSmallScreen`) through callbacks.
+/// - Listens to screen metrics changes for responsive layout updates in real-time.
+///
+/// ### Example Usage:
+/// ```dart
+/// MainAspectComponent(
+///   options: MainAspectComponentOptions(
+///     backgroundColor: Colors.green,
+///     children: [Text("Content goes here")],
+///     showControls: true,
+///     containerWidthFraction: 0.9,
+///     containerHeightFraction: 0.8,
+///     defaultFraction: 0.85,
+///     updateIsWideScreen: (isWide) => print("Wide screen? $isWide"),
+///     updateIsMediumScreen: (isMedium) => print("Medium screen? $isMedium"),
+///     updateIsSmallScreen: (isSmall) => print("Small screen? $isSmall"),
+///   ),
+/// );
+/// ```
+///
+class MainAspectComponent extends StatefulWidget {
+  final MainAspectComponentOptions options;
+
+  const MainAspectComponent({super.key, required this.options});
 
   @override
-  // ignore: library_private_types_in_public_api
   _MainAspectComponentState createState() => _MainAspectComponentState();
 }
 
 class _MainAspectComponentState extends State<MainAspectComponent>
     with WidgetsBindingObserver {
-  late double _height;
-  late double _width;
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Initial calculation
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateAspectStyles();
+    });
   }
 
   @override
@@ -77,51 +126,56 @@ class _MainAspectComponentState extends State<MainAspectComponent>
     super.dispose();
   }
 
+  /// Called when the screen metrics change (e.g., orientation, size).
   @override
   void didChangeMetrics() {
     _updateAspectStyles();
   }
 
+  /// Updates aspect styles and invokes callbacks based on current screen size.
   void _updateAspectStyles() {
-    setState(() {
-      final EdgeInsets safeAreaInsets = MediaQuery.of(context).padding +
-          MediaQuery.of(context).systemGestureInsets;
+    final Size size = MediaQuery.of(context).size;
+    final EdgeInsets safeAreaInsets = MediaQuery.of(context).padding +
+        MediaQuery.of(context).systemGestureInsets;
 
-      final Size size = MediaQuery.of(context).size;
+    final double parentWidth =
+        size.width * widget.options.containerWidthFraction;
 
-      final parentWidth = (size.width) * widget.containerWidthFraction;
-      final isWideScreen = parentWidth > 768;
-      final isMediumScreen = parentWidth > 576 && parentWidth <= 768;
-      final isSmallScreen = parentWidth <= 576;
+    final bool isWideScreen = parentWidth > 768;
+    final bool isMediumScreen = parentWidth > 576 && parentWidth <= 768;
+    final bool isSmallScreen = parentWidth <= 576;
 
-      widget.updateIsWideScreen(isWideScreen);
-      widget.updateIsMediumScreen(isMediumScreen);
-      widget.updateIsSmallScreen(isSmallScreen);
+    // Update screen size states via callbacks
+    widget.options.updateIsWideScreen(isWideScreen);
+    widget.options.updateIsMediumScreen(isMediumScreen);
+    widget.options.updateIsSmallScreen(isSmallScreen);
 
-      _height = widget.showControls
-          ? (widget.containerHeightFraction *
-                  (size.height - 0.0) *
-                  widget.defaultFraction)
-              .floorToDouble()
-          : (widget.containerHeightFraction *
-                  (size.height - safeAreaInsets.top))
-              .floorToDouble();
-
-      _width = (widget.containerWidthFraction * (size.width)).floorToDouble();
-    });
+    // Trigger a rebuild to adjust dimensions
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    // Call _updateAspectStyles() in the build method
-    _updateAspectStyles();
+    // Calculate dimensions based on current screen size and fractions
+    final Size size = MediaQuery.of(context).size;
+    final EdgeInsets safeAreaInsets = MediaQuery.of(context).padding +
+        MediaQuery.of(context).systemGestureInsets;
+
+    final double parentWidth =
+        size.width * widget.options.containerWidthFraction;
+    final double parentHeight = widget.options.showControls
+        ? size.height *
+            widget.options.containerHeightFraction *
+            widget.options.defaultFraction
+        : size.height * widget.options.containerHeightFraction -
+            safeAreaInsets.top;
 
     return Container(
-      color: widget.backgroundColor,
-      width: _width,
-      height: _height,
+      color: widget.options.backgroundColor,
+      width: parentWidth,
+      height: parentHeight,
       child: Stack(
-        children: widget.children,
+        children: widget.options.children,
       ),
     );
   }

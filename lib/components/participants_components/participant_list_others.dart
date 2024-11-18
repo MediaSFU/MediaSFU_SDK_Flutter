@@ -1,33 +1,71 @@
 import 'package:flutter/material.dart';
-import './participant_list_others_item.dart' show ParticipantListOthersItem;
+import '../../../types/types.dart' show Participant;
+import './participant_list_others_item.dart'
+    show ParticipantListOthersItem, ParticipantListOthersItemOptions;
 
-/// ParticipantListOthers - Displays a list of other participants (not the current user) in a scrollable view.
+/// `ParticipantListOthersOptions` defines the configuration options for the `ParticipantListOthers` widget,
+/// including a list of participants, co-host, and member identifiers.
 ///
-/// participants - A list of dynamic containing information about each participant.
+/// Parameters:
+/// - `participants`: The list of other participants to display.
+/// - `coHost`: The identifier of the co-host.
+/// - `member`: The identifier of the current user.
+
+class ParticipantListOthersOptions {
+  final List<Participant> participants;
+  final String coHost;
+  final String member;
+
+  ParticipantListOthersOptions({
+    required this.participants,
+    required this.coHost,
+    required this.member,
+  });
+}
+
+typedef ParticipantListOthersType = Widget Function(
+    {required ParticipantListOthersOptions options});
+
+/// `ParticipantListOthers` renders a scrollable list of participants not including the current user.
+/// Each participant is represented using `ParticipantListOthersItem`.
 ///
-/// parameters - Additional parameters such as member, co-host, and islevel for displaying participant details.
+/// Example Usage:
+/// ```dart
+/// ParticipantListOthers(
+///   options: ParticipantListOthersOptions(
+///     participants: [
+///       Participant(name: 'Jane Doe', muted: true, id: '1', islevel: '1'),
+///       Participant(name: 'John Smith', muted: false, id: '2', islevel: '2')
+///     ],
+///     coHost: 'host123',
+///     member: 'member123',
+///   ),
+/// );
+/// ```
 
 class ParticipantListOthers extends StatelessWidget {
-  final List<dynamic> participants;
-  final Map<String, dynamic> parameters;
+  final ParticipantListOthersOptions options;
 
-  const ParticipantListOthers(
-      {super.key, required this.participants, required this.parameters});
+  const ParticipantListOthers({super.key, required this.options});
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Column(
         children: List.generate(
-          participants.length,
+          options.participants.length,
           (index) {
+            final participant = options.participants[index];
             return Column(
               children: [
                 ParticipantListOthersItem(
-                  participant: participants[index],
-                  parameters: parameters,
+                  options: ParticipantListOthersItemOptions(
+                    participant: participant,
+                    coHost: options.coHost,
+                    member: options.member,
+                  ),
                 ),
-                if (index < participants.length - 1)
+                if (index < options.participants.length - 1)
                   const Divider(
                     color: Colors.grey,
                     height: 1,

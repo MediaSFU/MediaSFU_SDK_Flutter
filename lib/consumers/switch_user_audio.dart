@@ -1,126 +1,171 @@
 import 'dart:async';
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
+import '../types/types.dart'
+    show
+        ShowAlert,
+        StreamSuccessAudioSwitchType,
+        RequestPermissionAudioType,
+        StreamSuccessAudioSwitchParameters,
+        StreamSuccessAudioSwitchOptions;
 
-/// Switches the user's audio device based on the provided parameters.
-///
-/// The [parameters] map should contain the following keys:
-/// - 'userDefaultAudioInputDevice': The user's default audio input device.
-/// - 'prevAudioInputDevice': The previous audio input device.
-/// - 'showAlert': A function to show an alert message.
-/// - 'hasAudioPermission': A boolean indicating if the user has audio permission.
-/// - 'updateUserDefaultAudioInputDevice': A function to update the user's default audio input device.
-/// - 'checkMediaPermission': A boolean indicating if media permission should be checked.
-/// - 'streamSuccessAudioSwitch': A function to switch the audio stream.
-/// - 'requestPermissionAudio': A function to request audio permission.
-///
-/// The [audioPreference] parameter specifies the preferred audio input device.
-///
-/// Throws an error if there is an issue switching the audio device.
+abstract class SwitchUserAudioParameters
+    implements StreamSuccessAudioSwitchParameters {
+  // Core properties
+  String get userDefaultAudioInputDevice;
+  String get prevAudioInputDevice;
+  ShowAlert? get showAlert;
+  bool get hasAudioPermission;
+  void Function(String) get updateUserDefaultAudioInputDevice;
 
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
+  // Mediasfu functions
+  StreamSuccessAudioSwitchType get streamSuccessAudioSwitch;
+  RequestPermissionAudioType get requestPermissionAudio;
+  bool get checkMediaPermission;
+
+  // Dynamic access operator for additional properties
+  // dynamic operator [](String key);
+  // void operator []=(String key, dynamic value);
+}
+
+class SwitchUserAudioOptions {
+  final SwitchUserAudioParameters parameters;
+  final String audioPreference;
+  final Map<String, dynamic>? audioConstraints;
+
+  SwitchUserAudioOptions({
+    required this.parameters,
+    required this.audioPreference,
+    this.audioConstraints,
+  });
+}
+
+typedef SwitchUserAudioType = Future<void> Function({
+  required SwitchUserAudioOptions options,
 });
 
-typedef StreamSuccessAudioSwitch = Future<void> Function(
-    {required MediaStream stream, required Map<String, dynamic> parameters});
+/// Switches the user's audio input to the specified device.
+///
+/// ### Parameters:
+/// - `options` (`SwitchUserAudioOptions`): Contains:
+///   - `parameters` (`SwitchUserAudioParameters`): Includes settings, callbacks, permissions, and device states.
+///   - `audioPreference` (`String`): The ID of the new audio input device to switch to.
+///
+/// ### Workflow:
+/// 1. **Permission Check**:
+///    - Verifies if audio permissions are granted.
+///    - If not, it prompts the user to allow microphone access.
+///
+/// 2. **Media Constraints Setup**:
+///    - Configures `getUserMedia` constraints to select the desired `audioPreference` device.
+///
+/// 3. **Stream Retrieval and Switch**:
+///    - Attempts to create a new audio stream with the specified device.
+///    - Calls `streamSuccessAudioSwitch` to handle the switch in the application.
+///
+/// 4. **Error Handling and Fallback**:
+///    - If accessing the device fails, it reverts to the previously used device and shows an alert.
+///
+/// ### Example Usage:
+/// ```dart
+/// final parameters = SwitchUserAudioParameters(
+///   userDefaultAudioInputDevice: 'defaultDeviceID',
+///   prevAudioInputDevice: 'oldDeviceID',
+///   hasAudioPermission: true,
+///   // Other properties and callbacks...
+/// );
+///
+/// await switchUserAudio(
+///   SwitchUserAudioOptions(
+///     parameters: parameters,
+///     audioPreference: 'newDeviceID',
+///   ),
+/// );
+/// ```
+///
+/// ### Error Handling:
+/// - If an error occurs during the switch, reverts to the previous device and shows an alert.
 
-typedef Sleep = Future<void> Function(int milliseconds);
-
-typedef RequestPermissionAudio = Future<bool> Function();
-
-typedef UpdateDevice = void Function(String value);
-
-Future<void> switchUserAudio(
-    {required Map<String, dynamic> parameters,
-    required String audioPreference}) async {
-  // Function to switch the user's audio device
+Future<void> switchUserAudio({
+  required SwitchUserAudioOptions options,
+}) async {
+  final String audioPreference = options.audioPreference;
+  final SwitchUserAudioParameters parameters = options.parameters;
 
   try {
-    String userDefaultAudioInputDevice =
-        parameters['userDefaultAudioInputDevice'];
-    String prevAudioInputDevice = parameters['prevAudioInputDevice'];
-    ShowAlert? showAlert = parameters['showAlert'];
-    bool hasAudioPermission = parameters['hasAudioPermission'];
-    UpdateDevice updateUserDefaultAudioInputDevice =
-        parameters['updateUserDefaultAudioInputDevice'];
-    bool checkMediaPermission = parameters['checkMediaPermission'];
-
-    // Media functions
-    StreamSuccessAudioSwitch streamSuccessAudioSwitch =
-        parameters['streamSuccessAudioSwitch'];
-    RequestPermissionAudio requestPermissionAudio =
-        parameters['requestPermissionAudio'];
+    final String prevAudioInputDevice = parameters.prevAudioInputDevice;
+    final bool hasAudioPermission = parameters.hasAudioPermission;
+    final ShowAlert? showAlert = parameters.showAlert;
+    final StreamSuccessAudioSwitchType streamSuccessAudioSwitch =
+        parameters.streamSuccessAudioSwitch;
+    final RequestPermissionAudioType requestPermissionAudio =
+        parameters.requestPermissionAudio;
+    final void Function(String) updateUserDefaultAudioInputDevice =
+        parameters.updateUserDefaultAudioInputDevice;
+    final bool checkMediaPermission = parameters.checkMediaPermission;
 
     // Check if audio permission is granted
     if (!hasAudioPermission) {
       if (checkMediaPermission) {
-        var statusMic = await requestPermissionAudio();
-        if (statusMic != true) {
-          if (showAlert != null) {
-            showAlert(
-              message:
-                  'Allow access to your microphone or check if your microphone is not being used by another application.',
-              type: 'danger',
-              duration: 3000,
-            );
-          }
+        bool permissionGranted = await requestPermissionAudio();
+        if (!permissionGranted) {
+          showAlert?.call(
+            message:
+                "Allow access to your microphone or check if your microphone is not being used by another application.",
+            type: "danger",
+            duration: 3000,
+          );
           return;
         }
       }
     }
 
-    Map<String, dynamic> mediaConstraints = {
-      'audio': {
+    // Define media constraints with the desired audio input device
+    final MediaStreamConstraints mediaConstraints = MediaStreamConstraints(
+      audio: {
         'optional': [
           {
             'sourceId': audioPreference,
           }
         ],
       },
-      'video': false,
-    };
+      video: false,
+    );
 
-    // Get user media with the defined audio constraints
-    await navigator.mediaDevices
-        .getUserMedia(mediaConstraints)
-        .then((stream) async {
-      await streamSuccessAudioSwitch(
-          stream: stream,
-          parameters: {...parameters, 'audioConstraints': mediaConstraints});
-    }).catchError((error) {
-      // Handle errors and revert to the previous audio input device
-      userDefaultAudioInputDevice = prevAudioInputDevice;
-      updateUserDefaultAudioInputDevice(userDefaultAudioInputDevice);
+    // Attempt to get user media with the defined audio constraints
+    try {
+      MediaStream newAudioStream = await navigator.mediaDevices
+          .getUserMedia(mediaConstraints as Map<String, dynamic>);
+      final optionsSwitch = StreamSuccessAudioSwitchOptions(
+        stream: newAudioStream,
+        audioConstraints: options.audioConstraints,
+        parameters: parameters,
+      );
+      await streamSuccessAudioSwitch(optionsSwitch);
+    } catch (error) {
+      // Revert to the previous audio input device
+      updateUserDefaultAudioInputDevice.call(prevAudioInputDevice);
 
-      if (showAlert != null) {
-        showAlert(
-          message:
-              'Error switching; the specified microphone could not be accessed.',
-          type: 'danger',
-          duration: 3000,
-        );
-      }
-    });
-  } catch (error) {
-    // Handle unexpected errors and revert to the previous audio input device
-    String userDefaultAudioInputDevice =
-        parameters['userDefaultAudioInputDevice'];
-    String prevAudioInputDevice = parameters['prevAudioInputDevice'];
-    UpdateDevice updateUserDefaultAudioInputDevice =
-        parameters['updateUserDefaultAudioInputDevice'];
-    ShowAlert? showAlert = parameters['showAlert'];
-    userDefaultAudioInputDevice = prevAudioInputDevice;
-    updateUserDefaultAudioInputDevice(userDefaultAudioInputDevice);
-
-    if (showAlert != null) {
-      showAlert(
+      showAlert?.call(
         message:
-            'Error switching; the specified microphone could not be accessed.',
-        type: 'danger',
+            "Error switching; the specified microphone could not be accessed.",
+        type: "danger",
         duration: 3000,
       );
     }
+  } catch (error) {
+    String userDefaultAudioInputDevice = parameters.userDefaultAudioInputDevice;
+    String prevAudioInputDevice = parameters.prevAudioInputDevice;
+    void Function(String) updateUserDefaultAudioInputDevice =
+        parameters.updateUserDefaultAudioInputDevice;
+    ShowAlert? showAlert = parameters.showAlert;
+    userDefaultAudioInputDevice = prevAudioInputDevice;
+    updateUserDefaultAudioInputDevice(userDefaultAudioInputDevice);
+
+    showAlert?.call(
+      message:
+          "Error switching; the specified microphone could not be accessed.",
+      type: "danger",
+      duration: 3000,
+    );
   }
 }

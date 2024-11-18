@@ -1,156 +1,144 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import '../types/types.dart'
+    show Stream, TransportType, SleepType, SleepOptions;
 
-/// Processes consumer transports by pausing and resuming consumer streams based on certain conditions.
-///
-/// The [consumerTransports] parameter is a list of dynamic objects representing the consumer transports.
-/// The [lStreams_] parameter is a list of dynamic objects representing the lStreams.
-/// The [parameters] parameter is a map of string keys and dynamic values representing the parameters.
-///
-/// The [processConsumerTransports] function performs the following steps:
-/// 1. Retrieves the [getUpdatedAllParams] function from the [parameters] map and assigns it to the [getUpdatedAllParams] variable.
-/// 2. Calls the [getUpdatedAllParams] function to update the [parameters] map.
-/// 3. Retrieves specific values from the [parameters] map and assigns them to variables.
-/// 4. Defines a [sleep] function using the [parameters] map.
-/// 5. Defines a helper function [isValidProducerId] to check if a producerId is valid in the given stream arrays.
-/// 6. Filters the [consumerTransports] list to get paused consumer transports that are not audio.
-/// 7. Filters the [consumerTransports] list to get unpaused consumer transports that are not audio.
-/// 8. Pauses consumer transports after a short delay using the [sleep] function.
-/// 9. Emits consumer.pause() for each filtered transport (not audio).
-/// 10. Emits consumer.resume() for each filtered transport (not audio) if the corresponding server response indicates successful resumption.
-///
-/// Throws an error if any errors occur during the process of pausing or resuming consumer transports.
+abstract class ProcessConsumerTransportsParameters {
+  // Properties as abstract getters
+  List<Stream> get remoteScreenStream;
+  List<Stream> get oldAllStreams;
+  List<Stream> get newLimitedStreams;
 
-typedef Sleep = Future<void> Function(int milliseconds);
-typedef GetUpdatedAllParamsFunction = Map<String, dynamic> Function();
+  // Mediasfu function as an abstract getter
+  SleepType get sleep;
+
+  // Method to retrieve updated parameters
+  ProcessConsumerTransportsParameters Function() get getUpdatedAllParams;
+
+  // Dynamic key-value support
+  // dynamic operator [](String key);
+}
+
+class ProcessConsumerTransportsOptions {
+  final List<TransportType> consumerTransports;
+  final List<Stream> lStreams_;
+  final ProcessConsumerTransportsParameters parameters;
+
+  ProcessConsumerTransportsOptions({
+    required this.consumerTransports,
+    required this.lStreams_,
+    required this.parameters,
+  });
+}
+
+typedef ProcessConsumerTransportsType = Future<void> Function(
+    ProcessConsumerTransportsOptions options);
+
+/// Processes consumer transports to pause or resume video streams based on provided stream lists.
+///
+/// This function iterates over consumer transports, checking if each transport's `producerId`
+/// matches any in the provided lists of streams (`lStreams_`, `remoteScreenStream`, `oldAllStreams`,
+/// `newLimitedStreams`). If a transport is paused and its producerId matches a stream in the lists,
+/// it resumes the transport. If a transport is unpaused and its producerId does not match any stream
+/// in the lists, it pauses the transport after a brief delay.
+///
+/// Parameters:
+/// - [options] (`ProcessConsumerTransportsOptions`): Contains:
+///   - [consumerTransports]: List of transports to process.
+///   - [lStreams_]: List of current streams to compare producerIds against.
+///   - [parameters]: Includes the `sleep` function for a delay and lists of old and new streams.
+///
+/// Example:
+/// ```dart
+/// final parameters = ProcessConsumerTransportsParameters(
+///   remoteScreenStream: [screenStream1],
+///   oldAllStreams: [oldStream1, oldStream2],
+///   newLimitedStreams: [limitedStream1],
+///   sleep: (options) async => await Future.delayed(Duration(milliseconds: options.ms)),
+///   getUpdatedAllParams: () => updatedParams, // Function to retrieve updated parameters if needed
+/// );
+///
+/// await processConsumerTransports(
+///   ProcessConsumerTransportsOptions(
+///     consumerTransports: [transport1, transport2],
+///     lStreams_: [stream1, stream2],
+///     parameters: parameters,
+///   ),
+/// );
+/// ```
 
 Future<void> processConsumerTransports(
-    {required List<dynamic> consumerTransports,
-    required List<dynamic> lStreams_,
-    required Map<String, dynamic> parameters}) async {
+    ProcessConsumerTransportsOptions options) async {
+  // Retrieve and destructure updated parameters
+  final ProcessConsumerTransportsParameters parameters =
+      options.parameters.getUpdatedAllParams();
+  final SleepType sleep = parameters.sleep;
+
+  final List<TransportType> consumerTransports = options.consumerTransports;
+  final List<Stream> lStreams_ = options.lStreams_;
+  final List<Stream> remoteScreenStream = parameters.remoteScreenStream;
+  final List<Stream> oldAllStreams = parameters.oldAllStreams;
+  final List<Stream> newLimitedStreams = parameters.newLimitedStreams;
+
   try {
-    GetUpdatedAllParamsFunction getUpdatedAllParams =
-        parameters['getUpdatedAllParams'];
-
-    parameters = getUpdatedAllParams();
-
-    var remoteScreenStream = parameters['remoteScreenStream'];
-    var oldAllStreams = parameters['oldAllStreams'];
-    var newLimitedStreams = parameters['newLimitedStreams'];
-
-    //mediasfu functions
-    Sleep sleep = parameters['sleep'];
-
-    // Function to check if the producerId is valid in the given stream arrays
-    bool isValidProducerId(String producerId, List<dynamic> streamArrays) {
+    // Helper function to check if producerId exists in any provided stream array
+    bool isValidProducerId(String producerId, List<List<Stream>> streamArrays) {
       return producerId.isNotEmpty &&
-          producerId != "" &&
           streamArrays.any((streamArray) =>
-              streamArray.length > 0 &&
-              streamArray.any((stream) => stream['producerId'] == producerId));
+              streamArray.any((stream) => stream.producerId == producerId));
     }
 
-    // // Get paused consumer transports that are audio
-    // var consumerTransportsToResumeAudio = consumerTransports.where(
-    //     (transport) =>
-    //         isValidProducerId(transport['producerId'], [
-    //           lStreams_,
-    //           remoteScreenStream,
-    //           oldAllStreams,
-    //           newLimitedStreams
-    //         ]) &&
-    //         transport['consumer'].paused== true &&
-    //         transport['consumer']track.kind == "audio");
-
-    // // Get unpaused consumer transports that are audio
-    // var consumerTransportsToPauseAudio = consumerTransports.where((transport) =>
-    //     transport['producerId'] != null &&
-    //     transport['producerId'] != "" &&
-    //     !lStreams_
-    //         .any((stream) => stream['producerId'] == transport['producerId']) &&
-    //     transport['consumer'] != null &&
-    //     transport['consumer'].track.kind != null &&
-    //     transport['consumer'].paused!= true &&
-    //     transport['consumer'].track.kind == "audio" &&
-    //     !remoteScreenStream
-    //         .any((stream) => stream['producerId'] == transport['producerId']) &&
-    //     !oldAllStreams
-    //         .any((stream) => stream['producerId'] == transport['producerId']) &&
-    //     !newLimitedStreams
-    //         .any((stream) => stream['producerId'] == transport['producerId']));
-
-    // // Pause consumer transports after a short delay
-    // await sleep(100);
-
-    // // Emit consumer.pause() for each filtered transport (audio)
-    // for (var transport in consumerTransportsToPauseAudio) {
-    //   await transport['consumer'].pause();
-    //   await transport['socket_'].emitWithAck("consumer-pause", {
-    //     "serverConsumerId": transport['serverConsumerTransportId']
-    //   }, ack:(paused) async {
-    //     // Handle the response if needed
-    //   });
-    // }
-
     // Get paused consumer transports that are not audio
-    var consumerTransportsToResume = consumerTransports.where((transport) =>
-        isValidProducerId(transport['producerId'], [
+    final consumerTransportsToResume = consumerTransports.where((transport) =>
+        isValidProducerId(transport.producerId, [
           lStreams_,
           remoteScreenStream,
           oldAllStreams,
           newLimitedStreams
         ]) &&
-        transport['consumer'] != null &&
-        transport['consumer'].paused == true &&
-        transport['consumer'].track.kind != "audio");
+        transport.consumer.paused &&
+        transport.consumer.track.kind != 'audio');
 
-    // Get unpaused consumer transports that are not audio
-    var consumerTransportsToPause = consumerTransports.where((transport) =>
-        transport['producerId'] != null &&
-        transport['producerId'] != "" &&
-        !lStreams_
-            .any((stream) => stream['producerId'] == transport['producerId']) &&
-        transport['consumer'] != null &&
-        transport['consumer'].track.kind != null &&
-        transport['consumer'].paused != true &&
-        transport['consumer'].track.kind != "audio" &&
+    // Get unpaused consumer transports that are not audio and not in lStreams
+    final consumerTransportsToPause = consumerTransports.where((transport) =>
+        transport.producerId.isNotEmpty &&
+        !lStreams_.any((stream) => stream.producerId == transport.producerId) &&
+        transport.consumer.track.kind != 'audio' &&
         !remoteScreenStream
-            .any((stream) => stream['producerId'] == transport['producerId']) &&
+            .any((stream) => stream.producerId == transport.producerId) &&
         !oldAllStreams
-            .any((stream) => stream['producerId'] == transport['producerId']) &&
+            .any((stream) => stream.producerId == transport.producerId) &&
         !newLimitedStreams
-            .any((stream) => stream['producerId'] == transport['producerId']));
+            .any((stream) => stream.producerId == transport.producerId) &&
+        !transport.consumer.paused);
 
     // Pause consumer transports after a short delay
-
-    await sleep(100);
+    final sleepOptions = SleepOptions(ms: 100);
+    await sleep(sleepOptions);
 
     // Emit consumer.pause() for each filtered transport (not audio)
-    for (var transport in consumerTransportsToPause) {
-      await transport['consumer'].pause();
-      await transport['socket_'].emitWithAck("consumer-pause", {
-        "serverConsumerId": transport['serverConsumerTransportId']
-      }, ack: (paused) async {
-        // Handle the response if needed
-      });
+    // Note 'serverConsumerId' is 'transport.consumer.id' not 'serverconsumerTransportId'
+    for (final transport in consumerTransportsToPause) {
+      transport.consumer.pause();
+      transport.socket_.emitWithAck(
+          "consumer-pause", {'serverConsumerId': transport.consumer.id},
+          ack: (_) {});
     }
 
     // Emit consumer.resume() for each filtered transport (not audio)
-    for (var transport in consumerTransportsToResume) {
-      await transport['socket_'].emitWithAck("consumer-resume", {
-        "serverConsumerId": transport['serverConsumerTransportId']
+    // Note 'serverConsumerId' is 'transport.consumer.id' not 'serverconsumerTransportId'
+    for (final transport in consumerTransportsToResume) {
+      transport.socket_.emitWithAck("consumer-resume", {
+        'serverConsumerId': transport.consumer.id,
       }, ack: (resumed) async {
         if (resumed['resumed'] == true) {
-          await transport['consumer'].resume();
+          transport.consumer.resume();
         }
       });
     }
   } catch (error) {
-    // Handle errors during the process of pausing or resuming consumer transports
     if (kDebugMode) {
-      print('Error processing consumer transports: $error');
+      print('Error in processConsumerTransports: $error');
     }
-
-    // throw new Error('Error processing consumer transports: $error');
   }
 }

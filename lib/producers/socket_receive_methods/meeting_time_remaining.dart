@@ -1,57 +1,56 @@
 import 'dart:async';
+import '../../types/types.dart' show EventType, ShowAlert;
 
-/// A function that shows an alert with a specific message, type, and duration.
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
-});
+/// Defines options for handling meeting time remaining.
+class MeetingTimeRemainingOptions {
+  final int timeRemaining;
+  final ShowAlert? showAlert;
+  final EventType eventType;
 
-/// Updates the meeting time remaining and shows an alert with the remaining time.
+  MeetingTimeRemainingOptions({
+    required this.timeRemaining,
+    required this.eventType,
+    this.showAlert,
+  });
+}
+
+typedef MeetingTimeRemainingType = Future<void> Function(
+    MeetingTimeRemainingOptions options);
+
+/// Updates the meeting time remaining and shows an alert if the event type is not 'chat'.
 ///
-/// This function takes in the [timeRemaining] in milliseconds and [parameters] as a map
-/// containing the options for showing the alert. The [parameters] map should contain
-/// a [showAlert] function and an [eventType] string.
+/// This function takes in [MeetingTimeRemainingOptions] which contains the remaining time in
+/// milliseconds, an optional [showAlert] function to display the alert, and the [eventType].
 ///
-/// The function converts the [timeRemaining] from milliseconds to a readable format
-/// of minutes and seconds. It then shows an alert with the time remaining, unless
-/// the [eventType] is 'chat'. If the [showAlert] function is provided, it will be called
-/// with the message, type, and duration parameters.
+/// Converts [timeRemaining] to minutes and seconds and, if [eventType] is not 'chat', shows an alert with
+/// the formatted time.
 ///
 /// Example usage:
-///
 /// ```dart
 /// await meetingTimeRemaining(
-///   timeRemaining: 60000,
-///   parameters: {
-///     'showAlert': showAlertFunction,
-///     'eventType': 'meeting',
-///   },
+///   options: MeetingTimeRemainingOptions(
+///     timeRemaining: 450000, // 7 minutes and 30 seconds
+///     eventType: 'meeting',
+///     showAlert: (message, type, duration) => print(message),
+///   ),
 /// );
+/// // Output:
+/// // "The event will end in 7:30 minutes."
 /// ```
 Future<void> meetingTimeRemaining({
-  required int timeRemaining,
-  required Map<String, dynamic> parameters,
+  required MeetingTimeRemainingOptions options,
 }) async {
-  // Destructure options
-  ShowAlert? showAlert = parameters['showAlert'];
-  String eventType = parameters['eventType'];
+  final int minutes = options.timeRemaining ~/ 60000;
+  final int seconds = (options.timeRemaining % 60000) ~/ 1000;
+  final String timeRemainingString =
+      '$minutes:${seconds.toString().padLeft(2, '0')}';
 
-  // Update the meeting time remaining
-
-  // Convert time from milliseconds to readable format of minutes and seconds
-  int minutes = (timeRemaining / 60000).floor();
-  int seconds = ((timeRemaining % 60000) / 1000).round();
-  String timeRemainingString = '$minutes:${seconds < 10 ? '0' : ''}$seconds';
-
-  // Show alert with time remaining
-  if (eventType != 'chat') {
-    if (showAlert != null) {
-      showAlert(
-        message: 'The event will end in $timeRemainingString minutes.',
-        type: 'success',
-        duration: 3000,
-      );
-    }
+  // Show alert with time remaining if eventType is not 'chat'
+  if (options.eventType != EventType.chat) {
+    options.showAlert!(
+      message: 'The event will end in $timeRemainingString minutes.',
+      type: 'success',
+      duration: 3000,
+    );
   }
 }

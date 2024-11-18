@@ -1,33 +1,52 @@
+import '../../types/types.dart' show Request, WaitingRoomParticipant;
+
+// Options for handling a participant's request to join the event.
+class ParticipantRequestedOptions {
+  final Request userRequest;
+  final List<Request> requestList;
+  final List<WaitingRoomParticipant> waitingRoomList;
+  final void Function(int) updateTotalReqWait;
+  final void Function(List<Request>) updateRequestList;
+
+  ParticipantRequestedOptions({
+    required this.userRequest,
+    required this.requestList,
+    required this.waitingRoomList,
+    required this.updateTotalReqWait,
+    required this.updateRequestList,
+  });
+}
+
+typedef ParticipantRequestedType = void Function(
+    ParticipantRequestedOptions options);
+
 /// Handles the participant request to join the event.
 ///
-/// This function takes in two required parameters: [parameters] and [userRequest].
-/// The [parameters] parameter is a map that contains the following keys:
-///   - 'requestList': A list of dynamic objects representing the current request list.
-///   - 'waitingRoomList': A list of dynamic objects representing the current waiting room list.
-///   - 'updateTotalReqWait': A function used to update the total count of requests and waiting room participants.
-///   - 'updateRequestList': A function used to update the request list.
+/// This function takes a [ParticipantRequestedOptions] object, which contains the user's request,
+/// the current request list, waiting room list, and functions to update the request list and the total count.
 ///
-/// The [userRequest] parameter is a map that represents the user's request to join the event.
+/// Example usage:
+/// ```dart
+/// final options = ParticipantRequestedOptions(
+///   userRequest: Request(id: "user123", reason: "join"),
+///   requestList: [Request(id: "user1", reason: "help")],
+///   waitingRoomList: [WaitingRoomParticipant(id: "user2", name: "Alice")],
+///   updateTotalReqWait: (count) => print("Total requests: $count"),
+///   updateRequestList: (list) => print("Updated request list: $list"),
+/// );
 ///
-/// This function adds the [userRequest] to the [requestList] and updates the [requestList] using the [updateRequestList] function.
-/// It also calculates the total count of requests and waiting room participants and updates it using the [updateTotalReqWait] function.
-void participantRequested({
-  required Map<String, dynamic> parameters,
-  required Map<String, dynamic> userRequest,
-}) {
-  // Handle participant request to join the event
-
-  List<dynamic> requestList = parameters['requestList'];
-  List<dynamic> waitingRoomList = parameters['waitingRoomList'];
-  Function updateTotalReqWait = parameters['updateTotalReqWait'];
-  Function updateRequestList = parameters['updateRequestList'];
-
+/// participantRequested(options);
+/// // Output:
+/// // "Updated request list: [{ id: 'user1', reason: 'help' }, { id: 'user123', reason: 'join' }] "
+/// // "Total requests: 3"
+/// ```
+void participantRequested(ParticipantRequestedOptions options) {
   // Add the user request to the request list
-
-  requestList.add(userRequest);
-  updateRequestList(requestList);
+  final updatedRequestList = List<Request>.from(options.requestList)
+    ..add(options.userRequest);
+  options.updateRequestList(updatedRequestList);
 
   // Update the total count of requests and waiting room participants
-  int reqCount = requestList.length + waitingRoomList.length;
-  updateTotalReqWait(reqCount);
+  final reqCount = updatedRequestList.length + options.waitingRoomList.length;
+  options.updateTotalReqWait(reqCount);
 }

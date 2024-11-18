@@ -1,21 +1,69 @@
 import 'dart:math';
+import '../../types/types.dart' show Participant;
 
-/// Generates a list of random participants for a meeting.
-///
-/// The [generateRandomParticipants] function takes in the names of the member,
-/// co-host, and host, and generates a list of random participants for a meeting.
-/// It also has an optional parameter [forChatBroadcast] which, when set to true,
-/// limits the number of names to 2 for chat broadcast.
-///
-/// The function shuffles the names array to ensure unique names for each participant,
-/// and assigns a random level and muted status to each participant.
-///
-/// Returns a list of participant objects, where each object contains the name,
-/// level, muted status, and ID of the participant.
+/// Options for generating a random list of participants.
+class GenerateRandomParticipantsOptions {
+  final String member;
+  final String? coHost;
+  final String host;
+  final bool forChatBroadcast;
 
-List<dynamic> generateRandomParticipants(
-    String member, String coHost, String host,
-    {bool forChatBroadcast = false}) {
+  GenerateRandomParticipantsOptions({
+    required this.member,
+    this.coHost,
+    required this.host,
+    this.forChatBroadcast = false,
+  });
+}
+
+typedef GenerateRandomParticipantsType = List<Participant> Function(
+    GenerateRandomParticipantsOptions options);
+
+/// Generates a list of random participants for a meeting based on specified options.
+///
+/// This function creates a randomized list of participants for a meeting or broadcast
+/// session, placing the specified `member`, `coHost`, and `host` at the beginning of the
+/// list if they are not already included. When `forChatBroadcast` is `true`, only two
+/// participants are included to simulate a broadcast chat environment.
+///
+/// ## Parameters:
+/// - [options] - An instance of `GenerateRandomParticipantsOptions` containing:
+///   - `member`: The name of the main member to be included in the list.
+///   - `coHost`: An optional name for the co-host to be included in the list.
+///   - `host`: The name of the host, set to have a unique level in the list.
+///   - `forChatBroadcast`: If `true`, limits the list to two participants for broadcast.
+///
+/// ## Returns:
+/// A list of `Participant` objects with randomized names, levels, and muted states.
+///
+/// ## Example Usage:
+///
+/// ```dart
+/// // Define the options for generating random participants
+/// final options = GenerateRandomParticipantsOptions(
+///   member: 'John Doe',
+///   coHost: 'Jane Smith',
+///   host: 'Host1',
+///   forChatBroadcast: false, // Set to true for a broadcast session
+/// );
+///
+/// // Generate the participants list
+/// List<Participant> participants = generateRandomParticipants(options);
+///
+/// // Print participant details
+/// participants.forEach((participant) {
+///   print(
+///       'Name: ${participant.name}, Level: ${participant.islevel}, Muted: ${participant.muted}');
+/// });
+/// // Expected output:
+/// // Name: Host1, Level: 2, Muted: false
+/// // Name: Jane Smith, Level: 1, Muted: true
+/// // Name: John Doe, Level: 1, Muted: false
+/// // ...
+/// ```
+
+List<Participant> generateRandomParticipants(
+    GenerateRandomParticipantsOptions options) {
   List<String> names = [
     'Alice',
     'Bob',
@@ -45,26 +93,28 @@ List<dynamic> generateRandomParticipants(
     'Zack'
   ];
 
-  // Limit names to 2 for chat broadcast
-  if (forChatBroadcast) {
-    names = names.sublist(0, min(2, names.length));
+  // Limit names to 2 if for chat broadcast
+  if (options.forChatBroadcast) {
+    names = names.take(2).toList();
   }
 
   // Place member, coHost, and host at the beginning if not already included
-  if (!names.contains(member)) {
-    names.insert(0, member);
+  if (!names.contains(options.member)) {
+    names.insert(0, options.member);
   }
-  if (!names.contains(coHost) && !forChatBroadcast) {
-    names.insert(0, coHost);
+  if (options.coHost != null &&
+      !names.contains(options.coHost) &&
+      !options.forChatBroadcast) {
+    names.insert(0, options.coHost!);
   }
-  if (!names.contains(host)) {
-    names.insert(0, host);
+  if (!names.contains(options.host)) {
+    names.insert(0, options.host);
   }
 
   // Remove names of length 1 or less
   names = names.where((name) => name.length > 1).toList();
 
-  // Shuffle the names array to ensure unique names for each participant
+  // Shuffle the names to ensure unique positions
   List<String> shuffledNames = List.from(names);
   for (int i = shuffledNames.length - 1; i > 0; i--) {
     int j = Random().nextInt(i + 1);
@@ -74,30 +124,32 @@ List<dynamic> generateRandomParticipants(
   }
 
   bool hasLevel2Participant = false;
-  List<dynamic> participants = [];
+  List<Participant> participants = [];
 
   // Generate participant objects
   for (int i = 0; i < shuffledNames.length; i++) {
     String randomName = shuffledNames[i];
     String randomLevel = hasLevel2Participant
         ? '1'
-        : randomName == host
+        : randomName == options.host
             ? '2'
-            : '1'; // Set islevel to '2' only once
-    bool randomMuted = forChatBroadcast
+            : '1'; // Set `islevel` to '2' only once
+    bool randomMuted = options.forChatBroadcast
         ? true
-        : Random().nextBool(); // Set muted to false for chat broadcast
+        : Random().nextBool(); // Set muted to true for chat broadcast
 
     if (randomLevel == '2') {
       hasLevel2Participant = true;
     }
 
-    participants.add({
-      'name': randomName,
-      'islevel': randomLevel,
-      'muted': randomMuted,
-      'id': i.toString(),
-    });
+    participants.add(Participant(
+      name: randomName,
+      islevel: randomLevel,
+      muted: randomMuted,
+      id: i.toString(),
+      audioID: 'audio-$i',
+      videoID: 'video-$i',
+    ));
   }
 
   return participants;

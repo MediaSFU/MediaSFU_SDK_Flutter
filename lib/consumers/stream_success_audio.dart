@@ -1,193 +1,347 @@
-// ignore_for_file: empty_catches
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
+import '../types/types.dart'
+    show
+        Participant,
+        ShowAlert,
+        CreateSendTransportParameters,
+        ConnectSendTransportAudioParameters,
+        PrepopulateUserMediaType,
+        CreateSendTransportType,
+        ConnectSendTransportAudioType,
+        ResumeSendTransportAudioType,
+        PrepopulateUserMediaOptions,
+        CreateSendTransportOptions,
+        ConnectSendTransportAudioOptions,
+        ResumeSendTransportAudioOptions,
+        ProducerOptionsType;
 
-/// Handles the success scenario when streaming audio.
+/// StreamSuccessAudioParameters class equivalent to your TypeScript interface
+abstract class StreamSuccessAudioParameters
+    implements
+        ConnectSendTransportAudioParameters,
+        CreateSendTransportParameters {
+  // Core properties as abstract getters
+  io.Socket? get socket;
+  List<Participant> get participants;
+  MediaStream? get localStream;
+  bool get transportCreated;
+  bool get transportCreatedAudio;
+  bool get audioAlreadyOn;
+  bool get micAction;
+  ProducerOptionsType? get audioParams;
+  MediaStream? get localStreamAudio;
+  String get defAudioID;
+  String get userDefaultAudioInputDevice;
+  ProducerOptionsType? get params;
+  ProducerOptionsType? get aParams;
+  String get hostLabel;
+  String get islevel;
+  String get member;
+  bool get updateMainWindow;
+  bool get lockScreen;
+  bool get shared;
+  bool get videoAlreadyOn;
+  ShowAlert? get showAlert;
+
+  //  functions as abstract getters
+  void Function(List<Participant> participants) get updateParticipants;
+  void Function(bool transportCreated) get updateTransportCreated;
+  void Function(bool transportCreatedAudio) get updateTransportCreatedAudio;
+  void Function(bool audioAlreadyOn) get updateAudioAlreadyOn;
+  void Function(bool micAction) get updateMicAction;
+  void Function(ProducerOptionsType audioParams) get updateAudioParams;
+  void Function(MediaStream? localStream) get updateLocalStream;
+  void Function(MediaStream? localStreamAudio) get updateLocalStreamAudio;
+  void Function(String defAudioID) get updateDefAudioID;
+  void Function(String userDefaultAudioInputDevice)
+      get updateUserDefaultAudioInputDevice;
+  void Function(bool updateMainWindow) get updateUpdateMainWindow;
+
+  // Mediasfu functions as abstract getters
+  CreateSendTransportType get createSendTransport;
+  ConnectSendTransportAudioType get connectSendTransportAudio;
+  ResumeSendTransportAudioType get resumeSendTransportAudio;
+  PrepopulateUserMediaType get prepopulateUserMedia;
+
+  // Method to retrieve updated parameters as an abstract getter
+  StreamSuccessAudioParameters Function() get getUpdatedAllParams;
+
+  // Allow any other key-value pairs
+  // dynamic operator [](String key);
+  // void operator []=(String key, dynamic value);
+}
+
+/// StreamSuccessAudioOptions class equivalent to your TypeScript interface
+class StreamSuccessAudioOptions {
+  final MediaStream stream;
+  final StreamSuccessAudioParameters parameters;
+  final Map<String, dynamic>? audioConstraints;
+
+  StreamSuccessAudioOptions({
+    required this.stream,
+    required this.parameters,
+    this.audioConstraints,
+  });
+}
+
+typedef StreamSuccessAudioType = Future<void> Function(
+    StreamSuccessAudioOptions options);
+
+/// Manages the setup and successful transition of audio streaming by configuring necessary transports,
+/// updating audio settings, and updating UI state as required.
 ///
-/// This function takes in a [stream] of type [MediaStream] and [parameters] of type [Map<String, dynamic>].
-/// The [stream] represents the audio stream to be handled, while the [parameters] contain various parameters and callbacks needed for the handling process.
+/// ### Function Overview
+/// - **Audio Stream Update**: Sets up or switches to a new local audio stream, manages the default audio device, and updates local tracks.
+/// - **Transport Creation**: Creates or connects to a new audio transport if required, and resumes audio if already connected.
+/// - **UI and Participant Management**: Updates UI components, participant mute states, and screen locks based on user roles and permissions.
 ///
-/// The function performs the following steps:
-/// 1. Destructures the [parameters] to obtain the required variables.
-/// 2. Updates the local audio stream with the provided [stream].
-/// 3. If the [localStream] is null, assigns it the value of [localStreamAudio]. Otherwise, updates the [localStream] by removing existing audio tracks and adding the audio track from [localStreamAudio].
-/// 4. Retrieves the default audio ID from the [localStream] and updates the [defAudioID] and [userDefaultAudioInputDevice] variables accordingly.
-/// 5. Updates the [audioParams] with the provided [stream] and other audio parameters.
-/// 6. If the send transport has not been created, calls the [createSendTransport] function with the necessary parameters to create the send transport for audio.
-/// 7. If the send transport has been created but the audio transport has not, calls the [connectSendTransportAudio] function to connect the audio transport.
-/// 8. If both the send transport and audio transport have been created, calls the [resumeSendTransportAudio] function to resume the audio transport.
-/// 9. Handles any errors that occur during the process and displays an error message if [kDebugMode] is true.
-/// 10. Updates the [audioAlreadyOn] variable to true.
-/// 11. Updates the [micAction] variable to false if it was previously true.
-/// 12. Updates the [muted] status of the current participant in the [participants] list.
-/// 13. Updates the [transportCreated] and [transportCreatedAudio] variables to true.
-/// 14. If [videoAlreadyOn] is false and [islevel] is '2', updates the [updateMainWindow] variable to true, prepopulates the user media, and then updates the [updateMainWindow] variable to false.
+/// ### Parameters:
+/// - `options` (`StreamSuccessAudioOptions`): Configuration for the audio streaming setup, containing:
+///   - `stream` (`MediaStream`): The new audio stream to be set up.
+///   - `parameters` (`StreamSuccessAudioParameters`): Parameters including:
+///     - `socket`: (`io.Socket`): Socket instance for server communication.
+///     - `participants`: (`List<Participant>`): List of participants in the session.
+///     - `localStream`, `localStreamAudio`: (`MediaStream?`): The primary local stream and audio stream.
+///     - `transportCreated`, `transportCreatedAudio`: (`bool`): Flags indicating if the transport has been created for audio.
+///     - `audioParams`: (`ProducerOptionsType`): Current audio parameters.
+///     - `audioAlreadyOn`, `micAction`: (`bool`): Flags to track audio state and mic action.
+///     - `defAudioID`, `userDefaultAudioInputDevice`: (`String`): Audio device IDs for the current audio setup.
+///     - `showAlert`: (`ShowAlert?`): Optional function to display alerts to the user.
 ///
-/// The function also makes use of various typedefs and callbacks to handle different actions and updates.
+/// ### Steps:
+/// 1. **Update Local Audio Stream**:
+///    - Sets `localStreamAudio` to the new audio stream, updating `localStream` if necessary to include the new audio track.
+///    - Retrieves and updates the default audio device ID from the new audio stream.
 ///
-/// Example usage:
+/// 2. **Transport Creation or Connection**:
+///    - If the transport has not been created, a new send transport is created for the audio stream.
+///    - If the transport is created but not connected, it connects the audio transport with updated parameters.
+///    - If the transport is connected, the audio is resumed if paused.
+///
+/// 3. **UI and Participant List Updates**:
+///    - Sets `audioAlreadyOn` to `true`, indicating audio streaming is active.
+///    - Updates the `micAction` state if the microphone was previously active.
+///    - Updates participant list to unmute the local participant.
+///
+/// 4. **Main Window Update**:
+///    - Adjusts the main display if necessary, prepopulating user media based on user role, level, and lock state.
+///
+/// ### Example Usage:
 /// ```dart
-/// await streamSuccessAudio(stream: mediaStream, parameters: {
-///   'socket': socket,
-///   'participants': participants,
-///   'localStream': localStream,
-///   // other parameters and callbacks
-/// });
+/// final parameters = StreamSuccessAudioParameters(
+///   socket: io.Socket(),
+///   participants: [Participant(id: '123', name: 'User1')],
+///   localStream: null,
+///   transportCreated: false,
+///   transportCreatedAudio: false,
+///   audioAlreadyOn: false,
+///   micAction: false,
+///   audioParams: ProducerOptionsType(),
+///   defAudioID: 'defaultAudioID',
+///   userDefaultAudioInputDevice: 'defaultAudioID',
+///   showAlert: (message, type, duration) {
+///     print("Alert: $message");
+///   },
+///
+/// );
+///
+/// await streamSuccessAudio(
+///  StreamSuccessAudioOptions(
+///     stream: newAudioStream,
+///     parameters: parameters,
+///    audioConstraints: {
+///     'audio': true,
+///     'video': false,
+///      },
+///   ),
+/// );
 /// ```
-
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
-});
-
-typedef CheckPermission = Future<int> Function({
-  required String permissionType,
-  required Map<String, dynamic> parameters,
-});
-
-typedef CreateSendTransport = Future<void> Function({
-  required String option,
-  required Map<String, dynamic> parameters,
-});
-
-typedef ConnectSendTransportAudio = Future<void> Function({
-  required dynamic audioParams,
-  required Map<String, dynamic> parameters,
-});
-
-typedef ResumeSendTransportAudio = Future<void> Function({
-  required Map<String, dynamic> parameters,
-});
-
-typedef UpdateAudioAlreadyOn = void Function(bool value);
-typedef UpdateMicAction = void Function(bool value);
-typedef UpdateAudioParams = void Function(dynamic value);
-typedef UpdateLocalStream = void Function(dynamic value);
-typedef UpdateLocalStreamAudio = void Function(dynamic value);
-typedef UpdateDefAudioID = void Function(String value);
-typedef UpdateUserDefaultAudioInputDevice = void Function(String value);
-typedef UpdateUpdateMainWindow = void Function(bool value);
-typedef UpdateParticipants = void Function(List<dynamic> value);
-typedef UpdateTransportCreated = void Function(bool value);
-typedef UpdateTransportCreatedAudio = void Function(bool value);
-
-typedef PrepopulateUserMedia = List<dynamic> Function(
-    {required String name, required Map<String, dynamic> parameters});
+///
+/// ### Error Handling:
+/// - Logs any errors encountered during the audio setup process for debugging.
+/// - Displays an alert to the user if audio setup fails.
 
 Future<void> streamSuccessAudio(
-    {required MediaStream stream,
-    required Map<String, dynamic> parameters}) async {
-  // Destructure parameters
-  io.Socket socket = parameters['socket'];
-  List<dynamic> participants = parameters['participants'];
-
-  dynamic localStream = parameters['localStream'];
-  bool transportCreated = parameters['transportCreated'] ?? false;
-  bool transportCreatedAudio = parameters['transportCreatedAudio'] ?? false;
-  bool audioAlreadyOn = parameters['audioAlreadyOn'] ?? false;
-  bool micAction = parameters['micAction'] ?? false;
-  dynamic audioParams = parameters['audioParams'] ?? {};
-  dynamic localStreamAudio = parameters['localStreamAudio'];
-  String defAudioID = parameters['defAudioID'] ?? '';
-  String userDefaultAudioInputDevice =
-      parameters['userDefaultAudioInputDevice'] ?? '';
-  dynamic params = parameters['params'] ?? {};
-  dynamic audioParamse = parameters['audioParamse'] ?? {};
-  dynamic aParams = parameters['aParams'] ?? {};
-  String hostLabel = parameters['hostLabel'] ?? '';
-  String islevel = parameters['islevel'] ?? '1';
-  String member = parameters['member'] ?? '';
-  bool updateMainWindow = parameters['updateMainWindow'] ?? false;
-  bool lockScreen = parameters['lockScreen'] ?? false;
-  bool shared = parameters['shared'] ?? false;
-  bool videoAlreadyOn = parameters['videoAlreadyOn'] ?? false;
-  final UpdateParticipants updateParticipants =
-      parameters['updateParticipants'];
-  final UpdateTransportCreated updateTransportCreated =
-      parameters['updateTransportCreated'];
-  final UpdateTransportCreatedAudio updateTransportCreatedAudio =
-      parameters['updateTransportCreatedAudio'];
-  final UpdateAudioAlreadyOn updateAudioAlreadyOn =
-      parameters['updateAudioAlreadyOn'];
-  final UpdateMicAction updateMicAction = parameters['updateMicAction'];
-  final UpdateAudioParams updateAudioParams = parameters['updateAudioParams'];
-  final UpdateLocalStream updateLocalStream = parameters['updateLocalStream'];
-  final UpdateLocalStreamAudio updateLocalStreamAudio =
-      parameters['updateLocalStreamAudio'];
-  final UpdateDefAudioID updateDefAudioID = parameters['updateDefAudioID'];
-  final UpdateUserDefaultAudioInputDevice updateUserDefaultAudioInputDevice =
-      parameters['updateUserDefaultAudioInputDevice'];
-  final UpdateUpdateMainWindow updateUpdateMainWindow =
-      parameters['updateUpdateMainWindow'];
-
-  // mediasfu functions
-  final CreateSendTransport createSendTransport =
-      parameters['createSendTransport'];
-  final ConnectSendTransportAudio connectSendTransportAudio =
-      parameters['connectSendTransportAudio'];
-  final ResumeSendTransportAudio resumeSendTransportAudio =
-      parameters['resumeSendTransportAudio'];
-  final PrepopulateUserMedia prepopulateUserMedia =
-      parameters['prepopulateUserMedia'];
+  StreamSuccessAudioOptions options,
+) async {
+  final MediaStream stream = options.stream;
+  final StreamSuccessAudioParameters parameters = options.parameters;
 
   try {
+    // Destructure parameters
+    io.Socket? socket = parameters.socket;
+    List<Participant> participants = parameters.participants;
+    MediaStream? localStream = parameters.localStream;
+    bool transportCreated = parameters.transportCreated;
+    bool transportCreatedAudio = parameters.transportCreatedAudio;
+    bool audioAlreadyOn = parameters.audioAlreadyOn;
+    bool micAction = parameters.micAction;
+    ProducerOptionsType? audioParams = parameters.audioParams;
+    ProducerOptionsType? aParams = parameters.aParams;
+    MediaStream? localStreamAudio = parameters.localStreamAudio;
+    String defAudioID = parameters.defAudioID;
+    String userDefaultAudioInputDevice = parameters.userDefaultAudioInputDevice;
+    String hostLabel = parameters.hostLabel;
+    String islevel = parameters.islevel;
+    String member = parameters.member;
+    bool updateMainWindow = parameters.updateMainWindow;
+    bool lockScreen = parameters.lockScreen;
+    bool shared = parameters.shared;
+    bool videoAlreadyOn = parameters.videoAlreadyOn;
+
+    //  functions
+    void Function(List<Participant> participants) updateParticipants =
+        parameters.updateParticipants;
+    void Function(bool transportCreated) updateTransportCreated =
+        parameters.updateTransportCreated;
+    void Function(bool transportCreatedAudio) updateTransportCreatedAudio =
+        parameters.updateTransportCreatedAudio;
+    void Function(bool audioAlreadyOn) updateAudioAlreadyOn =
+        parameters.updateAudioAlreadyOn;
+    void Function(bool micAction) updateMicAction = parameters.updateMicAction;
+    void Function(ProducerOptionsType audioParams) updateAudioParams =
+        parameters.updateAudioParams;
+    void Function(MediaStream? localStream) updateLocalStream =
+        parameters.updateLocalStream;
+    void Function(MediaStream? localStreamAudio) updateLocalStreamAudio =
+        parameters.updateLocalStreamAudio;
+    void Function(String defAudioID) updateDefAudioID =
+        parameters.updateDefAudioID;
+    void Function(String userDefaultAudioInputDevice)
+        updateUserDefaultAudioInputDevice =
+        parameters.updateUserDefaultAudioInputDevice;
+    void Function(bool updateMainWindow) updateUpdateMainWindow =
+        parameters.updateUpdateMainWindow;
+
+    // Mediasfu functions
+    CreateSendTransportType createSendTransport =
+        parameters.createSendTransport;
+    ConnectSendTransportAudioType connectSendTransportAudio =
+        parameters.connectSendTransportAudio;
+    ResumeSendTransportAudioType resumeSendTransportAudio =
+        parameters.resumeSendTransportAudio;
+    PrepopulateUserMediaType prepopulateUserMedia =
+        parameters.prepopulateUserMedia;
+
     // Update the local audio stream
     localStreamAudio = stream;
     updateLocalStreamAudio(localStreamAudio);
 
-// Check if localStream is null
     if (localStream == null) {
-      localStream =
-          localStreamAudio; // Assign localStream to localStreamAudio if it's null
+      localStream = localStreamAudio;
     } else {
       // Remove existing audio tracks from localStream
-      for (var track in localStream!.getAudioTracks()) {
-        localStream!.removeTrack(track);
+      for (MediaStreamTrack track
+          in List<MediaStreamTrack>.from(localStream.getAudioTracks())) {
+        await localStream.removeTrack(track);
       }
 
       // Add the first audio track from localStreamAudio to localStream
-      var audioTracks = localStreamAudio!.getAudioTracks();
-      if (audioTracks.isNotEmpty) {
-        localStream!.addTrack(audioTracks.first);
+      if (localStreamAudio.getAudioTracks().isNotEmpty) {
+        localStream.addTrack(localStreamAudio.getAudioTracks().first);
       }
 
       // Update the local stream
-      updateLocalStream(localStream!);
+      updateLocalStream(localStream);
     }
 
-    final MediaStreamTrack audioTracked = localStream.getAudioTracks().first;
+    // Get the new default audio device ID from the new audio track
     try {
-      defAudioID = await audioTracked.getSettings()['deviceId'];
+      MediaStreamTrack audioTracked = localStream.getAudioTracks().first;
+      defAudioID = audioTracked.getSettings()['deviceId'] ?? "";
       userDefaultAudioInputDevice = defAudioID;
+
       updateDefAudioID(defAudioID);
       updateUserDefaultAudioInputDevice(userDefaultAudioInputDevice);
-    } catch (error) {}
+    } catch (_) {}
 
-    params = aParams;
-    audioParamse = {'params': params};
-    audioParams = {
-      'track': stream.getAudioTracks().first,
-      'stream': stream,
-      ...audioParamse
-    };
+    // Update audioParams with the new audio track and codec options
+    if (audioParams == null && aParams != null) {
+      audioParams = aParams;
+    }
+
+    audioParams!.track = localStream.getAudioTracks().first;
+
     updateAudioParams(audioParams);
 
+    // Create or connect transport for audio
     if (!transportCreated) {
       try {
-        await createSendTransport(
-          parameters: {...parameters, 'audioParams': audioParams},
+        parameters.updateAudioParams(audioParams);
+        final optionsCreate = CreateSendTransportOptions(
           option: 'audio',
+          parameters: parameters,
+          audioConstraints: options.audioConstraints,
         );
-      } catch (error) {}
+        await createSendTransport(
+          optionsCreate,
+        );
+      } catch (error) {
+        if (kDebugMode) {
+          print("Error creating transport: $error");
+        }
+      }
     } else {
       if (!transportCreatedAudio) {
+        parameters.updateAudioParams(audioParams);
+        final optionsConnect = ConnectSendTransportAudioOptions(
+          stream: localStream,
+          parameters: parameters,
+          audioConstraints: options.audioConstraints,
+        );
         await connectSendTransportAudio(
-            audioParams: audioParams, parameters: parameters);
+          optionsConnect,
+        );
       } else {
-        await resumeSendTransportAudio(parameters: parameters);
+        final optionsResume = ResumeSendTransportAudioOptions(
+          parameters: parameters,
+        );
+        await resumeSendTransportAudio(
+          options: optionsResume,
+        );
+      }
+    }
+
+    // Update audio already on state
+    audioAlreadyOn = true;
+    updateAudioAlreadyOn(audioAlreadyOn);
+
+    // Update mic action state
+    if (micAction == true) {
+      micAction = false;
+      updateMicAction(micAction);
+    }
+
+    // Update participants list to unmute the current participant
+    for (var participant in participants) {
+      if (participant['socketId'] == socket!.id && participant.name == member) {
+        participant.muted = false;
+      }
+    }
+    updateParticipants(participants);
+
+    // Update transport creation flags
+    transportCreated = true;
+    transportCreatedAudio = true;
+    updateTransportCreated(transportCreated);
+    updateTransportCreatedAudio(transportCreatedAudio);
+
+    // Update the UI based on the participant's level and screen lock status
+    if (!videoAlreadyOn && islevel == '2') {
+      if (!lockScreen && !shared) {
+        updateMainWindow = true;
+        updateUpdateMainWindow(updateMainWindow);
+        final optionsPrepopulate = PrepopulateUserMediaOptions(
+          name: hostLabel,
+          parameters: parameters,
+        );
+        await prepopulateUserMedia(
+          optionsPrepopulate,
+        );
+        updateMainWindow = false;
+        updateUpdateMainWindow(updateMainWindow);
       }
     }
   } catch (error) {
@@ -195,39 +349,10 @@ Future<void> streamSuccessAudio(
       print('streamSuccessAudio error: $error');
     }
 
-    final ShowAlert? showAlert = parameters['showAlert'];
-    if (showAlert != null) {
-      showAlert(message: error.toString(), type: 'danger', duration: 3000);
-    }
-  }
-
-  audioAlreadyOn = true;
-  updateAudioAlreadyOn(audioAlreadyOn);
-
-  if (micAction == true) {
-    micAction = false;
-    updateMicAction(micAction);
-  }
-
-  for (var participant in participants) {
-    if (participant['socketId'] == socket.id && participant['name'] == member) {
-      participant['muted'] = false;
-    }
-  }
-  updateParticipants(participants);
-
-  transportCreated = true;
-  transportCreatedAudio = true;
-  updateTransportCreated(transportCreated);
-  updateTransportCreatedAudio(transportCreatedAudio);
-
-  if (videoAlreadyOn == false && islevel == '2') {
-    if (!lockScreen && !shared) {
-      updateMainWindow = true;
-      updateUpdateMainWindow(updateMainWindow);
-      prepopulateUserMedia(name: hostLabel, parameters: parameters);
-      updateMainWindow = false;
-      updateUpdateMainWindow(updateMainWindow);
-    }
+    parameters.showAlert!(
+      message: 'Error setting up audio streaming: ${error.toString()}',
+      type: 'danger',
+      duration: 3000,
+    );
   }
 }

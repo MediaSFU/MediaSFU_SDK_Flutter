@@ -1,4 +1,4 @@
-// ignore_for_file: empty_catches
+// ignore_for_file: unused_local_variable
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -6,195 +6,288 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import '../methods/utils/mini_audio_player/mini_audio_player.dart'
     show MiniAudioPlayer;
-import '../components/display_components/mini_audio.dart' show MiniAudio;
+import '../components/display_components/mini_audio.dart'
+    show MiniAudio, MiniAudioOptions;
+import '../types/types.dart'
+    show
+        ReorderStreamsType,
+        ReorderStreamsParameters,
+        Participant,
+        PrepopulateUserMediaType,
+        PrepopulateUserMediaParameters,
+        Stream,
+        MiniAudioPlayerParameters,
+        EventType,
+        ReorderStreamsOptions,
+        PrepopulateUserMediaOptions,
+        MiniAudioPlayerOptions;
 
-/// Resumes the consumer and prepares it for use.
+/// Abstract class defining parameters for handling the resumption of audio and video streams in a media session.
 ///
-/// This function is responsible for resuming the consumer and updating its parameters based on the provided [stream], [kind], [remoteProducerId], [parameters], and [nsock].
-/// It performs various operations such as updating the audio and video streams, updating the screen share status, creating a mini audio player track, and updating the UI.
+/// Extends functionalities of [ReorderStreamsParameters], [PrepopulateUserMediaParameters], and [MiniAudioPlayerParameters]
+/// to provide comprehensive controls for managing audio and video streams, including real-time media updates, stream organization,
+/// and state management.
+abstract class ConsumerResumeParameters
+    implements
+        ReorderStreamsParameters,
+        PrepopulateUserMediaParameters,
+        MiniAudioPlayerParameters {
+  MediaStream? get nStream;
+  List<Stream> get allAudioStreams; // Use List<Stream> or List<Participant>
+  List<Stream> get allVideoStreams;
+  List<Stream> get streamNames;
+  List<Stream> get audStreamNames;
+  bool get updateMainWindow;
+  bool get shared;
+  bool get shareScreenStarted;
+  String get screenId;
+  List<Participant> get participants;
+  EventType get eventType;
+  String get meetingDisplayType;
+  bool get mainScreenFilled;
+  bool get firstRound;
+  bool get lockScreen;
+  List<Stream> get oldAllStreams;
+  String get adminVidID;
+  double get mainHeightWidth;
+  String get member;
+  List<Widget> get audioOnlyStreams;
+  bool get gotAllVids;
+  bool get deferReceive;
+  bool get firstAll;
+  List<Stream> get remoteScreenStream;
+  String get hostLabel;
+  bool get whiteboardStarted;
+  bool get whiteboardEnded;
+
+  void Function(bool value) get updateUpdateMainWindow;
+  void Function(List<Stream> value) get updateAllAudioStreams;
+  void Function(List<Stream> value) get updateAllVideoStreams;
+  void Function(List<Stream> value) get updateStreamNames;
+  void Function(List<Stream> value) get updateAudStreamNames;
+  void Function(MediaStream value) get updateNStream;
+  void Function(double value) get updateMainHeightWidth;
+  void Function(bool value) get updateLockScreen;
+  void Function(bool value) get updateFirstAll;
+  void Function(List<Stream> value) get updateRemoteScreenStream;
+  void Function(List<Stream> value) get updateOldAllStreams;
+  void Function(List<Widget> value) get updateAudioOnlyStreams;
+  void Function(bool value) get updateShareScreenStarted;
+  void Function(bool value) get updateGotAllVids;
+  void Function(String value) get updateScreenId;
+  void Function(bool value) get updateDeferReceive;
+
+  // Mediasfu functions
+  ReorderStreamsType get reorderStreams;
+  PrepopulateUserMediaType get prepopulateUserMedia;
+  ConsumerResumeParameters Function() get getUpdatedAllParams;
+
+  // Stream operator [](String key);
+}
+
+/// Configuration options for the `consumerResume` function, used to manage the resumption of audio or video streams.
 ///
-/// Parameters:
-/// - [stream]: The media stream for the consumer.
-/// - [kind]: The kind of media (e.g., audio, video).
-/// - [remoteProducerId]: The ID of the remote producer.
-/// - [parameters]: A map containing various parameters related to the consumer.
-/// - [nsock]: The socket for the consumer.
+/// ### Example Usage:
+/// ```dart
+/// final options = ConsumerResumeOptions(
+///   stream: myMediaStream,
+///   kind: 'audio',
+///   remoteProducerId: 'producerId123',
+///   parameters: myConsumerResumeParameters,
+///   nsock: mySocket,
+/// );
 ///
-/// Returns: A [Future] that completes when the consumer has been resumed.
+/// await consumerResume(options);
+/// ```
+class ConsumerResumeOptions {
+  final MediaStream stream;
+  final String kind;
+  final String remoteProducerId;
+  final ConsumerResumeParameters parameters;
+  final io.Socket nsock;
 
-// Typedefs
-typedef GetUpdatedAllparameters = Map<String, dynamic> Function();
+  ConsumerResumeOptions({
+    required this.stream,
+    required this.kind,
+    required this.remoteProducerId,
+    required this.parameters,
+    required this.nsock,
+  });
+}
 
-typedef RemoteScreenStream = List<dynamic>;
+typedef ConsumerResumeType = Future<void> Function(
+    ConsumerResumeOptions options);
 
-typedef PrepopulateUserMedia = List<dynamic> Function(
-    {required String name, required Map<String, dynamic> parameters});
-typedef ReorderStreams = Future<void> Function(
-    {bool add, bool screenChanged, required Map<String, dynamic> parameters});
-typedef GetVideos = Future<void> Function(
-    {required Map<String, dynamic> parameters});
-typedef RePort = Future<void> Function(
-    {bool restart, required Map<String, dynamic> parameters});
-typedef UpdateMainWindowFunction = void Function(bool);
-typedef UpdateActiveNamesFunction = void Function(List<String>);
-typedef UpdateAllAudioStreamsFunction = void Function(List<dynamic>);
-typedef UpdateAllVideoStreamsFunction = void Function(List<dynamic>);
-typedef UpdateSharedFunction = void Function(bool);
-typedef UpdateShareScreenStartedFunction = void Function(bool);
-typedef UpdateUpdateMainWindowFunction = void Function(bool);
-typedef UpdateNewLimitedStreamsFunction = void Function(List<dynamic>);
-typedef UpdateNewLimitedStreamsIDsFunction = void Function(List<dynamic>);
-typedef UpdateOldAllStreamsFunction = void Function(List<dynamic>);
-typedef UpdateDeferReceiveFunction = void Function(bool);
-typedef UpdateMainHeightWidthFunction = void Function(double);
-typedef UpdateShareEndedFunction = void Function(bool);
-typedef UpdateLockScreenFunction = void Function(bool);
-typedef UpdateFirstAllFunction = void Function(bool);
-typedef UpdateFirstRoundFunction = void Function(bool);
-typedef UpdateGotAllVidsFunction = void Function(bool);
-typedef UpdateEventTypeFunction = void Function(String);
-typedef UpdateNStreamFunction = void Function(MediaStream);
-typedef UpdateAudioOnlyStreamsFunction = void Function(List<dynamic>);
-typedef UpdateStreamNamesFunction = void Function(List<dynamic>);
-typedef UpdateAudStreamNamesFunction = void Function(List<dynamic>);
-typedef UpdateRemoteScreenStreamFunction = void Function(List<dynamic>);
-typedef UpdateScreenIdFunction = void Function(String);
-typedef UpdateAdminIDStreamFunction = void Function(String);
-typedef UpdateAdminNameStreamFunction = void Function(String);
-typedef UpdateScreenShareIDStreamFunction = void Function(String);
-typedef UpdateScreenShareNameStreamFunction = void Function(String);
+/// Handles the resumption of a media stream (either audio or video) by managing the socket
+/// connections, updating the UI, and reordering streams as necessary.
+///
+/// This function performs comprehensive handling of media streams by leveraging socket connections,
+/// organizing UI components, and performing real-time updates to the video and audio grids.
+///
+/// - **Audio Resumption:** Adds the resumed audio to the list of active audio streams, updates the UI with
+///   an audio-only component, and triggers a reordering of streams if required.
+/// - **Video Resumption:** Adds the resumed video to the list of active video streams, manages screen sharing
+///   updates (if applicable), and reorders streams based on the screen sharing state or participant role.
+///
+/// ### Parameters:
+/// - `options` (`ConsumerResumeOptions`): Contains the details of the stream to be resumed:
+///   - `stream` (`MediaStream`): The media stream that is being resumed.
+///   - `kind` (`String`): The type of the media stream, either 'audio' or 'video'.
+///   - `remoteProducerId` (`String`): The producer ID of the remote media stream.
+///   - `parameters` (`ConsumerResumeParameters`): Parameters for managing state updates and triggering functions.
+///   - `nsock` (`io.Socket`): The socket connection for managing real-time events.
+///
+/// ### Example Usage:
+/// ```dart
+/// await consumerResume(ConsumerResumeOptions(
+///   stream: myMediaStream,
+///   kind: 'audio',
+///   remoteProducerId: 'producerId123',
+///   parameters: consumerResumeParams,
+///   nsock: socket,
+/// ));
+/// ```
+///
+/// ### Returns:
+/// - A `Future<void>` that completes when the handling of the resumed media stream is finished.
 
-Future<void> consumerResume({
-  required MediaStream stream,
-  required String kind,
-  required String remoteProducerId,
-  required Map<String, dynamic> parameters,
-  required io.Socket nsock,
-}) async {
+Future<void> consumerResume(ConsumerResumeOptions options) async {
   try {
-    // Consumer resumed and ready to be used
-    GetUpdatedAllparameters getUpdatedAllParams =
-        parameters['getUpdatedAllParams'];
-    parameters = getUpdatedAllParams();
+    // Destructure options for easy access
+    final MediaStream stream = options.stream;
+    final String kind = options.kind;
+    final String remoteProducerId = options.remoteProducerId;
+    final ConsumerResumeParameters parameters = options.parameters;
+    final io.Socket nsock = options.nsock;
 
-    // Destructuring parameters
-    MediaStream? nStream = parameters['nStream'];
-    List<dynamic> allAudioStreams = parameters['allAudioStreams'];
-    List<dynamic> allVideoStreams = parameters['allVideoStreams'];
-    List<dynamic> streamNames = parameters['streamNames'];
-    List<dynamic> audStreamNames = parameters['audStreamNames'];
-    bool mainScreenFilled = parameters['mainScreenFilled'] ?? false;
-    bool shareScreenStarted = parameters['shareScreenStarted'] ?? false;
-    String screenId = parameters['screenId'];
-    List<dynamic> participants = parameters['participants'];
-    String eventType = parameters['eventType'];
-    String meetingDisplayType = parameters['meetingDisplayType'];
-    bool lockScreen = parameters['lockScreen'] ?? false;
-    bool firstAll = parameters['firstAll'] ?? false;
-    List<dynamic> oldAllStreams = parameters['oldAllStreams'];
-    String adminIDStream = parameters['adminIDStream'];
-    String adminNameStream = parameters['adminNameStream'];
-    String screenShareIDStream = parameters['screenShareIDStream'];
-    String screenShareNameStream = parameters['screenShareNameStream'];
-    String adminVidID = parameters['adminVidID'];
-    List<dynamic> audioOnlyStreams = parameters['audioOnlyStreams'];
-    bool gotAllVids = parameters['gotAllVids'];
-    bool deferReceive = parameters['deferReceive'];
-    RemoteScreenStream? remoteScreenStream = parameters['remoteScreenStream'];
-    String hostLabel = parameters['hostLabel'];
-    bool updateMainWindow = parameters['updateMainWindow'];
-    double mainHeightWidth = parameters['mainHeightWidth'];
+    // Refresh parameters using the latest state
+    final ConsumerResumeParameters updatedParams =
+        parameters.getUpdatedAllParams();
 
-    UpdateNStreamFunction updateNStream = parameters['updateNStream'];
-    UpdateAudioOnlyStreamsFunction updateAudioOnlyStreams =
-        parameters['updateAudioOnlyStreams'];
-    UpdateAllAudioStreamsFunction updateAllAudioStreams =
-        parameters['updateAllAudioStreams'];
-    UpdateStreamNamesFunction updateStreamNames =
-        parameters['updateStreamNames'];
-    UpdateAudStreamNamesFunction updateAudStreamNames =
-        parameters['updateAudStreamNames'];
-    UpdateUpdateMainWindowFunction updateUpdateMainWindow =
-        parameters['updateUpdateMainWindow'];
-    UpdateAllVideoStreamsFunction updateAllVideoStreams =
-        parameters['updateAllVideoStreams'];
-    UpdateMainHeightWidthFunction updateMainHeightWidth =
-        parameters['updateMainHeightWidth'];
-    UpdateLockScreenFunction updateLockScreen = parameters['updateLockScreen'];
-    UpdateFirstAllFunction updateFirstAll = parameters['updateFirstAll'];
-    UpdateRemoteScreenStreamFunction updateRemoteScreenStream =
-        parameters['updateRemoteScreenStream'];
-    UpdateOldAllStreamsFunction updateOldAllStreams =
-        parameters['updateOldAllStreams'];
-    UpdateShareScreenStartedFunction updateShareScreenStarted =
-        parameters['updateShareScreenStarted'];
-    UpdateGotAllVidsFunction updateGotAllVids = parameters['updateGotAllVids'];
-    UpdateScreenIdFunction updateScreenId = parameters['updateScreenId'];
-    UpdateDeferReceiveFunction updateDeferReceive =
-        parameters['updateDeferReceive'];
-    UpdateAdminIDStreamFunction updateAdminIDStream =
-        parameters['updateAdminIDStream'];
-    UpdateAdminNameStreamFunction updateAdminNameStream =
-        parameters['updateAdminNameStream'];
-    UpdateScreenShareIDStreamFunction updateScreenShareIDStream =
-        parameters['updateScreenShareIDStream'];
-    UpdateScreenShareNameStreamFunction updateScreenShareNameStream =
-        parameters['updateScreenShareNameStream'];
+    // Destructure updatedParams using getters
+    final MediaStream? nStream = updatedParams.nStream;
+    List<Stream> allAudioStreams = updatedParams.allAudioStreams;
+    List<Stream> allVideoStreams = updatedParams.allVideoStreams;
+    final List<Stream> streamNames = updatedParams.streamNames;
+    final List<Stream> audStreamNames = updatedParams.audStreamNames;
+    final bool mainScreenFilled = updatedParams.mainScreenFilled;
+    bool shareScreenStarted = updatedParams.shareScreenStarted;
+    String screenId = updatedParams.screenId;
+    final List<Participant> participants = updatedParams.participants;
+    final EventType eventType = updatedParams.eventType;
+    final String meetingDisplayType = updatedParams.meetingDisplayType;
+    final bool lockScreen = updatedParams.lockScreen;
+    final bool firstAll = updatedParams.firstAll;
+    List<Stream> oldAllStreams = updatedParams.oldAllStreams;
+    String adminVidID = updatedParams.adminVidID;
+    double mainHeightWidth = updatedParams.mainHeightWidth;
+    final String member = updatedParams.member;
+    List<Widget> audioOnlyStreams = updatedParams.audioOnlyStreams;
+    final bool gotAllVids = updatedParams.gotAllVids;
+    final bool deferReceive = updatedParams.deferReceive;
+    final bool firstRound = updatedParams.firstRound;
+    List<Stream> remoteScreenStream = updatedParams.remoteScreenStream;
+    final String hostLabel = updatedParams.hostLabel;
+    final bool whiteboardStarted = updatedParams.whiteboardStarted;
+    final bool whiteboardEnded = updatedParams.whiteboardEnded;
 
-    // mediasfu functions
-    ReorderStreams reorderStreams = parameters['reorderStreams'];
-    PrepopulateUserMedia prepopulateUserMedia =
-        parameters['prepopulateUserMedia'];
+    // Update functions
+    final Function(bool) updateUpdateMainWindow =
+        updatedParams.updateUpdateMainWindow;
+    final Function(List<Stream>) updateAllAudioStreams =
+        updatedParams.updateAllAudioStreams;
+    final Function(List<Stream>) updateAllVideoStreams =
+        updatedParams.updateAllVideoStreams;
+    final Function(List<Stream>) updateStreamNames =
+        updatedParams.updateStreamNames;
+    final Function(List<Stream>) updateAudStreamNames =
+        updatedParams.updateAudStreamNames;
+    final Function(MediaStream) updateNStream = updatedParams.updateNStream;
+    final Function(double) updateMainHeightWidth =
+        updatedParams.updateMainHeightWidth;
+    final Function(bool) updateLockScreen = updatedParams.updateLockScreen;
+    final Function(bool) updateFirstAll = updatedParams.updateFirstAll;
+    final Function(List<Stream>) updateRemoteScreenStream =
+        updatedParams.updateRemoteScreenStream;
+    final Function(List<Stream>) updateOldAllStreams =
+        updatedParams.updateOldAllStreams;
+    final Function(List<Widget>) updateAudioOnlyStreams =
+        updatedParams.updateAudioOnlyStreams;
+    final Function(bool) updateShareScreenStarted =
+        updatedParams.updateShareScreenStarted;
+    final Function(bool) updateGotAllVids = updatedParams.updateGotAllVids;
+    final Function(String) updateScreenId = updatedParams.updateScreenId;
+    final Function(bool) updateDeferReceive = updatedParams.updateDeferReceive;
+
+    // Mediasfu functions
+    final ReorderStreamsType reorderStreams = updatedParams.reorderStreams;
+    final PrepopulateUserMediaType prepopulateUserMedia =
+        updatedParams.prepopulateUserMedia;
 
     if (kind == 'audio') {
-      // Audio resumed
+      // ----- Handling Audio Resumption -----
 
-      // Check if the participant with audioID == remoteProducerId has a valid videoID
-      dynamic participant = participants.firstWhere(
-          (participant) => participant['audioID'] == remoteProducerId,
-          orElse: () => null);
-      String name = participant != null ? participant['name'] : '';
+      // Find participant with audioID == remoteProducerId
+      Participant? participant;
+      try {
+        participant =
+            participants.firstWhere((p) => p.audioID == remoteProducerId);
+      } catch (e) {
+        participant = null;
+      }
 
+      String name = participant?.name ?? '';
+
+      // If the participant is the host, no action is needed
       if (name == hostLabel) {
         return;
       }
 
-      // Find any participants with ScreenID not null and ScreenOn == true
-      dynamic screenParticipantAlt = participants.firstWhere(
-          (participant) =>
-              participant['ScreenID'] != null &&
-              participant['ScreenOn'] == true &&
-              participant['ScreenID'] != "",
-          orElse: () => null);
+      // Find any participant currently sharing the screen
+      Participant? screenParticipantAlt;
+      try {
+        screenParticipantAlt = participants.firstWhere(
+          (p) =>
+              p.ScreenID != null &&
+              p.ScreenOn == true &&
+              p.ScreenID!.isNotEmpty,
+        );
+      } catch (e) {
+        screenParticipantAlt = null;
+      }
+
       if (screenParticipantAlt != null) {
-        screenId = screenParticipantAlt['ScreenID'];
+        screenId = screenParticipantAlt.ScreenID!;
         updateScreenId(screenId);
         if (!shareScreenStarted) {
-          shareScreenStarted = true;
-          updateShareScreenStarted(shareScreenStarted);
+          updateShareScreenStarted(true);
         }
+      } else if (whiteboardStarted && !whiteboardEnded) {
+        // Whiteboard is active; no changes to screen sharing
       } else {
+        // No screen sharing; reset screen ID and share screen status
         screenId = "";
         updateScreenId(screenId);
         updateShareScreenStarted(false);
       }
 
-      // Media display and UI update to prioritize audio/video
-      nStream = stream;
+      // Update the main media stream
+      final nStream = stream;
       updateNStream(nStream);
 
-      // Create MiniAudioPlayer track
-      Widget nTrack = MiniAudioPlayer(
+      // Create a MiniAudioPlayer widget
+      final optionsMiniAudio = MiniAudioPlayerOptions(
         stream: nStream,
         remoteProducerId: remoteProducerId,
-        parameters: parameters,
-        MiniAudioComponent: (props) => MiniAudio(
+        parameters: updatedParams,
+        miniAudioComponent: (props) => MiniAudio(
+            options: MiniAudioOptions(
           name: name,
           showWaveform: true,
-        ),
+        )),
         miniAudioProps: {
           'customStyle': const {
-            'backgroundColor': Color.fromARGB(255, 23, 23, 23)
+            'backgroundColor': Color.fromARGB(255, 23, 23, 23),
           },
           'name': name,
           'showWaveform': true,
@@ -206,131 +299,148 @@ Future<void> consumerResume({
           'imageStyle': const {},
         },
       );
+      final Widget nTrack = MiniAudioPlayer(
+        options: optionsMiniAudio,
+      );
 
-      // Add to audioOnlyStreams array
+      // Add the MiniAudioPlayer to audio-only streams
       audioOnlyStreams.add(nTrack);
       updateAudioOnlyStreams(audioOnlyStreams);
 
-      // Add to allAudioStreams array; add producerId, stream
-      allAudioStreams.add({'producerId': remoteProducerId, 'stream': nStream});
+      // Add the new audio stream to allAudioStreams
+      allAudioStreams
+          .add(Stream(producerId: remoteProducerId, stream: nStream));
       updateAllAudioStreams(allAudioStreams);
 
-      try {
-        name = participant['name'];
-      } catch (error) {}
+      if (name.isNotEmpty) {
+        // Add to audStreamNames
+        final newAudioStream = Stream.fromMap({
+          'producerId': remoteProducerId,
+          'name': name,
+        });
 
-      if (name != '') {
-        // Add to audStreamNames array; add producerId, name
-        audStreamNames.add({'producerId': remoteProducerId, 'name': name});
+        audStreamNames.add(newAudioStream);
         updateAudStreamNames(audStreamNames);
 
-        if (!mainScreenFilled && participant['islevel'] == '2') {
-          updateMainWindow = true;
-          updateUpdateMainWindow(updateMainWindow);
-          prepopulateUserMedia(
+        // If the main screen is not filled and the participant is at level 2, prepopulate user media
+        if (!mainScreenFilled && participant!.islevel == '2') {
+          updateUpdateMainWindow(true);
+          var paramsPrepopulate = updatedParams;
+          paramsPrepopulate.updateAllAudioStreams(allAudioStreams);
+          paramsPrepopulate.updateAudStreamNames(audStreamNames);
+
+          final optionsPrepopulate = PrepopulateUserMediaOptions(
             name: hostLabel,
-            parameters: {
-              ...parameters,
-              'audStreamNames': audStreamNames,
-              'allAudioStreams': allAudioStreams
-            },
+            parameters: paramsPrepopulate,
           );
-          updateMainWindow = false;
-          updateUpdateMainWindow(updateMainWindow);
+          await prepopulateUserMedia(
+            optionsPrepopulate,
+          );
+          updateUpdateMainWindow(false);
         }
       } else {
         return;
       }
 
-      // Checks for display type and updates the UI
+      // Determine display type and update UI accordingly
       bool checker;
       bool altChecker = false;
 
       if (meetingDisplayType == 'video') {
         checker =
-            participant['videoID'] != null && participant['videoID'] != '';
+            participant!.name.isNotEmpty && participant.videoID.isNotEmpty;
       } else {
         checker = true;
         altChecker = true;
       }
 
       if (checker) {
-        if (shareScreenStarted || shareScreenStarted) {
+        if (shareScreenStarted) {
           if (!altChecker) {
-            await reorderStreams(parameters: {
-              ...parameters,
-              'audStreamNames': audStreamNames,
-              'allAudioStreams': allAudioStreams
-            });
+            // Reorder streams based on updated parameters
+            final optionsReorder = ReorderStreamsOptions(
+              parameters: updatedParams,
+            );
+            await reorderStreams(
+              optionsReorder,
+            );
 
             if (!kIsWeb) {
               await Future.delayed(const Duration(milliseconds: 1000));
-              await reorderStreams(parameters: {
-                ...parameters,
-                'audStreamNames': audStreamNames,
-                'allAudioStreams': allAudioStreams
-              });
+              await reorderStreams(
+                optionsReorder,
+              );
             }
           }
         } else {
           if (altChecker && meetingDisplayType != 'video') {
-            await reorderStreams(add: false, screenChanged: true, parameters: {
-              ...parameters,
-              'audStreamNames': audStreamNames,
-              'allAudioStreams': allAudioStreams
-            });
+            final optionsReorder = ReorderStreamsOptions(
+              add: false,
+              screenChanged: true,
+              parameters: updatedParams,
+            );
+            await reorderStreams(
+              optionsReorder,
+            );
             if (!kIsWeb) {
               await Future.delayed(const Duration(milliseconds: 1000));
               await reorderStreams(
-                  add: false,
-                  screenChanged: true,
-                  parameters: {
-                    ...parameters,
-                    'audStreamNames': audStreamNames,
-                    'allAudioStreams': allAudioStreams
-                  });
+                optionsReorder,
+              );
             }
           }
         }
       }
-    } else {
-      // Video resumed
-      nStream = stream;
+    } else if (kind == 'video') {
+      // ----- Handling Video Resumption -----
+
+      // Update the main media stream
+      final nStream = stream;
       updateNStream(nStream);
 
-      // Find any participants with ScreenID not null and ScreenOn == true
-      dynamic screenParticipantAlt = participants.firstWhere(
-          (participant) =>
-              participant['ScreenID'] != null &&
-              participant['ScreenOn'] == true &&
-              participant['ScreenID'] != "",
-          orElse: () => null);
+      // Find any participant currently sharing the screen
+      Participant? screenParticipantAlt;
+      try {
+        screenParticipantAlt = participants.firstWhere(
+          (p) =>
+              p.ScreenID != null &&
+              p.ScreenOn == true &&
+              p.ScreenID!.isNotEmpty,
+        );
+      } catch (e) {
+        screenParticipantAlt = null;
+      }
+
       if (screenParticipantAlt != null) {
-        screenId = screenParticipantAlt['ScreenID'];
+        screenId = screenParticipantAlt.ScreenID!;
         updateScreenId(screenId);
         if (!shareScreenStarted) {
           shareScreenStarted = true;
-          updateShareScreenStarted(shareScreenStarted);
+          updateShareScreenStarted(true);
         }
+      } else if (whiteboardStarted && !whiteboardEnded) {
+        // Whiteboard is active; no changes to screen sharing
       } else {
+        // No screen sharing; reset screen ID and share screen status
         screenId = "";
         updateScreenId(screenId);
         updateShareScreenStarted(false);
       }
 
-      // Check for display type and update the UI
+      // Check if the resumed video is a screen share
       if (remoteProducerId == screenId) {
-        // Put on main screen for screen share
-        updateMainWindow = true;
-        updateUpdateMainWindow(updateMainWindow);
-        remoteScreenStream = [
-          {'producerId': remoteProducerId, 'stream': nStream}
-        ];
+        // Manage screen sharing on the main screen
+        updateUpdateMainWindow(true);
+        final newRemoteScreen = Stream(
+            producerId: remoteProducerId, stream: nStream, socket_: nsock);
 
+        remoteScreenStream = [
+          newRemoteScreen,
+        ];
         updateRemoteScreenStream(remoteScreenStream);
 
-        if (eventType == 'conference') {
-          if (shareScreenStarted || shareScreenStarted) {
+        if (eventType == EventType.conference) {
+          if (shareScreenStarted) {
             if (mainHeightWidth == 0) {
               updateMainHeightWidth(84);
             }
@@ -342,115 +452,134 @@ Future<void> consumerResume({
         }
 
         if (!lockScreen) {
-          prepopulateUserMedia(name: hostLabel, parameters: parameters);
-          await reorderStreams(add: false, screenChanged: true, parameters: {
-            ...parameters,
-            'remoteScreenStream': remoteScreenStream,
-            'allVideoStreams': allVideoStreams
-          });
+          final optionsPrepopulate = PrepopulateUserMediaOptions(
+            name: hostLabel,
+            parameters: updatedParams,
+          );
+          await prepopulateUserMedia(
+            optionsPrepopulate,
+          );
+          final optionsReorder = ReorderStreamsOptions(
+            add: false,
+            screenChanged: true,
+            parameters: updatedParams,
+          );
+          await reorderStreams(
+            optionsReorder,
+          );
+
           if (!kIsWeb) {
             await Future.delayed(const Duration(milliseconds: 1000));
-            prepopulateUserMedia(name: hostLabel, parameters: parameters);
-            await reorderStreams(add: false, screenChanged: true, parameters: {
-              ...parameters,
-              'remoteScreenStream': remoteScreenStream,
-              'allVideoStreams': allVideoStreams
-            });
+            final optionsPrepopulate = PrepopulateUserMediaOptions(
+              name: hostLabel,
+              parameters: updatedParams,
+            );
+            final optionsReorder = ReorderStreamsOptions(
+              add: false,
+              screenChanged: true,
+              parameters: updatedParams,
+            );
+            await prepopulateUserMedia(
+              optionsPrepopulate,
+            );
+            await reorderStreams(
+              optionsReorder,
+            );
           }
         } else {
           if (!firstAll) {
-            prepopulateUserMedia(name: hostLabel, parameters: {
-              ...parameters,
-              'remoteScreenStream': remoteScreenStream,
-              'allVideoStreams': allVideoStreams
-            });
-            await reorderStreams(add: false, screenChanged: true, parameters: {
-              ...parameters,
-              'remoteScreenStream': remoteScreenStream,
-              'allVideoStreams': allVideoStreams
-            });
+            final optionsPrepopulate = PrepopulateUserMediaOptions(
+              name: hostLabel,
+              parameters: updatedParams,
+            );
+            final optionsReorder = ReorderStreamsOptions(
+              add: false,
+              screenChanged: true,
+              parameters: updatedParams,
+            );
+            await prepopulateUserMedia(
+              optionsPrepopulate,
+            );
+            await reorderStreams(
+              optionsReorder,
+            );
 
             if (!kIsWeb) {
               await Future.delayed(const Duration(milliseconds: 1000));
-              prepopulateUserMedia(name: hostLabel, parameters: {
-                ...parameters,
-                'remoteScreenStream': remoteScreenStream,
-                'allVideoStreams': allVideoStreams
-              });
+              await prepopulateUserMedia(
+                optionsPrepopulate,
+              );
               await reorderStreams(
-                  add: false,
-                  screenChanged: true,
-                  parameters: {
-                    ...parameters,
-                    'remoteScreenStream': remoteScreenStream,
-                    'allVideoStreams': allVideoStreams
-                  });
+                optionsReorder,
+              );
             }
           }
         }
 
-        lockScreen = true;
-        updateLockScreen(lockScreen);
-        firstAll = true;
-        updateFirstAll(firstAll);
+        // Update lock screen and firstAll flags
+        updateLockScreen(true);
+        updateFirstAll(true);
       } else {
         // Non-screen share video resumed
 
-        // Operations to add video to the UI (either main screen or mini screen)
-
-        // Get the name of the participant with videoID == remoteProducerId
-        dynamic participant = participants.firstWhere(
-            (participant) => participant['videoID'] == remoteProducerId,
-            orElse: () => null);
+        // Find the participant associated with the resumed video
+        Participant? participant;
+        try {
+          participant =
+              participants.firstWhere((p) => p.videoID == remoteProducerId);
+        } catch (e) {
+          participant = null;
+        }
 
         if (participant != null &&
-            participant['name'] != null &&
-            participant['name'] != '' &&
-            participant['name'] != hostLabel) {
-          allVideoStreams.add({
-            'producerId': remoteProducerId,
-            'stream': nStream,
-            'socket_': nsock
-          });
+            participant.name.isNotEmpty &&
+            participant.name != hostLabel) {
+          // Add the new video stream to allVideoStreams
+          allVideoStreams.add(
+            Stream(
+                producerId: remoteProducerId, stream: nStream, socket_: nsock),
+          );
           updateAllVideoStreams(allVideoStreams);
         }
 
-        // ignore: unused_local_variable
-        dynamic admin = participants.firstWhere(
-            (participant) =>
-                participant['isAdmin'] == true && participant['islevel'] == '2',
-            orElse: () => null);
+        // Find the admin participant
 
         if (participant != null) {
-          String name = participant['name'];
-          streamNames.add({'producerId': remoteProducerId, 'name': name});
+          final String name = participant.name;
+          // Add to streamNames
+          final newStreamName = Stream(
+            producerId: remoteProducerId,
+            name: name,
+          );
+          streamNames.add(newStreamName);
           updateStreamNames(streamNames);
         }
 
-        // If not screenshare, filter out the stream that belongs to the participant with isAdmin = true and islevel == '2' (host)
-        // Find the ID of the participant with isAdmin = true and islevel == '2'
+        // If not screenshare, filter out admin streams
         if (!shareScreenStarted) {
-          dynamic admin = participants.firstWhere(
-              (participant) =>
-                  participant['isAdmin'] == true &&
-                  participant['islevel'] == '2',
-              orElse: () => null);
-          // Remove video stream with producerId == admin.id
-          // Get the videoID of the admin
+          Participant? admin = participants.firstWhere(
+            (p) => p.isAdmin == true && p.islevel == '2',
+            orElse: () => Participant(
+              audioID: '',
+              videoID: '',
+              name: '',
+              isAdmin: false,
+              islevel: '0',
+            ),
+          );
 
-          if (admin != null) {
-            adminVidID = admin['videoID'];
-
-            // ignore: unnecessary_null_comparison
-            if (adminVidID != null && adminVidID != '') {
-              List<dynamic> oldAllStreams_ = [];
-              // Check if the length of allVideoStreams is > 0
+          if (admin.videoID.isNotEmpty) {
+            final String adminVidID = admin.videoID;
+            if (adminVidID.isNotEmpty) {
+              // Backup oldAllStreams
+              List<Stream> oldAllStreams_ = [];
               if (oldAllStreams.isNotEmpty) {
                 oldAllStreams_ = oldAllStreams;
               }
 
+              // Filter oldAllStreams for adminVidID
               oldAllStreams = allVideoStreams
-                  .where((streame) => streame['producerId'] == adminVidID)
+                  .where((s) => s.producerId == adminVidID)
                   .toList();
               updateOldAllStreams(oldAllStreams);
 
@@ -459,111 +588,115 @@ Future<void> consumerResume({
                 updateOldAllStreams(oldAllStreams);
               }
 
+              // Remove adminVidID streams from allVideoStreams
               allVideoStreams = allVideoStreams
-                  .where((streame) => streame['producerId'] != adminVidID)
+                  .where((s) => s.producerId != adminVidID)
                   .toList();
               updateAllVideoStreams(allVideoStreams);
 
-              adminIDStream = adminVidID;
-              adminNameStream = admin['name'];
-              updateAdminIDStream(adminIDStream);
-              updateAdminNameStream(adminNameStream);
-
+              // If the resumed producer is the admin, update main window
               if (remoteProducerId == adminVidID) {
-                updateMainWindow = true;
+                updateUpdateMainWindow(true);
               }
             }
 
-            gotAllVids = true;
-            updateGotAllVids(gotAllVids);
+            // Update gotAllVids flag
+            updateGotAllVids(true);
           }
         } else {
           // Check if the videoID is either that of the admin or that of the screen participant
-          dynamic admin = participants.firstWhere(
-              (participant) => participant['islevel'] == '2',
-              orElse: () => null);
-          dynamic screenParticipant = participants.firstWhere(
-              (participant) => participant['ScreenID'] == screenId,
-              orElse: () => null);
+          Participant? admin = participants.firstWhere(
+            (p) => p.islevel == '2',
+            orElse: () => Participant(
+              audioID: '',
+              videoID: '',
+              name: '',
+              isAdmin: false,
+              islevel: '0',
+            ),
+          );
 
-          // See if producerId is that of admin videoID or screenParticipant videoID
-          dynamic adminVidID;
-          if (admin != null) {
-            adminVidID = admin['videoID'];
+          Participant? screenParticipant = participants.firstWhere(
+            (p) => p.ScreenID == screenId,
+            orElse: () => Participant(
+              audioID: '',
+              videoID: '',
+              name: '',
+              isAdmin: false,
+              islevel: '0',
+            ),
+          );
+
+          String? adminVidID;
+          if (admin.name.isNotEmpty) {
+            adminVidID = admin.videoID;
           }
 
-          dynamic screenParticipantVidID;
-          if (screenParticipant != null) {
-            screenParticipantVidID = screenParticipant['videoID'];
+          String? screenParticipantVidID;
+          if (screenParticipant.name.isNotEmpty) {
+            screenParticipantVidID = screenParticipant.videoID;
           }
 
-          if (adminVidID != null && adminVidID != '') {
-            adminIDStream = adminVidID;
-            adminNameStream = admin['name'];
-          }
-
-          if (screenParticipantVidID != null && screenParticipantVidID != '') {
-            screenShareIDStream = screenParticipantVidID;
-            screenShareNameStream = screenParticipant['name'];
-            updateScreenShareIDStream(screenShareIDStream);
-            updateScreenShareNameStream(screenShareNameStream);
-          }
-
-          if ((adminVidID != null && adminVidID != '') ||
+          if ((adminVidID != null && adminVidID.isNotEmpty) ||
               (screenParticipantVidID != null &&
-                  screenParticipantVidID != '')) {
+                  screenParticipantVidID.isNotEmpty)) {
             if (adminVidID == remoteProducerId ||
                 screenParticipantVidID == remoteProducerId) {
-              await reorderStreams(parameters: {
-                ...parameters,
-                'allVideoStreams': allVideoStreams
-              });
+              final optionsReorder = ReorderStreamsOptions(
+                parameters: updatedParams,
+              );
+              await reorderStreams(
+                optionsReorder,
+              );
               return;
             }
           }
         }
 
-        // Update the UI
+        // Update the UI based on lockScreen and shareScreenStarted flags
         if (lockScreen || shareScreenStarted) {
-          deferReceive = true;
-          updateDeferReceive(deferReceive);
+          updateDeferReceive(true);
           if (!firstAll) {
-            await reorderStreams(add: false, screenChanged: true, parameters: {
-              ...parameters,
-              'allVideoStreams': allVideoStreams
-            });
+            final optionsReorder = ReorderStreamsOptions(
+              add: false,
+              screenChanged: true,
+              parameters: updatedParams,
+            );
+            await reorderStreams(
+              optionsReorder,
+            );
 
             if (!kIsWeb) {
               await Future.delayed(const Duration(milliseconds: 1000));
               await reorderStreams(
-                  add: false,
-                  screenChanged: true,
-                  parameters: {
-                    ...parameters,
-                    'allVideoStreams': allVideoStreams
-                  });
+                optionsReorder,
+              );
             }
           }
         } else {
           await reorderStreams(
-              add: false,
-              screenChanged: true,
-              parameters: {...parameters, 'allVideoStreams': allVideoStreams});
+            ReorderStreamsOptions(
+              parameters: updatedParams,
+            ),
+          );
 
           if (!kIsWeb) {
             await Future.delayed(const Duration(milliseconds: 1000));
-            await reorderStreams(add: false, screenChanged: true, parameters: {
-              ...parameters,
-              'allVideoStreams': allVideoStreams
-            });
+            await reorderStreams(
+              ReorderStreamsOptions(
+                screenChanged: true,
+                parameters: updatedParams,
+              ),
+            );
           }
         }
       }
     }
   } catch (error) {
     if (kDebugMode) {
-      print('MediaSFU - consumerResumed error $error');
+      print('MediaSFU - consumerResumed error: $error');
     }
+    // Optionally, you can rethrow the error or handle it as needed
     // throw error;
   }
 }

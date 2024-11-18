@@ -1,149 +1,195 @@
 import 'dart:async';
 import 'package:socket_io_client/socket_io_client.dart' as io;
-import './record_pause_timer.dart' show recordPauseTimer;
-import './record_resume_timer.dart' show recordResumeTimer;
-import './check_pause_state.dart' show checkPauseState;
-import './check_resume_state.dart' show checkResumeState;
+import './record_pause_timer.dart'
+    show recordPauseTimer, RecordPauseTimerOptions;
+import './record_resume_timer.dart'
+    show
+        recordResumeTimer,
+        RecordResumeTimerOptions,
+        RecordResumeTimerParameters;
+import './check_pause_state.dart' show checkPauseState, CheckPauseStateOptions;
+import './check_resume_state.dart'
+    show checkResumeState, CheckResumeStateOptions;
+import '../../types/types.dart'
+    show
+        RePortParameters,
+        RePortType,
+        ShowAlert,
+        RePortOptions,
+        UserRecordingParams;
 
-/// Updates the recording based on the given parameters.
+typedef UpdateBooleanState = void Function(bool);
+
+/// Parameters required for updating the recording state, implementing several
+/// interfaces for managing recording and timer state, and providing abstract
+/// getters for flexible and detailed recording configurations.
+abstract class UpdateRecordingParameters
+    implements RePortParameters, RecordResumeTimerParameters {
+  // Core properties as abstract getters
+  String get roomName;
+  UserRecordingParams get userRecordingParams;
+  io.Socket? get socket;
+  UpdateBooleanState get updateIsRecordingModalVisible;
+  bool get confirmedToRecord;
+  ShowAlert? get showAlert;
+  String get recordingMediaOptions;
+  bool get videoAlreadyOn;
+  bool get audioAlreadyOn;
+  bool get recordStarted;
+  bool get recordPaused;
+  bool get recordResumed;
+  bool get recordStopped;
+  int get recordChangeSeconds;
+  int get pauseRecordCount;
+  bool get startReport;
+  bool get endReport;
+  bool get canRecord;
+  bool get canPauseResume;
+  int get recordingVideoPausesLimit;
+  int get recordingAudioPausesLimit;
+  bool get isTimerRunning;
+
+  // Update functions as abstract getters returning functions
+  UpdateBooleanState get updateCanPauseResume;
+  void Function(int) get updatePauseRecordCount;
+  UpdateBooleanState get updateClearedToRecord;
+  UpdateBooleanState get updateRecordPaused;
+  UpdateBooleanState get updateRecordResumed;
+  UpdateBooleanState get updateStartReport;
+  UpdateBooleanState get updateEndReport;
+  UpdateBooleanState get updateCanRecord;
+
+  // Mediasfu function as an abstract getter
+  RePortType get rePort;
+
+  // Method to retrieve updated parameters as an abstract getter
+  UpdateRecordingParameters Function() get getUpdatedAllParams;
+
+  // Dynamic key-value support
+  // dynamic operator [](String key);
+}
+
+/// Options for the updateRecording function, containing recording parameters.
+class UpdateRecordingOptions {
+  final UpdateRecordingParameters parameters;
+
+  UpdateRecordingOptions({required this.parameters});
+}
+
+/// Typedef for the update recording function
+typedef UpdateRecordingType = Future<void> Function(
+    UpdateRecordingParameters options);
+
+/// Updates the recording based on the given parameters, managing recording start,
+/// pause, and resume states, as well as providing alerts for required conditions.
 ///
-/// The [parameters] map contains the following keys:
-/// - 'roomName': The name of the room.
-/// - 'userRecordingParams': The parameters for user recording.
-/// - 'socket': The socket for communication.
-/// - 'updateIsRecordingModalVisible': A function to update the visibility of the recording modal.
-/// - 'confirmedToRecord': A boolean indicating whether the recording is confirmed.
-/// - 'showAlert': A function to show an alert message.
-/// - 'recordingMediaOptions': The options for recording media (default is 'audio').
-/// - 'videoAlreadyOn': A boolean indicating whether the video is already on.
-/// - 'audioAlreadyOn': A boolean indicating whether the audio is already on.
-/// - 'recordStarted': A boolean indicating whether the recording has started.
-/// - 'recordPaused': A boolean indicating whether the recording is paused.
-/// - 'recordResumed': A boolean indicating whether the recording is resumed.
-/// - 'recordStopped': A boolean indicating whether the recording is stopped.
-/// - 'recordChangeSeconds': The number of milliseconds for record change.
-/// - 'pauseRecordCount': The count of pause records.
-/// - 'startReport': A boolean indicating whether the report has started.
-/// - 'endReport': A boolean indicating whether the report has ended.
-/// - 'canRecord': A boolean indicating whether recording is allowed.
-/// - 'updateCanPauseResume': A function to update the ability to pause/resume recording.
-/// - 'updateClearedToRecord': A function to update the cleared to record state.
-/// - 'updateRecordPaused': A function to update the paused state of recording.
-/// - 'updateRecordResumed': A function to update the resumed state of recording.
-/// - 'updateStartReport': A function to update the start report state.
-/// - 'updateEndReport': A function to update the end report state.
-/// - 'updateCanRecord': A function to update the ability to record.
-/// - 'updatePauseRecordCount': A function to update the count of pause records.
-/// - 'rePort': A function to report the recording.
+/// ### Recording State Management
+/// - **Pause**: Validates if recording can be paused based on limits and triggers
+///   the `recordPauseTimer` if conditions are met.
+/// - **Resume**: Validates if recording can be resumed based on limits and confirms
+///   before triggering the `recordResumeTimer`.
 ///
-/// This function performs various checks and updates the recording state accordingly.
-/// It communicates with the server using the provided socket and emits appropriate events.
-/// It also handles pause and resume functionality based on the current recording state.
-/// If any error occurs during the process, it shows an alert message.
+/// ### Example Usage:
+/// ```dart
+/// final options = UpdateRecordingOptions(
+///   parameters: recordingParameters,
+/// );
+///
+/// await updateRecording(options);
+/// ```
+///
+/// ### Error Handling:
+/// - Provides alerts for invalid actions (e.g., recording stopped or media not on).
+/// - Reports success or failure for each recording state change through `ShowAlert`.
 
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
-});
+Future<void> updateRecording(UpdateRecordingOptions options) async {
+  final parameters = options.parameters;
+  String roomName = parameters.roomName;
+  UserRecordingParams userRecordingParams = parameters.userRecordingParams;
+  io.Socket? socket = parameters.socket;
+  void Function(bool) updateIsRecordingModalVisible =
+      parameters.updateIsRecordingModalVisible;
+  bool confirmedToRecord = parameters.confirmedToRecord;
+  ShowAlert? showAlert = parameters.showAlert;
+  String recordingMediaOptions = parameters.recordingMediaOptions;
+  bool videoAlreadyOn = parameters.videoAlreadyOn;
+  bool audioAlreadyOn = parameters.audioAlreadyOn;
+  bool recordStarted = parameters.recordStarted;
+  bool recordPaused = parameters.recordPaused;
+  bool recordResumed = parameters.recordResumed;
+  bool recordStopped = parameters.recordStopped;
+  int recordChangeSeconds = parameters.recordChangeSeconds;
+  int pauseRecordCount = parameters.pauseRecordCount;
+  bool startReport = parameters.startReport;
+  bool endReport = parameters.endReport;
+  bool canRecord = parameters.canRecord;
+  void Function(bool) updateCanPauseResume = parameters.updateCanPauseResume;
+  void Function(int) updatePauseRecordCount = parameters.updatePauseRecordCount;
+  void Function(bool) updateClearedToRecord = parameters.updateClearedToRecord;
+  void Function(bool) updateRecordPaused = parameters.updateRecordPaused;
+  void Function(bool) updateRecordResumed = parameters.updateRecordResumed;
+  void Function(bool) updateStartReport = parameters.updateStartReport;
+  void Function(bool) updateEndReport = parameters.updateEndReport;
+  void Function(bool) updateCanRecord = parameters.updateCanRecord;
+  RePortType rePort = parameters.rePort;
 
-typedef RePort = Future<void> Function({
-  bool restart,
-  required Map<String, dynamic> parameters,
-});
-
-typedef UpdateBooleanState = void Function(bool value);
-typedef UpdateRecordState = void Function(String recordState);
-typedef UpdatePauseRecordCount = void Function(int value);
-
-Future<void> updateRecording({required Map<String, dynamic> parameters}) async {
-  String roomName = parameters['roomName'];
-  Map<String, dynamic> userRecordingParams = parameters['userRecordingParams'];
-  io.Socket socket = parameters['socket'];
-  UpdateBooleanState updateIsRecordingModalVisible =
-      parameters['updateIsRecordingModalVisible'];
-  bool confirmedToRecord = parameters['confirmedToRecord'];
-  ShowAlert? showAlert = parameters['showAlert'];
-  String recordingMediaOptions = parameters['recordingMediaOptions'] ?? 'audio';
-  bool videoAlreadyOn = parameters['videoAlreadyOn'] ?? false;
-  bool audioAlreadyOn = parameters['audioAlreadyOn'] ?? false;
-  bool recordStarted = parameters['recordStarted'] ?? false;
-  bool recordPaused = parameters['recordPaused'] ?? false;
-  bool recordResumed = parameters['recordResumed'] ?? false;
-  bool recordStopped = parameters['recordStopped'] ?? false;
-  int recordChangeSeconds = parameters['recordChangeSeconds'] ?? 15000;
-  int pauseRecordCount = parameters['pauseRecordCount'] ?? 0;
-  bool startReport = parameters['startReport'] ?? false;
-  bool endReport = parameters['endReport'] ?? false;
-  bool canRecord = parameters['canRecord'] ?? false;
-
-  UpdateBooleanState updateCanPauseResume = parameters['updateCanPauseResume'];
-  UpdateBooleanState updateClearedToRecord =
-      parameters['updateClearedToRecord'];
-  UpdateBooleanState updateRecordPaused = parameters['updateRecordPaused'];
-  UpdateBooleanState updateRecordResumed = parameters['updateRecordResumed'];
-  UpdateBooleanState updateStartReport = parameters['updateStartReport'];
-  UpdateBooleanState updateEndReport = parameters['updateEndReport'];
-  UpdateBooleanState updateCanRecord = parameters['updateCanRecord'];
-
-  UpdatePauseRecordCount updatePauseRecordCount =
-      parameters['updatePauseRecordCount'];
-
-  //mediasfu functions
-  RePort rePort = parameters['rePort'];
-
+  // Check if recording has stopped
   if (recordStopped) {
-    if (showAlert != null) {
-      showAlert(
-        message: 'Recording has already stopped',
-        type: 'danger',
-        duration: 3000,
-      );
-    }
+    showAlert?.call(
+      message: 'Recording has already stopped',
+      type: 'danger',
+      duration: 3000,
+    );
     return;
   }
 
+  // Check media options for video and audio
   if (recordingMediaOptions == 'video' && !videoAlreadyOn) {
-    if (showAlert != null) {
-      showAlert(
-        message: 'You must turn on your video before you can start recording',
-        type: 'danger',
-        duration: 3000,
-      );
-    }
+    showAlert?.call(
+      message: 'You must turn on your video before you can start recording',
+      type: 'danger',
+      duration: 3000,
+    );
     return;
   }
-
   if (recordingMediaOptions == 'audio' && !audioAlreadyOn) {
-    if (showAlert != null) {
-      showAlert(
-        message: 'You must turn on your audio before you can start recording',
-        type: 'danger',
-        duration: 3000,
-      );
-    }
+    showAlert?.call(
+      message: 'You must turn on your audio before you can start recording',
+      type: 'danger',
+      duration: 3000,
+    );
     return;
   }
 
+  // Handle Pause Action
   if (recordStarted && !recordPaused && !recordStopped) {
-    bool? proceed = false;
+    final optionsCheckPause = CheckPauseStateOptions(
+      recordingMediaOptions: recordingMediaOptions,
+      recordingVideoPausesLimit: parameters.recordingVideoPausesLimit,
+      recordingAudioPausesLimit: parameters.recordingAudioPausesLimit,
+      pauseRecordCount: pauseRecordCount,
+      showAlert: showAlert,
+    );
+    bool proceed = await checkPauseState(optionsCheckPause);
+    if (!proceed) return;
 
-    proceed = await checkPauseState(parameters: parameters);
-
-    if (!proceed) {
-      return;
-    }
-
-    bool? record = recordPauseTimer(stop: false, parameters: parameters);
+    final optionsPause = RecordPauseTimerOptions(
+      stop: false,
+      isTimerRunning: parameters.isTimerRunning,
+      canPauseResume: parameters.canPauseResume,
+      showAlert: parameters.showAlert,
+    );
+    bool record = recordPauseTimer(optionsPause);
     if (record) {
       String action = 'pauseRecord';
 
       await Future(() async {
-        socket.emitWithAck(action, {'roomName': roomName}, ack: (data) async {
+        socket!.emitWithAck(action, {'roomName': roomName}, ack: (data) async {
           bool success = data['success'] ?? false;
           String reason = data['reason'] ?? '';
           String recordState = data['recordState'] ?? '';
           int pauseCount = data['pauseCount'] ?? 0;
+
           pauseRecordCount = pauseCount;
           updatePauseRecordCount(pauseRecordCount);
 
@@ -155,13 +201,11 @@ Future<void> updateRecording({required Map<String, dynamic> parameters}) async {
             updateEndReport(endReport);
             updateRecordPaused(recordPaused);
 
-            if (showAlert != null) {
-              showAlert(
-                message: 'Recording paused',
-                type: 'success',
-                duration: 3000,
-              );
-            }
+            showAlert?.call(
+              message: 'Recording paused',
+              type: 'success',
+              duration: 3000,
+            );
 
             updateIsRecordingModalVisible(false);
             Future.delayed(Duration(milliseconds: recordChangeSeconds), () {
@@ -170,55 +214,52 @@ Future<void> updateRecording({required Map<String, dynamic> parameters}) async {
           } else {
             String reasonMessage =
                 'Recording Pause Failed: $reason; the current state is: $recordState';
-            if (showAlert != null) {
-              showAlert(
-                message: reasonMessage,
-                type: 'danger',
-                duration: 3000,
-              );
-            }
+            showAlert?.call(
+              message: reasonMessage,
+              type: 'danger',
+              duration: 3000,
+            );
           }
         });
       });
     }
-  } else if (recordStarted && recordPaused && !recordStopped) {
+  }
+
+  // Handle Resume Action
+  else if (recordStarted && recordPaused && !recordStopped) {
     if (!confirmedToRecord) {
-      if (showAlert != null) {
-        showAlert(
-          message: 'You must click confirm before you can start recording',
-          type: 'danger',
-          duration: 3000,
-        );
-      }
+      showAlert?.call(
+        message: 'You must click confirm before you can start recording',
+        type: 'danger',
+        duration: 3000,
+      );
       return;
     }
 
-    bool? proceed = false;
+    final optionsResumeParameters = parameters;
+    final optionsResume = RecordResumeTimerOptions(
+      parameters: optionsResumeParameters,
+    );
 
-    proceed = await checkResumeState(parameters: parameters);
+    final optionsCheckResume = CheckResumeStateOptions(
+      recordingMediaOptions: recordingMediaOptions,
+      recordingVideoPausesLimit: parameters.recordingVideoPausesLimit,
+      recordingAudioPausesLimit: parameters.recordingAudioPausesLimit,
+      pauseRecordCount: pauseRecordCount,
+    );
+    bool proceed = await checkResumeState(options: optionsCheckResume);
+    if (!proceed) return;
 
-    if (!proceed) {
-      return;
-    }
-
-    bool? resume = await recordResumeTimer(parameters: parameters);
+    bool resume = await recordResumeTimer(options: optionsResume);
     if (resume) {
       updateClearedToRecord(true);
 
-      String action = 'startRecord';
-      if (recordStarted && recordPaused && !recordResumed && !recordStopped) {
-        action = 'resumeRecord';
-      } else {
-        action = 'startRecord';
-      }
-      action = 'resumeRecord';
-
+      String action = 'resumeRecord';
       await Future(() async {
-        socket.emitWithAck(action, {
+        socket!.emitWithAck(action, {
           'roomName': roomName,
-          'userRecordingParams': userRecordingParams
+          'userRecordingParams': userRecordingParams.toMap(),
         }, ack: (data) async {
-          // Your callback function implementation
           bool success = data['success'] ?? false;
           String reason = data['reason'] ?? '';
 
@@ -228,24 +269,21 @@ Future<void> updateRecording({required Map<String, dynamic> parameters}) async {
             updateRecordPaused(recordPaused);
             updateRecordResumed(recordResumed);
 
-            if (action == 'startRecord') {
-              await rePort(restart: false, parameters: parameters);
-            } else {
-              recordResumed = true;
-              await rePort(restart: true, parameters: parameters);
-            }
+            final optionsReport = RePortOptions(
+              parameters: parameters.getUpdatedAllParams(),
+              restart: true,
+            );
+            await rePort(optionsReport);
           } else {
-            if (showAlert != null) {
-              showAlert(
-                message: 'Recording could not start - $reason',
-                type: 'danger',
-                duration: 3000,
-              );
-            }
+            showAlert?.call(
+              message: 'Recording could not start - $reason',
+              type: 'danger',
+              duration: 3000,
+            );
+
             canRecord = true;
             startReport = false;
             endReport = true;
-
             updateCanRecord(canRecord);
             updateStartReport(startReport);
             updateEndReport(endReport);

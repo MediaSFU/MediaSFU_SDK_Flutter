@@ -1,30 +1,33 @@
 import 'package:flutter/material.dart';
 
-/// A flexible video grid widget that dynamically adjusts its size based on the number of rows and columns.
+/// `FlexibleVideoOptions` - Configuration options for the `FlexibleVideo` widget.
 ///
-/// Parameters:
-/// - customWidth: The custom width of the video grid.
-/// - customHeight: The custom height of the video grid.
-/// - rows: The number of rows in the grid.
-/// - columns: The number of columns in the grid.
-/// - componentsToRender: The list of video components to render in the grid.
-/// - showAspect: A boolean indicating whether to show the aspect ratio.
-/// - backgroundColor: The background color of the grid.
+/// ### Properties:
+/// - `customWidth` (`double`): The width of the video container in pixels.
+/// - `customHeight` (`double`): The height of the video container in pixels.
+/// - `rows` (`int`): The number of rows in the video grid layout. (Note: Currently not utilized in the widget build.)
+/// - `columns` (`int`): The number of columns in the video grid layout. (Note: Currently not utilized in the widget build.)
+/// - `componentsToRender` (`List<Widget>`): A list of child widgets to display within the video container. Typically, these would be video streams or related UI components.
+/// - `showAspect` (`bool`): Determines whether the video container should be visible. Defaults to `true`.
+/// - `backgroundColor` (`Color`): The background color of the video container. Defaults to `Colors.transparent`.
 ///
-/// Example:
+/// ### Example Usage:
 /// ```dart
-/// FlexibleVideo(
-///   customWidth: 300,
-///   customHeight: 200,
+/// FlexibleVideoOptions(
+///   customWidth: 300.0,
+///   customHeight: 200.0,
 ///   rows: 2,
-///   columns: 2,
-///   componentsToRender: [VideoComponent1(), VideoComponent2()],
+///   columns: 3,
+///   componentsToRender: [
+///     VideoStreamWidget(userId: 'user1'),
+///     VideoStreamWidget(userId: 'user2'),
+///     // Add more video streams as needed
+///   ],
 ///   showAspect: true,
 ///   backgroundColor: Colors.black,
-/// )
+/// );
 /// ```
-
-class FlexibleVideo extends StatelessWidget {
+class FlexibleVideoOptions {
   final double customWidth;
   final double customHeight;
   final int rows;
@@ -33,20 +36,55 @@ class FlexibleVideo extends StatelessWidget {
   final bool showAspect;
   final Color backgroundColor;
 
-  const FlexibleVideo({
-    super.key,
-    required this.customWidth,
-    required this.customHeight,
-    required this.rows,
-    required this.columns,
-    required this.componentsToRender,
-    required this.showAspect,
-    required this.backgroundColor,
-  });
+  const FlexibleVideoOptions(
+      {required this.customWidth,
+      required this.customHeight,
+      required this.rows,
+      required this.columns,
+      required this.componentsToRender,
+      this.showAspect = true,
+      this.backgroundColor = Colors.transparent});
+}
+
+typedef FlexibleVideoType = Widget Function(
+    {required FlexibleVideoOptions options});
+
+/// `FlexibleVideo` - A widget that displays a customizable video container.
+///
+/// This widget provides a flexible container for video streams or related UI components.
+/// It allows customization of dimensions, background color, and the content to render within.
+/// The visibility of the container can be controlled via the `showAspect` option.
+///
+/// ### Example Usage:
+/// ```dart
+/// FlexibleVideo(
+///   options: FlexibleVideoOptions(
+///     customWidth: 300.0,
+///     customHeight: 200.0,
+///     rows: 2,
+///     columns: 3,
+///     componentsToRender: [
+///       VideoStreamWidget(userId: 'user1'),
+///       VideoStreamWidget(userId: 'user2'),
+///       // Add more video streams as needed
+///     ],
+///     showAspect: true,
+///     backgroundColor: Colors.black,
+///   ),
+/// );
+/// ```
+
+class FlexibleVideo extends StatelessWidget {
+  final FlexibleVideoOptions options;
+
+  const FlexibleVideo({super.key, required this.options});
 
   @override
   Widget build(BuildContext context) {
-    // Calculate the total width and height of the grid
+    final customWidth = options.customWidth;
+    final customHeight = options.customHeight;
+    final componentsToRender = options.componentsToRender;
+    final showAspect = options.showAspect;
 
     return Visibility(
       visible: componentsToRender.isNotEmpty && showAspect,

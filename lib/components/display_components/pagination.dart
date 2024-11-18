@@ -1,78 +1,64 @@
 import 'package:flutter/material.dart';
-import '../../consumers/generate_page_content.dart' show generatePageContent;
+import 'package:socket_io_client/socket_io_client.dart' as io;
+import '../../consumers/generate_page_content.dart'
+    show
+        generatePageContent,
+        GeneratePageContentParameters,
+        GeneratePageContentOptions,
+        GeneratePageContentType;
+import '../../types/types.dart' show ShowAlert, BreakoutParticipant;
 
-/// Pagination - A widget for displaying pagination controls.
-///
-/// This widget allows you to display pagination controls for navigating through pages.
-/// It provides options to control the appearance and behavior of the pagination controls.
-///
-/// The total number of pages.
-/// final int totalPages;
-///
-/// The current page index.
-/// final int currentUserPage;
-///
-/// The position of the pagination controls.
-/// Defaults to 'middle' if not provided.
-/// final String position;
-///
-/// The location of the pagination controls.
-/// Defaults to 'bottom' if not provided.
-/// final String location;
-///
-/// The direction of pagination controls.
-/// Defaults to 'horizontal' if not provided.
-/// final String direction;
-///
-/// Custom constraints for the buttons container.
-/// final BoxConstraints? buttonsContainerStyle;
-///
-/// An alternate icon component to use for the pagination controls.
-/// final Widget? alternateIconComponent;
-///
-/// The icon component to use for the pagination controls.
-/// final Widget? iconComponent;
-///
-/// The color of the active page indicator.
-/// Defaults to Color(0xFF2c678f) if not provided.
-/// final Color activePageColor;
-///
-/// The color of the inactive page indicators.
-/// Defaults to null if not provided.
-/// final Color? inactivePageColor;
-///
-/// The background color of the pagination controls.
-/// Defaults to Color(0xFFFFFFFF) if not provided.
-/// final Color backgroundColor;
-///
-/// The height of the pagination controls.
-/// Defaults to 40.0 if not provided.
-/// final double paginationHeight;
-///
-/// A flag indicating whether to show the pagination controls.
-/// Defaults to true if not provided.
-/// final bool showAspect;
-///
-/// Additional parameters to pass for page content generation.
-/// final Map<String, dynamic> parameters;
+abstract class PaginationParameters implements GeneratePageContentParameters {
+  int get mainRoomsLength;
+  int get memberRoom;
+  bool get breakOutRoomStarted;
+  bool get breakOutRoomEnded;
+  String get member;
+  List<List<BreakoutParticipant>> get breakoutRooms;
+  int get hostNewRoom;
+  String get roomName;
+  String get islevel;
+  ShowAlert? get showAlert;
+  io.Socket? get socket;
 
-typedef GeneratePageContent = Future<void> Function({
-  required int page,
-  required Map<String, dynamic> parameters,
-  int breakRoom,
-  bool inBreakRoom,
-});
+  // mediasfu functions
+  PaginationParameters Function() get getUpdatedAllParams;
+  // dynamic operator [](String key);
+}
 
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
-});
-
-class Pagination extends StatelessWidget {
+/// `PaginationOptions` - Configuration options for the `Pagination` widget.
+///
+/// ### Properties:
+/// - `totalPages`: The total number of pages available for navigation.
+/// - `currentUserPage`: The current page number for the user.
+/// - `handlePageChange`: Callback function for handling page change events.
+/// - `position`: Position of the pagination container ('middle' by default).
+/// - `location`: Location of pagination (e.g., 'bottom').
+/// - `direction`: Direction of pagination (e.g., 'horizontal' or 'vertical').
+/// - `buttonsContainerStyle`: Optional styling constraints for the pagination buttons container.
+/// - `alternateIconComponent`: Optional widget for an alternate icon display in pagination.
+/// - `iconComponent`: Optional widget for the main icon display in pagination.
+/// - `activePageColor`: Background color for the active page button.
+/// - `inactivePageColor`: Background color for inactive page buttons.
+/// - `backgroundColor`: Background color for the pagination container.
+/// - `paginationHeight`: Maximum height of the pagination component.
+/// - `showAspect`: Boolean to show pagination (defaults to true).
+/// - `parameters`: Provides the parameters needed for handling page changes, including room settings, socket information, user access level, and any alert functionality.
+///
+/// ### Example Usage:
+/// ```dart
+/// Pagination(
+///   options: PaginationOptions(
+///     totalPages: 10,
+///     currentUserPage: 1,
+///     parameters: PaginationParametersImplementation(),
+///   ),
+/// );
+/// ```
+class PaginationOptions {
   final int totalPages;
   final int currentUserPage;
-  // HandlePageChange handlePageChange;
+  final GeneratePageContentType handlePageChange;
   final String position;
   final String location;
   final String direction;
@@ -84,13 +70,12 @@ class Pagination extends StatelessWidget {
   final Color backgroundColor;
   final double paginationHeight;
   final bool showAspect;
-  final Map<String, dynamic> parameters;
+  final PaginationParameters parameters;
 
-  const Pagination({
-    super.key,
+  PaginationOptions({
     required this.totalPages,
     required this.currentUserPage,
-    // required this.handlePageChange,
+    this.handlePageChange = generatePageContent,
     this.position = 'middle',
     this.location = 'bottom',
     this.direction = 'horizontal',
@@ -104,97 +89,128 @@ class Pagination extends StatelessWidget {
     this.showAspect = true,
     required this.parameters,
   });
+}
 
-  void handlePageChange(int page, int offSet) async {
-    if (page == currentUserPage) {
+typedef PaginationType = Widget Function({required PaginationOptions options});
+
+/// `Pagination` - A widget for handling pagination with breakout room considerations.
+///
+/// The `Pagination` widget displays pagination controls for navigating through pages.
+/// It includes breakout room logic to allow or restrict access to specific rooms
+/// based on the user's access level and breakout room states.
+///
+/// ### Parameters:
+/// - `options` (`PaginationOptions`): Configuration options for the pagination.
+///
+/// ### Structure:
+/// - Displays a paginated view with buttons styled based on the active or inactive state.
+/// - Provides breakout room handling, alert notifications, and socket-based updates if the user is not authorized to access certain rooms.
+///
+/// ### Example Usage:
+/// ```dart
+/// Pagination(
+///   options: PaginationOptions(
+///     totalPages: 5,
+///     currentUserPage: 2,
+///     handlePageChange: customPageChangeHandler,
+///     parameters: PaginationParametersImplementation(),
+///     position: 'bottom',
+///   ),
+/// );
+/// ```
+
+class Pagination extends StatelessWidget {
+  final PaginationOptions options;
+
+  const Pagination({super.key, required this.options});
+
+  Future<void> handleClick(int page, int offSet) async {
+    if (page == options.currentUserPage) {
       return;
     }
+    PaginationParameters parameters = options.parameters;
+    final PaginationParameters updatedParameters =
+        parameters.getUpdatedAllParams();
+    parameters = updatedParameters;
 
-    final updatedParameters = parameters['getUpdatedAllParams']();
-    parameters.addAll(updatedParameters);
-
-    var breakOutRoomStarted = parameters['breakOutRoomStarted'] as bool;
-    var breakOutRoomEnded = parameters['breakOutRoomEnded'] as bool;
-    var member = parameters['member'] as String;
-    var breakoutRooms = parameters['breakoutRooms'] as List<dynamic>;
-    var hostNewRoom = parameters['hostNewRoom'] as int;
-    var roomName = parameters['roomName'] as String;
-    var islevel = parameters['islevel'] as String;
-    var showAlert = parameters['showAlert'] as ShowAlert;
-    var socket = parameters['socket'];
+    var breakOutRoomStarted = parameters.breakOutRoomStarted;
+    var breakOutRoomEnded = parameters.breakOutRoomEnded;
+    var member = parameters.member;
+    var breakoutRooms = parameters.breakoutRooms;
+    var hostNewRoom = parameters.hostNewRoom;
+    var roomName = parameters.roomName;
+    var islevel = parameters.islevel;
+    var showAlert = parameters.showAlert;
+    var socket = parameters.socket;
 
     if (breakOutRoomStarted && !breakOutRoomEnded && page != 0) {
       final roomMember = breakoutRooms.firstWhere(
-        (r) => r.any((p) => p['name'] == member),
-        orElse: () => null,
+        (r) => r.any((p) => p.name == member),
+        orElse: () => [BreakoutParticipant(name: '')],
       );
       final pageInt = page - offSet;
       int memberBreakRoom = -1;
 
-      if (roomMember != null) {
+      if (roomMember.isNotEmpty && roomMember.first.name == member) {
         memberBreakRoom = breakoutRooms.indexOf(roomMember);
       }
 
       if ((memberBreakRoom == -1 || memberBreakRoom != pageInt) &&
           pageInt >= 0) {
         if (islevel != '2') {
-          showAlert(
+          showAlert!(
             message: 'You are not part of the breakout room ${pageInt + 1}.',
             type: 'danger',
             duration: 3000,
           );
           return;
-
-          // if (memberBreakRoom != -1) {
-          //   page = memberBreakRoom;
-          // } else {
-          //   await generatePageContent(
-          //     page: page,
-          //     parameters: parameters,
-          //     breakRoom: pageInt,
-          //     inBreakRoom: true,
-          //   );
-          //   await onScreenChanges({'changed': true, 'parameters': parameters});
-          //   return;
-          // }
         }
 
-        await generatePageContent(
-          page: page,
+        final optionsHandlePageChange = GeneratePageContentOptions(
           parameters: parameters,
+          page: page,
           breakRoom: pageInt,
           inBreakRoom: true,
         );
+        await options.handlePageChange(
+          optionsHandlePageChange,
+        );
 
         if (hostNewRoom != pageInt) {
-          await socket.emitWithAck(
+          socket!.emitWithAck(
               'updateHostBreakout', {'newRoom': pageInt, 'roomName': roomName},
               ack: (response) async {});
         }
       } else {
-        await generatePageContent(
+        final optionsHandlePageChange = GeneratePageContentOptions(
           page: page,
           parameters: parameters,
           breakRoom: pageInt,
           inBreakRoom: pageInt >= 0,
         );
+        await options.handlePageChange(
+          optionsHandlePageChange,
+        );
 
         if (islevel == '2' && hostNewRoom != -1) {
-          await socket.emitWithAck('updateHostBreakout',
+          socket!.emitWithAck('updateHostBreakout',
               {'prevRoom': hostNewRoom, 'newRoom': -1, 'roomName': roomName},
               ack: (response) async {});
         }
       }
     } else {
-      await generatePageContent(
+      final optionsHandlePageChange = GeneratePageContentOptions(
         page: page,
         parameters: parameters,
         breakRoom: 0,
         inBreakRoom: false,
       );
+      await options.handlePageChange(
+        optionsHandlePageChange,
+      );
 
       if (islevel == '2' && hostNewRoom != -1) {
-        await socket.emitWithAck('updateHostBreakout',
+        socket!.emitWithAck('updateHostBreakout',
             {'prevRoom': hostNewRoom, 'newRoom': -1, 'roomName': roomName},
             ack: (response) async {});
       }
@@ -203,48 +219,71 @@ class Pagination extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<int> data = List<int>.generate(totalPages + 1, (index) => index);
+    final List<int> data =
+        List<int>.generate(options.totalPages + 1, (index) => index);
 
     return Visibility(
-      visible: showAspect,
+      visible: options.showAspect,
       child: Container(
-        color: backgroundColor,
+        color: options.backgroundColor,
         constraints: BoxConstraints(
-          maxHeight:
-              direction == 'vertical' ? double.infinity : paginationHeight,
-          maxWidth:
-              direction == 'horizontal' ? double.infinity : paginationHeight,
+          maxHeight: options.direction == 'vertical'
+              ? double.infinity
+              : options.paginationHeight,
+          maxWidth: options.direction == 'horizontal'
+              ? double.infinity
+              : options.paginationHeight,
         ),
         child: Center(
           child: ListView.builder(
             shrinkWrap:
                 true, // Ensures the ListView only occupies the space needed
-            scrollDirection:
-                direction == 'vertical' ? Axis.vertical : Axis.horizontal,
+            scrollDirection: options.direction == 'vertical'
+                ? Axis.vertical
+                : Axis.horizontal,
             itemCount: data.length,
             itemBuilder: (context, index) {
-              final isActive = data[index] == currentUserPage;
+              final isActive = data[index] == options.currentUserPage;
               final pageStyle = isActive
-                  ? BoxDecoration(color: activePageColor)
+                  ? BoxDecoration(
+                      color: options.activePageColor,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.5),
+                          spreadRadius: 1,
+                          blurRadius: 2,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    )
                   : BoxDecoration(
-                      color: inactivePageColor,
+                      color: options.inactivePageColor,
                       border: Border.all(
                         color: Colors.black,
                         width: 1.0,
-                      ));
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.5),
+                          spreadRadius: 1,
+                          blurRadius: 2,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    );
 
               String displayItem = data[index].toString();
-              final targetPage = parameters['memberRoom'] as int;
+              final targetPage = options.parameters.memberRoom;
 
-              if (parameters['breakOutRoomStarted'] as bool &&
-                  !(parameters['breakOutRoomEnded'] as bool) &&
-                  data[index] >= parameters['mainRoomsLength']) {
+              if (options.parameters.breakOutRoomStarted &&
+                  !(options.parameters.breakOutRoomEnded) &&
+                  data[index] >= options.parameters.mainRoomsLength) {
                 final roomNumber =
-                    data[index] - (parameters['mainRoomsLength'] - 1);
+                    data[index] - (options.parameters.mainRoomsLength - 1);
 
                 if (targetPage + 1 != roomNumber) {
-                  if (parameters['islevel'] as String != '2') {
-                    displayItem = 'Room $roomNumber';
+                  if (options.parameters.islevel != '2') {
+                    displayItem = 'Room $roomNumber 🔒';
                   } else {
                     displayItem = 'Room $roomNumber';
                   }
@@ -258,35 +297,30 @@ class Pagination extends StatelessWidget {
               return GestureDetector(
                 onTap: () {
                   if (!isActive) {
-                    handlePageChange(
-                        data[index], parameters['mainRoomsLength']);
+                    handleClick(
+                        data[index], options.parameters.mainRoomsLength);
                   }
                 },
                 child: Container(
                   margin:
                       const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
                   decoration: pageStyle,
-                  child: Container(
-                    margin:
-                        const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-                    decoration: pageStyle,
-                    child: Center(
-                      child: data[index] == 0
-                          ? Icon(Icons.star,
-                              size: 18,
-                              color: isActive ? Colors.yellow : Colors.grey)
-                          : Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 4.0),
-                              child: Text(
-                                displayItem,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                  child: Center(
+                    child: data[index] == 0
+                        ? Icon(Icons.star,
+                            size: 18,
+                            color: isActive ? Colors.yellow : Colors.grey)
+                        : Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 2.0),
+                            child: Text(
+                              displayItem,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                    ),
+                          ),
                   ),
                 ),
               );

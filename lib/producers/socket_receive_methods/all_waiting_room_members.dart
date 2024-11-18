@@ -1,38 +1,56 @@
-/// Callback function type for showing an alert message.
-typedef ShowAlert = void Function(String message);
+import '../../types/types.dart' show WaitingRoomParticipant;
 
-/// Callback function type for updating the waiting room participant list.
-typedef UpdateWaitingRoomList = void Function(
-    List<dynamic> waitingParticipants);
+/// Defines options for managing all waiting room members.
+class AllWaitingRoomMembersOptions {
+  final List<WaitingRoomParticipant> waitingParticipants;
+  final void Function(List<WaitingRoomParticipant>) updateWaitingRoomList;
+  final void Function(int) updateTotalReqWait;
 
-/// Callback function type for updating the total number of waiting room requests.
-typedef UpdateTotalReqWait = void Function(int totalRequests);
+  AllWaitingRoomMembersOptions({
+    required this.waitingParticipants,
+    required this.updateWaitingRoomList,
+    required this.updateTotalReqWait,
+  });
+}
 
-/// Retrieves all waiting room members and performs necessary updates.
+typedef AllWaitingRoomMembersType = Future<void> Function(
+    AllWaitingRoomMembersOptions options);
+
+/// Updates the waiting room participants list and the total count of waiting room participants.
 ///
-/// This function takes in a list of waiting room participants and a map of parameters.
-/// It then calculates the total number of waiting room participants, updates the waiting room
-/// participant list, and updates the total count of waiting room participants using the provided
-/// callback functions.
+/// This function calculates the total number of participants currently in the waiting room,
+/// updates the waiting room list with the provided list of `waitingParticipants`,
+/// and updates the total request count.
 ///
-/// Parameters:
-/// - `waitingParticipants`: A list of waiting room participants.
-/// - `parameters`: A map of parameters containing the callback functions for updating the waiting room list
-///   and the total count of waiting room participants.
-void allWaitingRoomMembers({
-  required List<dynamic> waitingParticipants,
-  required Map<String, dynamic> parameters,
-}) {
-  UpdateTotalReqWait updateTotalReqWait = parameters['updateTotalReqWait'];
-  UpdateWaitingRoomList updateWaitingRoomList =
-      parameters['updateWaitingRoomList'];
+/// ### Example Usage:
+/// ```dart
+/// final options = AllWaitingRoomMembersOptions(
+///   waitingParticipants: [
+///     WaitingRoomParticipant(name: 'Alice', id: '1'),
+///     WaitingRoomParticipant(name: 'Bob', id: '2'),
+///   ],
+///   updateWaitingRoomList: (updatedList) {
+///     print('Updated waiting room list: $updatedList');
+///   },
+///   updateTotalReqWait: (totalRequests) {
+///     print('Total waiting room requests: $totalRequests');
+///   },
+/// );
+///
+/// await allWaitingRoomMembers(options);
+/// ```
+///
+/// In this example:
+/// - The function updates the list of waiting participants with `Alice` and `Bob`.
+/// - It also sets the total count of requests to the length of `waitingParticipants`.
 
+Future<void> allWaitingRoomMembers(AllWaitingRoomMembersOptions options) async {
   // Calculate the total number of waiting room participants
-  int totalReqs = waitingParticipants.length;
+  final int totalReqs = options.waitingParticipants.length;
 
   // Update the waiting room participants list
-  updateWaitingRoomList(waitingParticipants);
+  options.updateWaitingRoomList(options.waitingParticipants);
 
   // Update the total count of waiting room participants
-  updateTotalReqWait(totalReqs);
+  options.updateTotalReqWait(totalReqs);
 }

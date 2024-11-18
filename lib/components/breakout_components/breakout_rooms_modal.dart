@@ -1,29 +1,194 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../../methods/utils/get_modal_position.dart' show getModalPosition;
+import 'package:socket_io_client/socket_io_client.dart' as io;
+import '../../methods/utils/get_modal_position.dart'
+    show getModalPosition, GetModalPositionOptions;
+import '../../types/types.dart'
+    show BreakoutParticipant, Participant, ShowAlert;
 
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
-});
+typedef BreakoutRoom = List<BreakoutParticipant>;
 
-class RoomList extends StatelessWidget {
-  final List<dynamic> rooms;
-  final Function(int) handleEditRoom;
-  final Function(int) handleDeleteRoom;
-  final Function(int, dynamic) handleRemoveParticipant;
-  final Function(int, dynamic) handleAddParticipant;
-  final List<dynamic> participantsRef;
+/// Configuration options for managing a room's participant list, edit, and delete actions.
+///
+/// ### Example Usage:
+/// ```dart
+/// final roomOptions = RoomOptions(
+///   rooms: rooms,
+///   handleEditRoom: (index) => editRoom(index),
+///   handleDeleteRoom: (index) => deleteRoom(index),
+///   handleRemoveParticipant: (index, participant) => removeParticipant(index, participant),
+/// );
+/// ```
+class RoomOptions {
+  /// List of breakout participants in the room.
+  final List<List<BreakoutParticipant>> rooms;
 
-  const RoomList({
-    super.key,
+  /// Callback to handle editing a room.
+  final void Function(int roomIndex) handleEditRoom;
+
+  /// Callback to handle deleting a room.
+  final void Function(int roomIndex) handleDeleteRoom;
+
+  /// Callback to handle removing a participant from a room.
+  final void Function(int roomIndex, BreakoutParticipant participant)
+      handleRemoveParticipant;
+
+  RoomOptions({
     required this.rooms,
     required this.handleEditRoom,
     required this.handleDeleteRoom,
     required this.handleRemoveParticipant,
-    required this.handleAddParticipant,
+  });
+}
+
+/// Options for configuring the `EditRoomModal` widget.
+///
+/// This allows control over the modal's visibility, current room index,
+/// assigned/unassigned participants, and room participant management.
+///
+/// ### Example Usage:
+/// ```dart
+/// final options = EditRoomModalOptions(
+///   editRoomModalVisible: ValueNotifier(false),
+///   updateEditRoomModalVisible: (visible) => toggleEditModal(visible),
+///   currentRoom: currentRoomParticipants,
+///   participantsRef: participantsList,
+///   handleAddParticipant: addParticipant,
+///   handleRemoveParticipant: removeParticipant,
+///   currentRoomIndex: 1,
+/// );
+/// ```
+class EditRoomModalOptions {
+  /// Controls the visibility of the EditRoomModal.
+  final ValueNotifier<bool> editRoomModalVisible;
+
+  /// Callback to update the visibility state of the EditRoomModal.
+  final void Function(bool visible) updateEditRoomModalVisible;
+
+  /// The current breakout room being edited. Null if no room is selected.
+  final List<BreakoutParticipant>? currentRoom;
+
+  /// Reference to all participants for assigning to rooms.
+  final List<Participant> participantsRef;
+
+  /// Callback to handle adding a participant to a room.
+  final void Function(int roomIndex, BreakoutParticipant participant)
+      handleAddParticipant;
+
+  /// Callback to handle removing a participant from a room.
+  final void Function(int roomIndex, BreakoutParticipant participant)
+      handleRemoveParticipant;
+
+  /// Index of the current room being edited. Null if no room is selected.
+  final int? currentRoomIndex;
+
+  /// Background color of the modal.
+  final Color backgroundColor;
+
+  EditRoomModalOptions({
+    required this.editRoomModalVisible,
+    required this.updateEditRoomModalVisible,
+    required this.currentRoom,
     required this.participantsRef,
+    required this.handleAddParticipant,
+    required this.handleRemoveParticipant,
+    required this.currentRoomIndex,
+    this.backgroundColor = const Color.fromARGB(255, 136, 171, 194),
+  });
+}
+
+/// Parameters for managing breakout rooms within a meeting.
+abstract class BreakoutRoomsModalParameters {
+  // Core properties as abstract getters
+  List<Participant> get participants;
+  ShowAlert? get showAlert;
+  io.Socket? get socket;
+  int get itemPageLimit;
+  String get meetingDisplayType;
+  String get prevMeetingDisplayType;
+  String get roomName;
+  bool get shareScreenStarted;
+  bool get shared;
+  bool get breakOutRoomStarted;
+  bool get breakOutRoomEnded;
+  bool get canStartBreakout;
+  List<List<BreakoutParticipant>> get breakoutRooms;
+
+  // Update functions as abstract getters returning functions
+  void Function(bool) get updateBreakOutRoomStarted;
+  void Function(bool) get updateBreakOutRoomEnded;
+  void Function(int) get updateCurrentRoomIndex;
+  void Function(bool) get updateCanStartBreakout;
+  void Function(List<List<BreakoutParticipant>>) get updateBreakoutRooms;
+  void Function(String) get updateMeetingDisplayType;
+
+  BreakoutRoomsModalParameters Function() get getUpdatedAllParams;
+
+  // dynamic operator [](String key);
+}
+
+/// Options for configuring the `BreakoutRoomsModal` widget.
+///
+/// This modal manages breakout rooms, allowing for creating, editing, and deleting rooms.
+///
+/// ### Example Usage:
+/// ```dart
+/// final breakoutOptions = BreakoutRoomsModalOptions(
+///   isVisible: true,
+///   onBreakoutRoomsClose: closeModal,
+///   parameters: breakoutRoomParams,
+/// );
+/// ```
+class BreakoutRoomsModalOptions {
+  /// Determines if the modal is visible.
+  final bool isVisible;
+
+  /// Callback function to close the modal.
+  final VoidCallback onBreakoutRoomsClose;
+
+  /// Parameters for managing breakout rooms.
+  final BreakoutRoomsModalParameters parameters;
+
+  /// Position of the modal on the screen.
+  final String position;
+
+  /// Background color of the modal.
+  final Color backgroundColor;
+
+  BreakoutRoomsModalOptions({
+    required this.isVisible,
+    required this.onBreakoutRoomsClose,
+    required this.parameters,
+    this.position = 'topRight',
+    this.backgroundColor = const Color(0xFF83C0E9),
+  });
+}
+
+/// Typedef for the BreakoutRoomsModal function.
+typedef BreakoutRoomsModalType = Widget Function(
+    {required BreakoutRoomsModalOptions options});
+
+/// A widget for displaying a list of breakout rooms and managing participants.
+///
+/// Displays each room with options to edit, delete, and manage participants.
+///
+/// ### Example Usage:
+/// ```dart
+/// RoomList(
+///   options: RoomOptions(
+///     rooms: breakoutRooms,
+///     handleEditRoom: editRoomCallback,
+///     handleDeleteRoom: deleteRoomCallback,
+///     handleRemoveParticipant: removeParticipantCallback,
+///   ),
+/// );
+/// ```
+class RoomList extends StatelessWidget {
+  final RoomOptions options;
+
+  const RoomList({
+    super.key,
+    required this.options,
   });
 
   @override
@@ -31,7 +196,7 @@ class RoomList extends StatelessWidget {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: rooms.length,
+      itemCount: options.rooms.length,
       itemBuilder: (context, roomIndex) {
         return Card(
           child: Column(
@@ -43,26 +208,30 @@ class RoomList extends StatelessWidget {
                   children: [
                     IconButton(
                       icon: const Icon(FontAwesomeIcons.pen),
-                      onPressed: () => handleEditRoom(roomIndex),
+                      onPressed: () => options.handleEditRoom(roomIndex),
+                      iconSize: 16,
                     ),
                     IconButton(
                       icon: const Icon(FontAwesomeIcons.xmark),
-                      onPressed: () => handleDeleteRoom(roomIndex),
+                      onPressed: () => options.handleDeleteRoom(roomIndex),
+                      iconSize: 16,
                     ),
                   ],
                 ),
               ),
-              ...rooms[roomIndex].map((participant) {
+              const Divider(height: 2, thickness: 2, color: Colors.black),
+              ...options.rooms[roomIndex].map((participant) {
                 return ListTile(
-                  title: Text(participant['name']),
+                  title: Text(participant.name),
                   trailing: IconButton(
                     icon: const Icon(FontAwesomeIcons.xmark),
                     onPressed: () =>
-                        handleRemoveParticipant(roomIndex, participant),
+                        options.handleRemoveParticipant(roomIndex, participant),
+                    iconSize: 16,
                   ),
                 );
               }),
-              if (rooms[roomIndex].isEmpty)
+              if (options.rooms[roomIndex].isEmpty)
                 const Padding(
                   padding: EdgeInsets.all(8.0),
                   child: Text(
@@ -81,26 +250,30 @@ class RoomList extends StatelessWidget {
   }
 }
 
+/// Modal widget for editing breakout room participants.
+///
+/// Allows users to view and manage assigned and unassigned participants within the room.
+///
+/// ### Example Usage:
+/// ```dart
+/// EditRoomModal(
+///   options: EditRoomModalOptions(
+///     editRoomModalVisible: ValueNotifier(false),
+///     updateEditRoomModalVisible: toggleModalVisibility,
+///     currentRoom: currentParticipants,
+///     participantsRef: allParticipants,
+///     handleAddParticipant: addParticipantCallback,
+///     handleRemoveParticipant: removeParticipantCallback,
+///     currentRoomIndex: 0,
+///   ),
+/// );
+/// ```
 class EditRoomModal extends StatelessWidget {
-  final ValueNotifier<bool> editRoomModalVisible;
-  final Function(bool) updateEditRoomModalVisible;
-  final List<dynamic> currentRoom;
-  final List<dynamic> participantsRef;
-  final Function(int, dynamic) handleAddParticipant;
-  final Function(int, dynamic) handleRemoveParticipant;
-  final int currentRoomIndex;
-  final Color backgroundColor;
+  final EditRoomModalOptions options;
 
   const EditRoomModal({
     super.key,
-    required this.editRoomModalVisible,
-    required this.updateEditRoomModalVisible,
-    required this.currentRoom,
-    required this.participantsRef,
-    required this.handleAddParticipant,
-    required this.handleRemoveParticipant,
-    required this.currentRoomIndex,
-    this.backgroundColor = const Color.fromARGB(255, 187, 195, 199),
+    required this.options,
   });
 
   @override
@@ -111,7 +284,7 @@ class EditRoomModal extends StatelessWidget {
     final modalHeight = MediaQuery.of(context).size.height * 0.7;
 
     return ValueListenableBuilder<bool>(
-      valueListenable: editRoomModalVisible,
+      valueListenable: options.editRoomModalVisible,
       builder: (context, value, child) {
         return Visibility(
           visible: value,
@@ -124,17 +297,20 @@ class EditRoomModal extends StatelessWidget {
                   width: modalWidth,
                   height: modalHeight,
                   decoration: BoxDecoration(
-                    color: backgroundColor,
+                    color: options.backgroundColor,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       ListTile(
-                        title: Text('Edit Room ${currentRoomIndex + 1}'),
+                        title:
+                            Text('Edit Room ${options.currentRoomIndex! + 1}'),
                         trailing: IconButton(
                           icon: const Icon(FontAwesomeIcons.xmark),
-                          onPressed: () => updateEditRoomModalVisible(false),
+                          onPressed: () =>
+                              options.updateEditRoomModalVisible(false),
+                          iconSize: 16,
                         ),
                       ),
                       const Divider(),
@@ -151,30 +327,33 @@ class EditRoomModal extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              ...currentRoom.map((participant) {
+                              ...options.currentRoom!.map((participant) {
                                 return ListTile(
                                   title: Row(
                                     children: [
                                       const Icon(FontAwesomeIcons.user),
                                       const SizedBox(width: 10),
-                                      Text(participant['name']),
+                                      Text(participant.name),
                                     ],
                                   ),
                                   trailing: IconButton(
                                     icon: const Icon(FontAwesomeIcons.xmark),
-                                    onPressed: () => handleRemoveParticipant(
-                                        currentRoomIndex, participant),
+                                    onPressed: () =>
+                                        options.handleRemoveParticipant(
+                                            options.currentRoomIndex!,
+                                            participant),
+                                    iconSize: 16,
                                   ),
                                 );
                               }),
-                              if (currentRoom.isEmpty)
+                              if (options.currentRoom!.isEmpty)
                                 const Padding(
                                   padding: EdgeInsets.all(8.0),
                                   child: Text(
                                     'None Assigned',
                                     style: TextStyle(
                                       fontStyle: FontStyle.italic,
-                                      color: Colors.grey,
+                                      color: Color.fromARGB(255, 249, 247, 247),
                                     ),
                                   ),
                                 ),
@@ -188,28 +367,32 @@ class EditRoomModal extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              ...participantsRef
+                              ...options.participantsRef
                                   .where((participant) =>
-                                      participant['breakRoom'] == null)
+                                      participant.breakRoom == null)
                                   .map((participant) {
                                 return ListTile(
                                   title: Row(
                                     children: [
                                       const Icon(FontAwesomeIcons.user),
                                       const SizedBox(width: 10),
-                                      Text(participant['name']),
+                                      Text(participant.name),
                                     ],
                                   ),
                                   trailing: IconButton(
                                     icon: const Icon(FontAwesomeIcons.plus),
-                                    onPressed: () => handleAddParticipant(
-                                        currentRoomIndex, participant),
+                                    onPressed: () =>
+                                        options.handleAddParticipant(
+                                            options.currentRoomIndex!,
+                                            BreakoutParticipant(
+                                                name: participant.name)),
+                                    iconSize: 16,
                                   ),
                                 );
                               }),
-                              if (participantsRef
+                              if (options.participantsRef
                                   .where((participant) =>
-                                      participant['breakRoom'] == null)
+                                      participant.breakRoom == null)
                                   .isEmpty)
                                 const Padding(
                                   padding: EdgeInsets.all(8.0),
@@ -217,7 +400,7 @@ class EditRoomModal extends StatelessWidget {
                                     'None Pending',
                                     style: TextStyle(
                                       fontStyle: FontStyle.italic,
-                                      color: Colors.grey,
+                                      color: Color.fromARGB(255, 249, 247, 247),
                                     ),
                                   ),
                                 ),
@@ -237,97 +420,143 @@ class EditRoomModal extends StatelessWidget {
   }
 }
 
+/// A modal widget for managing breakout rooms within a meeting.
+/// Allows users to create, edit, and delete rooms, assign participants, and start breakout rooms.
+/// ### Example Usage:
+/// ```dart
+/// BreakoutRoomsModal(
+///  options: BreakoutRoomsModalOptions(
+///   isVisible: true,
+///   onBreakoutRoomsClose: closeModal,
+///  parameters: breakoutRoomParams,
+/// ),
+/// );
+/// ```
+///
 class BreakoutRoomsModal extends StatefulWidget {
-  final bool isVisible;
-  final VoidCallback onBreakoutRoomsClose;
-  final Map<String, dynamic> parameters;
-  final String position;
-  final Color backgroundColor;
+  final BreakoutRoomsModalOptions options;
 
   const BreakoutRoomsModal({
     super.key,
-    required this.isVisible,
-    required this.onBreakoutRoomsClose,
-    required this.parameters,
-    this.position = 'topRight',
-    this.backgroundColor = const Color(0xFF83C0E9),
+    required this.options,
   });
 
   @override
-  // ignore: library_private_types_in_public_api
   _BreakoutRoomsModalState createState() => _BreakoutRoomsModalState();
 }
 
 class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
-  late List<dynamic> participants;
-  late List<dynamic> breakoutRooms;
+  late List<Participant> participants;
+  late List<BreakoutRoom> breakoutRooms;
   late int currentRoomIndex;
-  ValueNotifier<bool> editRoomModalVisible = ValueNotifier(false);
-  late List<dynamic> currentRoom;
+  final ValueNotifier<bool> editRoomModalVisible = ValueNotifier(false);
+  late BreakoutRoom currentRoom;
   late TextEditingController numRoomsController;
-  late ShowAlert showAlert;
+  late ShowAlert? showAlert;
   bool breakOutRoomStarted = false;
   bool breakOutRoomEnded = false;
   bool canStartBreakout = false;
   String newParticipantAction = 'autoAssignNewRoom';
 
-  updateEditRoomModalVisible(bool value) {
-    editRoomModalVisible.value = value;
-  }
-
   @override
   void initState() {
     super.initState();
-    participants = widget.parameters['participants']
-        .where((participant) => participant['islevel'] != '2')
+    participants = widget.options.parameters.participants
+        .where((participant) => participant.islevel != '2')
         .toList();
-    breakoutRooms = widget.parameters['breakoutRooms'];
-    showAlert = widget.parameters['showAlert'];
-    breakOutRoomStarted = widget.parameters['breakOutRoomStarted'];
-    breakOutRoomEnded = widget.parameters['breakOutRoomEnded'];
-    canStartBreakout = widget.parameters['canStartBreakout'];
+    breakoutRooms = widget.options.parameters.breakoutRooms;
+    showAlert = widget.options.parameters.showAlert!;
+    breakOutRoomStarted = widget.options.parameters.breakOutRoomStarted;
+    breakOutRoomEnded = widget.options.parameters.breakOutRoomEnded;
+    canStartBreakout = widget.options.parameters.canStartBreakout;
     currentRoomIndex = 0;
     currentRoom = [];
     numRoomsController = TextEditingController();
   }
 
+  /// Updates the visibility of the edit room modal.
+  void updateEditRoomModalVisible(bool value) {
+    editRoomModalVisible.value = value;
+  }
+
+  /// Handles editing a specific room.
   void handleEditRoom(int roomIndex) {
     setState(() {
       currentRoomIndex = roomIndex;
       currentRoom = breakoutRooms[roomIndex];
       editRoomModalVisible.value = true;
+      canStartBreakout = false;
     });
   }
 
+  /// Handles deleting a specific room.
   void handleDeleteRoom(int roomIndex) {
     setState(() {
+      // Remove room and reset breakRoom assignments.
       breakoutRooms.removeAt(roomIndex);
-      checkCanStartBreakout();
+      for (int i = 0; i < breakoutRooms.length; i++) {
+        for (var participant in breakoutRooms[i]) {
+          participant.breakRoom = i;
+        }
+      }
+      _checkCanStartBreakout();
     });
+    widget.options.parameters.updateBreakoutRooms(breakoutRooms);
+    showAlert!(
+      message: 'Room ${roomIndex + 1} deleted successfully.',
+      type: 'success',
+      duration: 3000,
+    );
   }
 
-  void handleAddParticipant(int roomIndex, dynamic participant) {
+  /// Handles adding a participant to a specific room.
+  void handleAddParticipant(int roomIndex, BreakoutParticipant participant) {
     setState(() {
+      if (breakoutRooms[roomIndex].length >=
+          widget.options.parameters.itemPageLimit) {
+        showAlert!(
+          message: 'Room ${roomIndex + 1} is full.',
+          type: 'danger',
+          duration: 3000,
+        );
+        return;
+      }
       breakoutRooms[roomIndex].add(participant);
-      participants.firstWhere(
-          (p) => p['name'] == participant['name'])['breakRoom'] = roomIndex;
-      checkCanStartBreakout();
+      participants.firstWhere((p) => p.name == participant.name).breakRoom =
+          roomIndex;
+      participant.breakRoom = roomIndex;
+      _checkCanStartBreakout();
     });
+    widget.options.parameters.updateBreakoutRooms(breakoutRooms);
+    showAlert!(
+      message: '${participant.name} added to Room ${roomIndex + 1}.',
+      type: 'success',
+      duration: 2000,
+    );
   }
 
-  void handleRemoveParticipant(int roomIndex, dynamic participant) {
+  /// Handles removing a participant from a specific room.
+  void handleRemoveParticipant(int roomIndex, BreakoutParticipant participant) {
     setState(() {
       breakoutRooms[roomIndex].remove(participant);
-      participants.firstWhere(
-          (p) => p['name'] == participant['name'])['breakRoom'] = null;
-      checkCanStartBreakout();
+      participants.firstWhere((p) => p.name == participant.name).breakRoom =
+          null;
+      participant.breakRoom = null;
+      _checkCanStartBreakout();
     });
+    widget.options.parameters.updateBreakoutRooms(breakoutRooms);
+    showAlert!(
+      message: '${participant.name} removed from Room ${roomIndex + 1}.',
+      type: 'success',
+      duration: 2000,
+    );
   }
 
+  /// Handles random assignment of participants to rooms.
   void handleRandomAssign() {
-    int numRooms = int.tryParse(numRoomsController.text) ?? 0;
+    final int numRooms = int.tryParse(numRoomsController.text) ?? 0;
     if (numRooms <= 0) {
-      showAlert(
+      showAlert!(
         message: 'Please enter a valid number of rooms',
         type: 'danger',
         duration: 3000,
@@ -335,31 +564,35 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
       return;
     }
 
-    List<dynamic> newBreakoutRooms = List.generate(numRooms, (_) => []);
-    List<dynamic> shuffledParticipants = List.from(participants)..shuffle();
-
-    for (int i = 0; i < shuffledParticipants.length; i++) {
-      int roomIndex = i % numRooms;
-      newBreakoutRooms[roomIndex].add(shuffledParticipants[i]);
-      shuffledParticipants[i]['breakRoom'] = roomIndex;
-    }
-
     setState(() {
+      List<List<BreakoutParticipant>> newBreakoutRooms =
+          List.generate(numRooms, (_) => []);
+      List<Participant> shuffledParticipants = List.from(participants)
+        ..shuffle();
+
+      for (int i = 0; i < shuffledParticipants.length; i++) {
+        int roomIndex = i % numRooms;
+        newBreakoutRooms[roomIndex].add(BreakoutParticipant(
+            name: shuffledParticipants[i].name, breakRoom: roomIndex));
+        shuffledParticipants[i].breakRoom = roomIndex;
+      }
       breakoutRooms = newBreakoutRooms;
+      _checkCanStartBreakout();
     });
 
-    showAlert(
+    widget.options.parameters.updateBreakoutRooms(breakoutRooms);
+    showAlert!(
       message: 'Participants assigned randomly to rooms',
       type: 'success',
       duration: 2000,
     );
-    checkCanStartBreakout();
   }
 
+  /// Handles manual assignment of participants to rooms.
   void handleManualAssign() {
-    int numRooms = int.tryParse(numRoomsController.text) ?? 0;
+    final int numRooms = int.tryParse(numRoomsController.text) ?? 0;
     if (numRooms <= 0) {
-      showAlert(
+      showAlert!(
         message: 'Please enter a valid number of rooms',
         type: 'danger',
         duration: 3000,
@@ -369,53 +602,35 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
 
     setState(() {
       breakoutRooms = List.generate(numRooms, (_) => []);
-      checkCanStartBreakout();
+      _checkCanStartBreakout();
     });
 
-    showAlert(
+    widget.options.parameters.updateBreakoutRooms(breakoutRooms);
+    showAlert!(
       message: 'Rooms created for manual assignment',
       type: 'success',
       duration: 2000,
     );
   }
 
+  /// Handles adding a new room.
   void handleAddRoom() {
     setState(() {
       breakoutRooms.add([]);
-      checkCanStartBreakout();
+      _checkCanStartBreakout();
     });
-
-    showAlert(
+    widget.options.parameters.updateBreakoutRooms(breakoutRooms);
+    showAlert!(
       message: 'New room added',
       type: 'success',
       duration: 3000,
     );
   }
 
-  void handleSaveRooms() {
-    if (validateRooms()) {
-      widget.parameters['updateBreakoutRooms'](breakoutRooms);
-      setState(() {
-        canStartBreakout = true;
-        widget.parameters['updateCanStartBreakout'](true);
-      });
-      showAlert(
-        message: 'Rooms saved successfully',
-        type: 'success',
-        duration: 3000,
-      );
-    } else {
-      // showAlert(
-      //   message: 'Rooms validation failed',
-      //   type: 'danger',
-      //   duration: 3000,
-      // );
-    }
-  }
-
+  /// Validates the breakout rooms before starting.
   bool validateRooms() {
     if (breakoutRooms.isEmpty) {
-      showAlert(
+      showAlert!(
         message: 'There must be at least one room',
         type: 'danger',
         duration: 3000,
@@ -423,9 +638,9 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
       return false;
     }
 
-    for (var room in breakoutRooms) {
+    for (final room in breakoutRooms) {
       if (room.isEmpty) {
-        showAlert(
+        showAlert!(
           message: 'Rooms must not be empty',
           type: 'danger',
           duration: 3000,
@@ -433,10 +648,10 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
         return false;
       }
 
-      final participantNames = room.map((p) => p['name']).toList();
+      final participantNames = room.map((p) => p.name).toList();
       final uniqueNames = Set.from(participantNames);
       if (participantNames.length != uniqueNames.length) {
-        showAlert(
+        showAlert!(
           message: 'Duplicate participant names in a room',
           type: 'danger',
           duration: 3000,
@@ -444,8 +659,8 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
         return false;
       }
 
-      if (room.length > widget.parameters['itemPageLimit']) {
-        showAlert(
+      if (room.length > widget.options.parameters.itemPageLimit) {
+        showAlert!(
           message: 'A room exceeds the participant limit',
           type: 'danger',
           duration: 3000,
@@ -457,7 +672,8 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
     return true;
   }
 
-  void checkCanStartBreakout() {
+  /// Checks if breakout rooms can be started based on current assignments.
+  void _checkCanStartBreakout() {
     if (validateRooms()) {
       setState(() {
         canStartBreakout = true;
@@ -469,10 +685,27 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
     }
   }
 
+  /// Handles saving the current room assignments.
+  void handleSaveRooms() {
+    if (validateRooms()) {
+      widget.options.parameters.updateBreakoutRooms(breakoutRooms);
+      setState(() {
+        canStartBreakout = true;
+        widget.options.parameters.updateCanStartBreakout(true);
+      });
+      showAlert!(
+        message: 'Rooms saved successfully',
+        type: 'success',
+        duration: 3000,
+      );
+    }
+  }
+
+  /// Handles starting or updating breakout rooms.
   void handleStartBreakout() {
-    if (widget.parameters['shareScreenStarted'] ||
-        widget.parameters['shared']) {
-      showAlert(
+    if (widget.options.parameters.shareScreenStarted ||
+        widget.options.parameters.shared) {
+      showAlert!(
         message:
             'You cannot start breakout rooms while screen sharing is active',
         type: 'danger',
@@ -482,30 +715,38 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
     }
 
     if (canStartBreakout) {
-      final emitName = breakOutRoomStarted && !breakOutRoomEnded
+      final String emitName = (breakOutRoomStarted && !breakOutRoomEnded)
           ? 'updateBreakout'
           : 'startBreakout';
-      final filteredBreakoutRooms = breakoutRooms
+      final List<BreakoutRoom> filteredBreakoutRooms = breakoutRooms
           .map((room) => room
-              .map((p) => {'name': p['name'], 'breakRoom': p['breakRoom']})
+              .map((p) => BreakoutParticipant(
+                  name: p.name, breakRoom: p.breakRoom ?? -1))
               .toList())
           .toList();
-      widget.parameters['socket'].emitWithAck(emitName, {
-        'breakoutRooms': filteredBreakoutRooms,
+
+      final List<List<Map<String, dynamic>>> filteredBreakoutRoomsMap =
+          filteredBreakoutRooms
+              .map((innerList) => innerList.map((p) => p.toMap()).toList())
+              .toList();
+
+      widget.options.parameters.socket!.emitWithAck(emitName, {
+        'breakoutRooms': filteredBreakoutRoomsMap,
         'newParticipantAction': newParticipantAction,
-        'roomName': widget.parameters['roomName'],
+        'roomName': widget.options.parameters.roomName,
       }, ack: (response) {
         if (response['success']) {
-          showAlert(
+          showAlert!(
             message: 'Breakout rooms active',
             type: 'success',
             duration: 3000,
           );
-          widget.parameters['updateBreakOutRoomStarted'](true);
-          widget.parameters['updateBreakOutRoomEnded'](false);
-          widget.onBreakoutRoomsClose();
+          widget.options.parameters.updateBreakOutRoomStarted(true);
+          widget.options.parameters.updateBreakOutRoomEnded(false);
+          widget.options.parameters.updateMeetingDisplayType('all');
+          widget.options.onBreakoutRoomsClose();
         } else {
-          showAlert(
+          showAlert!(
             message: response['reason'],
             type: 'danger',
             duration: 3000,
@@ -515,21 +756,24 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
     }
   }
 
+  /// Handles stopping the breakout rooms.
   void handleStopBreakout() {
-    widget.parameters['socket'].emitWithAck('stopBreakout', {
-      'roomName': widget.parameters['roomName'],
+    widget.options.parameters.socket!.emitWithAck('stopBreakout', {
+      'roomName': widget.options.parameters.roomName,
     }, ack: (response) {
       if (response['success']) {
-        showAlert(
+        showAlert!(
           message: 'Breakout rooms stopped',
           type: 'success',
           duration: 3000,
         );
-        widget.parameters['updateBreakOutRoomStarted'](false);
-        widget.parameters['updateBreakOutRoomEnded'](true);
-        widget.onBreakoutRoomsClose();
+        widget.options.parameters.updateBreakOutRoomStarted(false);
+        widget.options.parameters.updateBreakOutRoomEnded(true);
+        widget.options.parameters.updateMeetingDisplayType(
+            widget.options.parameters.prevMeetingDisplayType);
+        widget.options.onBreakoutRoomsClose();
       } else {
-        showAlert(
+        showAlert!(
           message: response['reason'],
           type: 'danger',
           duration: 3000,
@@ -540,24 +784,33 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
 
   @override
   Widget build(BuildContext context) {
-    final double modalWidth = 0.9 * MediaQuery.of(context).size.width > 600
+    final double modalWidth = MediaQuery.of(context).size.width * 0.9 > 600
         ? 600
-        : 0.9 * MediaQuery.of(context).size.width;
-    final modalHeight = MediaQuery.of(context).size.height * 0.7;
+        : MediaQuery.of(context).size.width * 0.9;
+    final double modalHeight = MediaQuery.of(context).size.height * 0.7;
+
     return Visibility(
-      visible: widget.isVisible,
+      visible: widget.options.isVisible,
       child: Stack(
         children: [
           Positioned(
-            top: getModalPosition(
-                widget.position, context, modalWidth, modalHeight)['top'],
-            right: getModalPosition(
-                widget.position, context, modalWidth, modalHeight)['right'],
+            top: getModalPosition(GetModalPositionOptions(
+              position: widget.options.position,
+              context: context,
+              modalWidth: modalWidth,
+              modalHeight: modalHeight,
+            ))['top']!,
+            right: getModalPosition(GetModalPositionOptions(
+              position: widget.options.position,
+              context: context,
+              modalWidth: modalWidth,
+              modalHeight: modalHeight,
+            ))['right']!,
             child: Container(
               width: modalWidth,
               height: modalHeight,
               decoration: BoxDecoration(
-                color: widget.backgroundColor,
+                color: widget.options.backgroundColor,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Dialog(
@@ -566,21 +819,25 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
                   width: MediaQuery.of(context).size.width * 0.9,
                   height: MediaQuery.of(context).size.height * 0.8,
                   decoration: BoxDecoration(
-                    color: widget.backgroundColor,
+                    color: widget.options.backgroundColor,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Header
                       ListTile(
                         title: const Text(
                           'Breakout Rooms',
                           style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         trailing: IconButton(
                           icon: const FaIcon(FontAwesomeIcons.xmark),
-                          onPressed: widget.onBreakoutRoomsClose,
+                          onPressed: widget.options.onBreakoutRoomsClose,
+                          tooltip: 'Close',
                         ),
                       ),
                       const Divider(),
@@ -591,16 +848,20 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
                             children: [
                               Padding(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 5),
+                                    horizontal: 10.0, vertical: 5.0),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
+                                    // Number of Rooms Input
                                     const Text(
                                       'Number of Rooms',
                                       style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87,
+                                      ),
                                     ),
+                                    const SizedBox(height: 5),
                                     TextField(
                                       controller: numRoomsController,
                                       decoration: const InputDecoration(
@@ -668,16 +929,19 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
                               ),
                               Padding(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 20, vertical: 10),
+                                    horizontal: 20.0, vertical: 10.0),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     const Text(
                                       'New Participant Action',
                                       style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87,
+                                      ),
                                     ),
+                                    const SizedBox(height: 5),
                                     DropdownButton<String>(
                                       value: newParticipantAction,
                                       onChanged: (String? newValue) {
@@ -705,8 +969,8 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
                               ),
                               const SizedBox(height: 10),
                               const Divider(),
-                              // Adding the EditRoomModal here
                               EditRoomModal(
+                                  options: EditRoomModalOptions(
                                 editRoomModalVisible: editRoomModalVisible,
                                 updateEditRoomModalVisible:
                                     updateEditRoomModalVisible,
@@ -716,18 +980,20 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
                                 handleRemoveParticipant:
                                     handleRemoveParticipant,
                                 currentRoomIndex: currentRoomIndex,
-                              ),
-
+                              )),
                               const SizedBox(height: 10),
+                              // Room List
+
                               RoomList(
+                                  options: RoomOptions(
                                 rooms: breakoutRooms,
                                 handleEditRoom: handleEditRoom,
                                 handleDeleteRoom: handleDeleteRoom,
                                 handleRemoveParticipant:
                                     handleRemoveParticipant,
-                                handleAddParticipant: handleAddParticipant,
-                                participantsRef: participants,
-                              ),
+                              )),
+
+                              // Control Buttons
                               Padding(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 20, vertical: 10),

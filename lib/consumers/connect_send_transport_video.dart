@@ -1,69 +1,128 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
+import '../../types/types.dart' show ProducerOptionsType;
 
-/// Connects and sends video transport.
+abstract class ConnectSendTransportVideoParameters {
+  Producer? get videoProducer;
+  Transport? get producerTransport;
+  String get islevel;
+  bool get updateMainWindow;
+  MediaStream? get localStream;
+  MediaStream? get localStreamVideo;
+  void Function(Transport? producerTransport) get updateProducerTransport;
+  void Function(Producer? videoProducer) get updateVideoProducer;
+  void Function(bool updateMainWindow) get updateUpdateMainWindow;
+  void Function(MediaStream? localStreamVideo) get updateLocalStreamVideo;
+  void Function(MediaStream? localStream) get updateLocalStream;
+  ConnectSendTransportVideoParameters Function() get getUpdatedAllParams;
+
+  // dynamic operator [](String key);
+}
+
+class ConnectSendTransportVideoOptions {
+  final ProducerOptionsType videoParams;
+  final Map<String, dynamic>? videoConstraints;
+  final ConnectSendTransportVideoParameters parameters;
+
+  ConnectSendTransportVideoOptions(
+      {required this.videoParams,
+      required this.parameters,
+      this.videoConstraints});
+}
+
+typedef ConnectSendTransportVideoType = Future<void> Function(
+    ConnectSendTransportVideoOptions options);
+
+/// Establishes a video transport connection, configuring video encoding and codec options for video transmission.
 ///
-/// This function establishes a connection and sends video data using the provided parameters.
-/// It takes in [videoParams] and [parameters] as required parameters.
-/// The [videoParams] parameter contains information about the video encoding and codec options.
-/// The [parameters] parameter is a map that contains various callback functions and objects required for the connection.
+/// This function handles existing video tracks, acquires new video media, and updates the local video stream state.
 ///
-/// The function performs the following steps:
-/// 1. Destructures the parameters and retrieves the required values.
-/// 2. Closes the existing video tracks from the local stream.
-/// 3. Retrieves the local media stream using the media constraints.
-/// 4. Updates the local stream video with the retrieved stream.
-/// 5. Adds the video track to the local stream.
-/// 6. Updates the main window state based on the video connection level.
-/// 7. Calls the provided callback functions to update the producer transport and main window state.
+/// ### Parameters:
+/// - `options` (`ConnectSendTransportVideoOptions`): Contains:
+///   - `videoParams` (`ProducerOptionsType`): Options for encoding, codec settings, and bitrate for video transmission.
+///   - `parameters` (`ConnectSendTransportVideoParameters`): Holds configurations, update functions, and current video producer and transport details.
 ///
-/// Throws an error if any exception occurs during the process.
+/// ### Workflow:
+/// 1. **Existing Video Track Cleanup**:
+///    - Removes any pre-existing video tracks in `localStream` and `localStreamVideo` to avoid conflicts.
+/// 2. **New Video Media Acquisition**:
+///    - Acquires a new video media stream based on `videoConstraints`.
+///    - Updates `localStream` and `localStreamVideo` with the newly acquired video stream.
+/// 3. **Encoding and Codec Configuration**:
+///    - Sets encoding parameters from `videoParams` if available, including `videoGoogleStartBitrate`.
+///    - Selects the first video codec available on the device, or a VP9 codec if present, for optimized streaming.
+/// 4. **Transport Production**:
+///    - Produces the video track for the transport with specified encoding and codec options, initiating video transmission.
+/// 5. **State Updates**:
+///    - Updates `videoProducer`, `producerTransport`, and `updateMainWindow` in the `parameters` to reflect the active video transport state.
+///
+/// ### Returns:
+/// - A `Future<void>` that resolves when the video transport connection is successfully established and streaming begins.
+///
+/// ### Example Usage:
+/// ```dart
+/// final videoOptions = ConnectSendTransportVideoOptions(
+///   videoParams: ProducerOptionsType(
+///     encodings: [{'rid': 'r0', 'maxBitrate': 1500000}],
+///     codecOptions: ProducerCodecOptions(videoGoogleStartBitrate: 1000),
+///     codec: myCodec,
+///   ),
+///   parameters: myConnectSendTransportVideoParameters,
+/// );
+///
+/// connectSendTransportVideo(videoOptions).then(() {
+///   print("Video transport connected successfully.");
+/// }).catchError((error) {
+///   print("Error connecting video transport: $error");
+/// });
+/// ```
+///
+/// ### Error Handling:
+/// - Logs any connection errors to the console in debug mode.
 
-typedef UpdateVideoProducer = void Function(dynamic videoProducer);
-typedef UpdateProducerTransport = void Function(dynamic producerTransport);
-typedef UpdateMainWindow = void Function(bool updateMainWindow);
-typedef GetUpdatedAllParams = Map<String, dynamic> Function();
+Future<void> connectSendTransportVideo(
+    ConnectSendTransportVideoOptions options) async {
+  final ProducerOptionsType videoParams = options.videoParams;
+  final ConnectSendTransportVideoParameters parameters = options.parameters;
+  final Map<String, dynamic>? videoConstraints = options.videoConstraints;
 
-typedef UpdatedBoolFunction = void Function(bool);
-typedef UpdatedStringFunction = void Function(String);
-typedef UpdatedDynamicFunction = void Function(dynamic);
-
-Future<void> connectSendTransportVideo({
-  required dynamic videoParams,
-  required Map<String, dynamic> parameters,
-}) async {
   try {
     // Destructure parameters
-    GetUpdatedAllParams getUpdatedAllParams = parameters['getUpdatedAllParams'];
-    Transport producerTransport = parameters['producerTransport'];
-    String islevel = parameters['islevel'];
-    dynamic mediaConstraints = parameters['mediaConstraints'];
+    Producer? videoProducer = parameters.videoProducer;
+    Transport? producerTransport = parameters.producerTransport;
+    String islevel = parameters.islevel;
+    bool updateMainWindow = parameters.updateMainWindow;
 
-    dynamic localStream = getUpdatedAllParams()['localStream'];
-    dynamic localStreamVideo = getUpdatedAllParams()['localStreamVideo'];
+    void Function(Producer? videoProducer) updateVideoProducer =
+        parameters.updateVideoProducer;
 
-    UpdatedDynamicFunction updateLocalStream = parameters['updateLocalStream'];
-    UpdatedDynamicFunction updateLocalStreamVideo =
-        parameters['updateLocalStreamVideo'];
+    MediaStream? localStream = parameters.localStream;
+    MediaStream? localStreamVideo = parameters.localStreamVideo;
+    void Function(MediaStream? localStreamVideo) updateLocalStreamVideo =
+        parameters.updateLocalStreamVideo;
+    void Function(MediaStream? localStream) updateLocalStream =
+        parameters.updateLocalStream;
 
     //close the existing video track
     if (localStream != null) {
-      var videoTracks = localStream.getVideoTracks().toList();
-      for (var track in videoTracks) {
-        localStream.removeTrack(track);
+      List<MediaStreamTrack> videoTracks =
+          localStream.getVideoTracks().toList();
+      for (MediaStreamTrack track in videoTracks) {
+        await localStream.removeTrack(track);
       }
     }
 
     if (localStreamVideo != null) {
-      var videoTracks = localStreamVideo.getVideoTracks().toList();
-      for (var track in videoTracks) {
-        localStreamVideo.removeTrack(track);
+      List<MediaStreamTrack> videoTracks =
+          localStreamVideo.getVideoTracks().toList();
+      for (MediaStreamTrack track in videoTracks) {
+        await localStreamVideo.removeTrack(track);
       }
     }
 
-    MediaStream stream =
-        await navigator.mediaDevices.getUserMedia(mediaConstraints);
+    MediaStream stream = await navigator.mediaDevices
+        .getUserMedia(videoConstraints ?? {'video': true});
 
     //Update the localStreamVideo
     updateLocalStreamVideo(stream);
@@ -76,30 +135,27 @@ Future<void> connectSendTransportVideo({
       updateLocalStream(localStream);
     } else {
       // Remove existing video tracks from localStream
-      for (var track in localStream!.getVideoTracks().toList()) {
-        localStream!.removeTrack(track);
+      for (MediaStreamTrack track in localStream.getVideoTracks().toList()) {
+        await localStream.removeTrack(track);
       }
 
       // Add the new video track to the localStream
-      localStream.addTrack(stream.getVideoTracks().first);
+      await localStream.addTrack(stream.getVideoTracks().first);
       updateLocalStream(localStream);
     }
-
-    bool updateMainWindow = parameters['updateMainWindow'];
-    UpdateProducerTransport updateProducerTransport =
-        parameters['updateProducerTransport'];
-    UpdateMainWindow updateUpdateMainWindow =
-        parameters['updateUpdateMainWindow'];
+    void Function(Transport? producerTransport) updateProducerTransport =
+        parameters.updateProducerTransport;
+    var updateUpdateMainWindow = parameters.updateUpdateMainWindow;
 
     List<RtpEncodingParameters> convertToRtpEncodingParametersList(
         List<dynamic> encodings) {
       return encodings.map((encoding) {
         return RtpEncodingParameters(
-          rid: encoding['rid'],
-          maxBitrate: encoding['maxBitrate']?.round(),
-          minBitrate: encoding['minBitrate']?.round(),
-          scalabilityMode: encoding['scalabilityMode'],
-          scaleResolutionDownBy: encoding['scaleResolutionDownBy']?.toDouble(),
+          rid: encoding.rid,
+          maxBitrate: encoding.maxBitrate?.round(),
+          minBitrate: encoding.minBitrate?.round(),
+          scalabilityMode: encoding.scalabilityMode,
+          scaleResolutionDownBy: encoding.scaleResolutionDownBy?.toDouble(),
         );
       }).toList();
     }
@@ -107,36 +163,37 @@ Future<void> connectSendTransportVideo({
     List<RtpEncodingParameters> encodingsList = [];
 
     try {
-      List encodings = videoParams["params"]['encodings'];
+      List encodings = videoParams.encodings;
       encodingsList = convertToRtpEncodingParametersList(encodings);
       // ignore: empty_catches
     } catch (e) {}
 
     //get the first codec from the first video track
 
-    producerTransport.produce(
+    producerTransport?.produce(
       track: stream.getVideoTracks().first,
       stream: stream,
-      encodings: encodingsList,
+      encodings: encodingsList.length > 1 ? encodingsList : [],
       codecOptions: ProducerCodecOptions(
-          videoGoogleStartBitrate: videoParams["params"]['codecOptions']
-                  ['videoGoogleStartBitrate']
-              ?.round()),
-      codec: videoParams['codecs'],
+          videoGoogleStartBitrate:
+              videoParams.codecOptions?.videoGoogleStartBitrate?.round()),
+      codec: videoParams.codec,
       source: 'webcam',
     );
 
-    // Update main window state based on the video connection level
+    // Update main window state based on video connection level
     if (islevel == '2') {
       updateMainWindow = true;
     }
 
+    // Update video producer and transport state
+    updateVideoProducer(videoProducer);
     updateProducerTransport(producerTransport);
     updateUpdateMainWindow(updateMainWindow);
   } catch (error) {
     if (kDebugMode) {
       print('connectSendTransportVideo error: $error');
     }
-    // throw error;
+    rethrow;
   }
 }

@@ -1,21 +1,37 @@
 typedef UpdateIsRequestsModalVisible = void Function(bool isVisible);
 
-/// Launches the requests with the given parameters.
-///
-/// The [parameters] map should contain the following keys:
-/// - 'updateIsRequestsModalVisible': A function that updates the visibility state of the requests modal.
-/// - 'isRequestsModalVisible': A boolean indicating the current visibility state of the requests modal.
-///
-/// This function toggles the visibility state of the requests modal by calling the [updateIsRequestsModalVisible]
-/// function with the negation of the current visibility state.
+/// Parameters for launching requests in the app.
+class LaunchRequestsOptions {
+  final UpdateIsRequestsModalVisible updateIsRequestsModalVisible;
+  final bool isRequestsModalVisible;
 
-void launchRequests({
-  required Map<String, dynamic> parameters,
-}) {
-  final UpdateIsRequestsModalVisible updateIsRequestsModalVisible =
-      parameters['updateIsRequestsModalVisible'];
-  final bool isRequestsModalVisible = parameters['isRequestsModalVisible'];
+  LaunchRequestsOptions({
+    required this.updateIsRequestsModalVisible,
+    required this.isRequestsModalVisible,
+  });
+}
 
-  // Toggle the visibility state of the requests modal
-  updateIsRequestsModalVisible(!isRequestsModalVisible);
+typedef LaunchRequestsType = void Function(LaunchRequestsOptions options);
+
+/// Toggles the visibility state of the requests modal.
+///
+/// The [options] parameter should include:
+/// - `updateIsRequestsModalVisible`: A function to update the visibility state of the requests modal.
+/// - `isRequestsModalVisible`: A boolean indicating the current visibility state of the requests modal.
+///
+/// This function inverts the visibility state by passing the negated value of `isRequestsModalVisible`
+/// to `updateIsRequestsModalVisible`.
+///
+/// Example:
+/// ```dart
+/// launchRequests(
+///   LaunchRequestsOptions(
+///     updateIsRequestsModalVisible: (isVisible) => print('Modal visible: $isVisible'),
+///     isRequestsModalVisible: true,
+///   ),
+/// );
+/// ```
+
+void launchRequests(LaunchRequestsOptions options) {
+  options.updateIsRequestsModalVisible(!options.isRequestsModalVisible);
 }

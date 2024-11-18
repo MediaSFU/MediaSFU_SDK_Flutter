@@ -1,78 +1,95 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import '../types/types.dart' show Participant, Stream;
 
-/// Mixes video streams based on the given parameters.
-///
-/// The [parameters] map should contain the following keys:
-/// - 'getUpdatedAllParams': A function that returns a map of updated parameters.
-/// - 'alVideoStreams': A list of video streams from the 'al' category.
-/// - 'nonAlVideoStreams': A list of video streams from the 'non-al' category.
-/// - 'refParticipants': A list of reference participants.
-///
-/// The function first destructures the parameters and retrieves the updated parameters
-/// using the 'getUpdatedAllParams' function. It then separates the 'al' and 'non-al'
-/// video streams and reference participants from the parameters.
-///
-/// Next, it filters the 'al' video streams based on whether they are muted or not,
-/// and whether the corresponding participant is muted or not. The unmuted 'al' video
-/// streams are added to the 'mixedStreams' list.
-///
-/// The function then interleaves the muted 'al' video streams and 'non-al' video streams
-/// in the 'mixedStreams' list. It starts by adding the first 'non-al' video stream, followed
-/// by the first muted 'al' video stream, and so on.
-///
-/// After that, any remaining 'non-al' video streams are added to the 'mixedStreams' list.
-///
-/// Finally, if there is a 'youyou' or 'youyouyou' video stream, it is inserted at the beginning
-/// of the 'mixedStreams' list.
-///
-/// The function returns the resulting 'mixedStreams' list.
-///
-/// If an error occurs during the process of mixing streams, it is handled and rethrown.
-/// If the code is running in debug mode, the error is printed to the console.
+/// Parameters for mixing video and audio streams with participants.
+class MixStreamsOptions {
+  final List<Stream> alVideoStreams; // Stream or Participant
+  final List<Stream> nonAlVideoStreams;
+  final List<Participant> refParticipants; // Stream or Participant
 
-typedef GetUpdatedAllParams = Map<String, dynamic> Function();
+  MixStreamsOptions({
+    required this.alVideoStreams,
+    required this.nonAlVideoStreams,
+    required this.refParticipants,
+  });
+}
 
-Future<List<dynamic>> mixStreams(
-    {required Map<String, dynamic> parameters}) async {
+typedef MixStreamsType = Future<List<Stream>> Function({
+  required MixStreamsOptions options,
+});
+
+/// Mixes video and audio streams and participants based on specified parameters.
+///
+/// Combines `alVideoStreams`, `nonAlVideoStreams`, and `refParticipants` by interleaving
+/// muted and unmuted streams, while ensuring prioritized positioning for streams with specific identifiers.
+///
+/// - [options] (`MixStreamsOptions`): The options for mixing streams.
+///   - `alVideoStreams` (`List<Stream>`): List of "al" category video and audio streams to mix.
+///   - `nonAlVideoStreams` (`List<Stream>`): List of non-"al" category streams to mix.
+///   - `refParticipants` (`List<Stream>`): List of reference participants.
+///
+/// Returns:
+/// A `Future<List<Stream>>` that completes with the mixed streams list.
+///
+/// Example:
+/// ```dart
+/// final mixedStreams = await mixStreams(
+///   options: MixStreamsOptions(
+///     alVideoStreams: [stream1, stream2],
+///     nonAlVideoStreams: [participant1, participant2],
+///     refParticipants: [participant1, participant2],
+///   ),
+/// );
+/// print('Mixed streams: $mixedStreams');
+/// ```
+///
+/// Throws:
+/// If an error occurs during the process of mixing streams, it logs the error in debug mode and rethrows it.
+Future<List<Stream>> mixStreams({
+  required MixStreamsOptions options,
+}) async {
   try {
-    // Destructure parameters
-    GetUpdatedAllParams getUpdatedAllParams = parameters['getUpdatedAllParams'];
-    parameters = getUpdatedAllParams();
+    List<Stream> alVideoStreams = List.from(options.alVideoStreams);
+    List<Stream> nonAlVideoStreams = List.from(options.nonAlVideoStreams);
+    var refParticipants = options.refParticipants;
 
-    var alVideoStreams = parameters['alVideoStreams'] as List<dynamic>;
-    var nonAlVideoStreams = parameters['nonAlVideoStreams'] as List<dynamic>;
-    var refParticipants = parameters['refParticipants'] as List<dynamic>;
+    var mixedStreams = <Stream>[];
 
-    var mixedStreams = <dynamic>[];
+    // Identify "youyou" or "youyouyou" stream
     var youyouStream = alVideoStreams.firstWhere(
-        (obj) =>
-            obj['producerId'] == 'youyou' || obj['producerId'] == 'youyouyou',
-        orElse: () => null);
+      (obj) => obj.producerId == 'youyou' || obj.producerId == 'youyouyou',
+      orElse: () => Stream(
+        producerId: '',
+        name: '',
+        muted: false,
+      ),
+    );
+
     alVideoStreams = alVideoStreams
         .where((obj) =>
-            obj['producerId'] != 'youyou' && obj['producerId'] != 'youyouyou')
+            obj.producerId != 'youyou' && obj.producerId != 'youyouyou')
         .toList();
 
+    // Separate unmuted and muted streams
     var unmutedAlVideoStreams = alVideoStreams.where((obj) {
       var participant = refParticipants.firstWhere(
-          (p) => p['videoID'] == obj['producerId'],
-          orElse: () => null);
-      return !obj['muted'] &&
-          participant != null &&
-          participant['muted'] == false;
+          (p) => p.videoID == obj.producerId,
+          orElse: () => Participant(
+              name: 'none', videoID: '', audioID: '', muted: false));
+      return !obj.muted! &&
+          participant.muted == false &&
+          (participant.name != 'none');
     }).toList();
 
     var mutedAlVideoStreams = alVideoStreams.where((obj) {
       var participant = refParticipants.firstWhere(
-          (p) => p['videoID'] == obj['producerId'],
-          orElse: () => null);
-      return obj['muted'] ||
-          (participant != null && participant['muted'] == true);
+          (p) => p.videoID == obj.producerId,
+          orElse: () => Participant(
+              name: 'none', videoID: '', audioID: '', muted: false));
+      return obj.muted! ||
+          (participant.name != 'none' && participant.muted == true);
     }).toList();
-
-    nonAlVideoStreams =
-        List.from(nonAlVideoStreams); // Create a copy of nonAlVideoStreams
 
     // Add unmutedAlVideoStreams to mixedStreams
     mixedStreams.addAll(unmutedAlVideoStreams);
@@ -87,21 +104,18 @@ Future<List<dynamic>> mixStreams(
       mixedStreams.add(mutedAlVideoStreams[i]);
     }
 
-    // Handle remaining nonAlVideoStreams (if any)
-    for (var i = nonAlIndex; i < nonAlVideoStreams.length; i++) {
-      mixedStreams.add(nonAlVideoStreams[i]);
-    }
+    // Add any remaining nonAlVideoStreams
+    mixedStreams.addAll(nonAlVideoStreams.sublist(nonAlIndex));
 
-    // Unshift 'youyou' or 'youyouyou' stream to mixedStreams
-    if (youyouStream != null) {
+    // Insert 'youyou' or 'youyouyou' stream at the start
+    if (youyouStream.producerId.isNotEmpty) {
       mixedStreams.insert(0, youyouStream);
     }
 
     return mixedStreams;
   } catch (error) {
-    // Handle errors during the process of mixing streams
     if (kDebugMode) {
-      // print('Error mixing streams: ${error.toString()}');
+      print('Error mixing streams: ${error.toString()}');
     }
     rethrow;
   }

@@ -1,38 +1,58 @@
 import 'dart:math';
+import '../../types/types.dart' show Request, Participant;
+
+/// Class to hold options for generating a random request list.
+class GenerateRandomRequestListOptions {
+  final List<Participant> participants;
+  final String hostName;
+  final String? coHostName;
+  final int numberOfRequests;
+
+  GenerateRandomRequestListOptions({
+    required this.participants,
+    required this.hostName,
+    this.coHostName,
+    required this.numberOfRequests,
+  });
+}
+
+typedef GenerateRandomRequestListType = List<Request> Function(
+    GenerateRandomRequestListOptions options);
 
 /// Generates a list of random requests for participants, excluding the host and co-host.
 ///
-/// The [participants] parameter is a list of dynamic objects representing the participants.
-/// The [hostName] parameter is a string representing the name of the host.
-/// The [coHostName] parameter is a string representing the name of the co-host.
-/// The [numberOfRequests] parameter is an integer representing the number of requests to generate for each participant.
-///
-/// Returns a list of maps, where each map represents a request and contains the following keys:
-/// - 'id': The ID of the participant.
-/// - 'name': The lowercase and underscored name of the participant.
-/// - 'icon': The randomly selected request icon.
-/// - 'username': The lowercase and underscored name of the participant.
-
-List<Map<String, dynamic>> generateRandomRequestList(List<dynamic> participants,
-    String hostName, String coHostName, int numberOfRequests) {
+/// Example usage:
+/// ```dart
+/// final options = GenerateRandomRequestListOptions(
+///   participants: [Participant(id: '1', name: 'Alice'), Participant(id: '2', name: 'Bob'), Participant(id: '3', name: 'Charlie')],
+///   hostName: 'Alice',
+///   coHostName: 'Bob',
+///   numberOfRequests: 2,
+/// );
+/// List<Request> requestList = generateRandomRequestList(options);
+/// print(requestList);
+/// ```
+List<Request> generateRandomRequestList(
+    GenerateRandomRequestListOptions options) {
   // Filter out the host and co-host from the participants
-  List<dynamic> filteredParticipants = participants
+  List<Participant> filteredParticipants = options.participants
       .where((participant) =>
-          participant['name'] != hostName && participant['name'] != coHostName)
+          participant.name != options.hostName &&
+          participant.name != options.coHostName)
       .toList();
 
   // Create a list with three possible request icons
   List<String> requestIcons = ['fa-video', 'fa-desktop', 'fa-microphone'];
 
-  // Shuffle the requestIcons list to ensure unique icons for each participant and randomly select between 1 and 3 icons
+  // Shuffle the requestIcons list to ensure unique icons for each participant
   requestIcons.shuffle();
 
   // Generate unique requests for each participant with unique icons
-  List<Map<String, dynamic>> requestList = [];
+  List<Request> requestList = [];
   for (var participant in filteredParticipants) {
     Set<String> uniqueIcons = {}; // To ensure unique icons for each participant
 
-    for (int i = 0; i < numberOfRequests; i++) {
+    for (int i = 0; i < options.numberOfRequests; i++) {
       String randomIcon;
       do {
         randomIcon = requestIcons[Random().nextInt(requestIcons.length)];
@@ -40,12 +60,12 @@ List<Map<String, dynamic>> generateRandomRequestList(List<dynamic> participants,
 
       uniqueIcons.add(randomIcon);
 
-      requestList.add({
-        'id': participant['id'],
-        'name': participant['name'].toLowerCase().replaceAll(' ', '_'),
-        'icon': randomIcon,
-        'username': participant['name'].toLowerCase().replaceAll(' ', '_'),
-      });
+      requestList.add(Request(
+        id: participant.id ?? '',
+        name: participant.name.toLowerCase().replaceAll(' ', '_'),
+        icon: randomIcon,
+        username: participant.name.toLowerCase().replaceAll(' ', '_'),
+      ));
     }
   }
 

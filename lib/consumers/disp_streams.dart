@@ -1,438 +1,545 @@
-import 'dart:async';
-import 'package:flutter/foundation.dart';
+// ignore_for_file: non_constant_identifier_names, unused_local_variable
 
-/// The `dispStreams` function takes in various parameters and performs the following tasks:
-/// - Extracts parameters from the provided map.
-/// - Filters the list of streams based on certain conditions.
-/// - Determines the level of the stream based on the recording display type.
-/// - Retrieves participant information based on the stream's producer ID.
+import 'dart:async';
+import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
+import '../types/types.dart'
+    show
+        Stream,
+        Participant,
+        TransportType,
+        PrepopulateUserMediaParameters,
+        PrepopulateUserMediaType,
+        RePortParameters,
+        RePortType,
+        ProcessConsumerTransportsParameters,
+        ProcessConsumerTransportsType,
+        ResumePauseStreamsParameters,
+        ResumePauseStreamsType,
+        ReadjustParameters,
+        ReadjustType,
+        AddVideosGridType,
+        AddVideosGridParameters,
+        GetEstimateType,
+        CheckGridType,
+        ResumePauseAudioStreamsParameters,
+        ResumePauseAudioStreamsType,
+        GetEstimateParameters,
+        EventType,
+        MediaStream,
+        AddVideosGridOptions,
+        GetEstimateOptions,
+        CheckGridOptions,
+        RePortOptions,
+        PrepopulateUserMediaOptions,
+        ProcessConsumerTransportsOptions,
+        ResumePauseStreamsOptions,
+        ResumePauseAudioStreamsOptions,
+        ReadjustOptions;
+
+/// Parameters required for displaying streams.
+/// Extends multiple parameter interfaces from your TypeScript definitions.
+abstract class DispStreamsParameters
+    implements
+        PrepopulateUserMediaParameters,
+        RePortParameters,
+        ProcessConsumerTransportsParameters,
+        ResumePauseStreamsParameters,
+        ReadjustParameters,
+        ResumePauseAudioStreamsParameters,
+        GetEstimateParameters,
+        AddVideosGridParameters {
+  // Properties as abstract getters
+  List<TransportType> get consumerTransports;
+  List<Stream> get streamNames;
+  List<Stream> get audStreamNames;
+  List<Participant> get participants;
+  List<Participant> get refParticipants;
+  String get recordingDisplayType; // 'video' | 'media' | 'all'
+  bool get recordingVideoOptimized;
+  String get meetingDisplayType;
+  bool get meetingVideoOptimized;
+  int get currentUserPage;
+  String get hostLabel;
+  double get mainHeightWidth;
+  double get prevMainHeightWidth;
+  bool get prevDoPaginate;
+  bool get doPaginate;
+  bool get firstAll;
+  bool get shared;
+  bool get shareScreenStarted;
+  bool get shareEnded;
+  List<Stream> get oldAllStreams; // List<Stream | Participant>
+  bool get updateMainWindow;
+  List<String> get activeNames;
+  List<String> get dispActiveNames;
+  List<String> get pDispActiveNames;
+  int get nForReadjustRecord;
+  bool get firstRound;
+  bool get lockScreen;
+  List<Stream> get chatRefStreams; // List<Stream | Participant>
+  EventType get eventType;
+  String get islevel;
+  MediaStream? get localStreamVideo;
+  bool get breakOutRoomStarted;
+  bool get breakOutRoomEnded;
+  bool get keepBackground;
+  MediaStream? get virtualStream;
+
+  // Update functions as abstract getters
+  void Function(List<String>) get updateActiveNames;
+  void Function(List<String>) get updateDispActiveNames;
+  void Function(List<Stream>) get updateLStreams;
+  void Function(List<Stream>) get updateChatRefStreams;
+  void Function(int) get updateNForReadjustRecord;
+  void Function(bool) get updateUpdateMainWindow;
+  void Function(bool) get updateShowMiniView;
+  void Function(bool) get updateShareEnded;
+
+  // Mediasfu functions as abstract getters
+  PrepopulateUserMediaType get prepopulateUserMedia;
+  RePortType get rePort;
+  ProcessConsumerTransportsType get processConsumerTransports;
+  ResumePauseStreamsType get resumePauseStreams;
+  ReadjustType get readjust;
+  AddVideosGridType get addVideosGrid;
+  GetEstimateType get getEstimate;
+  CheckGridType get checkGrid;
+  ResumePauseAudioStreamsType get resumePauseAudioStreams;
+
+  // Method for getting updated parameters
+  DispStreamsParameters Function() get getUpdatedAllParams;
+
+  // Dynamic access operator for additional properties
+  //dynamic operator [](String key);
+}
+
+/// Options for the dispStreams function.
+class DispStreamsOptions {
+  List<Stream> lStreams; // List<Stream | Participant>
+  int ind;
+  bool auto;
+  bool ChatSkip;
+  dynamic forChatCard;
+  dynamic forChatID;
+  DispStreamsParameters parameters;
+  int breakRoom;
+  bool inBreakRoom;
+
+  DispStreamsOptions({
+    required this.lStreams,
+    required this.ind,
+    this.auto = false,
+    this.ChatSkip = false,
+    this.forChatCard,
+    this.forChatID,
+    required this.parameters,
+    this.breakRoom = -1,
+    this.inBreakRoom = false,
+  });
+}
+
+/// Function type definition for displaying streams.
+typedef DispStreamsType = Future<void> Function(DispStreamsOptions options);
+
+/// Displays streams in the media application based on a range of parameters and conditions.
 ///
-/// The function also makes use of several typedefs and functions defined in the same file.
+/// This function:
+/// - **Filters Streams**: Excludes specific streams (like 'youyou') based on preset rules.
+/// - **Updates Active Names**: Populates lists of active and displayed names based on stream conditions.
+/// - **Prepopulates User Media**: Uses `prepopulateUserMedia` to update the UI and manage media layout.
+/// - **Reorders Streams**: Adds streams to a grid layout and updates based on the current event type (broadcast, chat).
+/// - **Resumes or Pauses Streams**: Adjusts the state of media streams depending on room settings, like breakout room status.
 ///
-/// Example usage:
+/// ### Parameters:
+/// - `options` (`DispStreamsOptions`): Contains parameters needed for stream display.
+///   - `lStreams`: The list of streams to be displayed, filtered and updated based on conditions.
+///   - `ind`: An index value for determining the stream arrangement or pagination.
+///   - `auto`: A boolean that determines if auto-adjustments should be applied.
+///   - `ChatSkip`: A flag indicating if chat-specific processing should be skipped.
+///   - `forChatCard`, `forChatID`: Optional dynamic parameters for chat-specific configurations.
+///   - `parameters`: The main set of parameters for configuring media stream display settings.
+///   - `breakRoom`: Integer representing a specific breakout room.
+///   - `inBreakRoom`: Indicates if the user is currently in a breakout room.
+///
+/// ### Behavior:
+/// - **Event-Driven Display**: Distinguishes between broadcast and chat events to organize streams differently.
+/// - **Grid Layout Adjustment**: Calculates grid layouts using `getEstimate` and `checkGrid` functions.
+/// - **Breakout Room Management**: Handles stream resume/pause differently if in a breakout room.
+///
+/// ### Error Handling:
+/// - Prints errors in debug mode if any function calls fail, particularly in media state transitions and stream handling.
+///
+/// ### Example Usage:
 /// ```dart
-/// await dispStreams(
-///   lStreams: myStreams,
+/// final options = DispStreamsOptions(
+///   lStreams: [/* Streams list */],
 ///   ind: 0,
 ///   auto: true,
-///   chatSkip: false,
-///   forChatCard: myChatCard,
-///   forChatID: myChatID,
-///   parameters: myParameters,
+///   ChatSkip: false,
+///   forChatCard: null,
+///   forChatID: null,
+///   parameters: parameters,  // Instance of DispStreamsParameters
 ///   breakRoom: -1,
 ///   inBreakRoom: false,
 /// );
 ///
+/// dispStreams(options).then((_) {
+///   print("Streams displayed successfully");
+/// }).catchError((error) {
+///   print("Error displaying streams: $error");
+/// });
+/// ```
+///
+/// ### Notes:
+/// - **Handles a wide variety of media conditions**: This function is intended to adapt to both participant and broadcast layouts, as well as chat-focused or mixed-media environments.
+/// - **Callback and Async Functionality**: Various callback functions and async operations are included to ensure responsive media state updates.
 
-typedef GetUpdatedAllParams = Map<String, dynamic> Function();
-typedef PrepopulateUserMedia = List<dynamic> Function({
-  required String name,
-  required Map<String, dynamic> parameters,
-});
-typedef RePort = Future<void> Function({
-  bool restart,
-  required Map<String, dynamic> parameters,
-});
-typedef ProcessConsumerTransports = Future<void> Function(
-    {required List<dynamic> consumerTransports,
-    required List<dynamic> lStreams_,
-    required Map<String, dynamic> parameters});
-typedef ResumePauseStreams = Future<void> Function({
-  required Map<String, dynamic> parameters,
-});
-typedef ResumePauseAudioStreams = Future<void> Function({
-  required bool inBreakRoom,
-  required int breakRoom,
-  required Map<String, dynamic> parameters,
-});
-typedef Readjust = Future<void> Function({
-  required int n,
-  required int state,
-  required Map<String, dynamic> parameters,
-});
-typedef AddVideosGrid = Future<void> Function({
-  required List<dynamic> mainGridStreams,
-  required List<dynamic> altGridStreams,
-  required int numtoadd,
-  required int numRows,
-  required int numCols,
-  required int remainingVideos,
-  required int actualRows,
-  required int lastrowcols,
-  required bool removeAltGrid,
-  required int ind,
-  bool forChat,
-  bool forChatMini,
-  dynamic forChatCard,
-  String? forChatID,
-  required Map<String, dynamic> parameters,
-});
-typedef GetEstimate = List<dynamic> Function({
-  required int n,
-  required Map<String, dynamic> parameters,
-});
-typedef CheckGrid = Future<List<dynamic>> Function(
-    int rows, int cols, int refLength);
-
-typedef UpdateActiveNames = void Function(List<String>);
-typedef UpdateDispActiveNames = void Function(List<String>);
-typedef UpdateLStreams = void Function(List<dynamic>);
-typedef UpdateChatRefStreams = void Function(List<dynamic>);
-typedef UpdateNForReadjustRecord = void Function(int);
-typedef UpdateUpdateMainWindow = void Function(bool);
-typedef UpdateShareEnded = void Function(bool);
-typedef UpdateShowMiniView = void Function(bool);
-
-Future<void> dispStreams({
-  required List<dynamic> lStreams,
-  required int ind,
-  bool auto = false,
-  bool chatSkip = false,
-  dynamic forChatCard,
-  dynamic forChatID,
-  required Map<String, dynamic> parameters,
-  int breakRoom = -1,
-  bool inBreakRoom = false,
-}) async {
-  // Function to display streams
-
+Future<void> dispStreams(DispStreamsOptions options) async {
   try {
-    // Extract parameters
-    GetUpdatedAllParams getUpdatedAllParams = parameters['getUpdatedAllParams'];
-    parameters = getUpdatedAllParams();
+    // Retrieve updated parameters
+    var lStreams = options.lStreams;
+    DispStreamsParameters parameters = options.parameters.getUpdatedAllParams();
 
-    List<dynamic> consumerTransports = parameters['consumerTransports'] ?? [];
-    List<dynamic> streamNames = parameters['streamNames'] ?? [];
-    List<dynamic> audStreamNames = parameters['audStreamNames'] ?? [];
-    List<dynamic> participants = parameters['participants'] ?? [];
-    List<dynamic> refParticipants = parameters['refParticipants'] ?? [];
-    String recordingDisplayType = parameters['recordingDisplayType'] ?? '';
-    bool recordingVideoOptimized =
-        parameters['recordingVideoOptimized'] ?? false;
-    String meetingDisplayType = parameters['meetingDisplayType'] ?? '';
-    bool meetingVideoOptimized = parameters['meetingVideoOptimized'] ?? false;
-    int currentUserPage = parameters['currentUserPage'] ?? 0;
-    String hostLabel = parameters['hostLabel'] ?? '';
-    double mainHeightWidth = parameters['mainHeightWidth'] ?? 0;
-    double prevMainHeightWidth = parameters['prevMainHeightWidth'] ?? 0;
-    bool prevDoPaginate = parameters['prevDoPaginate'] ?? false;
-    bool doPaginate = parameters['doPaginate'] ?? false;
-    bool firstAll = parameters['firstAll'] ?? false;
-    bool shared = parameters['shared'] ?? false;
-    bool shareScreenStarted = parameters['shareScreenStarted'] ?? false;
-    bool shareEnded = parameters['shareEnded'] ?? false;
-    List<dynamic> oldAllStreams = parameters['oldAllStreams'] ?? [];
-    bool updateMainWindow = parameters['updateMainWindow'] ?? false;
-    String? remoteProducerId = parameters['remoteProducerId'] ?? '';
-    List<String> activeNames = parameters['activeNames'] ?? [];
-    List<String> dispActiveNames = parameters['dispActiveNames'] ?? [];
-    List<String> pDispActiveNames = parameters['pDispActiveNames'] ?? [];
-    int nForReadjustRecord = parameters['nForReadjustRecord'] ?? 0;
-    bool firstRound = parameters['firstRound'] ?? false;
-    bool lockScreen = parameters['lockScreen'] ?? false;
-    List<dynamic> chatRefStreams = parameters['chatRefStreams'] ?? [];
-    String eventType = parameters['eventType'] ?? '';
-    String islevel = parameters['islevel'] ?? '1';
-    dynamic localStreamVideo = parameters['localStreamVideo'];
+    // Destructure necessary properties
+    List<TransportType> consumerTransports = parameters.consumerTransports;
+    List<Stream> streamNames = parameters.streamNames;
+    List<Stream> audStreamNames = parameters.audStreamNames;
+    List<Participant> participants = parameters.participants;
+    List<Participant> refParticipants = parameters.refParticipants;
+    String recordingDisplayType = parameters.recordingDisplayType;
+    bool recordingVideoOptimized = parameters.recordingVideoOptimized;
+    String meetingDisplayType = parameters.meetingDisplayType;
+    bool meetingVideoOptimized = parameters.meetingVideoOptimized;
+    int currentUserPage = parameters.currentUserPage;
+    String hostLabel = parameters.hostLabel;
+    double mainHeightWidth = parameters.mainHeightWidth;
+    double prevMainHeightWidth = parameters.prevMainHeightWidth;
+    bool prevDoPaginate = parameters.prevDoPaginate;
+    bool doPaginate = parameters.doPaginate;
+    bool firstAll = parameters.firstAll;
+    bool shared = parameters.shared;
+    bool shareScreenStarted = parameters.shareScreenStarted;
+    bool shareEnded = parameters.shareEnded;
+    List<Stream> oldAllStreams = parameters.oldAllStreams;
+    bool updateMainWindow = parameters.updateMainWindow;
+    List<String> activeNames = List.from(parameters.activeNames);
+    List<String> dispActiveNames = List.from(parameters.dispActiveNames);
+    List<String> pDispActiveNames = List.from(parameters.pDispActiveNames);
+    int nForReadjustRecord = parameters.nForReadjustRecord;
+    bool firstRound = parameters.firstRound;
+    bool lockScreen = parameters.lockScreen;
+    List<Stream> chatRefStreams = List.from(parameters.chatRefStreams);
+    EventType eventType = parameters.eventType;
+    String islevel = parameters.islevel;
+    MediaStream? localStreamVideo = parameters.localStreamVideo;
 
-    bool breakOutRoomStarted = parameters['breakOutRoomStarted'] ?? false;
-    bool breakOutRoomEnded = parameters['breakOutRoomEnded'] ?? false;
+    bool breakOutRoomStarted = parameters.breakOutRoomStarted;
+    bool breakOutRoomEnded = parameters.breakOutRoomEnded;
+    bool keepBackground = parameters.keepBackground;
+    MediaStream? virtualStream = parameters.virtualStream;
 
-    UpdateActiveNames updateActiveNames = parameters['updateActiveNames'];
-    UpdateDispActiveNames updateDispActiveNames =
-        parameters['updateDispActiveNames'];
-    UpdateLStreams updateLStreams = parameters['updateLStreams'];
-    UpdateChatRefStreams updateChatRefStreams =
-        parameters['updateChatRefStreams'];
-    UpdateNForReadjustRecord updateNForReadjustRecord =
-        parameters['updateNForReadjustRecord'];
-    UpdateUpdateMainWindow updateUpdateMainWindow =
-        parameters['updateUpdateMainWindow'];
-    UpdateShareEnded updateShareEnded = parameters['updateShareEnded'];
-    UpdateShowMiniView updateShowMiniView = parameters['updateShowMiniView'];
+    // Update functions
+    void Function(List<String>) updateActiveNames =
+        parameters.updateActiveNames;
+    void Function(List<String>) updateDispActiveNames =
+        parameters.updateDispActiveNames;
+    void Function(List<Stream>) updateLStreams = parameters.updateLStreams;
+    void Function(List<Stream>) updateChatRefStreams =
+        parameters.updateChatRefStreams;
+    void Function(int) updateNForReadjustRecord =
+        parameters.updateNForReadjustRecord;
+    void Function(bool) updateUpdateMainWindow =
+        parameters.updateUpdateMainWindow;
+    void Function(bool) updateShowMiniView = parameters.updateShowMiniView;
 
-    PrepopulateUserMedia prepopulateUserMedia =
-        parameters['prepopulateUserMedia'];
-    RePort rePort = parameters['rePort'];
-    ProcessConsumerTransports processConsumerTransports =
-        parameters['processConsumerTransports'];
-    ResumePauseStreams resumePauseStreams = parameters['resumePauseStreams'];
-    ResumePauseAudioStreams resumePauseAudioStreams =
-        parameters['resumePauseAudioStreams'];
-    Readjust readjust = parameters['readjust'];
-    AddVideosGrid addVideosGrid = parameters['addVideosGrid'];
-    GetEstimate getEstimate = parameters['getEstimate'];
-    CheckGrid checkGrid = parameters['checkGrid'];
+    // mediasfu functions
+    PrepopulateUserMediaType prepopulateUserMedia =
+        parameters.prepopulateUserMedia;
+    RePortType rePort = parameters.rePort;
+    ProcessConsumerTransportsType processConsumerTransports =
+        parameters.processConsumerTransports;
+    ResumePauseStreamsType resumePauseStreams = parameters.resumePauseStreams;
+    ReadjustType readjust = parameters.readjust;
+    AddVideosGridType addVideosGrid = parameters.addVideosGrid;
+    GetEstimateType getEstimate = parameters.getEstimate;
+    CheckGridType checkGrid = parameters.checkGrid;
+    ResumePauseAudioStreamsType resumePauseAudioStreams =
+        parameters.resumePauseAudioStreams;
 
-    var proceed = true;
+    bool proceed = true;
+    String? remoteProducerId;
 
-    var lStreams_ = lStreams
-        .where((stream) =>
-            stream['producerId'] != 'youyou' &&
-            stream['producerId'] != 'youyouyou')
-        .toList();
+    // Filter out 'youyou' and 'youyouyou' streams
+    List<Stream> lStreams_ = options.lStreams.where((stream) {
+      String? producerId = stream.producerId;
+      String? id = stream.id;
+      String? name = stream.name;
+      return producerId != 'youyou' &&
+          producerId != 'youyouyou' &&
+          id != 'youyou' &&
+          id != 'youyouyou' &&
+          name != 'youyou' &&
+          name != 'youyouyou';
+    }).toList();
 
-    lStreams_ = lStreams_
-        .where((stream) =>
-            stream['id'] != 'youyou' &&
-            stream['id'] != 'youyouyou' &&
-            stream['name'] != 'youyou' &&
-            stream['name'] != 'youyouyou')
-        .toList();
-
-    if (eventType == 'chat') {
+    if (eventType == EventType.chat) {
       proceed = true;
-    } else if (ind == 0 || (islevel != '2' && currentUserPage == ind)) {
+    } else if (options.ind == 0 ||
+        (islevel != '2' && currentUserPage == options.ind)) {
       proceed = false;
 
+      // Populate activeNames based on lStreams_
       for (var stream in lStreams_) {
-        var checker = false;
-        var checkLevel = 0;
+        bool checker = false;
+        int checkLevel = 0;
 
         if (recordingDisplayType == 'video') {
           if (recordingVideoOptimized) {
-            if (stream.containsKey('producerId') &&
-                stream['producerId'] != null &&
-                stream['producerId'] != '') {
+            if (stream.containsKey('producerId') && stream.producerId != '') {
               checker = true;
               checkLevel = 0;
             }
           } else {
-            if ((stream.containsKey('producerId') &&
-                    (stream['producerId'] != null &&
-                        stream['producerId'] != '')) ||
-                ((stream.containsKey('audioID') &&
-                    stream['audioID'] != null &&
-                    stream['audioID'] != ''))) {
+            if ((stream.containsKey('producerId') && stream.producerId != '') ||
+                (stream.containsKey('audioID') &&
+                    stream.audioID != null &&
+                    stream.audioID != '')) {
               checker = true;
               checkLevel = 1;
             }
           }
         } else if (recordingDisplayType == 'media') {
-          if ((stream.containsKey('producerId') &&
-                  (stream['producerId'] != null &&
-                      stream['producerId'] != '')) ||
-              ((stream.containsKey('audioID') &&
-                  stream['audioID'] != null &&
-                  stream['audioID'] != ''))) {
+          if ((stream.containsKey('producerId') && stream.producerId != '') ||
+              (stream.containsKey('audioID') &&
+                  stream.audioID != null &&
+                  stream.audioID != '')) {
             checker = true;
             checkLevel = 1;
           }
         } else {
-          if (((stream.containsKey('producerId') &&
-                  (stream['producerId'] != null &&
-                      stream['producerId'] != '')) ||
-              ((stream.containsKey('audioID') &&
-                  stream['audioID'] != null &&
-                  stream['audioID'] != '')) ||
+          if (((stream.containsKey('producerId') && stream.producerId != '') ||
+              (stream.containsKey('audioID') &&
+                  stream.audioID != null &&
+                  stream.audioID != '') ||
               (stream.containsKey('name') &&
-                  stream['name'] != null &&
-                  stream['name'] != ''))) {
+                  stream.name != null &&
+                  stream.name != ''))) {
             checker = true;
             checkLevel = 2;
           }
         }
 
-        dynamic participant;
+        Stream? participant;
 
         if (checker) {
           if (checkLevel == 0) {
-            if (stream.containsKey('producerId') &&
-                (stream['producerId'] != null && stream['producerId'] != '')) {
-              participant = streamNames.firstWhere(
-                  (obj) => obj['producerId'] == stream['producerId'],
-                  orElse: () => null);
+            if (stream.containsKey('producerId') && stream.producerId != '') {
+              participant = streamNames.firstWhereOrNull(
+                (obj) => obj.producerId == stream.producerId,
+              );
             }
           } else if (checkLevel == 1) {
-            if (stream.containsKey('producerId') &&
-                (stream['producerId'] != null && stream['producerId'] != '')) {
-              participant = streamNames.firstWhere(
-                  (obj) => obj['producerId'] == stream['producerId'],
-                  orElse: () => null);
+            if (stream.containsKey('producerId') && stream.producerId != '') {
+              participant = streamNames.firstWhereOrNull(
+                (obj) => obj.producerId == stream.producerId,
+              );
             }
             if (participant == null) {
-              if ((stream.containsKey('audioID') &&
-                  stream['audioID'] != null &&
-                  stream['audioID'] != '')) {
-                participant = audStreamNames.firstWhere(
-                    (obj) => obj['producerId'] == stream['audioID'],
-                    orElse: () => null);
-                participant ??= refParticipants.firstWhere(
-                    (obj) => obj['audioID'] == stream['audioID'],
-                    orElse: () => null);
+              if (stream.containsKey('audioID') &&
+                  stream.audioID != null &&
+                  stream.audioID != '') {
+                participant = audStreamNames.firstWhereOrNull(
+                  (obj) => obj.producerId == stream.audioID,
+                );
+                if (participant == null) {
+                  final participantStream = refParticipants.firstWhereOrNull(
+                    (obj) => obj.audioID == stream.audioID,
+                  );
+                  if (participantStream != null) {
+                    participant = Stream.fromMap(participantStream.toMap());
+                  }
+                }
               }
             }
           } else if (checkLevel == 2) {
-            if (stream.containsKey('producerId') &&
-                (stream['producerId'] != null && stream['producerId'] != '')) {
-              participant = streamNames.firstWhere(
-                  (obj) => obj['producerId'] == stream['producerId'],
-                  orElse: () => null);
+            if (stream.containsKey('producerId') && stream.producerId != '') {
+              participant = streamNames.firstWhereOrNull(
+                (obj) => obj.producerId == stream.producerId,
+              );
             }
             if (participant == null) {
-              if ((stream.containsKey('audioID') &&
-                  stream['audioID'] != null &&
-                  stream['audioID'] != '')) {
-                participant = audStreamNames.firstWhere(
-                    (obj) => obj['producerId'] == stream['audioID'],
-                    orElse: () => null);
-                participant ??= refParticipants.firstWhere(
-                    (obj) => obj['audioID'] == stream['audioID'],
-                    orElse: () => null);
+              if (stream.containsKey('audioID') &&
+                  stream.audioID != null &&
+                  stream.audioID != '') {
+                participant = audStreamNames.firstWhereOrNull(
+                  (obj) => obj.producerId == stream.audioID,
+                );
+
+                if (participant == null) {
+                  final participantStream = refParticipants.firstWhereOrNull(
+                    (obj) => obj.audioID == stream.audioID,
+                  );
+                  if (participantStream != null) {
+                    participant = Stream.fromMap(participantStream.toMap());
+                  }
+                }
               }
             }
             if (participant == null) {
               if (stream.containsKey('name') &&
-                  stream['name'] != null &&
-                  stream['name'] != '') {
-                participant = refParticipants.firstWhere(
-                    (obj) => obj['name'] == stream['name'],
-                    orElse: () => null);
+                  stream.name != null &&
+                  stream.name != '') {
+                final participantStream = refParticipants.firstWhereOrNull(
+                  (obj) => obj.name == stream.name,
+                );
+                if (participantStream != null) {
+                  participant = Stream.fromMap(participantStream.toMap());
+                }
               }
             }
           }
 
-          if (participant != null) {
-            if (!activeNames.contains(participant['name'])) {
-              activeNames.add(participant['name']);
+          if (participant != null &&
+              participant.name!.isNotEmpty &&
+              participant.name != 'none') {
+            if (!activeNames.contains(participant.name)) {
+              activeNames.add(participant.name!);
             }
           }
         }
       }
 
-      updateActiveNames(activeNames);
+      parameters.updateActiveNames(activeNames);
 
+      // Populate dispActiveNames based on lStreams_
       for (var stream in lStreams_) {
-        var dispChecker = false;
-        var dispCheckLevel = 0;
+        bool dispChecker = false;
+        int dispCheckLevel = 0;
 
         if (meetingDisplayType == 'video') {
           if (meetingVideoOptimized) {
-            if (stream.containsKey('producerId') &&
-                stream['producerId'] != null &&
-                stream['producerId'] != '') {
+            if (stream.containsKey('producerId') && stream.producerId != '') {
               dispChecker = true;
               dispCheckLevel = 0;
             }
           } else {
-            if ((stream.containsKey('producerId') &&
-                    (stream['producerId'] != null &&
-                        stream['producerId'] != '')) ||
-                ((stream.containsKey('audioID') &&
-                    stream['audioID'] != null &&
-                    stream['audioID'] != ''))) {
+            if ((stream.containsKey('producerId') && stream.producerId != '') ||
+                (stream.containsKey('audioID') &&
+                    stream.audioID != null &&
+                    stream.audioID != '')) {
               dispChecker = true;
               dispCheckLevel = 1;
             }
           }
         } else if (meetingDisplayType == 'media') {
-          if ((stream.containsKey('producerId') &&
-                  (stream['producerId'] != null &&
-                      stream['producerId'] != '')) ||
-              ((stream.containsKey('audioID') &&
-                  stream['audioID'] != null &&
-                  stream['audioID'] != ''))) {
+          if ((stream.containsKey('producerId') && stream.producerId != '') ||
+              (stream.containsKey('audioID') &&
+                  stream.audioID != null &&
+                  stream.audioID != '')) {
             dispChecker = true;
             dispCheckLevel = 1;
           }
         } else {
-          if (((stream.containsKey('producerId') &&
-                  (stream['producerId'] != null &&
-                      stream['producerId'] != '')) ||
-              ((stream.containsKey('audioID') &&
-                  stream['audioID'] != null &&
-                  stream['audioID'] != '')) ||
+          if (((stream.containsKey('producerId') && stream.producerId != '') ||
+              (stream.containsKey('audioID') &&
+                  stream.audioID != null &&
+                  stream.audioID != '') ||
               (stream.containsKey('name') &&
-                  stream['name'] != null &&
-                  stream['name'] != ''))) {
+                  stream.name != null &&
+                  stream.name != ''))) {
             dispChecker = true;
             dispCheckLevel = 2;
           }
         }
 
-        dynamic participant_;
+        Stream? participant_;
 
         if (dispChecker) {
           if (dispCheckLevel == 0) {
-            if (stream.containsKey('producerId') &&
-                (stream['producerId'] != null && stream['producerId'] != '')) {
-              participant_ = streamNames.firstWhere(
-                  (obj) => obj['producerId'] == stream['producerId'],
-                  orElse: () => null);
+            if (stream.containsKey('producerId') && stream.producerId != '') {
+              participant_ = streamNames.firstWhereOrNull(
+                (obj) => obj.producerId == stream.producerId,
+              );
             }
           } else if (dispCheckLevel == 1) {
-            if (stream.containsKey('producerId') &&
-                (stream['producerId'] != null && stream['producerId'] != '')) {
-              participant_ = streamNames.firstWhere(
-                  (obj) => obj['producerId'] == stream['producerId'],
-                  orElse: () => null);
+            if (stream.containsKey('producerId') && stream.producerId != '') {
+              participant_ = streamNames.firstWhereOrNull(
+                (obj) => obj.producerId == stream.producerId,
+              );
             }
             if (participant_ == null) {
-              if ((stream.containsKey('audioID') &&
-                  stream['audioID'] != null &&
-                  stream['audioID'] != '')) {
-                participant_ = audStreamNames.firstWhere(
-                    (obj) => obj['producerId'] == stream['audioID'],
-                    orElse: () => null);
-                participant_ ??= refParticipants.firstWhere(
-                    (obj) => obj['audioID'] == stream['audioID'],
-                    orElse: () => null);
+              if (stream.containsKey('audioID') &&
+                  stream.audioID != null &&
+                  stream.audioID != '') {
+                participant_ = audStreamNames.firstWhereOrNull(
+                  (obj) => obj.producerId == stream.audioID,
+                );
+                if (participant_ == null) {
+                  final participantStream = refParticipants.firstWhereOrNull(
+                    (obj) => obj.audioID == stream.audioID,
+                  );
+                  if (participantStream != null) {
+                    participant_ = Stream.fromMap(participantStream.toMap());
+                  }
+                }
               }
             }
           } else if (dispCheckLevel == 2) {
-            if (stream.containsKey('producerId') &&
-                (stream['producerId'] != null && stream['producerId'] != '')) {
-              participant_ = streamNames.firstWhere(
-                  (obj) => obj['producerId'] == stream['producerId'],
-                  orElse: () => null);
+            if (stream.containsKey('producerId') && stream.producerId != '') {
+              participant_ = streamNames.firstWhereOrNull(
+                (obj) => obj.producerId == stream.producerId,
+              );
             }
             if (participant_ == null) {
-              if ((stream.containsKey('audioID') &&
-                  stream['audioID'] != null &&
-                  stream['audioID'] != '')) {
-                participant_ = audStreamNames.firstWhere(
-                    (obj) => obj['producerId'] == stream['audioID'],
-                    orElse: () => null);
-                participant_ ??= refParticipants.firstWhere(
-                    (obj) => obj['audioID'] == stream['audioID'],
-                    orElse: () => null);
+              if (stream.containsKey('audioID') &&
+                  stream.audioID != null &&
+                  stream.audioID != '') {
+                participant_ = audStreamNames.firstWhereOrNull(
+                  (obj) => obj.producerId == stream.audioID,
+                );
+                if (participant_ == null) {
+                  final participantStream = refParticipants.firstWhereOrNull(
+                    (obj) => obj.audioID == stream.audioID,
+                  );
+                  if (participantStream != null) {
+                    participant_ = Stream.fromMap(participantStream.toMap());
+                  }
+                }
               }
-            }
-            if (participant_ == null) {
-              if (stream.containsKey('name') &&
-                  stream['name'] != null &&
-                  stream['name'] != '') {
-                participant_ = refParticipants.firstWhere(
-                    (obj) => obj['name'] == stream['name'],
-                    orElse: () => null);
+              if (participant_ == null) {
+                if (stream.containsKey('name') &&
+                    stream.name != null &&
+                    stream.name != '') {
+                  final participantStream = refParticipants.firstWhereOrNull(
+                    (obj) => obj.name == stream.name,
+                  );
+                }
               }
             }
           }
         }
 
         if (participant_ != null) {
-          if (!dispActiveNames.contains(participant_['name'])) {
-            dispActiveNames.add(participant_['name']);
-            if (!pDispActiveNames.contains(participant_['name'])) {
+          if (!dispActiveNames.contains(participant_.name)) {
+            dispActiveNames.add(participant_.name!);
+            if (!pDispActiveNames.contains(participant_.name)) {
               proceed = true;
             }
           }
         }
       }
 
-      updateDispActiveNames(dispActiveNames);
+      parameters.updateDispActiveNames(dispActiveNames);
 
-      if (lStreams_.isEmpty) {
-        if (shareScreenStarted || shared) {
-          proceed = true;
-        } else if (!firstAll) {
-          proceed = true;
-        }
+      if (lStreams_.isEmpty && (shareScreenStarted || shared || !firstAll)) {
+        proceed = true;
       }
 
       if (shareScreenStarted || shared) {
+        // Additional logic if needed
       } else {
-        if ((prevMainHeightWidth != mainHeightWidth)) {
+        if (prevMainHeightWidth != mainHeightWidth) {
           updateMainWindow = true;
           updateUpdateMainWindow(updateMainWindow);
         }
@@ -442,67 +549,69 @@ Future<void> dispStreams({
       updateNForReadjustRecord(nForReadjustRecord);
     }
 
-    if (!proceed && auto) {
-      if (updateMainWindow) {
-        if (!lockScreen && !shared) {
-          prepopulateUserMedia(name: hostLabel, parameters: parameters);
-        } else {
-          if (!firstRound) {
-            prepopulateUserMedia(name: hostLabel, parameters: parameters);
-          }
-        }
+    if (!proceed && options.auto) {
+      final optionsPrepopulate = PrepopulateUserMediaOptions(
+        name: hostLabel,
+        parameters: parameters,
+      );
+      if (updateMainWindow && !lockScreen && !shared) {
+        await prepopulateUserMedia(optionsPrepopulate);
+      } else if (!firstRound) {
+        await prepopulateUserMedia(optionsPrepopulate);
       }
 
-      if (ind == 0) {
-        await rePort(parameters: parameters);
+      if (options.ind == 0 && eventType != EventType.chat) {
+        final optionsRePort = RePortOptions(
+          parameters: parameters,
+        );
+        await rePort(optionsRePort);
       }
       return;
     }
 
-    if (eventType == 'broadcast') {
-      lStreams = lStreams_;
+    if (eventType == EventType.broadcast) {
+      lStreams = List.from(lStreams_);
       updateLStreams(lStreams);
-    } else if (eventType == 'chat') {
-      if (forChatID != null) {
-        lStreams = chatRefStreams;
+    } else if (eventType == EventType.chat) {
+      if (options.forChatID != null) {
+        lStreams = List.from(chatRefStreams);
         updateLStreams(lStreams);
       } else {
         updateShowMiniView(false);
+
         if (islevel != '2') {
-          var host = participants.firstWhere((obj) => obj['islevel'] == '2',
-              orElse: () => null);
+          Participant? host =
+              participants.firstWhereOrNull((obj) => obj.islevel == '2');
 
           if (host != null) {
-            dynamic streame;
+            Stream? streame;
 
-            remoteProducerId = host['videoID'];
+            remoteProducerId = host.videoID;
             if (islevel == '2') {
-              host['stream'] = localStreamVideo;
+              host['stream'] = keepBackground && virtualStream != null
+                  ? virtualStream
+                  : localStreamVideo;
             } else {
-              streame = oldAllStreams.firstWhere(
-                  (streame) => streame['producerId'] == remoteProducerId,
-                  orElse: () => null);
+              streame = oldAllStreams.firstWhereOrNull(
+                (streame) => streame.producerId == remoteProducerId,
+              );
               if (streame != null) {
                 lStreams = lStreams
-                    .where((stream) => stream['name'] != host['name'])
+                    .where((stream) => stream.name != host.name)
                     .toList();
-
                 lStreams.add(streame);
               }
             }
           }
         }
 
-        var youyou = lStreams.firstWhere(
-            (obj) =>
-                obj['producerId'] == 'youyou' ||
-                obj['producerId'] == 'youyouyou',
-            orElse: () => null);
+        Stream? youyou = lStreams.firstWhereOrNull((obj) =>
+            obj.producerId == 'youyou' || obj.producerId == 'youyouyou');
 
         lStreams = lStreams
             .where((stream) =>
-                stream['producerId'] != 'youyou' &&
-                stream['producerId'] != 'youyouyou')
+                stream.producerId != 'youyou' &&
+                stream.producerId != 'youyouyou')
             .toList();
 
         if (youyou != null) {
@@ -516,47 +625,61 @@ Future<void> dispStreams({
       }
     }
 
-    var refLength = lStreams.length;
+    int refLength = lStreams.length;
 
-    var [_, rows, cols] = getEstimate(n: refLength, parameters: parameters);
-    var [
-      removeAltGrid,
-      numtoaddd,
-      numRows,
-      numCols,
-      remainingVideos,
-      actualRows,
-      lastrowcols
-    ] = await checkGrid(rows, cols, refLength);
+    List<int> estimate =
+        getEstimate(GetEstimateOptions(n: refLength, parameters: parameters));
+    List<dynamic> gridCheckResult = await checkGrid(CheckGridOptions(
+        rows: estimate[1], cols: estimate[2], actives: refLength));
+    bool removeAltGrid = gridCheckResult[0];
+    int numtoaddd = gridCheckResult[1];
+    int numRows = gridCheckResult[2];
+    int numCols = gridCheckResult[3];
+    int actualRows = gridCheckResult[5];
+    int lastrowcols = gridCheckResult[6];
 
-    if (chatSkip && eventType == 'chat') {
+    if (options.ChatSkip && eventType == EventType.chat) {
       numRows = 1;
       numCols = 1;
       actualRows = 1;
     }
 
-    await readjust(n: lStreams.length, state: ind, parameters: parameters);
+    final optionsReadjust = ReadjustOptions(
+      n: lStreams.length,
+      state: options.ind,
+      parameters: parameters,
+    );
+    await readjust(options: optionsReadjust);
 
-    var mainGridStreams = lStreams.sublist(0, numtoaddd);
-    var altGridStreams = lStreams.sublist(numtoaddd, lStreams.length);
+    List<Stream> mainGridStreams = lStreams.sublist(0, numtoaddd);
+    List<Stream> altGridStreams = lStreams.sublist(numtoaddd);
 
-    if (doPaginate == true ||
-        (prevDoPaginate != doPaginate) ||
-        (shared || shareScreenStarted) ||
+    if (doPaginate ||
+        prevDoPaginate != doPaginate ||
+        shared ||
+        shareScreenStarted ||
         shareEnded) {
-      var lStreamsAlt = List.from(lStreams_);
-
-      await processConsumerTransports(
-          consumerTransports: consumerTransports,
-          lStreams_: lStreamsAlt,
-          parameters: parameters);
+      List<Stream> lStreamsAlt = List.from(lStreams_);
+      final optionsProcessConsumer = ProcessConsumerTransportsOptions(
+        consumerTransports: consumerTransports,
+        lStreams_: lStreamsAlt,
+        parameters: parameters,
+      );
+      await processConsumerTransports(optionsProcessConsumer);
 
       try {
         if (breakOutRoomStarted && !breakOutRoomEnded) {
-          await resumePauseAudioStreams(
-              inBreakRoom: inBreakRoom,
-              breakRoom: breakRoom,
-              parameters: parameters);
+          final optionsResumePause = ResumePauseAudioStreamsOptions(
+            inBreakRoom: options.inBreakRoom,
+            breakRoom: options.breakRoom,
+            parameters: parameters,
+          );
+          await resumePauseAudioStreams(options: optionsResumePause);
+        } else {
+          final optionsResumePause = ResumePauseStreamsOptions(
+            parameters: parameters,
+          );
+          await resumePauseStreams(options: optionsResumePause);
         }
       } catch (error) {
         if (kDebugMode) {
@@ -567,7 +690,9 @@ Future<void> dispStreams({
       try {
         if (!breakOutRoomStarted ||
             (breakOutRoomStarted && breakOutRoomEnded)) {
-          await resumePauseStreams(parameters: parameters);
+          final optionsResumePause =
+              ResumePauseStreamsOptions(parameters: parameters);
+          await resumePauseStreams(options: optionsResumePause);
         }
       } catch (error) {
         if (kDebugMode) {
@@ -577,60 +702,61 @@ Future<void> dispStreams({
 
       if (shareEnded) {
         shareEnded = false;
-        updateShareEnded(shareEnded);
+        parameters.updateShareEnded(shareEnded);
       }
     }
 
-    if (chatSkip && eventType == 'chat') {
-      await addVideosGrid(
+    if (options.ChatSkip && eventType == EventType.chat) {
+      final optionsVideosGrid = AddVideosGridOptions(
         mainGridStreams: mainGridStreams,
         altGridStreams: altGridStreams,
-        numtoadd: numtoaddd - 1,
         numRows: numRows,
         numCols: numCols,
-        remainingVideos: remainingVideos,
         actualRows: actualRows,
-        lastrowcols: lastrowcols,
+        lastRowCols: lastrowcols,
         removeAltGrid: removeAltGrid,
-        ind: ind,
-        forChat: true,
-        forChatMini: true,
-        forChatCard: forChatCard,
-        forChatID: forChatID,
         parameters: parameters,
       );
+      await addVideosGrid(optionsVideosGrid);
     } else {
-      await addVideosGrid(
+      final optionsVideosGrid = AddVideosGridOptions(
         mainGridStreams: mainGridStreams,
         altGridStreams: altGridStreams,
-        numtoadd: numtoaddd,
         numRows: numRows,
         numCols: numCols,
-        remainingVideos: remainingVideos,
         actualRows: actualRows,
-        lastrowcols: lastrowcols,
+        lastRowCols: lastrowcols,
         removeAltGrid: removeAltGrid,
-        ind: ind,
         parameters: parameters,
       );
+      await addVideosGrid(optionsVideosGrid);
     }
 
     if (updateMainWindow) {
       if (!lockScreen && !shared) {
-        prepopulateUserMedia(name: hostLabel, parameters: parameters);
+        final optionsPrePopulate = PrepopulateUserMediaOptions(
+          name: hostLabel,
+          parameters: parameters,
+        );
+        await prepopulateUserMedia(optionsPrePopulate);
       } else {
+        final optionsPrePopulate = PrepopulateUserMediaOptions(
+          name: hostLabel,
+          parameters: parameters,
+        );
         if (!firstRound) {
-          prepopulateUserMedia(name: hostLabel, parameters: parameters);
+          await prepopulateUserMedia(optionsPrePopulate);
         }
       }
     }
 
-    if (ind == 0) {
-      await rePort(parameters: parameters);
+    if (options.ind == 0 && eventType != EventType.chat) {
+      final optionsRePort = RePortOptions(parameters: parameters);
+      await rePort(optionsRePort);
     }
   } catch (error) {
     if (kDebugMode) {
-      print('MediaSFU - Error in dispStreams: $error');
+      print('dispStreams error: $error');
     }
   }
 }

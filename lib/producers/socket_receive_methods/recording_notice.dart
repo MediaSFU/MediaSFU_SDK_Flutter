@@ -1,232 +1,276 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import '../../methods/utils/sound_player.dart'
+    show SoundPlayer, SoundPlayerOptions;
+import '../../../types/types.dart' show EventType, UserRecordingParams;
 
-/// This function handles the recording notice logic.
+// RecordingNoticeParameters class for holding update functions and recording configurations
+abstract class RecordingNoticeParameters {
+  // Core properties as abstract getters
+  String get islevel;
+  UserRecordingParams get userRecordingParams;
+  int get recordElapsedTime;
+  int? get recordStartTime;
+  bool get recordStarted;
+  bool get recordPaused;
+  bool get canLaunchRecord;
+  bool get recordStopped;
+  bool get isTimerRunning;
+  bool get canPauseResume;
+  EventType get eventType;
+
+  // Update functions as abstract getters returning functions
+  void Function(String) get updateRecordingProgressTime;
+  void Function(bool) get updateShowRecordButtons;
+  void Function(UserRecordingParams) get updateUserRecordingParams;
+  void Function(String) get updateRecordingMediaOptions;
+  void Function(String) get updateRecordingAudioOptions;
+  void Function(String) get updateRecordingVideoOptions;
+  void Function(String) get updateRecordingVideoType;
+  void Function(bool) get updateRecordingVideoOptimized;
+  void Function(String) get updateRecordingDisplayType;
+  void Function(bool) get updateRecordingAddHLS;
+  void Function(bool) get updateRecordingNameTags;
+  void Function(String) get updateRecordingBackgroundColor;
+  void Function(String) get updateRecordingNameTagsColor;
+  void Function(String) get updateRecordingOrientationVideo;
+  void Function(bool) get updateRecordingAddText;
+  void Function(String) get updateRecordingCustomText;
+  void Function(String) get updateRecordingCustomTextPosition;
+  void Function(String) get updateRecordingCustomTextColor;
+  void Function(int) get updatePauseRecordCount;
+  void Function(int) get updateRecordElapsedTime;
+  void Function(int?) get updateRecordStartTime;
+  void Function(bool) get updateRecordStarted;
+  void Function(bool) get updateRecordPaused;
+  void Function(bool) get updateCanLaunchRecord;
+  void Function(bool) get updateRecordStopped;
+  void Function(bool) get updateIsTimerRunning;
+  void Function(bool) get updateCanPauseResume;
+  void Function(String) get updateRecordState;
+
+  // dynamic operator [](String key);
+}
+
+// RecordingNoticeOptions class to hold function parameters
+class RecordingNoticeOptions {
+  final String state;
+  final UserRecordingParams? userRecordingParam;
+  final int pauseCount;
+  final int timeDone;
+  final RecordingNoticeParameters parameters;
+
+  RecordingNoticeOptions({
+    required this.state,
+    this.userRecordingParam,
+    required this.pauseCount,
+    required this.timeDone,
+    required this.parameters,
+  });
+}
+
+typedef RecordingNoticeType = Future<void> Function(
+    RecordingNoticeOptions options);
+
+/// Handles recording state changes and updates recording settings accordingly.
 ///
-/// It takes in several parameters and updates the state of various variables
-/// based on the provided parameters. The function also triggers callbacks
-/// to update the UI with the updated values.
+/// This function manages the recording state (e.g., start, pause, stop) and updates various parameters related to recording.
+/// It accepts several parameters to customize and track recording settings, such as elapsed time, recording start time,
+/// user recording settings, and other configuration options. Based on the `state` value, the function will update UI states
+/// and initiate specific behavior.
 ///
 /// Parameters:
-/// - `parameters`: A map containing various parameters related to recording.
-/// - `timeDone`: An optional integer representing the time elapsed during recording.
-/// - `pauseCount`: An optional integer representing the number of times recording was paused.
-/// - `state`: An optional string representing the current state of recording.
-/// - `userRecordingParam`: An optional map containing user-specific recording parameters.
+/// - [parameters] (Map<String, dynamic>): A dictionary of recording-related properties, containing:
+///   - `islevel` (String): The recording level.
+///   - `userRecordingParams` (Map<String, dynamic>): Parameters for the user recording settings.
+///   - `recordElapsedTime` (int): Total time elapsed during recording.
+///   - `recordStartTime` (int): Start time of the recording.
+///   - `recordStarted` (bool): Whether recording has started.
+///   - `recordPaused` (bool): Whether recording is currently paused.
+///   - `canLaunchRecord` (bool): If recording can be initiated.
+///   - `recordStopped` (bool): If recording has been stopped.
+///   - `isTimerRunning` (bool): If the timer is active.
+///   - `canPauseResume` (bool): If pausing and resuming recording is allowed.
+/// - [state] (String): The current state of the recording (e.g., "pause", "stop").
+/// - [pauseCount] (int): Number of pauses made during the recording.
+/// - [timeDone] (int): Total recording time that has been completed.
+/// - [userRecordingParam] (Map<String, dynamic>?): Optional parameter for user-specific recording configuration.
 ///
-/// Returns: A Future that completes when the recording notice logic is executed.
+/// Example usage:
+/// ```dart
+/// final parameters = {
+///   'islevel': '1',
+///   'recordElapsedTime': 0,
+///   'recordStartTime': 0,
+///   'recordStarted': false,
+///   'recordPaused': false,
+///   'canLaunchRecord': true,
+///   'recordStopped': false,
+///   'isTimerRunning': false,
+///   'canPauseResume': true,
+///   'updateRecordingProgressTime': (String time) { print("Recording time: $time"); },
+///   'updateRecordState': (String state) { print("Recording state: $state"); },
+///   // Additional update functions
+/// };
+///
+/// RecordingNotice(
+///   parameters: parameters,
+///   timeDone: 3600,
+///   pauseCount: 2,
+///   state: "pause",
+///   userRecordingParam: {
+///     'mainSpecs': {
+///       'mediaOptions': 'option1',
+///       'audioOptions': 'option2',
+///       'videoOptions': 'option3',
+///       'videoType': 'HD'
+///     },
+///     'dispSpecs': {
+///       'nameTags': true,
+///       'backgroundColor': 'blue',
+///       'orientationVideo': 'landscape'
+///     },
+///     'textSpecs': {
+///       'addText': true,
+///       'customText': 'Recording',
+///       'customTextPosition': 'top-right',
+///       'customTextColor': 'white'
+///     }
+///   },
+/// );
+/// ```
+///
+/// Returns:
+/// - A [Future<void>] that completes once the recording state has been processed.
 
-typedef UpdateUserRecordingParams = void Function(Map<String, dynamic> value);
-typedef UpdateBooleanState = void Function(bool value);
-typedef UpdateStringState = void Function(String value);
-typedef UpdateIntState = void Function(int value);
-// ignore: non_constant_identifier_names
-Future<void> RecordingNotice({
-  required Map<String, dynamic> parameters,
-  int? timeDone = 0,
-  int? pauseCount = 0,
-  String? state = 'pause',
-  Map<String, dynamic>? userRecordingParam,
-}) async {
+Future<void> recordingNotice(RecordingNoticeOptions options) async {
+  final parameters = options.parameters;
+  final state = options.state;
+  final pauseCount = options.pauseCount;
+  final timeDone = options.timeDone;
+  int recordElapsedTime = parameters.recordElapsedTime;
+  int? recordStartTime = parameters.recordStartTime ?? 0;
+
   try {
-    String islevel = parameters['islevel'];
-    Map<String, dynamic> userRecordingParams =
-        parameters['userRecordingParams'];
-    String recordingMediaOptions = parameters['recordingMediaOptions'];
-    String recordingAudioOptions = parameters['recordingAudioOptions'];
-    String recordingVideoOptions = parameters['recordingVideoOptions'];
-    String recordingVideoType = parameters['recordingVideoType'];
-    bool recordingVideoOptimized = parameters['recordingVideoOptimized'];
-    String recordingDisplayType = parameters['recordingDisplayType'];
-    bool recordingAddHLS = parameters['recordingAddHLS'];
-    bool recordingNameTags = parameters['recordingNameTags'];
-    String recordingBackgroundColor = parameters['recordingBackgroundColor'];
-    String recordingNameTagsColor = parameters['recordingNameTagsColor'];
-    String recordingOrientationVideo = parameters['recordingOrientationVideo'];
-    bool recordingAddText = parameters['recordingAddText'];
-    String recordingCustomText = parameters['recordingCustomText'];
-    String recordingCustomTextPosition =
-        parameters['recordingCustomTextPosition'];
-    String recordingCustomTextColor = parameters['recordingCustomTextColor'];
-    int pauseRecordCount = parameters['pauseRecordCount'];
-    int recordElapsedTime = parameters['recordElapsedTime'];
-    bool recordStarted = parameters['recordStarted'];
-    bool recordPaused = parameters['recordPaused'];
-    bool canLaunchRecord = parameters['canLaunchRecord'];
-    bool recordStopped = parameters['recordStopped'] ?? false;
-    bool isTimerRunning = parameters['isTimerRunning'] ?? false;
-    bool canPauseResume = parameters['canPauseResume'] ?? false;
-    int recordStartTime = parameters['recordStartTime'] ?? 0;
-
-    UpdateStringState updateRecordingProgressTime =
-        parameters['updateRecordingProgressTime'];
-    UpdateBooleanState updateShowRecordButtons =
-        parameters['updateShowRecordButtons'];
-    UpdateUserRecordingParams updateUserRecordingParams =
-        parameters['updateUserRecordingParams'];
-    UpdateStringState updateRecordingMediaOptions =
-        parameters['updateRecordingMediaOptions'];
-    UpdateStringState updateRecordingAudioOptions =
-        parameters['updateRecordingAudioOptions'];
-    UpdateStringState updateRecordingVideoOptions =
-        parameters['updateRecordingVideoOptions'];
-    UpdateStringState updateRecordingVideoType =
-        parameters['updateRecordingVideoType'];
-    UpdateBooleanState updateRecordingVideoOptimized =
-        parameters['updateRecordingVideoOptimized'];
-    UpdateStringState updateRecordingDisplayType =
-        parameters['updateRecordingDisplayType'];
-    UpdateBooleanState updateRecordingAddHLS =
-        parameters['updateRecordingAddHLS'];
-    UpdateStringState updateRecordingBackgroundColor =
-        parameters['updateRecordingBackgroundColor'];
-    UpdateStringState updateRecordingNameTagsColor =
-        parameters['updateRecordingNameTagsColor'];
-    UpdateStringState updateRecordingOrientationVideo =
-        parameters['updateRecordingOrientationVideo'];
-    UpdateBooleanState updateRecordingAddText =
-        parameters['updateRecordingAddText'];
-    UpdateStringState updateRecordingCustomText =
-        parameters['updateRecordingCustomText'];
-    UpdateStringState updateRecordingCustomTextPosition =
-        parameters['updateRecordingCustomTextPosition'];
-    UpdateStringState updateRecordingCustomTextColor =
-        parameters['updateRecordingCustomTextColor'];
-    UpdateIntState updatePauseRecordCount =
-        parameters['updatePauseRecordCount'];
-    UpdateIntState updateRecordElapsedTime =
-        parameters['updateRecordElapsedTime'];
-    UpdateBooleanState updateRecordStarted = parameters['updateRecordStarted'];
-    UpdateBooleanState updateRecordPaused = parameters['updateRecordPaused'];
-    UpdateBooleanState updateCanLaunchRecord =
-        parameters['updateCanLaunchRecord'];
-    UpdateBooleanState updateRecordStopped = parameters['updateRecordStopped'];
-    UpdateBooleanState updateIsTimerRunning =
-        parameters['updateIsTimerRunning'];
-    UpdateBooleanState updateCanPauseResume =
-        parameters['updateCanPauseResume'];
-    UpdateIntState updateRecordStartTime = parameters['updateRecordStartTime'];
-    UpdateStringState updateRecordState = parameters['updateRecordState'];
-    UpdateBooleanState updateRecordingNameTags =
-        parameters['updateRecordingNameTags'];
-
-    if (islevel != '2') {
+    if (parameters.islevel != '2') {
       if (state == 'pause') {
-        updateRecordStarted(true);
-        updateRecordPaused(true);
-        updateRecordState('yellow');
+        parameters.updateRecordStarted(true);
+        parameters.updateRecordPaused(true);
+        parameters.updateRecordState('yellow');
+        if (parameters.eventType != EventType.broadcast) {
+          final option = SoundPlayerOptions(
+            soundUrl: 'https://www.mediasfu.com/sounds/record-paused.mp3',
+          );
+          SoundPlayer.play(option);
+        }
       } else if (state == 'stop') {
-        updateRecordStarted(true);
-        updateRecordStopped(true);
-        updateRecordState('green');
+        parameters.updateRecordStarted(true);
+        parameters.updateRecordStopped(true);
+        parameters.updateRecordState('green');
+        if (parameters.eventType != EventType.broadcast) {
+          final option = SoundPlayerOptions(
+            soundUrl: 'https://www.mediasfu.com/sounds/record-stopped.mp3',
+          );
+          SoundPlayer.play(option);
+        }
       } else {
-        updateRecordStarted(true);
-        updateRecordPaused(false);
-        updateRecordState('red');
+        parameters.updateRecordState('red');
+        parameters.updateRecordStarted(true);
+        parameters.updateRecordPaused(false);
+        if (parameters.eventType != EventType.broadcast) {
+          final option = SoundPlayerOptions(
+            soundUrl: 'https://www.mediasfu.com/sounds/record-progress.mp3',
+          );
+          SoundPlayer.play(option);
+        }
       }
     } else {
-      if (state == 'pause') {
-        updateRecordState('yellow');
-        if (userRecordingParam != null) {
-          userRecordingParams = userRecordingParam;
+      if (state == 'pause' && options.userRecordingParam != null) {
+        parameters.updateRecordState('yellow');
+        // Assuming userRecordingParam is a map with the relevant keys as shown below
+        final userRecordingParam = options.userRecordingParam!;
+        parameters.updateUserRecordingParams(userRecordingParam);
 
-          recordingMediaOptions =
-              userRecordingParams['mainSpecs']['mediaOptions'];
-          recordingAudioOptions =
-              userRecordingParams['mainSpecs']['audioOptions'];
-          recordingVideoOptions =
-              userRecordingParams['mainSpecs']['videoOptions'];
-          recordingVideoType = userRecordingParams['mainSpecs']['videoType'];
-          recordingVideoOptimized =
-              userRecordingParams['mainSpecs']['videoOptimized'];
-          recordingDisplayType =
-              userRecordingParams['mainSpecs']['recordingDisplayType'];
-          recordingAddHLS = userRecordingParams['mainSpecs']['addHLS'];
-          recordingNameTags = userRecordingParams['dispSpecs']['nameTags'];
-          recordingBackgroundColor =
-              userRecordingParams['dispSpecs']['backgroundColor'];
-          recordingNameTagsColor =
-              userRecordingParams['dispSpecs']['nameTagsColor'];
-          recordingOrientationVideo =
-              userRecordingParams['dispSpecs']['orientationVideo'];
-          recordingAddText = userRecordingParams['textSpecs']['addText'];
-          recordingCustomText = userRecordingParams['textSpecs']['customText'];
-          recordingCustomTextPosition =
-              userRecordingParams['textSpecs']['customTextPosition'];
-          recordingCustomTextColor =
-              userRecordingParams['textSpecs']['customTextColor'];
+        parameters.updateRecordingMediaOptions(
+            userRecordingParam.mainSpecs.mediaOptions);
+        parameters.updateRecordingAudioOptions(
+            userRecordingParam.mainSpecs.audioOptions);
+        parameters.updateRecordingVideoOptions(
+            userRecordingParam.mainSpecs.videoOptions);
+        parameters
+            .updateRecordingVideoType(userRecordingParam.mainSpecs.videoType);
+        parameters.updateRecordingVideoOptimized(
+            userRecordingParam.mainSpecs.videoOptimized);
+        parameters.updateRecordingDisplayType(
+            userRecordingParam.mainSpecs.recordingDisplayType);
+        parameters.updateRecordingAddHLS(userRecordingParam.mainSpecs.addHLS);
+        parameters
+            .updateRecordingNameTags(userRecordingParam.dispSpecs.nameTags);
+        parameters.updateRecordingBackgroundColor(
+            userRecordingParam.dispSpecs.backgroundColor);
+        parameters.updateRecordingNameTagsColor(
+            userRecordingParam.dispSpecs.nameTagsColor);
+        parameters.updateRecordingOrientationVideo(
+            userRecordingParam.dispSpecs.orientationVideo);
+        parameters
+            .updateRecordingAddText(userRecordingParam.textSpecs!.addText);
+        parameters.updateRecordingCustomText(
+            userRecordingParam.textSpecs!.customText!);
+        parameters.updateRecordingCustomTextPosition(
+            userRecordingParam.textSpecs!.customTextPosition!);
+        parameters.updateRecordingCustomTextColor(
+            userRecordingParam.textSpecs!.customTextColor!);
 
-          updateUserRecordingParams(userRecordingParams);
-          updateRecordingMediaOptions(recordingMediaOptions);
-          updateRecordingAudioOptions(recordingAudioOptions);
-          updateRecordingVideoOptions(recordingVideoOptions);
-          updateRecordingVideoType(recordingVideoType);
-          updateRecordingVideoOptimized(recordingVideoOptimized);
-          updateRecordingDisplayType(recordingDisplayType);
-          updateRecordingAddHLS(recordingAddHLS);
-          updateRecordingNameTags(recordingNameTags);
-          updateRecordingBackgroundColor(recordingBackgroundColor);
-          updateRecordingNameTagsColor(recordingNameTagsColor);
-          updateRecordingOrientationVideo(recordingOrientationVideo);
-          updateRecordingAddText(recordingAddText);
-          updateRecordingCustomText(recordingCustomText);
-          updateRecordingCustomTextPosition(recordingCustomTextPosition);
-          updateRecordingCustomTextColor(recordingCustomTextColor);
+        parameters.updatePauseRecordCount(pauseCount);
 
-          pauseRecordCount = pauseCount!;
-          updatePauseRecordCount(pauseRecordCount);
-
-          recordElapsedTime = timeDone!;
-          updateRecordElapsedTime(recordElapsedTime);
-
-          recordStarted = true;
-          recordPaused = true;
-          canLaunchRecord = false;
-          recordStopped = false;
-
-          updateRecordStarted(recordStarted);
-          updateRecordPaused(recordPaused);
-          updateCanLaunchRecord(canLaunchRecord);
-          updateRecordStopped(recordStopped);
-          updateShowRecordButtons(true);
-
-          isTimerRunning = false;
-          canPauseResume = true;
-
-          updateIsTimerRunning(isTimerRunning);
-          updateCanPauseResume(canPauseResume);
-
+        if (timeDone != 0) {
+          recordElapsedTime = timeDone;
           recordElapsedTime = (recordElapsedTime / 1000).floor();
           recordStartTime = (DateTime.now().millisecondsSinceEpoch ~/ 1000) -
               recordElapsedTime;
-          updateRecordElapsedTime(recordElapsedTime);
-          updateRecordStartTime(recordStartTime);
 
-          String padNumber(int number) {
-            return number.toString().padLeft(2, '0');
-          }
-
-          int hours = (recordElapsedTime / 3600).floor();
-          int minutes = ((recordElapsedTime % 3600) / 60).floor();
-          int seconds = recordElapsedTime % 60;
-          String formattedTime =
-              '${padNumber(hours)}:${padNumber(minutes)}:${padNumber(seconds)}';
-
-          updateRecordingProgressTime(formattedTime);
+          parameters.updateRecordElapsedTime(recordElapsedTime);
+          parameters.updateRecordStartTime(recordStartTime);
         }
+
+        parameters.updateRecordStarted(true);
+        parameters.updateRecordPaused(true);
+        parameters.updateCanLaunchRecord(false);
+        parameters.updateRecordStopped(false);
+
+        parameters.updateShowRecordButtons(true);
+
+        parameters.updateIsTimerRunning(false);
+        parameters.updateCanPauseResume(true);
+
+        if (timeDone != 0) {
+          parameters.updateRecordingProgressTime(
+              formatElapsedTime(recordElapsedTime));
+          parameters.updateRecordState('yellow');
+        }
+
+        final option = SoundPlayerOptions(
+          soundUrl: 'https://www.mediasfu.com/sounds/record-paused.mp3',
+        );
+        SoundPlayer.play(option);
       } else if (state == 'stop') {
-        recordStarted = true;
-        recordStopped = true;
-        canLaunchRecord = false;
-        updateRecordStarted(recordStarted);
-        updateRecordStopped(recordStopped);
-        updateCanLaunchRecord(canLaunchRecord);
-        updateShowRecordButtons(false);
-        updateRecordState('green');
+        parameters.updateRecordStarted(true);
+        parameters.updateRecordStopped(true);
+        parameters.updateCanLaunchRecord(false);
+        parameters.updateShowRecordButtons(false);
+        parameters.updateRecordState('green');
+        final option = SoundPlayerOptions(
+          soundUrl: 'https://www.mediasfu.com/sounds/record-stopped.mp3',
+        );
+        SoundPlayer.play(option);
       } else {
-        updateRecordState('red');
-        updateRecordStarted(true);
-        updateRecordPaused(false);
+        parameters.updateRecordState('red');
+        parameters.updateRecordStarted(true);
+        parameters.updateRecordPaused(false);
+        final option = SoundPlayerOptions(
+          soundUrl: 'https://www.mediasfu.com/sounds/record-progress.mp3',
+        );
+        SoundPlayer.play(option);
       }
     }
   } catch (error) {
@@ -236,4 +280,12 @@ Future<void> RecordingNotice({
 
     // throw Error("Failed to handle recording state and status.");
   }
+}
+
+// Helper function to format elapsed time
+String formatElapsedTime(int recordElapsedTime) {
+  int hours = (recordElapsedTime ~/ 3600);
+  int minutes = ((recordElapsedTime % 3600) ~/ 60);
+  int seconds = recordElapsedTime % 60;
+  return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
 }

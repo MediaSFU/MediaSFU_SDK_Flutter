@@ -1,15 +1,35 @@
-/// Launches the co-host functionality.
-///
-/// This function takes a map of parameters, which should include the following:
-/// - `updateIsCoHostModalVisible`: A function that updates the visibility state of the co-host modal.
-/// - `isCoHostModalVisible`: A boolean indicating the current visibility state of the co-host modal.
-///
-/// The function opens or closes the co-host modal based on its current visibility state.
-void launchCoHost({required Map<String, dynamic> parameters}) {
-  final Function updateIsCoHostModalVisible =
-      parameters['updateIsCoHostModalVisible'];
-  final bool isCoHostModalVisible = parameters['isCoHostModalVisible'];
+/// Defines options for launching the co-host modal, including the function to
+/// update visibility and the current modal visibility state.
+class LaunchCoHostOptions {
+  final void Function(bool isVisible) updateIsCoHostModalVisible;
+  final bool isCoHostModalVisible;
 
-  // Open or close the co-host modal based on its current visibility state
-  updateIsCoHostModalVisible(!isCoHostModalVisible);
+  LaunchCoHostOptions({
+    required this.updateIsCoHostModalVisible,
+    required this.isCoHostModalVisible,
+  });
+}
+
+/// Type definition for the function that launches the co-host modal.
+typedef LaunchCoHostType = void Function(LaunchCoHostOptions options);
+
+/// Toggles the visibility of the co-host modal.
+///
+/// This function calls `updateIsCoHostModalVisible` with the negated value of
+/// `isCoHostModalVisible` to toggle the modal's visibility.
+///
+/// Example:
+/// ```dart
+/// final options = LaunchCoHostOptions(
+///   updateIsCoHostModalVisible: (bool isVisible) {
+///     // Update visibility here
+///   },
+///   isCoHostModalVisible: false,
+/// );
+///
+/// launchCoHost(options);
+/// // Toggles the co-host modal to visible.
+/// ```
+void launchCoHost(LaunchCoHostOptions options) {
+  options.updateIsCoHostModalVisible(!options.isCoHostModalVisible);
 }

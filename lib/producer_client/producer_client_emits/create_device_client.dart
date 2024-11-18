@@ -1,50 +1,61 @@
+import 'package:flutter/foundation.dart';
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
+
+/// Options for creating a mediasoup client device.
+class CreateDeviceClientOptions {
+  RtpCapabilities? rtpCapabilities;
+
+  CreateDeviceClientOptions({required this.rtpCapabilities});
+}
+
+typedef CreateDeviceClientType = Future<Device?> Function(
+    {required CreateDeviceClientOptions options});
 
 /// Creates a mediasoup client device with the provided RTP capabilities.
 ///
-/// The [rtpCapabilities] parameter is required and should be a dynamic object
-/// representing the RTP capabilities of the device.
+/// The [CreateDeviceClientOptions] is required and must contain the RTP capabilities.
 ///
-/// Throws an [Exception] if [rtpCapabilities] is null.
-/// Throws an [Exception] if the device is unsupported.
+/// Returns a [Device] object representing the created mediasoup client device or
+/// throws an [Exception] if the device creation is not supported.
 ///
-/// Returns a [Future] that completes with a [Device] object representing the
-/// created mediasoup client device.
-
-Future<Device> createDeviceClient({required dynamic rtpCapabilities}) async {
+/// Example usage:
+/// ```dart
+/// final device = await createDeviceClient(
+///   options: CreateDeviceClientOptions(rtpCapabilities: rtpCapabilities),
+/// );
+/// if (device != null) {
+///   print("Device created successfully");
+/// } else {
+///   print("Failed to create device");
+/// }
+/// ```
+Future<Device?> createDeviceClient(
+    {required CreateDeviceClientOptions options}) async {
   try {
-    // Validate input parameters
-    if (rtpCapabilities == null) {
-      throw Exception('RTP capabilities required.');
+    // Check if rtpCapabilities is provided
+    if (options.rtpCapabilities == null) {
+      throw Exception('RTP capabilities must be provided.');
     }
 
-    // Create a mediasoup client device
+    // Initialize the mediasoup client device
     Device device = Device();
 
-    // Remove orientation capabilities
-    if (rtpCapabilities is Map<String, dynamic>) {
-      List<dynamic>? headerExtensions = rtpCapabilities['headerExtensions'];
-      if (headerExtensions != null) {
-        rtpCapabilities['headerExtensions'] = headerExtensions
-            .where((ext) => ext['uri'] != 'urn:3gpp:video-orientation')
-            .toList();
-      }
-    }
+    // Remove orientation capabilities if present in rtpCapabilities directly
+    options.rtpCapabilities!.headerExtensions.removeWhere(
+      (ext) => ext.uri == 'urn:3gpp:video-orientation',
+    );
 
     // Load the provided RTP capabilities into the device
-
-    RtpCapabilities rtpCapabilities_ = RtpCapabilities.fromMap(rtpCapabilities);
-    await device.load(routerRtpCapabilities: rtpCapabilities_);
-
-    // Perform additional initialization, e.g., loading spinner and retrieving messages
+    await device.load(routerRtpCapabilities: options.rtpCapabilities!);
 
     return device;
   } catch (error) {
-    // Handle specific errors, e.g., UnsupportedError
     if (error.runtimeType.toString() == 'UnsupportedError') {
-      throw Exception('Unsupported device.');
+      if (kDebugMode) {
+        print('Device creation is not supported on this device.');
+      }
+      return null;
     }
-
-    rethrow; // Propagate other errors
+    rethrow;
   }
 }

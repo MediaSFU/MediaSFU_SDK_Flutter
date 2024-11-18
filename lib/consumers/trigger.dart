@@ -1,200 +1,252 @@
-import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:socket_io_client/socket_io_client.dart' as io;
 
-/// Triggers the screen update based on the given parameters.
+import '../types/types.dart'
+    show Participant, AutoAdjustType, ScreenState, EventType, AutoAdjustOptions;
+import 'package:socket_io_client/socket_io_client.dart' show Socket;
+
+/// Represents parameters required for the [trigger] function.
+/// Interface for Trigger parameters, similar to the React Native TypeScript interface.
+abstract class TriggerParameters {
+  Socket? get socket;
+  String get roomName;
+  List<ScreenState> get screenStates;
+  List<Participant> get participants;
+  int? get updateDateState;
+  int? get lastUpdate;
+  int? get nForReadjust;
+  EventType get eventType;
+  bool get shared;
+  bool get shareScreenStarted;
+  bool get whiteboardStarted;
+  bool get whiteboardEnded;
+
+  void Function(int? timestamp) get updateUpdateDateState;
+  void Function(int? lastUpdate) get updateLastUpdate;
+  void Function(int nForReadjust) get updateNForReadjust;
+
+  // Mediasfu functions
+  AutoAdjustType get autoAdjust;
+
+  /// Returns updated parameters with potential changes
+  TriggerParameters Function() get getUpdatedAllParams;
+
+  /// Dynamic access operator for additional properties
+  // dynamic operator [](String key);
+}
+
+/// Options required to trigger a screen update.
+class TriggerOptions {
+  final List<String> refActiveNames;
+  final TriggerParameters parameters;
+
+  /// Constructor for [TriggerOptions].
+  ///
+  /// [refActiveNames] - Reference list of currently active participant names.
+  /// [parameters] - Parameters containing functions and configurations needed for the trigger.
+  TriggerOptions({
+    required this.refActiveNames,
+    required this.parameters,
+  });
+}
+
+typedef TriggerType = Future<void> Function(TriggerOptions options);
+
+/// Triggers a screen update based on various conditions and adjusts layouts as needed.
 ///
-/// The [refActiveNames] is a list of active names.
-/// The [parameters] is a map of parameters including:
-///   - [getUpdatedAllParams]: A function that returns updated parameters.
-///   - [socket]: The socket for communication.
-///   - [roomName]: The name of the room.
-///   - [screenStates]: The list of screen states.
-///   - [participants]: The list of participants.
-///   - [updateDateState]: The update date state.
-///   - [lastUpdate]: The last update.
-///   - [nForReadjust]: The number for readjustment.
-///   - [eventType]: The type of event.
-///   - [shared]: A flag indicating if the screen is shared.
-///   - [shareScreenStarted]: A flag indicating if the screen sharing has started.
+/// This function evaluates the current screen state and determines the primary participant
+/// on the main screen. Depending on event type, screen sharing status, and active participants,
+/// it adjusts the main screen person, calculates percentages for screen layout, and emits an
+/// update to the client via the socket connection.
 ///
-/// The [autoAdjust] is a function that adjusts the screen based on the number of active names.
+/// * [refActiveNames] - List of active participant names.
+/// * [parameters] - Additional parameters for adjusting layouts and emitting updates.
 ///
-/// The function updates the screen based on the given parameters and emits the update to the client.
-/// It handles different scenarios such as conferences, webinars, and screen filling.
+/// Example usage:
+/// ```dart
+/// final params = TriggerParameters(
+///   socket: mySocket,
+///   roomName: "myRoom",
+///   screenStates: [ScreenState(mainScreenPerson: "user1", mainScreenFilled: true)],
+///   participants: [Participant(name: "admin", islevel: "2")],
+///   updateDateState: (timestamp) => print("Updated date state: $timestamp"),
+///   updateLastUpdate: (lastUpdate) => print("Updated last update: $lastUpdate"),
+///   updateNForReadjust: (nForReadjust) => print("Updated nForReadjust: $nForReadjust"),
+///   autoAdjust: (n, parameters) async => [n, 0],
+///   getUpdatedAllParams: () => params,
+///   eventType: EventType.conference,
+///   shared: false,
+///   shareScreenStarted: false,
+///   whiteboardStarted: false,
+///   whiteboardEnded: false,
+/// );
+///
+/// await trigger(
+///  TriggerOptions(
+///   refActiveNames: ["user1", "user2"],
+///   parameters: params,
+/// ),
+/// );
+/// ```
+Future<void> trigger(TriggerOptions options) async {
+  try {
+    final refActiveNames = options.refActiveNames;
+    var parameters = options.parameters;
 
-typedef AutoAdjust = Future<List<int>> Function({
-  required int n,
-  required Map<String, dynamic> parameters,
-});
+    parameters = parameters.getUpdatedAllParams();
 
-typedef GetUpdatedAllParams = Map<String, dynamic> Function();
+    final socket = parameters.socket;
+    final roomName = parameters.roomName;
+    final screenStates = parameters.screenStates;
+    final participants = parameters.participants;
+    var updateDateState = parameters.updateDateState;
+    var lastUpdate = parameters.lastUpdate;
+    var nForReadjust = parameters.nForReadjust ?? 0;
+    final eventType = parameters.eventType;
+    final shared = parameters.shared;
+    final shareScreenStarted = parameters.shareScreenStarted;
+    final whiteboardStarted = parameters.whiteboardStarted;
+    final whiteboardEnded = parameters.whiteboardEnded;
 
-typedef GetEstimate = List<dynamic> Function(
-    {required int n, required Map<String, dynamic> parameters});
-typedef CheckGrid = Future<List<dynamic>> Function(
-    int rows, int cols, int refLength);
+    final updateUpdateDateState = parameters.updateUpdateDateState;
+    final updateLastUpdate = parameters.updateLastUpdate;
+    final updateNForReadjust = parameters.updateNForReadjust;
+    final autoAdjust = parameters.autoAdjust;
 
-typedef UpdateDateState = void Function(int timestamp);
-typedef UpdateUpdateDateState = void Function(int timestamp);
-typedef UpdateLastUpdate = void Function(int now);
-typedef UpdateNForReadjust = void Function(int nForReadjust);
-typedef UpdateScreenStates = void Function(
-    List<Map<String, dynamic>> screenStates);
+    // Determine admin and main screen participant
+    String? personOnMainScreen =
+        screenStates.isNotEmpty ? screenStates[0].mainScreenPerson : null;
+    final admin = participants.firstWhere(
+      (participant) => participant.islevel == '2',
+    );
+    final adminName = admin.name;
 
-Future<void> trigger(
-    {required List<String> refActiveNames,
-    required Map<String, dynamic> parameters}) async {
-  GetUpdatedAllParams getUpdatedAllParams = parameters['getUpdatedAllParams'];
-
-  parameters = getUpdatedAllParams();
-
-  io.Socket socket = parameters['socket'];
-  String roomName = parameters['roomName'];
-  List<Map<String, dynamic>> screenStates = parameters['screenStates'] ?? [];
-  List<dynamic> participants = parameters['participants'] ?? [];
-  int updateDateState = parameters['updateDateState'] ?? 0;
-  dynamic lastUpdate = parameters['lastUpdate'];
-  int nForReadjust = parameters['nForReadjust'];
-  String eventType = parameters['eventType'];
-  bool shared = parameters['shared'] ?? false;
-  bool shareScreenStarted = parameters['shareScreenStarted'] ?? false;
-
-  UpdateUpdateDateState updateUpdateDateState =
-      parameters['updateUpdateDateState'];
-  UpdateLastUpdate updateLastUpdate = parameters['updateLastUpdate'];
-  UpdateNForReadjust updateNForReadjust = parameters['updateNForReadjust'];
-
-  // mediasfu functions
-  AutoAdjust autoAdjust = parameters['autoAdjust'];
-
-  String? personOnMainScreen = screenStates[0]['mainScreenPerson'];
-  bool? mainfilled = screenStates[0]['mainScreenFilled'];
-  bool? adminOnMain = screenStates[0]['adminOnMainScreen'];
-  int nForReadjust_;
-  int val1;
-
-  int noww = DateTime.now().millisecondsSinceEpoch;
-  int timestamp = noww ~/ 1000;
-
-  bool eventPass = false;
-
-  if (eventType == 'conference' && !(shared || shareScreenStarted)) {
-    eventPass = true;
-
-    List<dynamic> admin = participants
-        .where((participant) =>
-            participant['isAdmin'] == true && participant['islevel'] == '2')
-        .toList();
-    String adminName = "";
-
-    if (admin.isNotEmpty) {
-      adminName = admin[0]['name'];
+    if (personOnMainScreen == 'WhiteboardActive') {
+      personOnMainScreen = adminName;
     }
 
-    personOnMainScreen = adminName;
+    final bool mainScreenFilled =
+        screenStates.isNotEmpty && screenStates[0].mainScreenFilled;
+    final bool adminOnMainScreen =
+        screenStates.isNotEmpty && screenStates[0].adminOnMainScreen;
+    final int timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
-    if (!refActiveNames.contains(adminName)) {
-      refActiveNames.insert(0, adminName);
+    bool eventPass = false;
+
+    // Specific conference conditions
+    if (eventType == EventType.conference && !(shared || shareScreenStarted)) {
+      eventPass = true;
+      personOnMainScreen = adminName;
+      if (!refActiveNames.contains(adminName) &&
+          whiteboardStarted &&
+          !whiteboardEnded) {
+        refActiveNames.insert(0, adminName);
+      }
     }
-  }
 
-  if ((mainfilled! && personOnMainScreen != null && adminOnMain!) ||
-      eventPass) {
-    dynamic admin = participants
-        .where((participant) =>
-            participant['isAdmin'] == true && participant['islevel'] == '2')
-        .toList();
+    if ((mainScreenFilled && personOnMainScreen != null && adminOnMainScreen) ||
+        eventPass) {
+      nForReadjust += 1;
+      updateNForReadjust(nForReadjust);
 
-    if (admin.isNotEmpty) {}
+      int adjustedParticipantCount = refActiveNames.length;
 
-    nForReadjust = nForReadjust + 1;
-    updateNForReadjust(nForReadjust);
+      List<int> adjustedValues = [0, 0];
 
-    nForReadjust_ = refActiveNames.length;
+      if (adjustedParticipantCount == 0 && eventType == EventType.webinar) {
+        adjustedParticipantCount = 0;
+      } else {
+        final optionsAutoAdjust = AutoAdjustOptions(
+          n: adjustedParticipantCount,
+          eventType: eventType,
+          shareScreenStarted: shareScreenStarted,
+          shared: shared,
+        );
+        adjustedValues = await autoAdjust(
+          optionsAutoAdjust,
+        );
+      }
 
-    if (nForReadjust_ == 0 && eventType == 'webinar') {
-      val1 = 0;
+      final mainScreenPercentage =
+          100 - ((adjustedValues[0] / 12) * 100).floor();
+
+      // Emit update if new timestamp or different last update
+      if (lastUpdate == null || updateDateState != timestamp) {
+        socket!.emitWithAck(
+          'updateScreenClient',
+          {
+            'roomName': roomName,
+            'names': refActiveNames,
+            'mainPercent': mainScreenPercentage,
+            'mainScreenPerson': personOnMainScreen,
+            'viewType': eventType.name,
+          },
+          ack: (data) {
+            updateDateState = timestamp;
+            updateUpdateDateState(updateDateState);
+            lastUpdate = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+            updateLastUpdate(lastUpdate);
+            if (data['success']) {
+              // handle success
+            } else {
+              if (kDebugMode) {
+                print('${data['reason']} updateScreenClient failed');
+              }
+            }
+          },
+        );
+      }
+    } else if (mainScreenFilled &&
+        personOnMainScreen != null &&
+        !adminOnMainScreen) {
+      if (!refActiveNames.contains(adminName)) {
+        refActiveNames.insert(0, adminName);
+      }
+
+      final optionsAutoAdjust = AutoAdjustOptions(
+        n: refActiveNames.length,
+        eventType: eventType,
+        shareScreenStarted: shareScreenStarted,
+        shared: shared,
+      );
+      final adjustedValues = await autoAdjust(
+        optionsAutoAdjust,
+      );
+      final mainScreenPercentage =
+          100 - ((adjustedValues[0] / 12) * 100).floor();
+
+      if (lastUpdate == null || updateDateState != timestamp) {
+        socket!.emitWithAck(
+          'updateScreenClient',
+          {
+            'roomName': roomName,
+            'names': refActiveNames,
+            'mainPercent': mainScreenPercentage,
+            'mainScreenPerson': personOnMainScreen,
+            'viewType': eventType.name,
+          },
+          ack: (data) {
+            updateDateState = timestamp;
+            updateUpdateDateState(updateDateState);
+            lastUpdate = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+            updateLastUpdate(lastUpdate);
+            if (data['success']) {
+              // handle success
+            } else {
+              if (kDebugMode) {
+                print('${data['reason']} updateScreenClient failed');
+              }
+            }
+          },
+        );
+      }
     } else {
-      List<int> adjustedValues =
-          await autoAdjust(n: nForReadjust_, parameters: parameters);
-      val1 = adjustedValues[0];
+      if (kDebugMode) {
+        // print('Trigger stopped recording');
+      }
     }
-
-    int calc1 = ((val1 / 12) * 100).floor();
-    int calc2 = 100 - calc1;
-
-    if (lastUpdate == null || (updateDateState != timestamp)) {
-      socket.emitWithAck('updateScreenClient', {
-        'roomName': roomName,
-        'names': refActiveNames,
-        'mainPercent': calc2,
-        'mainScreenPerson': personOnMainScreen,
-        'viewType': eventType
-      }, ack: (data) {
-        updateDateState = timestamp;
-        updateUpdateDateState(timestamp);
-        updateLastUpdate(timestamp);
-
-        if (data['success']) {
-          // handle success
-        } else {
-          if (kDebugMode) {
-            print('${data['reason']} updateScreenClient failed');
-          }
-        }
-      });
-    }
-  } else if (mainfilled && personOnMainScreen != null && !adminOnMain!) {
-    dynamic admin = participants
-        .where((participant) =>
-            participant['isAdmin'] == true && participant['islevel'] == '2')
-        .toList();
-    String adminName = "";
-
-    if (admin.length > 0) {
-      adminName = admin[0]['name'];
-    }
-
-    nForReadjust_ = refActiveNames.length;
-
-    if (!refActiveNames.contains(adminName)) {
-      refActiveNames.insert(0, adminName);
-      nForReadjust_ = refActiveNames.length;
-    }
-
-    List<int> adjustedValues =
-        await autoAdjust(n: nForReadjust_, parameters: parameters);
-    val1 = adjustedValues[0];
-
-    int calc1 = ((val1 / 12) * 100).floor();
-    int calc2 = 100 - calc1;
-
-    if (lastUpdate == null || (updateDateState != timestamp)) {
-      socket.emitWithAck('updateScreenClient', {
-        'roomName': roomName,
-        'names': refActiveNames,
-        'mainPercent': calc2,
-        'mainScreenPerson': personOnMainScreen,
-        'viewType': eventType
-      }, ack: (data) {
-        updateDateState = timestamp;
-        updateUpdateDateState(timestamp);
-        updateLastUpdate(timestamp);
-
-        if (data['success']) {
-          // handle success
-        } else {
-          if (kDebugMode) {
-            print('${data['reason']} updateScreenClient failed');
-          }
-        }
-      });
-    }
-  } else {
-    //stop recording
+  } catch (error) {
     if (kDebugMode) {
-      print('trigger stopRecording');
+      print('Error in trigger: $error');
     }
   }
 }

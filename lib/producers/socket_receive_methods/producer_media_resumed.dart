@@ -1,99 +1,127 @@
 import 'dart:async';
+import '../../types/types.dart'
+    show
+        Participant,
+        PrepopulateUserMediaType,
+        ReorderStreamsType,
+        PrepopulateUserMediaParameters,
+        ReorderStreamsParameters,
+        PrepopulateUserMediaOptions,
+        ReorderStreamsOptions;
 
-/// This function is called when a media is resumed for a producer.
-/// It takes in the [name], [kind], and [parameters] of the media.
-/// The [name] parameter represents the name of the participant.
-/// The [kind] parameter represents the kind of media (always audio).
-/// The [parameters] parameter is a map that contains various parameters related to the media.
+abstract class ProducerMediaResumedParameters
+    implements PrepopulateUserMediaParameters, ReorderStreamsParameters {
+  String get meetingDisplayType;
+  List<Participant> get participants;
+  bool get shared;
+  bool get shareScreenStarted;
+  bool get mainScreenFilled;
+  String get hostLabel;
+
+  // Update function as an abstract getter
+  void Function(bool) get updateUpdateMainWindow;
+
+  // Mediasfu functions as abstract getters
+  ReorderStreamsType get reorderStreams;
+  PrepopulateUserMediaType get prepopulateUserMedia;
+
+  // Method to retrieve updated parameters as an abstract getter
+  ProducerMediaResumedParameters Function() get getUpdatedAllParams;
+
+  // Dynamic key-value support
+  // dynamic operator [](String key);
+}
+
+class ProducerMediaResumedOptions {
+  final String name;
+  final String kind;
+  final ProducerMediaResumedParameters parameters;
+
+  ProducerMediaResumedOptions({
+    required this.name,
+    required this.kind,
+    required this.parameters,
+  });
+}
+
+typedef ProducerMediaResumedType = Future<void> Function(
+    ProducerMediaResumedOptions options);
+
+/// Resumes media for a specified participant in a meeting.
 ///
-/// This function performs operations to update the UI and optimize interest levels.
-/// It checks if the main screen is filled and if the participant is at interest level 2.
-/// If both conditions are met, it updates the main window, prepopulates the user media, and then resets the main window.
+/// This function manages media resumption for a participant by optimizing the display and handling any
+/// prepopulated media or screen reordering as necessary. It first verifies the participant's status,
+/// checks if the main screen is filled, and then performs actions based on the meeting display type and
+/// participant's interest level.
 ///
-/// If the [meetingDisplayType] is 'media', it checks if the participant has a video ID.
-/// If the participant does not have a video ID and screen sharing is not started or shared, it calls the [reorderStreams] function.
+/// - If the participant is a key user (e.g., a high-interest level) and the main screen is not filled,
+///   the media is prepopulated, optimizing their display.
+/// - If the display type is 'media' and the participant has no active video, the function reorders the
+///   stream list to adjust the meeting view appropriately.
 ///
-/// Note: This function is specifically for resuming audio media and does not handle video or screenshare media.
+/// Parameters:
+/// - [options] (`ProducerMediaResumedOptions`): Contains the participant's name, media type, and additional
+///   configuration parameters for managing resumption.
+///
+/// Example usage:
+/// ```dart
+/// final parameters = ProducerMediaResumedParameters(
+///   meetingDisplayType: "media",
+///   participants: [Participant(name: "John Doe", islevel: "2", videoID: "vid123")],
+///   shared: false,
+///   shareScreenStarted: false,
+///   mainScreenFilled: false,
+///   hostLabel: "Host",
+///   updateUpdateMainWindow: (update) => print("Main window updated: $update"),
+///   reorderStreams: ({required bool add, required bool screenChanged, required Map<String, dynamic> parameters}) async {
+///     print("Reordered streams");
+///   },
+///   prepopulateUserMedia: ({required String name, required Map<String, dynamic> parameters}) {
+///     print("Prepopulating media for $name");
+///   },
+/// );
+///
+/// final options = ProducerMediaResumedOptions(
+///   name: "John Doe",
+///   kind: "audio",
+///   parameters: parameters,
+/// );
+///
+/// await producerMediaResumed(options);
+/// ```
 
-typedef ReUpdateInter = Future<void> Function({
-  required String name,
-  bool add,
-  bool force,
-  double average,
-  required Map<String, dynamic> parameters,
-});
+Future<void> producerMediaResumed(ProducerMediaResumedOptions options) async {
+  final parameters = options.parameters;
 
-typedef CloseAndResize = Future<void> Function({
-  required String producerId,
-  required String kind,
-  required Map<String, dynamic> parameters,
-});
+  final participant = parameters.participants.firstWhere(
+    (obj) => obj.name == options.name,
+    orElse: () => Participant(name: '', islevel: '', videoID: '', audioID: ''),
+  );
 
-typedef PrepopulateUserMedia = List<dynamic> Function({
-  required String name,
-  required Map<String, dynamic> parameters,
-});
-
-typedef ReorderStreams = Future<void> Function({
-  bool add,
-  bool screenChanged,
-  required Map<String, dynamic> parameters,
-});
-
-typedef UpdateActiveSounds = void Function(List<String> activeSounds);
-typedef UpdateUpdateMainWindow = void Function(bool updateMainWindow);
-
-Future<void> producerMediaResumed(
-    {required String name,
-    required String kind,
-    required Map<String, dynamic> parameters}) async {
-  String meetingDisplayType = parameters['meetingDisplayType'];
-  List<dynamic> participants = parameters['participants'];
-  bool shared = parameters['shared'];
-  bool shareScreenStarted = parameters['shareScreenStarted'];
-  bool updateMainWindow = parameters['updateMainWindow'];
-  bool mainScreenFilled = parameters['mainScreenFilled'];
-
-  UpdateUpdateMainWindow updateUpdateMainWindow =
-      parameters['updateUpdateMainWindow'];
-
-  // mediasfu functions
-  ReorderStreams reorderStreams = parameters['reorderStreams'];
-  PrepopulateUserMedia prepopulateUserMedia =
-      parameters['prepopulateUserMedia'];
-
-  // Update to resume the audio only of a participant
-  // Name is the name of the participant
-  // Kind is the kind of media (always audio)
-  // This is only emitted for audio (and not video or screenshare)
-
-  // Operations to update UI to optimize interest levels
-  var participant =
-      participants.firstWhere((obj) => obj['name'] == name, orElse: () => null);
-
-  if (!mainScreenFilled &&
-      participant != null &&
-      participant['islevel'] == '2') {
-    updateMainWindow = true;
-    updateUpdateMainWindow(updateMainWindow);
-    prepopulateUserMedia(name: name, parameters: parameters);
-    updateMainWindow = false;
+  if (participant.name.isNotEmpty &&
+      !parameters.mainScreenFilled &&
+      participant.islevel == '2') {
+    parameters.updateUpdateMainWindow(true);
+    final optionsPrepopulate = PrepopulateUserMediaOptions(
+      name: parameters.hostLabel,
+      parameters: parameters,
+    );
+    parameters.prepopulateUserMedia(optionsPrepopulate);
+    parameters.updateUpdateMainWindow(false);
   }
 
-  bool checker;
-  if (meetingDisplayType == 'media') {
-    var participant = participants.firstWhere((obj) => obj['name'] == name,
-        orElse: () => null);
-    checker = participant != null &&
-        participant['videoID'] != null &&
-        participant['videoID'] != "";
-
-    if (!checker) {
-      if (shareScreenStarted || shared) {
-      } else {
-        await reorderStreams(
-            add: false, screenChanged: true, parameters: parameters);
-      }
+  bool hasVideo = false;
+  if (parameters.meetingDisplayType == 'media') {
+    hasVideo = participant.videoID.isNotEmpty && participant.videoID != "";
+    if (!hasVideo && !(parameters.shareScreenStarted || parameters.shared)) {
+      final optionsReorder = ReorderStreamsOptions(
+        add: false,
+        screenChanged: true,
+        parameters: parameters,
+      );
+      await parameters.reorderStreams(
+        optionsReorder,
+      );
     }
   }
 }

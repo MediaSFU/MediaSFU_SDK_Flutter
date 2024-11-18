@@ -1,76 +1,127 @@
 import 'package:flutter/material.dart';
-import '../../methods/exit_methods/confirm_exit.dart' show confirmExit;
-import '../../methods/utils/get_modal_position.dart' show getModalPosition;
 import 'package:socket_io_client/socket_io_client.dart' as io;
+import '../../methods/exit_methods/confirm_exit.dart'
+    show confirmExit, ConfirmExitType, ConfirmExitOptions;
+import '../../methods/utils/get_modal_position.dart'
+    show getModalPosition, GetModalPositionOptions;
 
-/// ConfirmExitModal - A modal widget for confirming exit actions.
-///
-/// This widget provides a confirmation dialog for exiting an event or ending it.
-///
-/// Whether the confirm exit modal is visible.
-///final bool isConfirmExitModalVisible;
-///
-/// A callback function called when the confirm exit modal is closed.
-///final Function onConfirmExitClose;
-///
-/// The parameters associated with the confirm exit modal.
-///final Map<String, dynamic> parameters;
-///
-/// The position of the modal.
-///final String position;
-///
-/// The background color of the modal.
-///final Color backgroundColor;
-///
-/// The function to execute when the exit action is confirmed.
-///final ConfirmExit exitEventOnConfirm;
-
-typedef ConfirmExit = Future<void> Function({
-  required io.Socket socket,
-  required String member,
-  required String roomName,
-  bool ban,
-});
-
-class ConfirmExitModal extends StatelessWidget {
-  final bool isConfirmExitModalVisible;
-  final Function onConfirmExitClose;
-  final Map<String, dynamic> parameters;
+/// ConfirmExitModalOptions - Defines configuration options for the `ConfirmExitModal`.
+class ConfirmExitModalOptions {
+  final bool isVisible;
+  final VoidCallback onClose;
   final String position;
   final Color backgroundColor;
-  final ConfirmExit exitEventOnConfirm;
+  final ConfirmExitType exitEventOnConfirm;
+  final String member;
+  final bool ban;
+  final String roomName;
+  final io.Socket? socket;
+  final String islevel;
 
-  const ConfirmExitModal({
-    super.key,
-    required this.isConfirmExitModalVisible,
-    required this.onConfirmExitClose,
-    required this.parameters,
+  ConfirmExitModalOptions({
+    required this.isVisible,
+    required this.onClose,
     this.position = 'topRight',
     this.backgroundColor = const Color(0xFF83C0E9),
     this.exitEventOnConfirm = confirmExit,
+    required this.member,
+    this.ban = false,
+    required this.roomName,
+    this.socket,
+    required this.islevel,
   });
+}
+
+typedef ConfirmExitModalType = ConfirmExitModal Function({
+  required ConfirmExitModalOptions options,
+});
+
+/// `ConfirmExitModalOptions` - Configuration options for `ConfirmExitModal`.
+///
+/// ### Properties:
+/// - `isVisible`: Boolean indicating the modal's visibility.
+/// - `onClose`: Callback to close the modal.
+/// - `position`: Position of the modal on the screen (default is 'topRight').
+/// - `backgroundColor`: Background color of the modal (default is `Color(0xFF83C0E9)`).
+/// - `exitEventOnConfirm`: Function to execute on confirming the exit.
+/// - `member`: Identifier for the exiting user.
+/// - `ban`: Boolean indicating if the user should be banned on exit.
+/// - `roomName`: Name of the room or event.
+/// - `socket`: Socket connection for sending exit commands.
+/// - `islevel`: User’s permission level, where '2' indicates admin rights.
+///
+/// ### Example Usage:
+/// ```dart
+/// ConfirmExitModal(
+///   options: ConfirmExitModalOptions(
+///     isVisible: true,
+///     onClose: () => print("Modal closed"),
+///     islevel: '1',
+///     member: 'user123',
+///     roomName: 'eventRoom',
+///     socket: socket,
+///     islevel: '2',
+///   ),
+/// );
+/// ```
+
+/// `ConfirmExitModal` - A modal widget that displays an exit confirmation dialog.
+///
+/// This widget is useful for confirming an exit action, such as ending an event
+/// or allowing a user to leave. For users with an admin role (indicated by `islevel` '2'),
+/// a warning appears, noting that the action will end the event for all participants.
+///
+/// ### Parameters:
+/// - `options` (`ConfirmExitModalOptions`): Configuration options for the modal.
+///
+/// ### Structure:
+/// - Header with title ("Confirm Exit") and close icon.
+/// - Message indicating the impact of the exit, based on user level (`islevel`).
+/// - Buttons for "Cancel" and "Confirm":
+///   - The "Confirm" button ends the event if `islevel` is '2' or allows the user to exit otherwise.
+///
+/// ### Example Usage:
+/// ```dart
+/// ConfirmExitModal(
+///   options: ConfirmExitModalOptions(
+///     isVisible: true,
+///     onClose: () => print("Modal closed"),
+///     member: 'user123',
+///     roomName: 'eventRoom',
+///     socket: socket,
+///     islevel: '2',
+///   ),
+/// );
+/// ```
+
+class ConfirmExitModal extends StatelessWidget {
+  final ConfirmExitModalOptions options;
+
+  const ConfirmExitModal({super.key, required this.options});
 
   @override
   Widget build(BuildContext context) {
-    final islevel = parameters['islevel'];
-
+    final islevel = options.islevel;
     final screenWidth = MediaQuery.of(context).size.width;
-    var modalWidth = 0.7 * screenWidth;
-    if (modalWidth > 400) {
-      modalWidth = 400;
-    }
-
-    final modalHeight = MediaQuery.of(context).size.height * 0.5;
+    final double modalWidth = screenWidth * 0.7 > 400 ? 400 : screenWidth * 0.7;
+    final double modalHeight = MediaQuery.of(context).size.height * 0.5;
 
     return Visibility(
-      visible: isConfirmExitModalVisible,
+      visible: options.isVisible,
       child: Stack(
         children: [
           Positioned(
-            top: getModalPosition(
-                position, context, modalWidth, modalHeight)['top'],
-            right: getModalPosition(
-                position, context, modalWidth, modalHeight)['right'],
+            top: getModalPosition(GetModalPositionOptions(
+              position: options.position,
+              modalWidth: modalWidth,
+              modalHeight: modalHeight,
+              context: context,
+            ))['top'],
+            right: getModalPosition(GetModalPositionOptions(
+                position: options.position,
+                modalWidth: modalWidth,
+                modalHeight: modalHeight,
+                context: context))['right'],
             child: Center(
               child: SingleChildScrollView(
                 child: Container(
@@ -79,7 +130,7 @@ class ConfirmExitModal extends StatelessWidget {
                   margin:
                       const EdgeInsets.symmetric(vertical: 50, horizontal: 20),
                   decoration: BoxDecoration(
-                    color: backgroundColor,
+                    color: options.backgroundColor,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Column(
@@ -97,7 +148,7 @@ class ConfirmExitModal extends StatelessWidget {
                             ),
                           ),
                           IconButton(
-                            onPressed: onConfirmExitClose as void Function()?,
+                            onPressed: options.onClose,
                             icon: const Icon(Icons.close),
                             color: Colors.black,
                           ),
@@ -123,10 +174,14 @@ class ConfirmExitModal extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           ElevatedButton(
-                            onPressed: onConfirmExitClose as void Function()?,
-                            style: ButtonStyle(
-                              backgroundColor: WidgetStateProperty.all<Color>(
-                                  Colors.grey[700]!),
+                            onPressed: options.onClose,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey[700],
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 15, vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(5),
+                              ),
                             ),
                             child: const Text(
                               'Cancel',
@@ -142,18 +197,25 @@ class ConfirmExitModal extends StatelessWidget {
                             width: 10,
                           ),
                           ElevatedButton(
-                            onPressed: () {
-                              exitEventOnConfirm(
-                                socket: parameters['socket'],
-                                member: parameters['member'],
-                                roomName: parameters['roomName'],
-                                ban: false,
+                            onPressed: () async {
+                              final optionsExit = ConfirmExitOptions(
+                                member: options.member,
+                                ban: options.ban,
+                                socket: options.socket,
+                                roomName: options.roomName,
                               );
-                              onConfirmExitClose();
+                              await options.exitEventOnConfirm(
+                                optionsExit,
+                              );
+                              options.onClose();
                             },
-                            style: ButtonStyle(
-                              backgroundColor:
-                                  WidgetStateProperty.all<Color>(Colors.red),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 15, vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(5),
+                              ),
                             ),
                             child: Text(
                               islevel == '2' ? 'End Event' : 'Exit',

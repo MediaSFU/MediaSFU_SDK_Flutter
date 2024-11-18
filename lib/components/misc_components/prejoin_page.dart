@@ -3,63 +3,143 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:socket_io_client/socket_io_client.dart' as io;
+import '../../types/types.dart'
+    show ShowAlert, ConnectSocketType, ConnectSocketOptions;
 
-/// This file contains the implementation of the [PreJoinPage] widget.
-/// The [PreJoinPage] widget is responsible for handling the pre-join logic
-/// before a user joins a room in the application.
-/// It includes functions for checking rate limits, making API requests,
-/// and creating/joining rooms on MediaSFU.
-///
-/// The [PreJoinPage] widget receives parameters such as [showAlert],
-/// [updateIsLoadingModalVisible], [onWeb], [connectSocket], [socket],
-/// [updateSocket], [updateValidated], [updateApiUserName], [updateApiToken],
-/// [updateLink], [updateRoomName], [updateMember], and [validated].
-/// These parameters are used for various purposes such as displaying alerts,
-/// updating the loading modal visibility, connecting to a socket,
-/// updating state variables, and validating user credentials.
-///
-/// The [PreJoinPage] widget is a stateful widget that maintains the state
-/// of various variables such as [_isCreateMode], [_name], [_duration],
-/// [_eventType], [_capacity], [_eventID], [_error], and [credentials].
-/// These variables store information related to the pre-join page,
-/// user input, and user credentials.
-///
-/// The [PreJoinPage] widget also includes functions such as [_checkLimitsAndMakeRequest],
-/// [joinRoomOnMediaSFU], and [createRoomOnMediaSFU]. These functions are responsible
-/// for checking rate limits, making API requests to join/create rooms on MediaSFU,
-/// and handling the response data.
-///
-/// Overall, the [PreJoinPage] widget provides the necessary functionality
-/// for the pre-join page in the application.
+class PreJoinPageOptions {
+  String? imgSrc;
+  ShowAlert? showAlert;
+  Function(bool) updateIsLoadingModalVisible;
+  ConnectSocketType connectSocket;
+  Function(io.Socket?) updateSocket;
+  Function(bool) updateValidated;
+  Function(String) updateApiUserName;
+  Function(String) updateApiToken;
+  Function(String) updateLink;
+  Function(String) updateRoomName;
+  Function(String) updateMember;
 
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
+  PreJoinPageOptions({
+    this.imgSrc = 'https://mediasfu.com/images/logo192.png',
+    required this.showAlert,
+    required this.updateIsLoadingModalVisible,
+    required this.connectSocket,
+    required this.updateSocket,
+    required this.updateValidated,
+    required this.updateApiUserName,
+    required this.updateApiToken,
+    required this.updateLink,
+    required this.updateRoomName,
+    required this.updateMember,
+  });
+}
+
+class Credentials {
+  final String apiUserName;
+  final String apiKey;
+
+  Credentials({required this.apiUserName, required this.apiKey});
+}
+
+typedef PreJoinPageType = Widget Function({
+  PreJoinPageOptions? options,
+  required Credentials credentials,
 });
 
-typedef ConnectSocket = Future<dynamic> Function(
-    String apiUserName, String apiKey, String apiToken, String link);
-
-int maxAttempts =
-    20; // Maximum number of unsuccessful attempts before rate limiting
-int rateLimitDuration = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
-String apiKey = 'yourAPIKEY';
-String apiUserName = 'yourAPIUSERNAME';
-Map<String, dynamic> userCredentials = {
-  'apiUserName': apiUserName,
-  'apiKey': apiKey
-};
-
+/// `PreJoinPage` is a StatefulWidget that allows users to either join an existing room
+/// or create a new room. It provides validation, error handling, and alerts for user interactions.
+///
+/// ### Parameters:
+/// - `PreJoinPageOptions` `options`: Contains functions and configurations such as alert displays,
+///   socket connections, and loading state updates.
+/// - `Credentials` `credentials`: Holds the `apiUserName` and `apiKey` for room creation and joining.
+/// - `PreJoinPageType?` `customBuilder`: *(Optional)* A custom widget builder that overrides the default UI.
+///
+/// ### Example Usage:
+///
+/// #### Using the Default `PreJoinPage`:
+/// ```dart
+/// PreJoinPage(
+///   options: PreJoinPageOptions(
+///     showAlert: (message, type, duration) => print('Alert: $message'),
+///     updateIsLoadingModalVisible: (isVisible) => print('Loading: $isVisible'),
+///     connectSocket: myConnectSocketFunction,
+///     updateSocket: (socket) => print('Socket Updated'),
+///     updateValidated: (isValid) => print('Validated: $isValid'),
+///     updateApiUserName: (userName) => print('API UserName: $userName'),
+///     updateApiToken: (token) => print('API Token: $token'),
+///     updateLink: (link) => print('Link: $link'),
+///     updateRoomName: (roomName) => print('Room Name: $roomName'),
+///     updateMember: (member) => print('Member: $member'),
+///   ),
+///   credentials: Credentials(
+///     apiUserName: 'exampleUser',
+///     apiKey: 'exampleKey',
+///   ),
+/// );
+/// ```
+///
+/// #### Using a Custom `PreJoinPage`:
+/// ```dart
+/// // Define a custom PreJoinPage widget
+/// Widget myCustomPreJoinPage({
+///   required PreJoinPageOptions options,
+///   required Credentials credentials,
+/// }) {
+///   return Scaffold(
+///     appBar: AppBar(title: const Text('Custom PreJoin Page')),
+///     body: Center(
+///       child: Text(
+///         'Welcome, ${credentials.apiUserName}!',
+///         style: const TextStyle(fontSize: 24),
+///       ),
+///     ),
+///   );
+/// }
+///
+/// // Usage with Custom Builder
+/// PreJoinPage(
+///   options: PreJoinPageOptions(
+///     showAlert: (message, type, duration) => print('Alert: $message'),
+///     updateIsLoadingModalVisible: (isVisible) => print('Loading: $isVisible'),
+///     connectSocket: myConnectSocketFunction,
+///     updateSocket: (socket) => print('Socket Updated'),
+///     updateValidated: (isValid) => print('Validated: $isValid'),
+///     updateApiUserName: (userName) => print('API UserName: $userName'),
+///     updateApiToken: (token) => print('API Token: $token'),
+///     updateLink: (link) => print('Link: $link'),
+///     updateRoomName: (roomName) => print('Room Name: $roomName'),
+///     updateMember: (member) => print('Member: $member'),
+///   ),
+///   credentials: Credentials(
+///     apiUserName: 'exampleUser',
+///     apiKey: 'exampleKey',
+///   ),
+///   customBuilder: myCustomPreJoinPage, // Pass the custom builder
+/// );
+/// ```
+///
+/// ### Key Methods:
+/// - `_handleCreateRoom()`: Validates inputs and sends a request to create a room. If successful,
+///   it calls `_checkLimitsAndMakeRequest` to handle socket connection setup.
+/// - `_handleJoinRoom()`: Similar to `_handleCreateRoom`, but for joining an existing room based on `eventID`.
+/// - `_checkLimitsAndMakeRequest(...)`: Checks for rate limits and, if passed, establishes a socket connection.
+/// - `_toggleMode()`: Switches between "Create" and "Join" modes.
+///
+/// ### UI Elements:
+/// - `_buildInputFields()`: Generates input fields based on the current mode.
+/// - `_buildActionButton()`: Displays either a "Create Room" or "Join Room" button based on the mode.
+/// - `_buildToggleButton()`: Button to switch between "Create" and "Join" modes.
 class PreJoinPage extends StatefulWidget {
-  final Map<String, dynamic> parameters;
-  final Map<String, dynamic> credentials;
+  final PreJoinPageOptions? options;
+  final Credentials credentials;
+  final PreJoinPageType? customBuilder;
 
   const PreJoinPage(
-      {super.key, required this.parameters, required this.credentials});
+      {super.key, this.options, required this.credentials, this.customBuilder});
 
   @override
-  // ignore: library_private_types_in_public_api
   _PreJoinPageState createState() => _PreJoinPageState();
 }
 
@@ -72,347 +152,107 @@ class _PreJoinPageState extends State<PreJoinPage> {
   String _eventID = '';
   String _error = '';
 
-  Map<String, dynamic> credentials = userCredentials;
-
-  late final ShowAlert showAlert;
-  late final Function(bool) updateIsLoadingModalVisible;
-  late bool onWeb;
-  late final ConnectSocket connectSocket;
-  late dynamic socket;
-  late Function(dynamic) updateSocket;
-  late Function(bool) updateValidated;
-  late Function(String) updateApiUserName;
-  late Function(String) updateApiToken;
-  late Function(String) updateLink;
-  late Function(String) updateRoomName;
-  late Function(String) updateMember;
-  late bool validated;
-
-  @override
-  void initState() {
-    super.initState();
-    // Extract showAlert and updateIsLoadingModalVisible from parameters
-    showAlert = widget.parameters['showAlert'];
-    updateIsLoadingModalVisible =
-        widget.parameters['updateIsLoadingModalVisible'];
-    onWeb = widget.parameters['onWeb'];
-    connectSocket = widget.parameters['connectSocket'];
-    socket = widget.parameters['socket'];
-    updateSocket = widget.parameters['updateSocket'];
-    updateValidated = widget.parameters['updateValidated'];
-    updateApiUserName = widget.parameters['updateApiUserName'];
-    updateApiToken = widget.parameters['updateApiToken'];
-    updateLink = widget.parameters['updateLink'];
-    updateRoomName = widget.parameters['updateRoomName'];
-    updateMember = widget.parameters['updateMember'];
-    validated = widget.parameters['validated'];
-  }
+  final int maxAttempts = 10;
+  final int rateLimitDuration = 3 * 60 * 60 * 1000; // 3 hours
 
   Future<void> _checkLimitsAndMakeRequest({
     required String apiUserName,
-    String apiToken = "",
-    String apiKey = "",
+    String apiToken = '',
     required String link,
     required String userName,
   }) async {
-    const int duration = 20000;
-
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final prefs = await SharedPreferences.getInstance();
     int unsuccessfulAttempts = prefs.getInt('unsuccessfulAttempts') ?? 0;
     int lastRequestTimestamp = prefs.getInt('lastRequestTimestamp') ?? 0;
 
-    if (unsuccessfulAttempts >= maxAttempts) {
-      if (DateTime.now().millisecondsSinceEpoch - lastRequestTimestamp <
-          rateLimitDuration) {
-        showAlert(
-          message: 'Too many unsuccessful attempts. Please try again later.',
-          type: 'danger',
-          duration: 3000,
-        );
-        await prefs.setInt(
-          'lastRequestTimestamp',
-          DateTime.now().millisecondsSinceEpoch,
-        );
-        return;
-      } else {
-        unsuccessfulAttempts = 0;
-        await prefs.setInt('unsuccessfulAttempts', unsuccessfulAttempts);
-        await prefs.setInt(
-          'lastRequestTimestamp',
-          DateTime.now().millisecondsSinceEpoch,
-        );
-      }
+    if (unsuccessfulAttempts >= maxAttempts &&
+        DateTime.now().millisecondsSinceEpoch - lastRequestTimestamp <
+            rateLimitDuration) {
+      widget.options!.showAlert!(
+        message: 'Too many unsuccessful attempts. Please try again later.',
+        type: 'danger',
+        duration: 3000,
+      );
+      return;
     }
 
     try {
-      updateIsLoadingModalVisible(true);
+      widget.options!.updateIsLoadingModalVisible(true);
+      final socketWithTimeout = await widget.options!
+          .connectSocket(
+        ConnectSocketOptions(
+          apiUserName: apiUserName,
+          apiKey:
+              "", // connectSocket does not require an API key if the API token is provided with the room name as the apiusername
+          apiToken: apiToken,
+          link: link,
+        ),
+      )
+          .timeout(const Duration(seconds: 20), onTimeout: () {
+        throw TimeoutException('Socket connection timed out');
+      });
 
-      final socketPromise = connectSocket(apiUserName, apiKey, apiToken, link);
-      const timeoutDuration = Duration(milliseconds: duration);
+      if (socketWithTimeout.id!.isNotEmpty) {
+        prefs.setInt('unsuccessfulAttempts', 0);
+        prefs.setInt(
+            'lastRequestTimestamp', DateTime.now().millisecondsSinceEpoch);
 
-      final socketWithTimeout = await socketPromise.timeout(
-        timeoutDuration,
-        onTimeout: () {
-          throw TimeoutException('Socket connection timed out');
-        },
-      );
-
-      if (socketWithTimeout != null && socketWithTimeout.id != null) {
-        unsuccessfulAttempts = 0;
-        await prefs.setInt('unsuccessfulAttempts', unsuccessfulAttempts);
-        await prefs.setInt(
-          'lastRequestTimestamp',
-          DateTime.now().millisecondsSinceEpoch,
-        );
-        // Update state or perform other actions on successful request
-        await updateSocket(socketWithTimeout);
-        await updateApiUserName(apiUserName);
-        await updateApiToken(apiToken);
-        await updateLink(link);
-        await updateRoomName(apiUserName);
-        await updateMember(userName);
-        updateIsLoadingModalVisible(false);
-        await updateValidated(true);
+        widget.options!.updateSocket(socketWithTimeout);
+        widget.options!.updateApiUserName(apiUserName);
+        widget.options!.updateApiToken(apiToken);
+        widget.options!.updateLink(link);
+        widget.options!.updateRoomName(apiUserName);
+        widget.options!.updateMember(userName);
+        widget.options!.updateValidated(true);
       } else {
-        updateIsLoadingModalVisible(false);
-        unsuccessfulAttempts++;
-        await prefs.setInt('unsuccessfulAttempts', unsuccessfulAttempts);
-        await prefs.setInt(
-          'lastRequestTimestamp',
-          DateTime.now().millisecondsSinceEpoch,
-        );
-        if (unsuccessfulAttempts >= maxAttempts) {
-          showAlert(
-            message: 'Too many unsuccessful attempts. Please try again later.',
-            type: 'danger',
-            duration: 3000,
-          );
-        } else {
-          showAlert(
-            message: 'Invalid credentials. Please try again later.',
-            type: 'danger',
-            duration: 3000,
-          );
-        }
-      }
-    } catch (error) {
-      updateIsLoadingModalVisible(false);
-
-      await prefs.setInt('unsuccessfulAttempts', unsuccessfulAttempts);
-      await prefs.setInt(
-        'lastRequestTimestamp',
-        DateTime.now().millisecondsSinceEpoch,
-      );
-
-      if (unsuccessfulAttempts >= maxAttempts) {
-        showAlert(
-          message: 'Too many unsuccessful attempts. Please try again later.',
-          type: 'danger',
-          duration: 3000,
-        );
-      } else {
-        showAlert(
-          message: 'Unable to connect. ${error.toString()}',
+        prefs.setInt('unsuccessfulAttempts', ++unsuccessfulAttempts);
+        widget.options!.showAlert!(
+          message: 'Invalid credentials. Please try again later.',
           type: 'danger',
           duration: 3000,
         );
       }
-    }
-  }
-
-  Future<Map<String, dynamic>> joinRoomOnMediaSFU(
-      Map<String, dynamic> payload, String apiUserName, String apiKey) async {
-    try {
-      if (apiUserName.isEmpty ||
-          apiKey.isEmpty ||
-          apiUserName.isEmpty ||
-          apiKey.isEmpty) {
-        return {'data': null, 'success': false};
-      }
-
-      if (apiUserName == 'yourAPIUSERNAME' || apiKey == 'yourAPIKEY') {
-        return {'data': null, 'success': false};
-      }
-
-      if (apiKey.length != 64) {
-        return {'data': null, 'success': false};
-      }
-
-      if (apiUserName.length < 6) {
-        return {'data': null, 'success': false};
-      }
-
-      final url = Uri.parse('https://mediasfu.com/v1/rooms/');
-      final headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $apiUserName:$apiKey',
-      };
-
-      final response = await http.post(
-        url,
-        headers: headers,
-        body: jsonEncode(payload),
-      );
-
-      if (response.statusCode != 200 && response.statusCode != 201) {
-        throw Exception('HTTP error! Status: ${response.statusCode}');
-      }
-
-      final responseData = jsonDecode(response.body);
-      return {'data': responseData, 'success': true};
     } catch (error) {
-      return {'data': null, 'success': false};
+      widget.options!.updateIsLoadingModalVisible(false);
+      prefs.setInt('unsuccessfulAttempts', ++unsuccessfulAttempts);
+      prefs.setInt(
+          'lastRequestTimestamp', DateTime.now().millisecondsSinceEpoch);
+      widget.options!.showAlert!(
+        message: 'Unable to connect. ${error.toString()}',
+        type: 'danger',
+        duration: 3000,
+      );
+    } finally {
+      widget.options!.updateIsLoadingModalVisible(false);
     }
   }
 
   Future<Map<String, dynamic>> createRoomOnMediaSFU(
-      Map<String, dynamic> payload, String apiUserName, String apiKey) async {
+      Map<String, dynamic> payload) async {
     try {
-      if (apiUserName.isEmpty || apiKey.isEmpty) {
-        return {'data': null, 'success': false};
-      }
-
-      if (apiUserName == 'yourAPIUSERNAME' || apiKey == 'yourAPIKEY') {
-        return {'data': null, 'success': false};
-      }
-
-      if (apiKey.length != 64) {
-        return {'data': null, 'success': false};
-      }
-
-      if (apiUserName.length < 6) {
-        return {'data': null, 'success': false};
-      }
-
       final url = Uri.parse('https://mediasfu.com/v1/rooms/');
       final headers = {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $apiUserName:$apiKey',
+        'Authorization':
+            'Bearer ${widget.credentials.apiUserName}:${widget.credentials.apiKey}',
       };
 
-      final response = await http.post(
-        url,
-        headers: headers,
-        body: jsonEncode(payload),
-      );
+      final response =
+          await http.post(url, headers: headers, body: jsonEncode(payload));
 
-      if (response.statusCode != 201 && response.statusCode != 200) {
-        throw Exception('HTTP error! Status: ${response.statusCode}');
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return {'data': jsonDecode(response.body), 'success': true};
+      } else {
+        return {'data': jsonDecode(response.body), 'success': false};
       }
-
-      final responseData = jsonDecode(response.body);
-      return {'data': responseData, 'success': true};
     } catch (error) {
       return {'data': null, 'success': false};
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF53C6E0),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(10),
-          child: SizedBox(
-            width: 300, // Max width for content area
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(height: 20),
-                const CircleAvatar(
-                  radius: 50,
-                  backgroundImage:
-                      NetworkImage('https://mediasfu.com/images/logo192.png'),
-                ),
-                const SizedBox(height: 10),
-                _buildInputFields(),
-                if (_error.isNotEmpty)
-                  Text(
-                    _error,
-                    style: const TextStyle(
-                      color: Colors.red,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                const SizedBox(height: 10),
-                _buildActionButton(),
-                const SizedBox(height: 10),
-                _buildOrText(),
-                const SizedBox(height: 10),
-                _buildToggleButton(),
-                const SizedBox(height: 10),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInputFields() {
-    return Column(
-      children: [
-        _buildTextField('Display Name', _name, (value) => _name = value),
-        if (_isCreateMode) ...[
-          _buildTextField(
-              'Duration (minutes)', _duration, (value) => _duration = value),
-          _buildTextField(
-              'Event Type', _eventType, (value) => _eventType = value),
-          _buildTextField(
-              'Room Capacity', _capacity, (value) => _capacity = value),
-        ],
-        if (!_isCreateMode)
-          _buildTextField('Event ID', _eventID, (value) => _eventID = value),
-      ],
-    );
-  }
-
-  Widget _buildTextField(
-      String hintText, String value, Function(String) onChanged) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: TextField(
-        decoration: InputDecoration(
-          hintText: hintText,
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-        ),
-        onChanged: onChanged,
-      ),
-    );
-  }
-
-  Widget _buildActionButton() {
-    return ElevatedButton(
-      onPressed: _isCreateMode ? _handleCreateRoom : _handleJoinRoom,
-      child: Text(_isCreateMode ? 'Create Room' : 'Join Room'),
-    );
-  }
-
-  Widget _buildOrText() {
-    return const Text(
-      'OR',
-      style: TextStyle(
-          color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
-    );
-  }
-
-  Widget _buildToggleButton() {
-    return ElevatedButton(
-      onPressed: _toggleMode,
-      child:
-          Text(_isCreateMode ? 'Switch to Join Mode' : 'Switch to Create Mode'),
-    );
-  }
-
-  void _toggleMode() {
-    setState(() {
-      _isCreateMode = !_isCreateMode;
-      _error = ''; // Reset error message
-    });
+  Future<Map<String, dynamic>> joinRoomOnMediaSFU(
+      Map<String, dynamic> payload) async {
+    return await createRoomOnMediaSFU(payload);
   }
 
   void _handleCreateRoom() async {
@@ -420,14 +260,11 @@ class _PreJoinPageState extends State<PreJoinPage> {
       setState(() {
         _error = ''; // Clear any previous error message
       });
-
       if (_name.isEmpty ||
           _duration.isEmpty ||
           _eventType.isEmpty ||
           _capacity.isEmpty) {
-        setState(() {
-          _error = 'Please fill all the fields.';
-        });
+        setState(() => _error = 'Please fill all the fields.');
         return;
       }
 
@@ -474,35 +311,28 @@ class _PreJoinPageState extends State<PreJoinPage> {
         'userName': _name,
       };
 
-      updateIsLoadingModalVisible(true);
-
-      // Perform room creation logic
-      final response = await createRoomOnMediaSFU(payload,
-          widget.credentials['apiUserName'], widget.credentials['apiKey']);
+      widget.options!.updateIsLoadingModalVisible(true);
+      final response = await createRoomOnMediaSFU(payload);
 
       if (response['success']) {
-        // Handle successful room creation
+        final data = response['data'];
         await _checkLimitsAndMakeRequest(
-            apiUserName: response['data']['roomName'],
-            apiToken: response['data']['secret'],
-            link: response['data']['link'],
-            userName: _name);
-        setState(() {
-          _error = ''; // Clear any previous error message
-        });
+          apiUserName: data['roomName'],
+          apiToken: data['secret'],
+          link: data['link'],
+          userName: _name,
+        );
       } else {
-        // Handle failed room creation
-        updateIsLoadingModalVisible(false);
-        setState(() {
-          _error =
-              'Unable to create room. ${response['data'] != null ? response['data']['message'] : ''}';
-        });
+        widget.options!.updateIsLoadingModalVisible(false);
+        setState(() =>
+            _error = 'Unable to create room. ${response['data']['error']}');
       }
     } catch (error) {
-      updateIsLoadingModalVisible(false);
-      setState(() {
-        _error = 'Unable to connect. ${error.toString()}';
-      });
+      widget.options!.showAlert!(
+        message: 'Unable to create room. ${error.toString()}',
+        type: 'danger',
+        duration: 3000,
+      );
     }
   }
 
@@ -513,13 +343,10 @@ class _PreJoinPageState extends State<PreJoinPage> {
       });
 
       if (_name.isEmpty || _eventID.isEmpty) {
-        setState(() {
-          _error = 'Please fill all the fields.';
-        });
+        setState(() => _error = 'Please fill all the fields.');
         return;
       }
 
-      // Validate name; must not be empty and be alphanumeric of 2 to 10 characters
       if (_name.isEmpty || _name.length < 2 || _name.length > 10) {
         setState(() {
           _error =
@@ -528,42 +355,129 @@ class _PreJoinPageState extends State<PreJoinPage> {
         return;
       }
 
-      // Call API to join room
       final payload = {
         'action': 'join',
         'meetingID': _eventID,
         'userName': _name,
       };
 
-      updateIsLoadingModalVisible(true);
-
-      // Perform room join logic
-      final response = await joinRoomOnMediaSFU(payload,
-          widget.credentials['apiUserName'], widget.credentials['apiKey']);
+      widget.options!.updateIsLoadingModalVisible(true);
+      final response = await joinRoomOnMediaSFU(payload);
 
       if (response['success']) {
-        // Handle successful room join
+        final data = response['data'];
         await _checkLimitsAndMakeRequest(
-            apiUserName: response['data']['roomName'],
-            apiToken: response['data']['secret'],
-            link: response['data']['link'],
-            userName: _name);
-        setState(() {
-          _error = ''; // Clear any previous error message
-        });
+          apiUserName: data['roomName'],
+          apiToken: data['secret'],
+          link: data['link'],
+          userName: _name,
+        );
       } else {
-        updateIsLoadingModalVisible(false);
-        // Handle failed room join
-        setState(() {
-          _error =
-              'Unable to connect to room. ${response['data'] != null ? response['data']['message'] : ''}';
-        });
+        widget.options!.updateIsLoadingModalVisible(false);
+        setState(() =>
+            _error = 'Unable to connect to room. ${response['data']['error']}');
       }
     } catch (error) {
-      updateIsLoadingModalVisible(false);
-      setState(() {
-        _error = 'Unable to connect. ${error.toString()}';
-      });
+      widget.options!.showAlert!(
+        message: 'Unable to connect to room. ${error.toString()}',
+        type: 'danger',
+        duration: 3000,
+      );
     }
+  }
+
+  void _toggleMode() {
+    setState(() {
+      _isCreateMode = !_isCreateMode;
+      _error = '';
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // If a custom builder is provided, use it
+    if (widget.customBuilder != null) {
+      return widget.customBuilder!(
+        options: widget.options,
+        credentials: widget.credentials,
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF53C6E0),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(10),
+          child: SizedBox(
+            width: 300,
+            child: Column(
+              children: [
+                const SizedBox(height: 20),
+                CircleAvatar(
+                  radius: 50,
+                  backgroundImage: NetworkImage(widget.options!.imgSrc ??
+                      'https://mediasfu.com/images/logo192.png'),
+                ),
+                const SizedBox(height: 10),
+                _buildInputFields(),
+                if (_error.isNotEmpty)
+                  Text(_error, style: const TextStyle(color: Colors.red)),
+                const SizedBox(height: 10),
+                _buildActionButton(),
+                const SizedBox(height: 10),
+                const Text('OR', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 10),
+                _buildToggleButton(),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInputFields() {
+    return Column(
+      children: [
+        _buildTextField('Display Name', (value) => _name = value),
+        if (_isCreateMode) ...[
+          _buildTextField('Duration (minutes)', (value) => _duration = value),
+          _buildTextField('Event Type', (value) => _eventType = value),
+          _buildTextField('Room Capacity', (value) => _capacity = value),
+        ],
+        if (!_isCreateMode)
+          _buildTextField('Event ID', (value) => _eventID = value),
+      ],
+    );
+  }
+
+  Widget _buildTextField(String hintText, ValueChanged<String> onChanged) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: TextField(
+        decoration: InputDecoration(
+          hintText: hintText,
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+        ),
+        onChanged: onChanged,
+      ),
+    );
+  }
+
+  Widget _buildActionButton() {
+    return ElevatedButton(
+      onPressed: _isCreateMode ? _handleCreateRoom : _handleJoinRoom,
+      child: Text(_isCreateMode ? 'Create Room' : 'Join Room'),
+    );
+  }
+
+  Widget _buildToggleButton() {
+    return ElevatedButton(
+      onPressed: _toggleMode,
+      child:
+          Text(_isCreateMode ? 'Switch to Join Mode' : 'Switch to Create Mode'),
+    );
   }
 }

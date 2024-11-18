@@ -1,119 +1,128 @@
-// ignore_for_file: empty_catches
-
 import 'dart:async';
 import 'package:intl/intl.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
+import '../../types/types.dart' show ShowAlert, CoHostResponsibility, Message;
 
-/// Sends a message to the server.
+/// Defines options for sending a message to a room.
+class SendMessageOptions {
+  final String member;
+  final String islevel;
+  final ShowAlert? showAlert;
+  final List<CoHostResponsibility> coHostResponsibility;
+  final String coHost;
+  final String chatSetting;
+  final String message;
+  final String roomName;
+  final int messagesLength;
+  final List<String> receivers;
+  final bool group;
+  final String sender;
+  final io.Socket? socket;
+
+  SendMessageOptions({
+    required this.member,
+    required this.islevel,
+    this.showAlert,
+    required this.coHostResponsibility,
+    required this.coHost,
+    required this.chatSetting,
+    required this.message,
+    required this.roomName,
+    required this.messagesLength,
+    required this.receivers,
+    required this.group,
+    required this.sender,
+    this.socket,
+  });
+}
+
+/// Type definition for the function that sends a message.
+typedef SendMessageType = Future<void> Function(SendMessageOptions options);
+
+/// Sends a message to the specified room.
 ///
-/// The [parameters] map should contain the following keys:
-/// - 'member': The member's name (optional, default: '').
-/// - 'islevel': The level of the member (optional, default: '1').
-/// - 'showAlert': A function to show an alert (optional).
-/// - 'coHostResponsibility': A list of co-host responsibilities (optional, default: []).
-/// - 'coHost': The co-host's name (optional, default: '').
-/// - 'chatSetting': The chat setting (optional, default: '').
-/// - 'message': The message to send (optional).
-/// - 'roomName': The name of the room (optional, default: '').
-/// - 'messagesLength': The length of the messages (optional, default: 0).
-/// - 'receivers': A list of message receivers (optional, default: []).
-/// - 'group': A flag indicating if it's a group message (optional, default: false).
-/// - 'sender': The sender's name (optional).
-/// - 'socket': The socket to communicate with the server.
+/// This function checks the message limit, validates input, and
+/// checks permissions based on user level and co-host responsibilities.
 ///
-/// The function checks the message count limit based on the room type and shows an alert if the limit is exceeded.
-/// It validates the message, sender, and receivers and shows an alert if they are not valid.
-/// It creates a message object with the sender, receivers, message, timestamp, and group flag.
-/// It checks the co-host responsibility for chat and allows sending the message if the conditions are met.
-/// If the user is not allowed to send a message in the event room, it shows an alert.
-/// Finally, it sends the message to the server using the provided socket.
-
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
-});
-
-typedef CoHostResponsibility = List<dynamic>;
-
-Future<void> sendMessage({required Map<String, dynamic> parameters}) async {
-  final String member = parameters['member'] ?? '';
-  final String islevel = parameters['islevel'] ?? '1';
-  final ShowAlert? showAlert = parameters['showAlert'];
-  final CoHostResponsibility coHostResponsibility =
-      parameters['coHostResponsibility'] ?? [];
-  final String coHost = parameters['coHost'] ?? '';
-  final String chatSetting = parameters['chatSetting'] ?? '';
-  final String? message = parameters['message'] ?? '';
-  final String roomName = parameters['roomName'] ?? '';
-  final int messagesLength = parameters['messagesLength'] ?? 0;
-  final List receivers = parameters['receivers'] ?? [];
-  final bool? group = parameters['group'] ?? false;
-  final String? sender = parameters['sender'] ?? '';
-  final io.Socket socket = parameters['socket'];
-
+/// Example:
+/// ```dart
+/// final options = SendMessageOptions(
+///   member: "JohnDoe",
+///   islevel: "2",
+///   coHostResponsibility: [{"name": "chat", "value": true}],
+///   coHost: "JaneDoe",
+///   chatSetting: "allow",
+///   message: "Hello, world!",
+///   roomName: "Room123",
+///   messagesLength: 50,
+///   receivers: ["UserA", "UserB"],
+///   group: true,
+///   sender: "JohnDoe",
+///   socket: socketInstance,
+/// );
+///
+/// await sendMessage(options);
+/// ```
+Future<void> sendMessage(SendMessageOptions options) async {
   bool chatValue = false;
 
   // Check message count limit based on the room type
-  if ((messagesLength > 100 && roomName.startsWith('d')) ||
-      (messagesLength > 500 && roomName.startsWith('s')) ||
-      (messagesLength > 100000 && roomName.startsWith('p'))) {
-    if (showAlert != null) {
-      showAlert(
-        message: 'You have reached the maximum number of messages allowed.',
-        type: 'danger',
-        duration: 3000,
-      );
-    }
+  if ((options.messagesLength > 100 && options.roomName.startsWith('d')) ||
+      (options.messagesLength > 500 && options.roomName.startsWith('s')) ||
+      (options.messagesLength > 100000 && options.roomName.startsWith('p'))) {
+    options.showAlert?.call(
+      message: 'You have reached the maximum number of messages allowed.',
+      type: 'danger',
+      duration: 3000,
+    );
     return;
   }
 
   // Validate message, sender, and receivers
-  if (message == null || (member.isEmpty && sender == null)) {
-    if (showAlert != null) {
-      showAlert(
-        message: 'Message is not valid.',
-        type: 'danger',
-        duration: 3000,
-      );
-    }
+  if (options.message.isEmpty ||
+      (options.member.isEmpty && options.sender.isEmpty)) {
+    options.showAlert?.call(
+      message: 'Message is not valid.',
+      type: 'danger',
+      duration: 3000,
+    );
     return;
   }
 
   // Create the message object
-  final messageObject = {
-    'sender': sender != null && sender.isNotEmpty ? sender : member,
-    'receivers': receivers,
-    'message': message,
-    'timestamp': DateFormat('HH:mm:ss').format(DateTime.now()),
-    'group': group != null && group == true,
-  };
+  Message messageObject = Message(
+    sender: options.sender.isNotEmpty ? options.sender : options.member,
+    receivers: options.receivers,
+    message: options.message,
+    timestamp: DateFormat('HH:mm:ss').format(DateTime.now()),
+    group: options.group,
+  );
 
-  try {
-    // Check co-host responsibility for chat
-    chatValue = coHostResponsibility
-        .firstWhere((item) => item['name'] == 'chat')['value'];
-  } catch (error) {}
+  // Check co-host responsibility for chat
+  chatValue = options.coHostResponsibility
+      .firstWhere((item) => item.name == 'chat',
+          orElse: () => CoHostResponsibility(
+              name: 'chat', value: false, dedicated: false))
+      .value;
 
-  if (islevel == '2' || (coHost == member && chatValue == true)) {
+  if (options.islevel == '2' ||
+      (options.coHost == options.member && chatValue == true)) {
     // Allow sending message
   } else {
     // Check if user is allowed to send a message in the event room
-    if (chatSetting != 'allow') {
-      if (showAlert != null) {
-        showAlert(
-          message: 'You are not allowed to send a message in this event room',
-          type: 'danger',
-          duration: 3000,
-        );
-      }
+    if (options.chatSetting != 'allow') {
+      options.showAlert?.call(
+        message: 'You are not allowed to send a message in this event room',
+        type: 'danger',
+        duration: 3000,
+      );
       return;
     }
   }
 
   // Send the message to the server
-  socket.emit('sendMessage', {
-    'messageObject': messageObject,
-    'roomName': roomName,
+  options.socket!.emit('sendMessage', {
+    'messageObject': messageObject.toMap(),
+    'roomName': options.roomName,
   });
 }

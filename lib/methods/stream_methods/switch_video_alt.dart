@@ -1,168 +1,174 @@
-// ignore_for_file: empty_catches
+import '../../types/types.dart'
+    show
+        ShowAlert,
+        SwitchUserVideoAltType,
+        SwitchUserVideoAltOptions,
+        SwitchUserVideoAltParameters;
 
-import 'dart:async';
+abstract class SwitchVideoAltParameters
+    implements SwitchUserVideoAltParameters {
+  // Core properties as abstract getters
+  bool get recordStarted;
+  bool get recordResumed;
+  bool get recordStopped;
+  bool get recordPaused;
+  String get recordingMediaOptions;
+  bool get videoAlreadyOn;
+  String get currentFacingMode;
+  String get prevFacingMode;
+  bool get allowed;
+  bool get audioOnlyRoom;
 
-import 'package:flutter/foundation.dart';
+  // Update functions as abstract getters
+  void Function(String) get updateCurrentFacingMode;
+  void Function(String) get updatePrevFacingMode;
+  void Function(bool) get updateIsMediaSettingsModalVisible;
 
-/// Switches the user's video (from front to back camera and vice versa) based on the given parameters.
+  // Optional alert as an abstract getter
+  ShowAlert? get showAlert;
+
+  // Mediasfu function as an abstract getter
+  SwitchUserVideoAltType get switchUserVideoAlt;
+
+  // Method to retrieve updated parameters as an abstract getter
+  SwitchVideoAltParameters Function() get getUpdatedAllParams;
+
+  // dynamic operator [](String key);
+}
+
+/// Options for switching the user's video with alternate logic.
+class SwitchVideoAltOptions {
+  final SwitchVideoAltParameters parameters;
+
+  SwitchVideoAltOptions({required this.parameters});
+}
+
+typedef SwitchVideoAltType = Future<void> Function(
+    SwitchVideoAltOptions options);
+
+/// Switches the user's video device with alternate logic, taking into account recording state and camera access permissions.
 ///
-/// The [parameters] map contains the following keys:
-/// - `recordStarted`: A boolean indicating if recording has started.
-/// - `recordResumed`: A boolean indicating if recording has resumed.
-/// - `recordStopped`: A boolean indicating if recording has stopped.
-/// - `recordPaused`: A boolean indicating if recording has paused.
-/// - `recordingMediaOptions`: A string representing the recording media options.
-/// - `videoAlreadyOn`: A boolean indicating if the video is already turned on.
-/// - `currentFacingMode`: A string representing the current facing mode of the camera.
-/// - `allowed`: A boolean indicating if camera access is allowed.
-/// - `audioOnlyRoom`: A boolean indicating if the room is audio-only.
-/// - `updateCurrentFacingMode`: A function that updates the current facing mode.
-/// - `updateIsMediaSettingsModalVisible`: A function that updates the visibility of the media settings modal.
-/// - `showAlert`: A function that shows an alert message.
-/// - `switchUserVideoAlt`: A function that switches the user's video alternative.
+/// ### Parameters:
+/// - [options] (`SwitchVideoAltOptions`): Contains the `parameters` required for switching video.
 ///
-/// If the room is audio-only, an alert message will be shown and the function will return.
-///
-/// If camera access is not allowed, an alert message will be shown and the function will return.
-///
-/// Depending on the video state and the selected video device, different alert messages will be shown.
-///
-/// The camera switching logic is implemented here by updating the current facing mode and calling the `switchUserVideoAlt` function.
-///
-/// Example usage:
+/// ### Example:
 /// ```dart
-/// await switchVideoAlt(parameters: {
-///   'recordStarted': true,
-///   'videoAlreadyOn': false,
-///   'currentFacingMode': 'user',
-///   'allowed': true,
-///   'audioOnlyRoom': false,
-///   'updateCurrentFacingMode': (mode) {
-///     // Update the current facing mode logic
-///   },
-///   'updateIsMediaSettingsModalVisible': (visible) {
-///     // Update the media settings modal visibility logic
-///   },
-///   'showAlert': ({message, type, duration}) {
-///     // Show alert message logic
-///   },
-///   'switchUserVideoAlt': ({parameters}) async {
-///     // Switch user's video alternative logic
-///   },
-/// });
+/// final switchVideoAltOptions = SwitchVideoAltOptions(
+///   parameters: SwitchVideoAltParameters(
+///     recordStarted: true,
+///     recordResumed: false,
+///     recordStopped: false,
+///     recordPaused: false,
+///     recordingMediaOptions: 'video',
+///     videoAlreadyOn: true,
+///     currentFacingMode: 'user',
+///     prevFacingMode: 'environment',
+///     allowed: true,
+///     audioOnlyRoom: false,
+///     updateCurrentFacingMode: (mode) => setCurrentFacingMode(mode),
+///     updatePrevFacingMode: (mode) => setPrevFacingMode(mode),
+///     updateIsMediaSettingsModalVisible: (isVisible) => setMediaSettingsModal(isVisible),
+///     showAlert: (alertOptions) => showAlert(alertOptions),
+///     switchUserVideoAlt: switchUserVideoAltFunction,
+///   ),
+/// );
+///
+/// await switchVideoAlt(switchVideoAltOptions);
 /// ```
+Future<void> switchVideoAlt(SwitchVideoAltOptions options) async {
+  final parameters = options.parameters.getUpdatedAllParams();
 
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
-});
+  final bool recordStarted = parameters.recordStarted;
+  final bool recordResumed = parameters.recordResumed;
+  final bool recordStopped = parameters.recordStopped;
+  final bool recordPaused = parameters.recordPaused;
+  final String recordingMediaOptions = parameters.recordingMediaOptions;
+  bool videoAlreadyOn = parameters.videoAlreadyOn;
+  String currentFacingMode = parameters.currentFacingMode;
+  String prevFacingMode = parameters.prevFacingMode;
+  final bool allowed = parameters.allowed;
+  final bool audioOnlyRoom = parameters.audioOnlyRoom;
+  final void Function(String) updateCurrentFacingMode =
+      parameters.updateCurrentFacingMode;
+  final void Function(String) updatePrevFacingMode =
+      parameters.updatePrevFacingMode;
+  final void Function(bool) updateIsMediaSettingsModalVisible =
+      parameters.updateIsMediaSettingsModalVisible;
+  final ShowAlert? showAlert = parameters.showAlert;
 
-typedef SwitchUserVideoAlt = Future<void> Function(
-    {required Map<String, dynamic> parameters});
+  // mediasfu functions
+  final SwitchUserVideoAltType switchUserVideoAlt =
+      parameters.switchUserVideoAlt;
 
-Future<void> switchVideoAlt({required Map<String, dynamic> parameters}) async {
-  // Destructuring parameters for ease of use
+  // Check if the room is audio-only
+  if (audioOnlyRoom) {
+    showAlert?.call(
+      message: 'You cannot turn on your camera in an audio-only event.',
+      type: 'danger',
+      duration: 3000,
+    );
+    return;
+  }
 
-  try {
-    bool recordStarted = parameters['recordStarted'] ?? false;
-    bool recordResumed = parameters['recordResumed'] ?? false;
-    bool recordStopped = parameters['recordStopped'] ?? false;
-    bool recordPaused = parameters['recordPaused'] ?? false;
-    String recordingMediaOptions = parameters['recordingMediaOptions'] ?? '';
-    bool videoAlreadyOn = parameters['videoAlreadyOn'] ?? false;
-    String currentFacingMode = parameters['currentFacingMode'] ?? 'user';
-    bool allowed = parameters['allowed'] ?? false;
-    bool audioOnlyRoom = parameters['audioOnlyRoom'] ?? false;
-    Function(String)? updateCurrentFacingMode =
-        parameters['updateCurrentFacingMode'];
-    Function(bool)? updateIsMediaSettingsModalVisible =
-        parameters['updateIsMediaSettingsModalVisible'];
-    ShowAlert? showAlert = parameters['showAlert'];
+  // Check if recording is in progress and if video cannot be turned off
+  bool checkoff = false;
+  if ((recordStarted || recordResumed) &&
+      !recordStopped &&
+      !recordPaused &&
+      recordingMediaOptions == 'video') {
+    checkoff = true;
+  }
 
-    // mediasfu functions
-    SwitchUserVideoAlt? switchUserVideoAlt = parameters['switchUserVideoAlt'];
+  // Check camera access permission
+  if (!allowed) {
+    showAlert?.call(
+      message: 'Allow access to your camera by starting it for the first time.',
+      type: 'danger',
+      duration: 3000,
+    );
+    return;
+  }
 
-    if (audioOnlyRoom) {
-      if (showAlert != null) {
-        showAlert(
-          message: 'You cannot turn on your camera in an audio-only event.',
-          type: 'danger',
-          duration: 3000,
-        );
-      }
+  // Check video state and display appropriate alert messages
+  if (checkoff) {
+    if (videoAlreadyOn) {
+      showAlert?.call(
+        message: 'Please turn off your video before switching.',
+        type: 'danger',
+        duration: 3000,
+      );
       return;
     }
-
-    // Check if recording is in progress and whether the selected video device is the default one
-    bool checkoff = false;
-    if ((recordStarted || recordResumed) && (!recordStopped && !recordPaused)) {
-      if (recordingMediaOptions == 'video') {
-        checkoff = true;
-      }
-    }
-
-    // Check camera access permission
-    if (!allowed) {
-      if (showAlert != null) {
-        showAlert(
-          message:
-              'Allow access to your camera by starting it for the first time.',
-          type: 'danger',
-          duration: 3000,
-        );
-      }
+  } else {
+    if (!videoAlreadyOn) {
+      showAlert?.call(
+        message: 'Please turn on your video before switching.',
+        type: 'danger',
+        duration: 3000,
+      );
       return;
-    }
-
-    // Check video state and display appropriate alert messages
-    if (checkoff) {
-      if (videoAlreadyOn) {
-        if (showAlert != null) {
-          showAlert(
-            message: 'Please turn off your video before switching.',
-            type: 'danger',
-            duration: 3000,
-          );
-        }
-        return;
-      }
-    } else {
-      if (!videoAlreadyOn) {
-        if (showAlert != null) {
-          showAlert(
-            message: 'Please turn on your video before switching.',
-            type: 'danger',
-            duration: 3000,
-          );
-        }
-        return;
-      }
-    }
-
-    // Camera switching logic here
-    currentFacingMode =
-        currentFacingMode == 'environment' ? 'user' : 'environment';
-    if (updateCurrentFacingMode != null) {
-      await updateCurrentFacingMode(currentFacingMode);
-    }
-
-    if (updateIsMediaSettingsModalVisible != null) {
-      updateIsMediaSettingsModalVisible(false);
-    }
-
-    if (switchUserVideoAlt != null) {
-      try {
-        await switchUserVideoAlt(parameters: {
-          'videoPreference': currentFacingMode,
-          'checkoff': checkoff,
-          ...parameters
-        });
-      } catch (error) {}
-    }
-  } catch (error) {
-    if (kDebugMode) {
-      print('switchVideoAlt error: $error');
     }
   }
+
+  // Camera switching logic
+  prevFacingMode = currentFacingMode;
+  updatePrevFacingMode(prevFacingMode);
+
+  // Toggle between 'environment' and 'user'
+  currentFacingMode =
+      currentFacingMode == 'environment' ? 'user' : 'environment';
+  updateCurrentFacingMode(currentFacingMode);
+
+  // Hide media settings modal if visible
+  updateIsMediaSettingsModalVisible(false);
+
+  // Perform the video switch using the mediasfu function
+  final optionsSwitch = SwitchUserVideoAltOptions(
+    parameters: parameters,
+    videoPreference: currentFacingMode,
+    checkoff: checkoff,
+  );
+  await switchUserVideoAlt(
+    optionsSwitch,
+  );
 }

@@ -1,6 +1,7 @@
 // ignore_for_file: empty_catches, non_constant_identifier_names
 import 'package:flutter/material.dart';
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
+import '../misc_components/prejoin_page.dart';
 // import 'package:permission_handler/permission_handler.dart'; // handle permissions manually
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'dart:async';
@@ -12,95 +13,118 @@ import '../../methods/utils/initial_values.dart' show initialValuesState;
 
 //import components for display (samples)
 import '../display_components/meeting_progress_timer.dart'
-    show MeetingProgressTimer;
+    show MeetingProgressTimer, MeetingProgressTimerOptions;
 import '../display_components/main_aspect_component.dart'
-    show MainAspectComponent;
-import '../display_components/loading_modal.dart' show LoadingModal;
+    show MainAspectComponent, MainAspectComponentOptions;
+import '../display_components/loading_modal.dart'
+    show LoadingModal, LoadingModalOptions;
 import '../display_components/control_buttons_component.dart'
-    show ControlButtonsComponent;
+    show ControlButtonsComponent, ControlButtonsComponentOptions;
 import '../display_components/control_buttons_alt_component.dart'
-    show ControlButtonsAltComponent;
+    show ControlButtonsAltComponent, ControlButtonsAltComponentOptions;
 import '../display_components/other_grid_component.dart'
-    show OtherGridComponent;
+    show OtherGridComponent, OtherGridComponentOptions;
 import '../display_components/main_screen_component.dart'
-    show MainScreenComponent;
-import '../display_components/main_grid_component.dart' show MainGridComponent;
+    show MainScreenComponent, MainScreenComponentOptions;
+import '../display_components/main_grid_component.dart'
+    show MainGridComponent, MainGridComponentOptions;
 import '../display_components/sub_aspect_component.dart'
-    show SubAspectComponent;
+    show SubAspectComponent, SubAspectComponentOptions;
 import '../display_components/main_container_component.dart'
-    show MainContainerComponent;
-import '../display_components/alert_component.dart' show AlertComponent;
-import '../menu_components/menu_modal.dart' show MenuModal;
-import '../recording_components/recording_modal.dart' show RecordingModal;
-import '../requests_components/requests_modal.dart' show RequestsModal;
-import '../waiting_components/waiting_modal.dart' show WaitingRoomModal;
+    show MainContainerComponent, MainContainerComponentOptions;
+import '../display_components/alert_component.dart'
+    show AlertComponent, AlertComponentOptions;
+import '../menu_components/menu_modal.dart' show MenuModal, MenuModalOptions;
+import '../recording_components/recording_modal.dart'
+    show RecordingModal, RecordingModalOptions;
+import '../requests_components/requests_modal.dart'
+    show RequestsModal, RequestsModalOptions;
+import '../waiting_components/waiting_modal.dart'
+    show WaitingRoomModal, WaitingRoomModalOptions;
 import '../display_settings_components/display_settings_modal.dart'
-    show DisplaySettingsModal;
+    show DisplaySettingsModal, DisplaySettingsModalOptions;
 import '../event_settings_components/event_settings_modal.dart'
-    show EventSettingsModal;
-import '../co_host_components/co_host_modal.dart' show CoHostModal;
+    show EventSettingsModal, EventSettingsModalOptions;
+import '../co_host_components/co_host_modal.dart'
+    show CoHostModal, CoHostModalOptions;
 import '../participants_components/participants_modal.dart'
-    show ParticipantsModal;
-import '../message_components/messages_modal.dart' show MessagesModal;
+    show ParticipantsModal, ParticipantsModalOptions;
+import '../message_components/messages_modal.dart'
+    show MessagesModal, MessagesModalOptions;
 import '../media_settings_components/media_settings_modal.dart'
-    show MediaSettingsModal;
-import '../exit_components/confirm_exit_modal.dart' show ConfirmExitModal;
-import '../misc_components/confirm_here_modal.dart' show ConfirmHereModal;
-import '../misc_components/share_event_modal.dart' show ShareEventModal;
-import '../misc_components/welcome_page.dart' show WelcomePage;
+    show MediaSettingsModal, MediaSettingsModalOptions;
+import '../exit_components/confirm_exit_modal.dart'
+    show ConfirmExitModal, ConfirmExitModalOptions;
+import '../misc_components/confirm_here_modal.dart'
+    show ConfirmHereModal, ConfirmHereModalOptions;
+import '../misc_components/share_event_modal.dart'
+    show ShareEventModal, ShareEventModalOptions;
+import '../misc_components/welcome_page.dart'
+    show WelcomePage, WelcomePageOptions;
 
-import '../polls_components/poll_modal.dart' show PollModal;
+import '../polls_components/poll_modal.dart' show PollModal, PollModalOptions;
 import '../breakout_components/breakout_rooms_modal.dart'
-    show BreakoutRoomsModal;
+    show BreakoutRoomsModal, BreakoutRoomsModalOptions;
 
 // Pagination and display of media (samples)
-import '../display_components/pagination.dart' show Pagination;
-import '../display_components/flexible_grid.dart' show FlexibleGrid;
-import '../display_components/flexible_video.dart' show FlexibleVideo;
-import '../display_components/audio_grid.dart' show AudioGrid;
+import '../display_components/pagination.dart'
+    show Pagination, PaginationOptions;
+import '../display_components/flexible_grid.dart'
+    show FlexibleGrid, FlexibleGridOptions;
+import '../display_components/flexible_video.dart'
+    show FlexibleVideo, FlexibleVideoOptions;
+import '../display_components/audio_grid.dart' show AudioGrid, AudioGridOptions;
 
 // Import methods for control (samples)
-import '../../methods/menu_methods/launch_menu_modal.dart' show launchMenuModal;
+import '../../methods/menu_methods/launch_menu_modal.dart'
+    show launchMenuModal, LaunchMenuModalOptions;
 import '../../methods/recording_methods/launch_recording.dart'
-    show launchRecording;
+    show launchRecording, LaunchRecordingOptions;
 import '../../methods/recording_methods/start_recording.dart'
     show startRecording;
 import '../../methods/recording_methods/confirm_recording.dart'
     show confirmRecording;
-import '../../methods/waiting_methods/launch_waiting.dart' show launchWaiting;
-import '../../methods/co_host_methods/launch_co_host.dart' show launchCoHost;
+import '../../methods/waiting_methods/launch_waiting.dart'
+    show launchWaiting, LaunchWaitingOptions;
+import '../../methods/co_host_methods/launch_co_host.dart'
+    show launchCoHost, LaunchCoHostOptions;
 import '../../methods/media_settings_methods/launch_media_settings.dart'
-    show launchMediaSettings;
+    show launchMediaSettings, LaunchMediaSettingsOptions;
 import '../../methods/display_settings_methods/launch_display_settings.dart'
-    show launchDisplaySettings;
+    show launchDisplaySettings, LaunchDisplaySettingsOptions;
 import '../../methods/settings_methods/launch_settings.dart'
-    show launchSettings;
+    show launchSettings, LaunchSettingsOptions;
 import '../../methods/requests_methods/launch_requests.dart'
-    show launchRequests;
+    show launchRequests, LaunchRequestsOptions;
 import '../../methods/participants_methods/launch_participants.dart'
-    show launchParticipants;
-import '../../methods/message_methods/launch_messages.dart' show launchMessages;
+    show launchParticipants, LaunchParticipantsOptions;
+import '../../methods/message_methods/launch_messages.dart'
+    show launchMessages, LaunchMessagesOptions;
 import '../../methods/exit_methods/launch_confirm_exit.dart'
-    show launchConfirmExit;
+    show launchConfirmExit, LaunchConfirmExitOptions;
 
-import '../../methods/polls_methods/launch_poll.dart' show launchPoll;
+import '../../methods/polls_methods/launch_poll.dart'
+    show launchPoll, LaunchPollOptions;
 import '../../methods/breakout_rooms_methods/launch_breakout_rooms.dart'
-    show launchBreakoutRooms;
+    show launchBreakoutRooms, LaunchBreakoutRoomsOptions;
 
 // Mediasfu functions -- examples
 import '../../sockets/socket_manager.dart' show connectSocket;
 import '../../producer_client/producer_client_emits/join_room_client.dart'
-    show joinRoomClient;
+    show joinRoomClient, JoinRoomClientOptions;
 import '../../producer_client/producer_client_emits/update_room_parameters_client.dart'
-    show updateRoomParametersClient;
+    show updateRoomParametersClient, UpdateRoomParametersClientOptions;
 import '../../producer_client/producer_client_emits/create_device_client.dart'
-    show createDeviceClient;
+    show createDeviceClient, CreateDeviceClientOptions;
 
 // Stream methods
-import '../../methods/stream_methods/click_video.dart' show clickVideo;
-import '../../methods/stream_methods/click_audio.dart' show clickAudio;
+import '../../methods/stream_methods/switch_video_alt.dart' show switchVideoAlt;
+import '../../methods/stream_methods/click_video.dart'
+    show clickVideo, ClickVideoOptions;
+import '../../methods/stream_methods/click_audio.dart'
+    show clickAudio, ClickAudioOptions;
 import '../../methods/stream_methods/click_screen_share.dart'
-    show clickScreenShare;
+    show clickScreenShare, ClickScreenShareOptions;
 
 // Consumer functions
 import '../../consumers/stream_success_video.dart' show streamSuccessVideo;
@@ -118,7 +142,8 @@ import '../../consumers/check_screen_share.dart' show checkScreenShare;
 import '../../consumers/start_share_screen.dart' show startShareScreen;
 import '../../consumers/request_screen_share.dart' show requestScreenShare;
 import '../../consumers/reorder_streams.dart' show reorderStreams;
-import '../../consumers/prepopulate_user_media.dart' show prepopulateUserMedia;
+import '../../consumers/prepopulate_user_media.dart'
+    show prepopulateUserMedia, PrepopulateUserMediaOptions;
 import '../../consumers/get_videos.dart' show getVideos;
 import '../../consumers/re_port.dart' show rePort;
 import '../../consumers/trigger.dart' show trigger;
@@ -138,7 +163,8 @@ import '../../consumers/get_estimate.dart' show getEstimate;
 import '../../consumers/calculate_rows_and_columns.dart'
     show calculateRowsAndColumns;
 import '../../consumers/add_videos_grid.dart' show addVideosGrid;
-import '../../consumers/on_screen_changes.dart' show onScreenChanges;
+import '../../consumers/on_screen_changes.dart'
+    show onScreenChanges, OnScreenChangesOptions;
 import '../../methods/utils/sleep.dart' show sleep;
 import '../../consumers/change_vids.dart' show changeVids;
 import '../../consumers/compare_active_names.dart' show compareActiveNames;
@@ -167,110 +193,181 @@ import '../../consumers/auto_adjust.dart' show autoAdjust;
 import '../../consumers/switch_user_video_alt.dart' show switchUserVideoAlt;
 import '../../consumers/switch_user_video.dart' show switchUserVideo;
 import '../../consumers/switch_user_audio.dart' show switchUserAudio;
-import '../../consumers/receive_room_messages.dart' show receiveRoomMessages;
+import '../../consumers/receive_room_messages.dart'
+    show receiveRoomMessages, ReceiveRoomMessagesOptions;
 import '../../methods/utils/format_number.dart' show formatNumber;
 import '../../consumers/connect_ips.dart' show connectIps;
 
-import '../../methods/polls_methods/poll_updated.dart' show pollUpdated;
+import '../../methods/polls_methods/poll_updated.dart'
+    show pollUpdated, PollUpdatedOptions;
 import '../../methods/polls_methods/handle_create_poll.dart'
     show handleCreatePoll;
 import '../../methods/polls_methods/handle_vote_poll.dart' show handleVotePoll;
 import '../../methods/polls_methods/handle_end_poll.dart' show handleEndPoll;
 
 import '../../methods/breakout_rooms_methods/breakout_room_updated.dart'
-    show breakoutRoomUpdated;
+    show breakoutRoomUpdated, BreakoutRoomUpdatedOptions;
 
 // Mediasfu functions
 import '../../methods/utils/meeting_timer/start_meeting_progress_timer.dart'
-    show startMeetingProgressTimer;
+    show startMeetingProgressTimer, StartMeetingProgressTimerOptions;
 import '../../methods/recording_methods/update_recording.dart'
-    show updateRecording;
-import '../../methods/recording_methods/stop_recording.dart' show stopRecording;
+    show updateRecording, UpdateRecordingOptions;
+import '../../methods/recording_methods/stop_recording.dart'
+    show stopRecording, StopRecordingOptions;
 
 import '../../producers/socket_receive_methods/user_waiting.dart'
-    show userWaiting;
+    show userWaiting, UserWaitingOptions;
 import '../../producers/socket_receive_methods/person_joined.dart'
-    show personJoined;
+    show personJoined, PersonJoinedOptions;
 import '../../producers/socket_receive_methods/all_waiting_room_members.dart'
-    show allWaitingRoomMembers;
+    show allWaitingRoomMembers, AllWaitingRoomMembersOptions;
 import '../../producers/socket_receive_methods/room_record_params.dart'
-    show roomRecordParams;
+    show roomRecordParams, RoomRecordParamsOptions;
 import '../../producers/socket_receive_methods/ban_participant.dart'
-    show banParticipant;
+    show banParticipant, BanParticipantOptions;
 import '../../producers/socket_receive_methods/updated_co_host.dart'
-    show updatedCoHost;
+    show updatedCoHost, UpdatedCoHostOptions;
 import '../../producers/socket_receive_methods/participant_requested.dart'
-    show participantRequested;
+    show participantRequested, ParticipantRequestedOptions;
 import '../../producers/socket_receive_methods/screen_producer_id.dart'
-    show screenProducerId;
+    show screenProducerId, ScreenProducerIdOptions;
 import '../../producers/socket_receive_methods/update_media_settings.dart'
-    show updateMediaSettings;
+    show updateMediaSettings, UpdateMediaSettingsOptions;
 import '../../producers/socket_receive_methods/producer_media_paused.dart'
-    show producerMediaPaused;
+    show producerMediaPaused, ProducerMediaPausedOptions;
 import '../../producers/socket_receive_methods/producer_media_resumed.dart'
-    show producerMediaResumed;
+    show producerMediaResumed, ProducerMediaResumedOptions;
 import '../../producers/socket_receive_methods/producer_media_closed.dart'
-    show producerMediaClosed;
+    show producerMediaClosed, ProducerMediaClosedOptions;
 import '../../producers/socket_receive_methods/control_media_host.dart'
-    show controlMediaHost;
+    show controlMediaHost, ControlMediaHostOptions;
 import '../../producers/socket_receive_methods/meeting_ended.dart'
-    show meetingEnded;
+    show meetingEnded, MeetingEndedOptions;
 import '../../producers/socket_receive_methods/disconnect_user_self.dart'
-    show disconnectUserSelf;
+    show disconnectUserSelf, DisconnectUserSelfOptions;
 import '../../producers/socket_receive_methods/receive_message.dart'
-    show receiveMessage;
+    show receiveMessage, ReceiveMessageOptions;
 import '../../producers/socket_receive_methods/meeting_time_remaining.dart'
-    show meetingTimeRemaining;
+    show meetingTimeRemaining, MeetingTimeRemainingOptions;
 import '../../producers/socket_receive_methods/meeting_still_there.dart'
-    show meetingStillThere;
+    show meetingStillThere, MeetingStillThereOptions;
 import '../../producers/socket_receive_methods/start_records.dart'
-    show startRecords;
+    show startRecords, StartRecordsOptions;
 import '../../producers/socket_receive_methods/re_initiate_recording.dart'
-    show reInitiateRecording;
+    show reInitiateRecording, ReInitiateRecordingOptions;
 import '../../producers/socket_receive_methods/get_domains.dart'
     show getDomains;
 import '../../producers/socket_receive_methods/update_consuming_domains.dart'
-    show updateConsumingDomains;
+    show updateConsumingDomains, UpdateConsumingDomainsOptions;
 import '../../producers/socket_receive_methods/recording_notice.dart'
-    show RecordingNotice;
+    show recordingNotice, RecordingNoticeOptions;
 import '../../producers/socket_receive_methods/time_left_recording.dart'
-    show timeLeftRecording;
+    show timeLeftRecording, TimeLeftRecordingOptions;
 import '../../producers/socket_receive_methods/stopped_recording.dart'
-    show stoppedRecording;
+    show stoppedRecording, StoppedRecordingOptions;
 import '../../producers/socket_receive_methods/host_request_response.dart'
-    show hostRequestResponse;
+    show hostRequestResponse, HostRequestResponseOptions;
 import '../../producers/socket_receive_methods/all_members.dart'
-    show allMembers;
+    show allMembers, AllMembersOptions;
 import '../../producers/socket_receive_methods/all_members_rest.dart'
-    show allMembersRest;
-import '../../producers/socket_receive_methods/disconnect.dart' show disconnect;
+    show allMembersRest, AllMembersRestOptions;
+import '../../producers/socket_receive_methods/disconnect.dart'
+    show disconnect, DisconnectOptions;
 
 import '../../consumers/resume_pause_audio_streams.dart'
     show resumePauseAudioStreams;
 import '../../consumers/process_consumer_transports_audio.dart'
     show processConsumerTransportsAudio;
 
+import '../../types/types.dart'
+    show
+        AllMembersData,
+        AllMembersRestData,
+        AltButton,
+        AudioDecibels,
+        BreakoutParticipant,
+        BreakoutRoomUpdatedData,
+        CoHostResponsibility,
+        ComponentSizes,
+        ConsumeSocket,
+        ControlButton,
+        CustomButton,
+        DimensionConstraints,
+        DispSpecs,
+        EventType,
+        GridSizes,
+        MainSpecs,
+        MeetingRoomParams,
+        Message,
+        Participant,
+        Poll,
+        PollUpdatedData,
+        PreJoinPageType,
+        ProducerOptionsType,
+        RecordParameters,
+        Request,
+        RequestResponse,
+        ResponseJoinRoom,
+        ScreenState,
+        SeedData,
+        Settings,
+        Stream,
+        TransportType,
+        UpdateConsumingDomainsData,
+        UserRecordingParams,
+        VidCons,
+        WaitingRoomParticipant,
+        WhiteboardUser;
+
+import '../../methods/utils/mediasfu_parameters.dart' show MediasfuParameters;
+
+class MediasfuWebinarOptions {
+  PreJoinPageType? preJoinPageWidget;
+  Credentials? credentials;
+  bool? useLocalUIMode;
+  SeedData? seedData;
+  bool? useSeed;
+  String? imgSrc;
+
+  MediasfuWebinarOptions({
+    this.preJoinPageWidget,
+    this.credentials,
+    this.useLocalUIMode,
+    this.seedData,
+    this.useSeed,
+    this.imgSrc,
+  });
+}
+
+/// `MediasfuWebinar` - A generic widget for initializing and managing Mediasfu functionalities.
+///
+/// ### Parameters:
+/// - `options` (`MediasfuWebinarOptions`): Configuration options for setting up the widget.
+///
+/// ### Example Usage:
+/// ```dart
+/// MediasfuWebinar(
+///   options: MediasfuWebinarOptions(
+///     preJoinPageWidget: PreJoinPage(),
+///     credentials: myCredentials,
+///     useLocalUIMode: true,
+///     seedData: mySeedData,
+///     useSeed: false,
+///     imgSrc: "https://example.com/image.png",
+///   ),
+/// );
+/// ```
+
 class MediasfuWebinar extends StatefulWidget {
-  final Widget Function({
-    required Map<String, dynamic> credentials,
-    required Map<String, dynamic> parameters,
-  })? PrejoinPage;
-  final Map<String, dynamic> credentials;
-  final bool useLocalUIMode;
-  final Map<String, dynamic> seedData;
-  final bool useSeed;
+  final MediasfuWebinarOptions options;
 
   const MediasfuWebinar({
     super.key,
-    this.PrejoinPage,
-    this.credentials = const {},
-    this.useLocalUIMode = false,
-    this.seedData = const {},
-    this.useSeed = false,
+    required this.options,
   });
 
   @override
-  // ignore: library_private_types_in_public_api
   _MediasfuWebinarState createState() => _MediasfuWebinarState();
 }
 
@@ -278,87 +375,23 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
   bool validated = false;
 
   Map<String, dynamic> initialValues = initialValuesState;
-  void updateStatesToInitialValues() async {
-    // Update states (variables) to initial values
 
-    Map<String, dynamic> updateFunctions = getAllParams();
-    for (String key in initialValues.keys) {
-      try {
-        String updateFunctionName =
-            'update${key[0].toUpperCase()}${key.substring(1)}';
-        Function updateFunction = updateFunctions[updateFunctionName];
-
-        await updateFunction(initialValues[key]);
-      } catch (error) {}
-    }
-  }
-
-  // Update states (variables) to initial values
-  ValueNotifier<io.Socket?> socket =
-      ValueNotifier<io.Socket?>(null); // Socket for the media server
-  ValueNotifier<dynamic> roomData = ValueNotifier<dynamic>(null);
-  ValueNotifier<dynamic> device = ValueNotifier<dynamic>(null);
-
-  ValueNotifier<String> apiKey = ValueNotifier<String>(''); // API key
-  ValueNotifier<String> apiUserName = ValueNotifier<String>(''); // API username
-  ValueNotifier<String> apiToken = ValueNotifier<String>(''); // API token
-  ValueNotifier<String> link =
-      ValueNotifier<String>(''); // Link to the media server
-
-  void updateSocket(dynamic value) {
-    socket.value = value;
-  }
-
-  void updateDevice(dynamic value) {
-    device.value = value;
-  }
-
-  void updateRoomData(dynamic value) {
-    roomData.value = value;
-  }
-
-  void updateValidated(bool value) {
-    setState(() {
-      validated = value;
-    });
-
-    if (validated) {
-      joinAndUpdate().then((value) => null);
-    }
-  }
-
-  void updateApiKey(String value) {
-    apiKey.value = value;
-  }
-
-  void updateApiUserName(String value) {
-    apiUserName.value = value;
-  }
-
-  void updateApiToken(String value) {
-    apiToken.value = value;
-  }
-
-  void updateLink(String value) {
-    link.value = value;
-  }
-
-  Future<dynamic> joinRoom(
-      {required io.Socket socket,
+  Future<ResponseJoinRoom> joinRoom(
+      {required io.Socket? socket,
       required String roomName,
       required String islevel,
-      dynamic member,
-      dynamic sec,
+      String? member,
+      String? sec,
       required String apiUserName}) async {
     try {
       // Emit the joinRoom event to the server using the provided socket
-      dynamic data = await joinRoomClient(
+      ResponseJoinRoom data = await joinRoomClient(JoinRoomClientOptions(
           socket: socket,
           roomName: roomName,
           islevel: islevel,
-          member: member,
-          sec: sec,
-          apiUserName: apiUserName);
+          member: member!,
+          sec: sec!,
+          apiUserName: apiUserName));
       return data;
     } catch (error) {
       // Handle and log errors during the joinRoom process
@@ -371,49 +404,184 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
     }
   }
 
+  void onParticipantsFilterChange(String value) {
+    // Filter the participants list based on the value
+    if (value.isNotEmpty) {
+      List<Participant> filteredParts = participants.value.where((participant) {
+        return participant.name.toLowerCase().contains(value.toLowerCase());
+      }).toList();
+      filteredParticipants.value = filteredParts;
+      participantsCounter.value = filteredParts.length;
+    } else {
+      filteredParticipants.value = participants.value;
+      participantsCounter.value = participants.value.length;
+    }
+  }
+
+  Future<bool> requestPermissionAudio() async {
+    return true;
+    // final status = await Permission.microphone.request();
+    // if (status == PermissionStatus.granted) {
+    //   hasAudioPermission.value = true;
+    //   return true;
+    // } else {
+    //   return false;
+    // }
+  }
+
+  Future<bool> requestPermissionCamera() async {
+    return true;
+    // final status = await Permission.camera.request();
+    // if (status == PermissionStatus.granted) {
+    //   hasCameraPermission.value = true;
+    //   return true;
+    // } else {
+    //   return false;
+    // }
+  }
+
+  void onWaitingRoomFilterChange(String value) {
+    // Filter the waiting room list based on the value
+    if (value.isNotEmpty) {
+      final filteredList = waitingRoomList.value.where((room) =>
+          room.name.toString().toLowerCase().contains(value.toLowerCase()));
+      filteredWaitingRoomList.value = filteredList.toList();
+      waitingRoomCounter.value = filteredList.length;
+    } else {
+      filteredWaitingRoomList.value = waitingRoomList.value;
+      waitingRoomCounter.value = waitingRoomList.value.length;
+    }
+  }
+
+  void onRequestFilterChange(String value) {
+    // Filter the request list based on the value
+    if (value.isNotEmpty) {
+      final filteredList = requestList.value.where((request) => request['name']
+          .toString()
+          .toLowerCase()
+          .contains(value.toLowerCase()));
+      filteredRequestList.value = filteredList.toList();
+      requestCounter.value = filteredList.length;
+    } else {
+      filteredRequestList.value = requestList.value;
+      requestCounter.value = requestList.value.length;
+    }
+  }
+
+  void _updateControlHeight() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if ((eventType.value == EventType.webinar ||
+          eventType.value == EventType.conference)) {
+        // Handle landscape orientation for webinar and conference event types
+        final minValue = MediaQuery.of(context).size.height;
+
+        // Adaptively set the control height for specific screen sizes
+        //compute the fraction that give max of 40px to 3 decimal places
+        final fraction = (40 / minValue).toStringAsFixed(3);
+        if (controlHeight.value != double.parse(fraction)) {
+          updateControlHeight(double.parse(fraction));
+        }
+      } else {
+        if (controlHeight.value != 0.0) {
+          updateControlHeight(0.0);
+        }
+      }
+    });
+  }
+
+  void _updateRecordState() {
+    if (recordStarted.value && !recordStopped.value) {
+      if (!recordPaused.value) {
+        setState(() {
+          recordState = 'red';
+        });
+      } else {
+        setState(() {
+          recordState = 'yellow';
+        });
+      }
+    } else {
+      setState(() {
+        recordState = 'green';
+      });
+    }
+  }
+
+  String checkOrientation() {
+    return MediaQuery.of(context).orientation == Orientation.portrait
+        ? 'portrait'
+        : 'landscape';
+  }
+
+  // Update states (variables) to initial values
+  ValueNotifier<io.Socket?> socket = ValueNotifier<io.Socket?>(null);
+  ValueNotifier<ResponseJoinRoom?> roomData =
+      ValueNotifier<ResponseJoinRoom?>(ResponseJoinRoom());
+  ValueNotifier<Device?> device = ValueNotifier<Device?>(null);
+
+  ValueNotifier<String> apiKey = ValueNotifier<String>('');
+  ValueNotifier<String> apiUserName = ValueNotifier<String>('');
+  ValueNotifier<String> apiToken = ValueNotifier<String>('');
+  ValueNotifier<String> link =
+      ValueNotifier<String>(''); // Link to the media server
+
   // Room Details
-  final ValueNotifier<String> roomName = ValueNotifier(''); // Room name
-  final ValueNotifier<String> member = ValueNotifier(''); // Member name
+  final ValueNotifier<String> roomName = ValueNotifier('');
+  final ValueNotifier<String> member = ValueNotifier('');
   final ValueNotifier<String> adminPasscode =
       ValueNotifier(''); // Admin passcode
-  final ValueNotifier<String> islevel = ValueNotifier("0"); // Level
-  final ValueNotifier<String> coHost = ValueNotifier("No coHost"); // Co-host
-  final ValueNotifier<List<dynamic>> coHostResponsibility = ValueNotifier([
-    {'name': 'participants', 'value': false, 'dedicated': false},
-    {'name': 'media', 'value': false, 'dedicated': false},
-    {'name': 'waiting', 'value': false, 'dedicated': false},
-    {'name': 'chat', 'value': false, 'dedicated': false},
+  final ValueNotifier<String> islevel = ValueNotifier("0");
+  final ValueNotifier<String> coHost = ValueNotifier("No coHost");
+  final ValueNotifier<List<CoHostResponsibility>> coHostResponsibility =
+      ValueNotifier([
+    CoHostResponsibility(name: 'participants', value: false, dedicated: false),
+    CoHostResponsibility(name: 'media', value: false, dedicated: false),
+    CoHostResponsibility(name: 'waiting', value: false, dedicated: false),
+    CoHostResponsibility(name: 'chat', value: false, dedicated: false),
   ]);
   final ValueNotifier<bool> youAreCoHost = ValueNotifier(false);
   final ValueNotifier<bool> youAreHost = ValueNotifier(false);
   final ValueNotifier<bool> confirmedToRecord = ValueNotifier(false);
   final ValueNotifier<String> meetingDisplayType = ValueNotifier('media');
   final ValueNotifier<bool> meetingVideoOptimized = ValueNotifier(false);
-  final ValueNotifier<String> eventType = ValueNotifier('webinar');
-  final ValueNotifier<List<dynamic>> participants = ValueNotifier(<dynamic>[]);
-  final ValueNotifier<List<dynamic>> filteredParticipants =
-      ValueNotifier(<dynamic>[]);
-  final ValueNotifier<int> participantsCounter = ValueNotifier(0);
-  final ValueNotifier<String> participantsFilter = ValueNotifier('');
-  final ValueNotifier<List<Map<String, io.Socket>>> consumeSockets =
-      ValueNotifier(<Map<String, io.Socket>>[]);
-  final ValueNotifier<dynamic> rtpCapabilities = ValueNotifier(null);
-  final ValueNotifier<List<dynamic>> roomRecvIPs = ValueNotifier(<dynamic>[]);
-  final ValueNotifier<dynamic> meetingRoomParams = ValueNotifier(null);
-  final ValueNotifier<int> itemPageLimit = ValueNotifier(4);
-  final ValueNotifier<bool> audioOnlyRoom = ValueNotifier(false);
-  final ValueNotifier<bool> addForBasic = ValueNotifier(false);
-  final ValueNotifier<int> screenPageLimit = ValueNotifier(4);
-  final ValueNotifier<bool> shareScreenStarted = ValueNotifier(false);
-  final ValueNotifier<bool> shared = ValueNotifier(false);
-  final ValueNotifier<String> targetOrientation = ValueNotifier('landscape');
-  final ValueNotifier<Map<String, dynamic>> vidCons =
-      ValueNotifier(<String, dynamic>{});
-  final ValueNotifier<int> frameRate = ValueNotifier(5);
-  final ValueNotifier<dynamic> hParams = ValueNotifier(null);
-  final ValueNotifier<dynamic> vParams = ValueNotifier(null);
-  final ValueNotifier<dynamic> screenParams = ValueNotifier(null);
-  final ValueNotifier<dynamic> aParams = ValueNotifier(null);
+  final ValueNotifier<EventType> eventType = ValueNotifier(EventType.webinar);
+  final ValueNotifier<List<Participant>> participants =
+      ValueNotifier(<Participant>[]);
+  final ValueNotifier<List<Participant>> filteredParticipants =
+      ValueNotifier(<Participant>[]);
+  ValueNotifier<int> participantsCounter = ValueNotifier<int>(0);
+  ValueNotifier<String> participantsFilter = ValueNotifier<String>('');
+  ValueNotifier<List<ConsumeSocket>> consumeSockets =
+      ValueNotifier<List<ConsumeSocket>>([]);
+  ValueNotifier<RtpCapabilities?> rtpCapabilities =
+      ValueNotifier<RtpCapabilities?>(null);
+  ValueNotifier<List<String>> roomRecvIPs = ValueNotifier<List<String>>([]);
+  ValueNotifier<MeetingRoomParams?> meetingRoomParams =
+      ValueNotifier<MeetingRoomParams?>(null);
+  ValueNotifier<int> itemPageLimit = ValueNotifier<int>(4);
+  ValueNotifier<bool> audioOnlyRoom = ValueNotifier<bool>(false);
+  ValueNotifier<bool> addForBasic = ValueNotifier<bool>(false);
+  ValueNotifier<int> screenPageLimit = ValueNotifier<int>(4);
+  ValueNotifier<bool> shareScreenStarted = ValueNotifier<bool>(false);
+  ValueNotifier<bool> shared = ValueNotifier<bool>(false);
+  ValueNotifier<String> targetOrientation = ValueNotifier<String>('landscape');
+  ValueNotifier<String> targetResolution = ValueNotifier<String>('sd');
+  ValueNotifier<String> targetResolutionHost =
+      ValueNotifier<String>('sd'); // Host resolution
+  ValueNotifier<VidCons> vidCons = ValueNotifier<VidCons>(VidCons(
+      width: DimensionConstraints(ideal: 640),
+      height: DimensionConstraints(ideal: 480)));
+  ValueNotifier<int> frameRate = ValueNotifier<int>(5);
+  ValueNotifier<ProducerOptionsType?> hParams =
+      ValueNotifier<ProducerOptionsType?>(null);
+  ValueNotifier<ProducerOptionsType?> vParams =
+      ValueNotifier<ProducerOptionsType?>(null);
+  ValueNotifier<ProducerOptionsType?> screenParams =
+      ValueNotifier<ProducerOptionsType?>(null);
+  ValueNotifier<ProducerOptionsType?> aParams =
+      ValueNotifier<ProducerOptionsType?>(null);
+
+  // Recording Details
   final ValueNotifier<int> recordingAudioPausesLimit = ValueNotifier(0);
   final ValueNotifier<int> recordingAudioPausesCount = ValueNotifier(0);
   final ValueNotifier<bool> recordingAudioSupport = ValueNotifier(false);
@@ -439,329 +607,44 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
   final ValueNotifier<bool> recordingSupportForOtherOrientation =
       ValueNotifier(false);
   final ValueNotifier<bool> recordingMultiFormatsSupport = ValueNotifier(false);
-  final ValueNotifier<Map<String, dynamic>> userRecordingParams =
-      ValueNotifier({
-    'mainSpecs': {
-      'mediaOptions': 'video',
-      'audioOptions': 'all',
-      'videoOptions': 'all',
-      'videoType': 'fullDisplay',
-      'videoOptimized': false,
-      'recordingDisplayType': 'media',
-      'addHLS': false,
-    },
-    'dispSpecs': {
-      'nameTags': true,
-      'backgroundColor': '#000000',
-      'nameTagsColor': '#ffffff',
-      'orientationVideo': 'portrait',
-    },
-  });
-  final ValueNotifier<bool> canRecord = ValueNotifier(false);
-  final ValueNotifier<bool> startReport = ValueNotifier(false);
-  final ValueNotifier<bool> endReport = ValueNotifier(false);
-  final ValueNotifier<dynamic> recordTimerInterval = ValueNotifier(null);
-  final ValueNotifier<dynamic> recordStartTime = ValueNotifier(null);
-  final ValueNotifier<int> recordElapsedTime = ValueNotifier(0);
-  final ValueNotifier<bool> isTimerRunning = ValueNotifier(false);
-  final ValueNotifier<bool> canPauseResume = ValueNotifier(false);
-  final ValueNotifier<int> recordChangeSeconds = ValueNotifier(15000);
-  final ValueNotifier<int> pauseLimit = ValueNotifier(0);
-  final ValueNotifier<int> pauseRecordCount = ValueNotifier(0);
-  final ValueNotifier<bool> canLaunchRecord = ValueNotifier(true);
-  final ValueNotifier<bool> stopLaunchRecord = ValueNotifier(false);
-  final ValueNotifier<List<dynamic>> participantsAll =
-      ValueNotifier(<dynamic>[]);
-
-  // Update functions
-  void updateMember(String value) {
-    member.value = value;
-  }
-
-  void updateYouAreCoHost(bool value) {
-    setState(() {
-      youAreCoHost.value = value;
-    });
-  }
-
-  void updateYouAreHost(bool value) {
-    youAreHost.value = value;
-  }
-
-  void updateConfirmedToRecord(bool value) {
-    confirmedToRecord.value = value;
-  }
-
-  void updateMeetingDisplayType(String value) {
-    setState(() {
-      meetingDisplayType.value = value;
-    });
-  }
-
-  void updateMeetingVideoOptimized(bool value) {
-    setState(() {
-      meetingVideoOptimized.value = value;
-    });
-  }
-
-  void updateEventType(String value) {
-    setState(() {
-      eventType.value = value;
-    });
-    if (value == 'chat') {
-      updateMeetingDisplayType('all');
-    }
-  }
-
-  void updateParticipants(List<dynamic> value) {
-    participants.value = value;
-    filteredParticipants.value = value;
-    participantsCounter.value = value.length;
-  }
-
-  void updateFilteredParticipants(List<dynamic> value) {
-    filteredParticipants.value = value;
-  }
-
-  void updateParticipantsCounter(int value) {
-    participantsCounter.value = value;
-  }
-
-  void updateParticipantsFilter(String value) {
-    participantsFilter.value = value;
-  }
-
-  void onParticipantsFilterChange(String value) {
-    // Filter the participants list based on the value
-    if (value.isNotEmpty) {
-      List<dynamic> filteredParts = participants.value.where((participant) {
-        return participant['name'].toLowerCase().contains(value.toLowerCase());
-      }).toList();
-      filteredParticipants.value = filteredParts;
-      participantsCounter.value = filteredParts.length;
-    } else {
-      filteredParticipants.value = participants.value;
-      participantsCounter.value = participants.value.length;
-    }
-  }
-
-  void updateRoomName(String value) {
-    roomName.value = value;
-  }
-
-  void updateAdminPasscode(String value) {
-    adminPasscode.value = value;
-  }
-
-  void updateIslevel(String value) {
-    setState(() {
-      islevel.value = value;
-    });
-  }
-
-  void updateCoHost(String value) {
-    coHost.value = value;
-  }
-
-  void updateCoHostResponsibility(List<dynamic> value) {
-    coHostResponsibility.value = value;
-  }
-
-  void updateRecordingAudioPausesLimit(int value) {
-    recordingAudioPausesLimit.value = value;
-  }
-
-  void updateRecordingAudioPausesCount(int value) {
-    recordingAudioPausesCount.value = value;
-  }
-
-  void updateRecordingAudioSupport(bool value) {
-    recordingAudioSupport.value = value;
-  }
-
-  void updateRecordingAudioPeopleLimit(int value) {
-    recordingAudioPeopleLimit.value = value;
-  }
-
-  void updateRecordingAudioParticipantsTimeLimit(int value) {
-    recordingAudioParticipantsTimeLimit.value = value;
-  }
-
-  void updateRecordingVideoPausesCount(int value) {
-    recordingVideoPausesCount.value = value;
-  }
-
-  void updateRecordingVideoPausesLimit(int value) {
-    recordingVideoPausesLimit.value = value;
-  }
-
-  void updateRecordingVideoSupport(bool value) {
-    recordingVideoSupport.value = value;
-  }
-
-  void updateRecordingVideoPeopleLimit(int value) {
-    recordingVideoPeopleLimit.value = value;
-  }
-
-  void updateRecordingVideoParticipantsTimeLimit(int value) {
-    recordingVideoParticipantsTimeLimit.value = value;
-  }
-
-  void updateRecordingAllParticipantsSupport(bool value) {
-    recordingAllParticipantsSupport.value = value;
-  }
-
-  void updateRecordingVideoParticipantsSupport(bool value) {
-    recordingVideoParticipantsSupport.value = value;
-  }
-
-  void updateRecordingAllParticipantsFullRoomSupport(bool value) {
-    recordingAllParticipantsFullRoomSupport.value = value;
-  }
-
-  void updateRecordingVideoParticipantsFullRoomSupport(bool value) {
-    recordingVideoParticipantsFullRoomSupport.value = value;
-  }
-
-  void updateRecordingPreferredOrientation(String value) {
-    recordingPreferredOrientation.value = value;
-  }
-
-  void updateRecordingSupportForOtherOrientation(bool value) {
-    recordingSupportForOtherOrientation.value = value;
-  }
-
-  void updateRecordingMultiFormatsSupport(bool value) {
-    recordingMultiFormatsSupport.value = value;
-  }
-
-  void updateUserRecordingParams(dynamic value) {
-    userRecordingParams.value = value;
-  }
-
-  void updateCanRecord(bool value) {
-    canRecord.value = value;
-  }
-
-  void updateStartReport(bool value) {
-    startReport.value = value;
-  }
-
-  void updateEndReport(bool value) {
-    endReport.value = value;
-  }
-
-  void updateRecordTimerInterval(dynamic value) {
-    recordTimerInterval.value = value;
-  }
-
-  void updateRecordStartTime(dynamic value) {
-    recordStartTime.value = value;
-  }
-
-  void updateRecordElapsedTime(int value) {
-    recordElapsedTime.value = value;
-  }
-
-  void updateIsTimerRunning(bool value) {
-    isTimerRunning.value = value;
-  }
-
-  void updateCanPauseResume(bool value) {
-    canPauseResume.value = value;
-  }
-
-  void updateRecordChangeSeconds(int value) {
-    recordChangeSeconds.value = value;
-  }
-
-  void updatePauseLimit(int value) {
-    pauseLimit.value = value;
-  }
-
-  void updatePauseRecordCount(int value) {
-    pauseRecordCount.value = value;
-  }
-
-  void updateCanLaunchRecord(bool value) {
-    canLaunchRecord.value = value;
-  }
-
-  void updateStopLaunchRecord(bool value) {
-    stopLaunchRecord.value = value;
-  }
-
-  void updateParticipantsAll(List<dynamic> value) {
-    participantsAll.value = value;
-  }
-
-  void updateConsumeSockets(List<Map<String, io.Socket>> value) {
-    consumeSockets.value = value;
-  }
-
-  void updateRtpCapabilities(dynamic value) {
-    rtpCapabilities.value = value;
-  }
-
-  void updateRoomRecvIPs(List<dynamic> value) {
-    roomRecvIPs.value = value;
-  }
-
-  void updateMeetingRoomParams(dynamic value) {
-    meetingRoomParams.value = value;
-  }
-
-  void updateItemPageLimit(int value) {
-    itemPageLimit.value = value;
-  }
-
-  void updateAudioOnlyRoom(bool value) {
-    audioOnlyRoom.value = value;
-  }
-
-  void updateAddForBasic(bool value) {
-    addForBasic.value = value;
-  }
-
-  void updateScreenPageLimit(int value) {
-    screenPageLimit.value = value;
-  }
-
-  void updateShareScreenStarted(bool value) {
-    shareScreenStarted.value = value;
-  }
-
-  void updateShared(bool value) {
-    shared.value = value;
-  }
-
-  void updateTargetOrientation(String value) {
-    targetOrientation.value = value;
-  }
-
-  void updateVidCons(Map<String, dynamic> value) {
-    vidCons.value = value;
-  }
-
-  void updateFrameRate(int value) {
-    frameRate.value = value;
-  }
-
-  void updateHParams(dynamic value) {
-    hParams.value = value;
-  }
-
-  void updateVParams(dynamic value) {
-    vParams.value = value;
-  }
-
-  void updateScreenParams(dynamic value) {
-    screenParams.value = value;
-  }
-
-  void updateAParams(dynamic value) {
-    aParams.value = value;
-  }
+  // User Recording Parameters
+  final ValueNotifier<UserRecordingParams> userRecordingParams =
+      ValueNotifier<UserRecordingParams>(
+    UserRecordingParams(
+      mainSpecs: MainSpecs(
+        mediaOptions: 'video',
+        audioOptions: 'all',
+        videoOptions: 'all',
+        videoType: 'fullDisplay',
+        videoOptimized: false,
+        recordingDisplayType: 'media',
+        addHLS: false,
+      ),
+      dispSpecs: DispSpecs(
+        nameTags: true,
+        backgroundColor: '#000000',
+        nameTagsColor: '#ffffff',
+        orientationVideo: 'portrait',
+      ),
+    ),
+  );
+
+// Recording States
+  ValueNotifier<bool> canRecord = ValueNotifier<bool>(false);
+  ValueNotifier<bool> startReport = ValueNotifier<bool>(false);
+  ValueNotifier<bool> endReport = ValueNotifier<bool>(false);
+  ValueNotifier<dynamic> recordTimerInterval = ValueNotifier<dynamic>(null);
+  ValueNotifier<int?> recordStartTime = ValueNotifier<int?>(0);
+  ValueNotifier<int> recordElapsedTime = ValueNotifier<int>(0);
+  ValueNotifier<bool> isTimerRunning = ValueNotifier<bool>(false);
+  ValueNotifier<bool> canPauseResume = ValueNotifier<bool>(false);
+  ValueNotifier<int> recordChangeSeconds = ValueNotifier<int>(15000);
+  ValueNotifier<int> pauseLimit = ValueNotifier<int>(0);
+  ValueNotifier<int> pauseRecordCount = ValueNotifier<int>(0);
+  ValueNotifier<bool> canLaunchRecord = ValueNotifier<bool>(true);
+  ValueNotifier<bool> stopLaunchRecord = ValueNotifier<bool>(false);
+  ValueNotifier<List<Participant>> participantsAll =
+      ValueNotifier<List<Participant>>([]);
 
   final ValueNotifier<bool> firstAll = ValueNotifier(false);
   final ValueNotifier<bool> updateMainWindow = ValueNotifier(false);
@@ -769,26 +652,26 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
   final ValueNotifier<bool> landScaped = ValueNotifier(false);
   final ValueNotifier<bool> lockScreen = ValueNotifier(false);
   final ValueNotifier<String> screenId = ValueNotifier('');
-  final ValueNotifier<List<dynamic>> allVideoStreams = ValueNotifier([]);
-  final ValueNotifier<List<dynamic>> newLimitedStreams = ValueNotifier([]);
-  final ValueNotifier<List<dynamic>> newLimitedStreamsIDs = ValueNotifier([]);
-  final ValueNotifier<List<dynamic>> activeSounds = ValueNotifier([]);
+  final ValueNotifier<List<Stream>> allVideoStreams = ValueNotifier([]);
+  final ValueNotifier<List<Stream>> newLimitedStreams = ValueNotifier([]);
+  final ValueNotifier<List<String>> newLimitedStreamsIDs = ValueNotifier([]);
+  final ValueNotifier<List<String>> activeSounds = ValueNotifier([]);
   final ValueNotifier<String> screenShareIDStream = ValueNotifier('');
   final ValueNotifier<String> screenShareNameStream = ValueNotifier('');
   final ValueNotifier<String> adminIDStream = ValueNotifier('');
   final ValueNotifier<String> adminNameStream = ValueNotifier('');
-  final ValueNotifier<dynamic> youYouStream = ValueNotifier(null);
+  final ValueNotifier<List<Stream>> youYouStream = ValueNotifier([]);
   final ValueNotifier<List<String>> youYouStreamIDs = ValueNotifier([]);
-  final ValueNotifier<dynamic> localStream = ValueNotifier(null);
+  final ValueNotifier<MediaStream?> localStream = ValueNotifier(null);
   final ValueNotifier<bool> recordStarted = ValueNotifier(false);
   final ValueNotifier<bool> recordResumed = ValueNotifier(false);
   final ValueNotifier<bool> recordPaused = ValueNotifier(false);
   final ValueNotifier<bool> recordStopped = ValueNotifier(false);
   final ValueNotifier<bool> adminRestrictSetting = ValueNotifier(false);
   final ValueNotifier<String> videoRequestState = ValueNotifier('none');
-  final ValueNotifier<DateTime?> videoRequestTime = ValueNotifier(null);
+  final ValueNotifier<int?> videoRequestTime = ValueNotifier(null);
   final ValueNotifier<bool> videoAction = ValueNotifier(false);
-  final ValueNotifier<dynamic> localStreamVideo = ValueNotifier(null);
+  final ValueNotifier<MediaStream?> localStreamVideo = ValueNotifier(null);
   final ValueNotifier<String> userDefaultVideoInputDevice = ValueNotifier('');
   final ValueNotifier<String> currentFacingMode = ValueNotifier('user');
   final ValueNotifier<String> prevFacingMode = ValueNotifier('user');
@@ -808,27 +691,27 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
   final ValueNotifier<String> audioRequestState = ValueNotifier('none');
   final ValueNotifier<String> screenRequestState = ValueNotifier('none');
   final ValueNotifier<String> chatRequestState = ValueNotifier('none');
-  final ValueNotifier<DateTime?> audioRequestTime = ValueNotifier(null);
-  final ValueNotifier<DateTime?> screenRequestTime = ValueNotifier(null);
-  final ValueNotifier<DateTime?> chatRequestTime = ValueNotifier(null);
+  final ValueNotifier<int?> audioRequestTime = ValueNotifier(null);
+  final ValueNotifier<int?> screenRequestTime = ValueNotifier(null);
+  final ValueNotifier<int?> chatRequestTime = ValueNotifier(null);
   final ValueNotifier<int> updateRequestIntervalSeconds = ValueNotifier(240);
   final ValueNotifier<List<String>> oldSoundIds = ValueNotifier([]);
   final ValueNotifier<String> hostLabel = ValueNotifier('Host');
   final ValueNotifier<bool> mainScreenFilled = ValueNotifier(false);
-  final ValueNotifier<dynamic> localStreamScreen = ValueNotifier(null);
+  final ValueNotifier<MediaStream?> localStreamScreen = ValueNotifier(null);
   final ValueNotifier<bool> screenAlreadyOn = ValueNotifier(false);
   final ValueNotifier<bool> chatAlreadyOn = ValueNotifier(false);
   final ValueNotifier<String> redirectURL = ValueNotifier('');
-  final ValueNotifier<List<dynamic>> oldAllStreams = ValueNotifier([]);
+  final ValueNotifier<List<Stream>> oldAllStreams = ValueNotifier([]);
   final ValueNotifier<String> adminVidID = ValueNotifier('');
-  final ValueNotifier<List<dynamic>> streamNames = ValueNotifier([]);
-  final ValueNotifier<List<dynamic>> nonAlVideoStreams = ValueNotifier([]);
+  final ValueNotifier<List<Stream>> streamNames = ValueNotifier([]);
+  final ValueNotifier<List<Stream>> nonAlVideoStreams = ValueNotifier([]);
   final ValueNotifier<bool> sortAudioLoudness = ValueNotifier(false);
-  final ValueNotifier<List<dynamic>> audioDecibels = ValueNotifier([]);
-  final ValueNotifier<List<dynamic>> mixedAlVideoStreams = ValueNotifier([]);
-  final ValueNotifier<List<dynamic>> nonAlVideoStreamsMuted = ValueNotifier([]);
-  final ValueNotifier<List<dynamic>> paginatedStreams = ValueNotifier([]);
-  final ValueNotifier<dynamic> localStreamAudio = ValueNotifier(null);
+  final ValueNotifier<List<AudioDecibels>> audioDecibels = ValueNotifier([]);
+  final ValueNotifier<List<Stream>> mixedAlVideoStreams = ValueNotifier([]);
+  final ValueNotifier<List<Stream>> nonAlVideoStreamsMuted = ValueNotifier([]);
+  final ValueNotifier<List<List<Stream>>> paginatedStreams = ValueNotifier([]);
+  final ValueNotifier<MediaStream?> localStreamAudio = ValueNotifier(null);
   final ValueNotifier<String> defAudioID = ValueNotifier('');
   final ValueNotifier<String> userDefaultAudioInputDevice = ValueNotifier('');
   final ValueNotifier<String> userDefaultAudioOutputDevice = ValueNotifier('');
@@ -837,22 +720,21 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
   final ValueNotifier<bool> audioPaused = ValueNotifier(false);
   final ValueNotifier<String> mainScreenPerson = ValueNotifier('');
   final ValueNotifier<bool> adminOnMainScreen = ValueNotifier(false);
-  final ValueNotifier<List<Map<String, dynamic>>> screenStates = ValueNotifier([
-    {
-      'mainScreenPerson': null,
-      'mainScreenProducerId': null,
-      'mainScreenFilled': false,
-      'adminOnMainScreen': false
-    }
+  final ValueNotifier<List<ScreenState>> screenStates = ValueNotifier([
+    ScreenState(
+      mainScreenPerson: null,
+      mainScreenProducerId: null,
+      mainScreenFilled: false,
+      adminOnMainScreen: false,
+    ),
   ]);
-  final ValueNotifier<List<Map<String, dynamic>>> prevScreenStates =
-      ValueNotifier([
-    {
-      'mainScreenPerson': null,
-      'mainScreenProducerId': null,
-      'mainScreenFilled': false,
-      'adminOnMainScreen': false
-    }
+  final ValueNotifier<List<ScreenState>> prevScreenStates = ValueNotifier([
+    ScreenState(
+      mainScreenPerson: null,
+      mainScreenProducerId: null,
+      mainScreenFilled: false,
+      adminOnMainScreen: false,
+    ),
   ]);
   final ValueNotifier<dynamic> updateDateState = ValueNotifier(null);
   final ValueNotifier<dynamic> lastUpdate = ValueNotifier(null);
@@ -860,20 +742,19 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
   final ValueNotifier<int> fixedPageLimit = ValueNotifier(4);
   final ValueNotifier<bool> removeAltGrid = ValueNotifier(false);
   final ValueNotifier<int> nForReadjust = ValueNotifier(0);
-  final ValueNotifier<int> reOrderInterval = ValueNotifier(30000);
-  final ValueNotifier<int> fastReOrderInterval = ValueNotifier(10000);
-  final ValueNotifier<int> lastReOrderTime = ValueNotifier(0);
-  final ValueNotifier<List<dynamic>> audStreamNames = ValueNotifier([]);
+  final ValueNotifier<int> reorderInterval = ValueNotifier(30000);
+  final ValueNotifier<int> fastReorderInterval = ValueNotifier(10000);
+  final ValueNotifier<int> lastReorderTime = ValueNotifier(0);
+  final ValueNotifier<List<Stream>> audStreamNames = ValueNotifier([]);
   final ValueNotifier<int> currentUserPage = ValueNotifier(0);
   double mainHeightWidth = 67;
   final ValueNotifier<double> prevMainHeightWidth = ValueNotifier(67);
   final ValueNotifier<bool> prevDoPaginate = ValueNotifier(false);
   final ValueNotifier<bool> doPaginate = ValueNotifier(false);
   final ValueNotifier<bool> shareEnded = ValueNotifier(false);
-  final ValueNotifier<List<dynamic>> lStreams = ValueNotifier([]);
-  final ValueNotifier<List<dynamic>> chatRefStreams = ValueNotifier([]);
+  final ValueNotifier<List<Stream>> lStreams = ValueNotifier([]);
+  final ValueNotifier<List<Stream>> chatRefStreams = ValueNotifier([]);
   final ValueNotifier<double> controlHeight = ValueNotifier(0.06);
-  // double controlHeight = 0.06;
   final ValueNotifier<bool> isWideScreen = ValueNotifier(false);
   final ValueNotifier<bool> isMediumScreen = ValueNotifier(false);
   final ValueNotifier<bool> isSmallScreen = ValueNotifier(false);
@@ -884,18 +765,24 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
   final ValueNotifier<int> altGridRows = ValueNotifier(0);
   final ValueNotifier<int> altGridCols = ValueNotifier(0);
   final ValueNotifier<int> numberPages = ValueNotifier(0);
-  final ValueNotifier<List<dynamic>> currentStreams = ValueNotifier([]);
+  final ValueNotifier<List<Stream>> currentStreams = ValueNotifier([]);
   final ValueNotifier<bool> showMiniView = ValueNotifier(false);
-  final ValueNotifier<dynamic> nStream = ValueNotifier(null);
+  final ValueNotifier<MediaStream?> nStream = ValueNotifier(null);
   final ValueNotifier<bool> deferReceive = ValueNotifier(false);
-  final ValueNotifier<List<dynamic>> allAudioStreams = ValueNotifier([]);
-  final ValueNotifier<List<dynamic>> remoteScreenStream = ValueNotifier([]);
-  final ValueNotifier<dynamic> screenProducer = ValueNotifier(null);
+  final ValueNotifier<List<Stream>> allAudioStreams = ValueNotifier([]);
+  final ValueNotifier<List<Stream>> remoteScreenStream = ValueNotifier([]);
+  final ValueNotifier<Producer?> screenProducer = ValueNotifier(null);
   final ValueNotifier<bool> gotAllVids = ValueNotifier(false);
-  final ValueNotifier<int> paginationHeightWidth = ValueNotifier(40);
+  final ValueNotifier<double> paginationHeightWidth = ValueNotifier(40);
   final ValueNotifier<String> paginationDirection = ValueNotifier('horizontal');
-  final ValueNotifier<Map<String, int>> gridSizes = ValueNotifier(
-      {'gridWidth': 0, 'gridHeight': 0, 'altGridWidth': 0, 'altGridHeight': 0});
+  final ValueNotifier<GridSizes> gridSizes = ValueNotifier(
+    GridSizes(
+      gridWidth: 0,
+      gridHeight: 0,
+      altGridWidth: 0,
+      altGridHeight: 0,
+    ),
+  );
   final ValueNotifier<bool> screenForceFullDisplay = ValueNotifier(false);
   List<Widget> mainGridStream = [];
   List<List<Widget>> otherGridStreams = [[], []];
@@ -904,564 +791,12 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
   final ValueNotifier<List<MediaDeviceInfo>> audioInputs = ValueNotifier([]);
   final ValueNotifier<String> meetingProgressTime = ValueNotifier('00:00:00');
   final ValueNotifier<int> meetingElapsedTime = ValueNotifier(0);
-  final ValueNotifier<List<dynamic>> refParticipants = ValueNotifier([]);
-
-  void updateFirstAll(bool value) {
-    firstAll.value = value;
-  }
-
-  void updateUpdateMainWindow(bool value) {
-    updateMainWindow.value = value;
-  }
-
-  void updateFirstRound(bool value) {
-    firstRound.value = value;
-  }
-
-  void updateLandScaped(bool value) {
-    landScaped.value = value;
-  }
-
-  void updateLockScreen(bool value) {
-    lockScreen.value = value;
-  }
-
-  void updateScreenId(String value) {
-    screenId.value = value;
-  }
-
-  void updateAllVideoStreams(List<dynamic> value) {
-    allVideoStreams.value = value;
-  }
-
-  void updateNewLimitedStreams(List<dynamic> value) {
-    newLimitedStreams.value = value;
-  }
-
-  void updateNewLimitedStreamsIDs(List<String> value) {
-    newLimitedStreamsIDs.value = value;
-  }
-
-  void updateActiveSounds(List<String> value) {
-    activeSounds.value = value;
-  }
-
-  void updateScreenShareIDStream(String value) {
-    screenShareIDStream.value = value;
-  }
-
-  void updateScreenShareNameStream(String value) {
-    screenShareNameStream.value = value;
-  }
-
-  void updateAdminIDStream(String value) {
-    adminIDStream.value = value;
-  }
-
-  void updateAdminNameStream(String value) {
-    adminNameStream.value = value;
-  }
-
-  void updateYouYouStream(value) {
-    youYouStream.value = value;
-  }
-
-  void updateYouYouStreamIDs(List<String> value) {
-    youYouStreamIDs.value = value;
-  }
-
-  void updateLocalStream(value) {
-    localStream.value = value;
-  }
-
-  void updateRecordStarted(bool value) {
-    setState(() {
-      recordStarted.value = value;
-    });
-  }
-
-  void updateRecordResumed(bool value) {
-    setState(() {
-      recordResumed.value = value;
-    });
-  }
-
-  void updateRecordPaused(bool value) {
-    setState(() {
-      recordPaused.value = value;
-    });
-  }
-
-  void updateRecordStopped(bool value) {
-    setState(() {
-      recordStopped.value = value;
-    });
-  }
-
-  void updateAdminRestrictSetting(bool value) {
-    adminRestrictSetting.value = value;
-  }
-
-  void updateVideoRequestState(String value) {
-    videoRequestState.value = value;
-  }
-
-  void updateVideoRequestTime(DateTime value) {
-    videoRequestTime.value = value;
-  }
-
-  void updateVideoAction(bool value) {
-    videoAction.value = value;
-  }
-
-  void updateLocalStreamVideo(value) {
-    localStreamVideo.value = value;
-  }
-
-  void updateUserDefaultVideoInputDevice(String value) {
-    userDefaultVideoInputDevice.value = value;
-  }
-
-  void updateCurrentFacingMode(String value) {
-    currentFacingMode.value = value;
-  }
-
-  void updatePrevFacingMode(String value) {
-    prevFacingMode.value = value;
-  }
-
-  void updateDefVideoID(String value) {
-    defVideoID.value = value;
-  }
-
-  void updateAllowed(bool value) {
-    allowed.value = value;
-  }
-
-  void updateDispActiveNames(List<String> value) {
-    dispActiveNames.value = value;
-  }
-
-  void updatePDispActiveNames(List<String> value) {
-    pDispActiveNames.value = value;
-  }
-
-  void updateActiveNames(List<String> value) {
-    activeNames.value = value;
-  }
-
-  void updatePrevActiveNames(List<String> value) {
-    prevActiveNames.value = value;
-  }
-
-  void updatePActiveNames(List<String> value) {
-    pActiveNames.value = value;
-  }
-
-  void updateMembersReceived(bool value) {
-    membersReceived.value = value;
-  }
-
-  void updateDeferScreenReceived(bool value) {
-    deferScreenReceived.value = value;
-  }
-
-  void updateHostFirstSwitch(bool value) {
-    hostFirstSwitch.value = value;
-  }
-
-  void updateMicAction(bool value) {
-    micAction.value = value;
-  }
-
-  void updateScreenAction(bool value) {
-    screenAction.value = value;
-  }
-
-  void updateChatAction(bool value) {
-    chatAction.value = value;
-  }
-
-  void updateAudioRequestState(String value) {
-    audioRequestState.value = value;
-  }
-
-  void updateScreenRequestState(String value) {
-    screenRequestState.value = value;
-  }
-
-  void updateChatRequestState(String value) {
-    chatRequestState.value = value;
-  }
-
-  void updateAudioRequestTime(DateTime value) {
-    audioRequestTime.value = value;
-  }
-
-  void updateScreenRequestTime(DateTime value) {
-    screenRequestTime.value = value;
-  }
-
-  void updateChatRequestTime(DateTime value) {
-    chatRequestTime.value = value;
-  }
-
-  void updateOldSoundIds(List<String> value) {
-    oldSoundIds.value = value;
-  }
-
-  void updateHostLabel(String value) {
-    hostLabel.value = value;
-  }
-
-  void updateMainScreenFilled(bool value) {
-    mainScreenFilled.value = value;
-  }
-
-  void updateLocalStreamScreen(value) {
-    localStreamScreen.value = value;
-  }
-
-  void updateScreenAlreadyOn(bool value) {
-    screenAlreadyOn.value = value;
-    setState(() {
-      screenShareActive = value;
-    });
-  }
-
-  void updateChatAlreadyOn(bool value) {
-    chatAlreadyOn.value = value;
-  }
-
-  void updateRedirectURL(value) {
-    redirectURL.value = value;
-  }
-
-  void updateOldAllStreams(value) {
-    oldAllStreams.value = value;
-  }
-
-  void updateAdminVidID(String value) {
-    adminVidID.value = value;
-  }
-
-  void updateStreamNames(List<dynamic> value) {
-    streamNames.value = value;
-  }
-
-  void updateNonAlVideoStreams(value) {
-    nonAlVideoStreams.value = value;
-  }
-
-  void updateSortAudioLoudness(bool value) {
-    sortAudioLoudness.value = value;
-  }
-
-  void updateAudioDecibels(value) {
-    audioDecibels.value = value;
-  }
-
-  void updateMixedAlVideoStreams(value) {
-    mixedAlVideoStreams.value = value;
-  }
-
-  void updateNonAlVideoStreamsMuted(value) {
-    nonAlVideoStreamsMuted.value = value;
-  }
-
-  void updatePaginatedStreams(value) {
-    paginatedStreams.value = value;
-  }
-
-  void updateLocalStreamAudio(value) {
-    localStreamAudio.value = value;
-  }
-
-  void updateDefAudioID(String value) {
-    defAudioID.value = value;
-  }
-
-  void updateUserDefaultAudioInputDevice(String value) {
-    userDefaultAudioInputDevice.value = value;
-  }
-
-  void updateUserDefaultAudioOutputDevice(String value) {
-    userDefaultAudioOutputDevice.value = value;
-  }
-
-  void updatePrevAudioInputDevice(String value) {
-    prevAudioInputDevice.value = value;
-  }
-
-  void updatePrevVideoInputDevice(String value) {
-    prevVideoInputDevice.value = value;
-  }
-
-  void updateAudioPaused(bool value) {
-    audioPaused.value = value;
-  }
-
-  void updateMainScreenPerson(String value) {
-    mainScreenPerson.value = value;
-  }
-
-  void updateAdminOnMainScreen(bool value) {
-    adminOnMainScreen.value = value;
-  }
-
-  void updateScreenStates(List<Map<String, dynamic>> value) {
-    screenStates.value = value;
-  }
-
-  void updatePrevScreenStates(List<Map<String, dynamic>> value) {
-    prevScreenStates.value = value;
-  }
-
-  void updateUpdateDateState(value) {
-    updateDateState.value = value;
-  }
-
-  void updateLastUpdate(value) {
-    lastUpdate.value = value;
-  }
-
-  void updateNForReadjustRecord(int value) {
-    nForReadjustRecord.value = value;
-  }
-
-  void updateFixedPageLimit(int value) {
-    fixedPageLimit.value = value;
-  }
-
-  void updateRemoveAltGrid(bool value) {
-    removeAltGrid.value = value;
-  }
-
-  void updateNForReadjust(int value) {
-    nForReadjust.value = value;
-  }
-
-  void updateLastReOrderTime(int value) {
-    lastReOrderTime.value = value;
-  }
-
-  void updateAudStreamNames(value) {
-    audStreamNames.value = value;
-  }
-
-  void updateCurrentUserPage(int value) {
-    currentUserPage.value = value;
-  }
-
-  void updateMainHeightWidth(value) {
-    bool doUpdate = value.floor() != mainHeightWidth.floor();
-    setState(() {
-      mainHeightWidth = value.toDouble();
-    });
-
-    if (doUpdate && validated) {
-      try {
-        onScreenChanges(
-            changed: true,
-            parameters: {...getAllParams(), ...mediaSFUFunctions()});
-      } catch (error) {}
-
-      try {
-        prepopulateUserMedia(
-            name: hostLabel.value,
-            parameters: {...getAllParams(), ...mediaSFUFunctions()});
-      } catch (error) {}
-    }
-  }
-
-  void updatePrevMainHeightWidth(value) {
-    prevMainHeightWidth.value = value;
-  }
-
-  void updatePrevDoPaginate(bool value) {
-    if (value != prevDoPaginate.value) {
-      prevDoPaginate.value = value;
-    }
-  }
-
-  void updateDoPaginate(bool value) {
-    if (value != doPaginate.value) {
-      // doPaginate.value = value;
-      setState(() {
-        doPaginate.value = value;
-      });
-    }
-  }
-
-  void updateShareEnded(bool value) {
-    shareEnded.value = value;
-  }
-
-  void updateLStreams(value) {
-    lStreams.value = value;
-  }
-
-  void updateChatRefStreams(value) {
-    chatRefStreams.value = value;
-  }
-
-  void _updateControlHeight() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if ((eventType.value == 'webinar' || eventType.value == 'conference')) {
-        // Handle landscape orientation for webinar and conference event types
-        final minValue = MediaQuery.of(context).size.height;
-
-        // Adaptively set the control height for specific screen sizes
-        //compute the fraction that give max of 40px to 3 decimal places
-        final fraction = (40 / minValue).toStringAsFixed(3);
-        if (controlHeight.value != double.parse(fraction)) {
-          updateControlHeight(double.parse(fraction));
-        }
-      } else {
-        if (controlHeight.value != 0.0) {
-          updateControlHeight(0.0);
-        }
-      }
-    });
-  }
-
-  void updateControlHeight(value) {
-    setState(() {
-      controlHeight.value = value;
-    });
-  }
-
-  void updateIsWideScreen(bool value) {
-    isWideScreen.value = value;
-  }
-
-  void updateIsMediumScreen(bool value) {
-    isMediumScreen.value = value;
-  }
-
-  void updateIsSmallScreen(bool value) {
-    isSmallScreen.value = value;
-  }
-
-  void updateAddGrid(bool value) {
-    addGrid.value = value;
-  }
-
-  void updateAddAltGrid(bool value) {
-    addAltGrid.value = value;
-  }
-
-  void updateGridRows(int value) {
-    gridRows.value = value;
-  }
-
-  void updateGridCols(int value) {
-    gridCols.value = value;
-  }
-
-  void updateAltGridRows(int value) {
-    altGridRows.value = value;
-  }
-
-  void updateAltGridCols(int value) {
-    altGridCols.value = value;
-  }
-
-  void updateNumberPages(int value) {
-    numberPages.value = value;
-  }
-
-  void updateCurrentStreams(value) {
-    currentStreams.value = value;
-  }
-
-  void updateShowMiniView(bool value) {
-    showMiniView.value = value;
-  }
-
-  void updateNStream(value) {
-    nStream.value = value;
-  }
-
-  void updateDeferReceive(bool value) {
-    deferReceive.value = value;
-  }
-
-  void updateAllAudioStreams(value) {
-    allAudioStreams.value = value;
-  }
-
-  void updateRemoteScreenStream(value) {
-    remoteScreenStream.value = value;
-  }
-
-  void updateScreenProducer(value) {
-    screenProducer.value = value;
-  }
-
-  void updateGotAllVids(bool value) {
-    gotAllVids.value = value;
-  }
-
-  void updatePaginationHeightWidth(value) {
-    setState(() {
-      paginationHeightWidth.value = value;
-    });
-  }
-
-  void updatePaginationDirection(String value) {
-    paginationDirection.value = value;
-  }
-
-  void updateGridSizes(Map<String, int> value) {
-    gridSizes.value = value;
-  }
-
-  void updateScreenForceFullDisplay(bool value) {
-    screenForceFullDisplay.value = value;
-  }
-
-  void updateMainGridStream(value) {
-    setState(() {
-      mainGridStream = value;
-    });
-  }
-
-  void updateOtherGridStreams(value) {
-    setState(() {
-      otherGridStreams = value;
-    });
-  }
-
-  void updateAudioOnlyStreams(value) {
-    audioOnlyStreams.value = value;
-  }
-
-  void updateVideoInputs(value) {
-    videoInputs.value = value;
-  }
-
-  void updateAudioInputs(value) {
-    audioInputs.value = value;
-  }
-
-  void updateMeetingProgressTime(value) {
-    meetingProgressTime.value = value;
-  }
-
-  void updateMeetingElapsedTime(value) {
-    meetingElapsedTime.value = value;
-  }
-
-  void updateRefParticipants(List<dynamic> value) {
-    refParticipants.value = value;
-  }
+  final ValueNotifier<List<Participant>> refParticipants = ValueNotifier([]);
 
   // Messages
-  final ValueNotifier<List<dynamic>> messages = ValueNotifier([]);
+  final ValueNotifier<List<Message>> messages = ValueNotifier([]);
   final ValueNotifier<bool> startDirectMessage = ValueNotifier(false);
-  final ValueNotifier<Map<String, dynamic>> directMessageDetails =
-      ValueNotifier({});
+  final ValueNotifier<Participant?> directMessageDetails = ValueNotifier(null);
   final ValueNotifier<bool> showMessagesBadge = ValueNotifier(false);
 
   // Event settings related variables
@@ -1471,7 +806,6 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
   final ValueNotifier<String> chatSetting = ValueNotifier('allow');
 
   // Display settings related variables
-  final ValueNotifier<String> displayOption = ValueNotifier('media');
   final ValueNotifier<bool> autoWave = ValueNotifier(true);
   final ValueNotifier<bool> forceFullDisplay = ValueNotifier(true);
   final ValueNotifier<bool> prevForceFullDisplay = ValueNotifier(false);
@@ -1479,127 +813,97 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
 
   // Waiting room
   final ValueNotifier<String> waitingRoomFilter = ValueNotifier('');
-  final ValueNotifier<List<dynamic>> waitingRoomList = ValueNotifier([]);
+  final ValueNotifier<List<WaitingRoomParticipant>> waitingRoomList =
+      ValueNotifier([]);
   final ValueNotifier<int> waitingRoomCounter = ValueNotifier(0);
-  final ValueNotifier<List<dynamic>> filteredWaitingRoomList =
+  final ValueNotifier<List<WaitingRoomParticipant>> filteredWaitingRoomList =
       ValueNotifier([]);
 
   // Requests
   final ValueNotifier<String> requestFilter = ValueNotifier('');
-  final ValueNotifier<List<dynamic>> requestList = ValueNotifier([]);
+  final ValueNotifier<List<Request>> requestList = ValueNotifier([]);
   final ValueNotifier<int> requestCounter = ValueNotifier(0);
-  final ValueNotifier<List<dynamic>> filteredRequestList = ValueNotifier([]);
+  final ValueNotifier<List<Request>> filteredRequestList = ValueNotifier([]);
 
-  // Update methods
-  void updateMessages(List<dynamic> value) {
-    messages.value = value;
-  }
+  //transports related variables
+  final ValueNotifier<bool> transportCreated = ValueNotifier(false);
+  final ValueNotifier<bool> transportCreatedVideo = ValueNotifier(false);
+  final ValueNotifier<bool> transportCreatedAudio = ValueNotifier(false);
+  final ValueNotifier<bool> transportCreatedScreen = ValueNotifier(false);
+  final ValueNotifier<Transport?> producerTransport = ValueNotifier(null);
+  final ValueNotifier<Producer?> videoProducer = ValueNotifier(null);
+  final ValueNotifier<ProducerOptionsType?> params = ValueNotifier(null);
+  final ValueNotifier<ProducerOptionsType?> videoParams = ValueNotifier(null);
+  final ValueNotifier<ProducerOptionsType?> audioParams = ValueNotifier(null);
+  final ValueNotifier<Producer?> audioProducer = ValueNotifier(null);
+  final ValueNotifier<List<TransportType>> consumerTransports =
+      ValueNotifier([]);
+  final ValueNotifier<List<String>> consumingTransports = ValueNotifier([]);
 
-  void updateStartDirectMessage(bool value) {
-    startDirectMessage.value = value;
-  }
+  final ValueNotifier<List<Poll>> polls = ValueNotifier([]);
+  final ValueNotifier<Poll?> poll = ValueNotifier(null);
+  final ValueNotifier<bool> isPollModalVisible = ValueNotifier(false);
 
-  void updateDirectMessageDetails(Map<String, dynamic> value) {
-    directMessageDetails.value = value;
-  }
+  // Breakout rooms related variables
+  final ValueNotifier<List<List<BreakoutParticipant>>> breakoutRooms =
+      ValueNotifier([]);
+  final ValueNotifier<int> currentRoomIndex = ValueNotifier(0);
+  final ValueNotifier<bool> canStartBreakout = ValueNotifier(false);
+  final ValueNotifier<bool> breakOutRoomStarted = ValueNotifier(false);
+  final ValueNotifier<bool> breakOutRoomEnded = ValueNotifier(false);
+  final ValueNotifier<int> hostNewRoom = ValueNotifier(-1);
+  final ValueNotifier<List<BreakoutParticipant>> limitedBreakRoom =
+      ValueNotifier([]);
+  final ValueNotifier<int> mainRoomsLength = ValueNotifier(0);
+  final ValueNotifier<int> memberRoom = ValueNotifier(-1);
+  final ValueNotifier<bool> isBreakoutRoomsModalVisible = ValueNotifier(false);
 
-  void updateShowMessagesBadge(bool value) {
-    setState(() {
-      showMessagesBadge.value = value;
-    });
-  }
+  final ValueNotifier<bool> isPortrait = ValueNotifier<bool>(true);
 
-  void updateAudioSetting(String value) {
-    audioSetting.value = value;
-  }
+  // Not implemented
+  // Background-related variables
+  ValueNotifier<String?> customImage = ValueNotifier<String?>(null);
+  ValueNotifier<String?> selectedImage = ValueNotifier<String?>(null);
+  ValueNotifier<MediaStream?> segmentVideo = ValueNotifier<MediaStream?>(null);
+  ValueNotifier<dynamic> selfieSegmentation = ValueNotifier<dynamic>(null);
+  ValueNotifier<bool> pauseSegmentation = ValueNotifier<bool>(false);
+  ValueNotifier<MediaStream?> processedStream =
+      ValueNotifier<MediaStream?>(null);
+  ValueNotifier<bool> keepBackground = ValueNotifier<bool>(false);
+  ValueNotifier<bool> backgroundHasChanged = ValueNotifier<bool>(false);
+  ValueNotifier<MediaStream?> virtualStream = ValueNotifier<MediaStream?>(null);
+  ValueNotifier<dynamic> mainCanvas = ValueNotifier<dynamic>(null);
+  ValueNotifier<bool> prevKeepBackground = ValueNotifier<bool>(false);
+  ValueNotifier<bool> appliedBackground = ValueNotifier<bool>(false);
+  ValueNotifier<bool> isBackgroundModalVisible = ValueNotifier<bool>(false);
+  ValueNotifier<bool> autoClickBackground = ValueNotifier<bool>(false);
 
-  void updateVideoSetting(String value) {
-    videoSetting.value = value;
-  }
+// Whiteboard-related variables
+  ValueNotifier<List<WhiteboardUser>> whiteboardUsers =
+      ValueNotifier<List<WhiteboardUser>>([]);
+  ValueNotifier<int?> currentWhiteboardIndex = ValueNotifier<int?>(null);
+  ValueNotifier<bool> canStartWhiteboard = ValueNotifier<bool>(false);
+  ValueNotifier<bool> whiteboardStarted = ValueNotifier<bool>(false);
+  ValueNotifier<bool> whiteboardEnded = ValueNotifier<bool>(false);
+  ValueNotifier<int> whiteboardLimit = ValueNotifier<int>(0);
+  ValueNotifier<bool> isWhiteboardModalVisible = ValueNotifier<bool>(false);
+  ValueNotifier<bool> isConfigureWhiteboardModalVisible =
+      ValueNotifier<bool>(false);
+  ValueNotifier<List<dynamic>> shapes = ValueNotifier<List<dynamic>>([]);
+  ValueNotifier<bool> useImageBackground = ValueNotifier<bool>(true);
+  ValueNotifier<List<dynamic>> redoStack = ValueNotifier<List<dynamic>>([]);
+  ValueNotifier<List<String>> undoStack = ValueNotifier<List<String>>([]);
+  ValueNotifier<MediaStream?> canvasStream = ValueNotifier<MediaStream?>(null);
+  ValueNotifier<dynamic> canvasWhiteboard = ValueNotifier<dynamic>(null);
 
-  void updateScreenshareSetting(String value) {
-    screenshareSetting.value = value;
-  }
-
-  void updateChatSetting(String value) {
-    chatSetting.value = value;
-  }
-
-  void updateDisplayOption(String value) {
-    displayOption.value = value;
-  }
-
-  void updateAutoWave(bool value) {
-    autoWave.value = value;
-  }
-
-  void updateForceFullDisplay(bool value) {
-    forceFullDisplay.value = value;
-  }
-
-  void updatePrevForceFullDisplay(bool value) {
-    prevForceFullDisplay.value = value;
-  }
-
-  void updatePrevMeetingDisplayType(String value) {
-    prevMeetingDisplayType.value = value;
-  }
-
-  void updateWaitingRoomFilter(String value) {
-    waitingRoomFilter.value = value;
-  }
-
-  void updateWaitingRoomList(List<dynamic> value) {
-    waitingRoomList.value = value;
-    filteredWaitingRoomList.value = value;
-    waitingRoomCounter.value = value.length;
-  }
-
-  void updateWaitingRoomCounter(int value) {
-    waitingRoomCounter.value = value;
-  }
-
-  void updateRequestFilter(String value) {
-    requestFilter.value = value;
-  }
-
-  void updateRequestList(List<dynamic> value) {
-    requestList.value = value;
-    filteredRequestList.value = value;
-    requestCounter.value = value.length;
-  }
-
-  void updateRequestCounter(int value) {
-    requestCounter.value = value;
-  }
-
-  void onWaitingRoomFilterChange(String value) {
-    // Filter the waiting room list based on the value
-    if (value.isNotEmpty) {
-      final filteredList = waitingRoomList.value.where((room) =>
-          room['name'].toString().toLowerCase().contains(value.toLowerCase()));
-      filteredWaitingRoomList.value = filteredList.toList();
-      waitingRoomCounter.value = filteredList.length;
-    } else {
-      filteredWaitingRoomList.value = waitingRoomList.value;
-      waitingRoomCounter.value = waitingRoomList.value.length;
-    }
-  }
-
-  void onRequestFilterChange(String value) {
-    // Filter the request list based on the value
-    if (value.isNotEmpty) {
-      final filteredList = requestList.value.where((request) => request['name']
-          .toString()
-          .toLowerCase()
-          .contains(value.toLowerCase()));
-      filteredRequestList.value = filteredList.toList();
-      requestCounter.value = filteredList.length;
-    } else {
-      filteredRequestList.value = requestList.value;
-      requestCounter.value = requestList.value.length;
-    }
-  }
+// Screenboard-related variables
+  ValueNotifier<dynamic> canvasScreenboard = ValueNotifier<dynamic>(null);
+  ValueNotifier<MediaStream?> processedScreenStream =
+      ValueNotifier<MediaStream?>(null);
+  ValueNotifier<bool> annotateScreenStream =
+      ValueNotifier<bool>(false); // Annotate screen stream as boolean
+  ValueNotifier<dynamic> mainScreenCanvas = ValueNotifier<dynamic>(null);
+  ValueNotifier<bool> isScreenboardModalVisible = ValueNotifier<bool>(false);
 
   // showAlert modal
   final ValueNotifier<bool> alertVisible = ValueNotifier(false);
@@ -1607,34 +911,9 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
   final ValueNotifier<String> alertType = ValueNotifier('info');
   final ValueNotifier<int> alertDuration = ValueNotifier(3000);
 
-  void updateAlertVisible(bool value) {
-    alertVisible.value = value;
-  }
-
-  void updateAlertMessage(String value) {
-    alertMessage.value = value;
-  }
-
-  void updateAlertType(String value) {
-    alertType.value = value;
-  }
-
-  void updateAlertDuration(int value) {
-    alertDuration.value = value;
-  }
-
   // Progress Timer
   final ValueNotifier<bool> progressTimerVisible = ValueNotifier(true);
   final ValueNotifier<int> progressTimerValue = ValueNotifier(0);
-
-  void updateProgressTimerVisible(bool value) {
-    progressTimerVisible.value = value;
-  }
-
-  void updateProgressTimerValue(int value) {
-    progressTimerValue.value = value;
-  }
-
   // Menu modals
   final ValueNotifier<bool> isMenuModalVisible = ValueNotifier(false);
   final ValueNotifier<bool> isRecordingModalVisible = ValueNotifier(false);
@@ -1645,63 +924,8 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
   final ValueNotifier<bool> isMediaSettingsModalVisible = ValueNotifier(false);
   final ValueNotifier<bool> isDisplaySettingsModalVisible =
       ValueNotifier(false);
-
-  // onRequestClose method
-  void onRequestClose() {
-    updateIsRequestsModalVisible(false);
-  }
-
   // totalReqWait variable and update method
   final ValueNotifier<int> totalReqWait = ValueNotifier(0);
-
-  void updateTotalReqWait(int value) {
-    setState(() {
-      totalReqWait.value = value;
-    });
-  }
-
-  // Update methods for menu modals
-  void updateIsMenuModalVisible(bool value) {
-    isMenuModalVisible.value = value;
-  }
-
-  void updateIsRecordingModalVisible(bool value) {
-    isRecordingModalVisible.value = value;
-    if (value) {
-      updateConfirmedToRecord(false);
-    } else {
-      if (clearedToRecord.value == true &&
-          clearedToResume.value == true &&
-          recordStarted.value == true) {
-        updateShowRecordButtons(true);
-      }
-    }
-  }
-
-  void updateIsSettingsModalVisible(bool value) {
-    isSettingsModalVisible.value = value;
-  }
-
-  void updateIsRequestsModalVisible(bool value) {
-    isRequestsModalVisible.value = value;
-  }
-
-  void updateIsWaitingModalVisible(bool value) {
-    isWaitingModalVisible.value = value;
-  }
-
-  void updateIsCoHostModalVisible(bool value) {
-    isCoHostModalVisible.value = value;
-  }
-
-  void updateIsMediaSettingsModalVisible(bool value) {
-    isMediaSettingsModalVisible.value = value;
-  }
-
-  void updateIsDisplaySettingsModalVisible(bool value) {
-    isDisplaySettingsModalVisible.value = value;
-  }
-
   // Other Modals
   final ValueNotifier<bool> isParticipantsModalVisible = ValueNotifier(false);
   final ValueNotifier<bool> isMessagesModalVisible = ValueNotifier(false);
@@ -1709,30 +933,6 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
   final ValueNotifier<bool> isConfirmHereModalVisible = ValueNotifier(false);
   final ValueNotifier<bool> isShareEventModalVisible = ValueNotifier(false);
   final ValueNotifier<bool> isLoadingModalVisible = ValueNotifier(false);
-
-  void updateIsParticipantsModalVisible(bool value) {
-    isParticipantsModalVisible.value = value;
-  }
-
-  void updateIsMessagesModalVisible(bool value) {
-    isMessagesModalVisible.value = value;
-  }
-
-  void updateIsConfirmExitModalVisible(bool value) {
-    isConfirmExitModalVisible.value = value;
-  }
-
-  void updateIsConfirmHereModalVisible(bool value) {
-    isConfirmHereModalVisible.value = value;
-  }
-
-  void updateIsShareEventModalVisible(bool value) {
-    isShareEventModalVisible.value = value;
-  }
-
-  void updateIsLoadingModalVisible(bool value) {
-    isLoadingModalVisible.value = value;
-  }
 
   // Recording related variables
   final ValueNotifier<String> recordingMediaOptions = ValueNotifier('video');
@@ -1766,160 +966,1452 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
   // Update methods for recording options
   final ValueNotifier<bool> recordUIChanged = ValueNotifier(false);
 
+  // Media related variables
+  final ValueNotifier<bool> videoAlreadyOn = ValueNotifier(false);
+  final ValueNotifier<bool> audioAlreadyOn = ValueNotifier(false);
+
+  // Permissions related variables
+  final ValueNotifier<bool> hasCameraPermission = ValueNotifier(false);
+  final ValueNotifier<bool> hasAudioPermission = ValueNotifier(false);
+  final ValueNotifier<ComponentSizes> componentSizes = ValueNotifier(
+      ComponentSizes(
+          mainHeight: 0, otherHeight: 0, mainWidth: 0, otherWidth: 0));
+
+  // Update functionss
+  void updateSocket(io.Socket? value) {
+    socket.value = value;
+    mediasfuParameters.socket = value;
+  }
+
+  void updateDevice(Device? value) {
+    device.value = value;
+    mediasfuParameters.device = value;
+  }
+
+  void updateRoomData(ResponseJoinRoom? value) {
+    roomData.value = value;
+    mediasfuParameters.roomData = value!;
+  }
+
+  void updateValidated(bool value) {
+    setState(() {
+      validated = value;
+      mediasfuParameters.validated = value;
+    });
+
+    if (validated) {
+      joinAndUpdate().then((value) => null);
+    }
+  }
+
+  void updateApiKey(String value) {
+    apiKey.value = value;
+    // mediasfuParameters.apiKey = value;
+  }
+
+  void updateApiUserName(String value) {
+    apiUserName.value = value;
+    // mediasfuParameters.apiUserName = value;
+  }
+
+  void updateApiToken(String value) {
+    apiToken.value = value;
+    // mediasfuParameters.apiToken = value;
+  }
+
+  void updateLink(String value) {
+    link.value = value;
+    // mediasfuParameters.link = value;
+  }
+
+  void updateMember(String value) {
+    member.value = value;
+    mediasfuParameters.member = value;
+  }
+
+  void updateYouAreCoHost(bool value) {
+    setState(() {
+      youAreCoHost.value = value;
+      mediasfuParameters.youAreCoHost = value;
+    });
+  }
+
+  void updateYouAreHost(bool value) {
+    youAreHost.value = value;
+    mediasfuParameters.youAreHost = value;
+  }
+
+  void updateConfirmedToRecord(bool value) {
+    confirmedToRecord.value = value;
+    mediasfuParameters.confirmedToRecord = value;
+  }
+
+  void updateMeetingDisplayType(String value) {
+    setState(() {
+      meetingDisplayType.value = value;
+      mediasfuParameters.meetingDisplayType = value;
+    });
+  }
+
+  void updateMeetingVideoOptimized(bool value) {
+    setState(() {
+      meetingVideoOptimized.value = value;
+      mediasfuParameters.meetingVideoOptimized = value;
+    });
+  }
+
+  void updateEventType(EventType value) {
+    setState(() {
+      eventType.value = value;
+      mediasfuParameters.eventType = value;
+    });
+    if (value == EventType.chat) {
+      updateMeetingDisplayType('all');
+    }
+  }
+
+  void updateParticipants(List<Participant> value) {
+    participants.value = value;
+    mediasfuParameters.participants = value;
+    filteredParticipants.value = List.from(value);
+    participantsCounter.value = value.length;
+  }
+
+  void updateFilteredParticipants(List<Participant> value) {
+    filteredParticipants.value = value;
+    mediasfuParameters.filteredParticipants = value;
+  }
+
+  void updateParticipantsCounter(int value) {
+    participantsCounter.value = value;
+    mediasfuParameters.participantsCounter = value;
+  }
+
+  void updateParticipantsFilter(String value) {
+    participantsFilter.value = value;
+    mediasfuParameters.participantsFilter = value;
+  }
+
+  void updateRoomName(String value) {
+    roomName.value = value;
+    mediasfuParameters.roomName = value;
+  }
+
+  void updateAdminPasscode(String value) {
+    adminPasscode.value = value;
+    mediasfuParameters.adminPasscode = value;
+  }
+
+  void updateIslevel(String value) {
+    setState(() {
+      islevel.value = value;
+      mediasfuParameters.islevel = value;
+    });
+  }
+
+  void updateCoHost(String value) {
+    coHost.value = value;
+    mediasfuParameters.coHost = value;
+  }
+
+  void updateCoHostResponsibility(List<CoHostResponsibility> value) {
+    coHostResponsibility.value = value;
+    mediasfuParameters.coHostResponsibility = value;
+  }
+
+  void updateRecordingAudioPausesLimit(int value) {
+    recordingAudioPausesLimit.value = value;
+    mediasfuParameters.recordingAudioPausesLimit = value;
+  }
+
+  void updateRecordingAudioPausesCount(int value) {
+    recordingAudioPausesCount.value = value;
+    mediasfuParameters.recordingAudioPausesCount = value;
+  }
+
+  void updateRecordingAudioSupport(bool value) {
+    recordingAudioSupport.value = value;
+    mediasfuParameters.recordingAudioSupport = value;
+  }
+
+  void updateRecordingAudioPeopleLimit(int value) {
+    recordingAudioPeopleLimit.value = value;
+    mediasfuParameters.recordingAudioPeopleLimit = value;
+  }
+
+  void updateRecordingAudioParticipantsTimeLimit(int value) {
+    recordingAudioParticipantsTimeLimit.value = value;
+    mediasfuParameters.recordingAudioParticipantsTimeLimit = value;
+  }
+
+  void updateRecordingVideoPausesCount(int value) {
+    recordingVideoPausesCount.value = value;
+    mediasfuParameters.recordingVideoPausesCount = value;
+  }
+
+  void updateRecordingVideoPausesLimit(int value) {
+    recordingVideoPausesLimit.value = value;
+    mediasfuParameters.recordingVideoPausesLimit = value;
+  }
+
+  void updateRecordingVideoSupport(bool value) {
+    recordingVideoSupport.value = value;
+    mediasfuParameters.recordingVideoSupport = value;
+  }
+
+  void updateRecordingVideoPeopleLimit(int value) {
+    recordingVideoPeopleLimit.value = value;
+    mediasfuParameters.recordingVideoPeopleLimit = value;
+  }
+
+  void updateRecordingVideoParticipantsTimeLimit(int value) {
+    recordingVideoParticipantsTimeLimit.value = value;
+    mediasfuParameters.recordingVideoParticipantsTimeLimit = value;
+  }
+
+  void updateRecordingAllParticipantsSupport(bool value) {
+    recordingAllParticipantsSupport.value = value;
+    mediasfuParameters.recordingAllParticipantsSupport = value;
+  }
+
+  void updateRecordingVideoParticipantsSupport(bool value) {
+    recordingVideoParticipantsSupport.value = value;
+    mediasfuParameters.recordingVideoParticipantsSupport = value;
+  }
+
+  void updateRecordingAllParticipantsFullRoomSupport(bool value) {
+    recordingAllParticipantsFullRoomSupport.value = value;
+    mediasfuParameters.recordingAllParticipantsFullRoomSupport = value;
+  }
+
+  void updateRecordingVideoParticipantsFullRoomSupport(bool value) {
+    recordingVideoParticipantsFullRoomSupport.value = value;
+    mediasfuParameters.recordingVideoParticipantsFullRoomSupport = value;
+  }
+
+  void updateRecordingPreferredOrientation(String value) {
+    recordingPreferredOrientation.value = value;
+    mediasfuParameters.recordingPreferredOrientation = value;
+  }
+
+  void updateRecordingSupportForOtherOrientation(bool value) {
+    recordingSupportForOtherOrientation.value = value;
+    mediasfuParameters.recordingSupportForOtherOrientation = value;
+  }
+
+  void updateRecordingMultiFormatsSupport(bool value) {
+    recordingMultiFormatsSupport.value = value;
+    mediasfuParameters.recordingMultiFormatsSupport = value;
+  }
+
+  void updateUserRecordingParams(UserRecordingParams value) {
+    userRecordingParams.value = value;
+    mediasfuParameters.userRecordingParams = value;
+  }
+
+  void updateCanRecord(bool value) {
+    canRecord.value = value;
+    mediasfuParameters.canRecord = value;
+  }
+
+  void updateStartReport(bool value) {
+    startReport.value = value;
+    mediasfuParameters.startReport = value;
+  }
+
+  void updateEndReport(bool value) {
+    endReport.value = value;
+    mediasfuParameters.endReport = value;
+  }
+
+  void updateRecordTimerInterval(dynamic value) {
+    recordTimerInterval.value = value;
+    mediasfuParameters.recordTimerInterval = value;
+  }
+
+  void updateRecordStartTime(int? value) {
+    recordStartTime.value = value;
+    mediasfuParameters.recordStartTime = value;
+  }
+
+  void updateRecordElapsedTime(int value) {
+    recordElapsedTime.value = value;
+    mediasfuParameters.recordElapsedTime = value;
+  }
+
+  void updateIsTimerRunning(bool value) {
+    isTimerRunning.value = value;
+    mediasfuParameters.isTimerRunning = value;
+  }
+
+  void updateCanPauseResume(bool value) {
+    canPauseResume.value = value;
+    mediasfuParameters.canPauseResume = value;
+  }
+
+  void updateRecordChangeSeconds(int value) {
+    recordChangeSeconds.value = value;
+    mediasfuParameters.recordChangeSeconds = value;
+  }
+
+  void updatePauseLimit(int value) {
+    pauseLimit.value = value;
+    mediasfuParameters.pauseLimit = value;
+  }
+
+  void updatePauseRecordCount(int value) {
+    pauseRecordCount.value = value;
+    mediasfuParameters.pauseRecordCount = value;
+  }
+
+  void updateCanLaunchRecord(bool value) {
+    canLaunchRecord.value = value;
+    mediasfuParameters.canLaunchRecord = value;
+  }
+
+  void updateStopLaunchRecord(bool value) {
+    stopLaunchRecord.value = value;
+    mediasfuParameters.stopLaunchRecord = value;
+  }
+
+  void updateParticipantsAll(List<Participant> value) {
+    participantsAll.value = value;
+    mediasfuParameters.participantsAll = value;
+  }
+
+  void updateConsumeSockets(List<ConsumeSocket> value) {
+    consumeSockets.value = value;
+    mediasfuParameters.consumeSockets = value;
+  }
+
+  void updateRtpCapabilities(RtpCapabilities? value) {
+    rtpCapabilities.value = value;
+    mediasfuParameters.rtpCapabilities = value;
+  }
+
+  void updateRoomRecvIPs(List<String> value) {
+    roomRecvIPs.value = value;
+    mediasfuParameters.roomRecvIPs = value;
+  }
+
+  void updateMeetingRoomParams(MeetingRoomParams? value) {
+    meetingRoomParams.value = value;
+    mediasfuParameters.meetingRoomParams = value;
+  }
+
+  void updateItemPageLimit(int value) {
+    itemPageLimit.value = value;
+    mediasfuParameters.itemPageLimit = value;
+  }
+
+  void updateAudioOnlyRoom(bool value) {
+    audioOnlyRoom.value = value;
+    mediasfuParameters.audioOnlyRoom = value;
+  }
+
+  void updateAddForBasic(bool value) {
+    addForBasic.value = value;
+    mediasfuParameters.addForBasic = value;
+  }
+
+  void updateScreenPageLimit(int value) {
+    screenPageLimit.value = value;
+    mediasfuParameters.screenPageLimit = value;
+  }
+
+  void updateShareScreenStarted(bool value) {
+    shareScreenStarted.value = value;
+    mediasfuParameters.shareScreenStarted = value;
+  }
+
+  void updateShared(bool value) {
+    shared.value = value;
+    mediasfuParameters.shared = value;
+  }
+
+  void updateTargetOrientation(String value) {
+    targetOrientation.value = value;
+    mediasfuParameters.targetOrientation = value;
+  }
+
+  void updateTargetResolution(String value) {
+    targetResolution.value = value;
+    mediasfuParameters.targetResolution = value;
+  }
+
+  void updateTargetResolutionHost(String value) {
+    targetResolutionHost.value = value;
+    mediasfuParameters.targetResolutionHost = value;
+  }
+
+  void updateVidCons(VidCons value) {
+    vidCons.value = value;
+    mediasfuParameters.vidCons = value;
+  }
+
+  void updateFrameRate(int value) {
+    frameRate.value = value;
+    mediasfuParameters.frameRate = value;
+  }
+
+  void updateHParams(ProducerOptionsType? value) {
+    hParams.value = value;
+    mediasfuParameters.hParams = value;
+  }
+
+  void updateVParams(ProducerOptionsType? value) {
+    vParams.value = value;
+    mediasfuParameters.vParams = value;
+  }
+
+  void updateScreenParams(ProducerOptionsType? value) {
+    screenParams.value = value;
+    mediasfuParameters.screenParams = value;
+  }
+
+  void updateAParams(ProducerOptionsType? value) {
+    aParams.value = value;
+    mediasfuParameters.aParams = value;
+  }
+
+  void updateFirstAll(bool value) {
+    firstAll.value = value;
+    mediasfuParameters.firstAll = value;
+  }
+
+  void updateUpdateMainWindow(bool value) {
+    updateMainWindow.value = value;
+    mediasfuParameters.updateMainWindow = value;
+  }
+
+  void updateFirstRound(bool value) {
+    firstRound.value = value;
+    mediasfuParameters.firstRound = value;
+  }
+
+  void updateLandScaped(bool value) {
+    landScaped.value = value;
+    mediasfuParameters.landScaped = value;
+  }
+
+  void updateLockScreen(bool value) {
+    lockScreen.value = value;
+    mediasfuParameters.lockScreen = value;
+  }
+
+  void updateScreenId(String value) {
+    screenId.value = value;
+    mediasfuParameters.screenId = value;
+  }
+
+  void updateAllVideoStreams(List<Stream> value) {
+    allVideoStreams.value = value;
+    mediasfuParameters.allVideoStreams = value;
+  }
+
+  void updateNewLimitedStreams(List<Stream> value) {
+    newLimitedStreams.value = value;
+    mediasfuParameters.newLimitedStreams = value;
+  }
+
+  void updateNewLimitedStreamsIDs(List<String> value) {
+    newLimitedStreamsIDs.value = value;
+    mediasfuParameters.newLimitedStreamsIDs = value;
+  }
+
+  void updateActiveSounds(List<String> value) {
+    activeSounds.value = value;
+    mediasfuParameters.activeSounds = value;
+  }
+
+  void updateScreenShareIDStream(String value) {
+    screenShareIDStream.value = value;
+    mediasfuParameters.screenShareIDStream = value;
+  }
+
+  void updateScreenShareNameStream(String value) {
+    screenShareNameStream.value = value;
+    mediasfuParameters.screenShareNameStream = value;
+  }
+
+  void updateAdminIDStream(String value) {
+    adminIDStream.value = value;
+    mediasfuParameters.adminIDStream = value;
+  }
+
+  void updateAdminNameStream(String value) {
+    adminNameStream.value = value;
+    mediasfuParameters.adminNameStream = value;
+  }
+
+  void updateYouYouStream(List<Stream> value) {
+    youYouStream.value = value;
+    mediasfuParameters.youYouStream = value;
+  }
+
+  void updateYouYouStreamIDs(List<String> value) {
+    youYouStreamIDs.value = value;
+    mediasfuParameters.youYouStreamIDs = value;
+  }
+
+  void updateLocalStream(MediaStream? value) {
+    localStream.value = value;
+    mediasfuParameters.localStream = value;
+  }
+
+  void updateRecordStarted(bool value) {
+    setState(() {
+      recordStarted.value = value;
+      mediasfuParameters.recordStarted = value;
+    });
+    if (clearedToRecord.value == true &&
+        clearedToResume.value == true &&
+        recordStarted.value == true) {
+      updateShowRecordButtons(true);
+    }
+  }
+
+  void updateRecordResumed(bool value) {
+    setState(() {
+      recordResumed.value = value;
+      mediasfuParameters.recordResumed = value;
+    });
+  }
+
+  void updateRecordPaused(bool value) {
+    setState(() {
+      recordPaused.value = value;
+      mediasfuParameters.recordPaused = value;
+    });
+  }
+
+  void updateRecordStopped(bool value) {
+    setState(() {
+      recordStopped.value = value;
+      mediasfuParameters.recordStopped = value;
+    });
+  }
+
+  void updateAdminRestrictSetting(bool value) {
+    adminRestrictSetting.value = value;
+    mediasfuParameters.adminRestrictSetting = value;
+  }
+
+  void updateVideoRequestState(String value) {
+    videoRequestState.value = value;
+    mediasfuParameters.videoRequestState = value;
+  }
+
+  void updateVideoRequestTime(int? value) {
+    videoRequestTime.value = value;
+    mediasfuParameters.videoRequestTime = value;
+  }
+
+  void updateVideoAction(bool value) {
+    videoAction.value = value;
+    mediasfuParameters.videoAction = value;
+  }
+
+  void updateLocalStreamVideo(MediaStream? value) {
+    localStreamVideo.value = value;
+    mediasfuParameters.localStreamVideo = value;
+  }
+
+  void updateUserDefaultVideoInputDevice(String value) {
+    userDefaultVideoInputDevice.value = value;
+    mediasfuParameters.userDefaultVideoInputDevice = value;
+  }
+
+  void updateCurrentFacingMode(String value) {
+    currentFacingMode.value = value;
+    mediasfuParameters.currentFacingMode = value;
+  }
+
+  void updatePrevFacingMode(String value) {
+    prevFacingMode.value = value;
+    mediasfuParameters.prevFacingMode = value;
+  }
+
+  void updateDefVideoID(String value) {
+    defVideoID.value = value;
+    mediasfuParameters.defVideoID = value;
+  }
+
+  void updateAllowed(bool value) {
+    allowed.value = value;
+    mediasfuParameters.allowed = value;
+  }
+
+  void updateDispActiveNames(List<String> value) {
+    dispActiveNames.value = value;
+    mediasfuParameters.dispActiveNames = value;
+  }
+
+  void updatePDispActiveNames(List<String> value) {
+    pDispActiveNames.value = value;
+    mediasfuParameters.pDispActiveNames = value;
+  }
+
+  void updateActiveNames(List<String> value) {
+    activeNames.value = value;
+    mediasfuParameters.activeNames = value;
+  }
+
+  void updatePrevActiveNames(List<String> value) {
+    prevActiveNames.value = value;
+    mediasfuParameters.prevActiveNames = value;
+  }
+
+  void updatePActiveNames(List<String> value) {
+    pActiveNames.value = value;
+    mediasfuParameters.pActiveNames = value;
+  }
+
+  void updateMembersReceived(bool value) {
+    membersReceived.value = value;
+    mediasfuParameters.membersReceived = value;
+  }
+
+  void updateDeferScreenReceived(bool value) {
+    deferScreenReceived.value = value;
+    mediasfuParameters.deferScreenReceived = value;
+  }
+
+  void updateHostFirstSwitch(bool value) {
+    hostFirstSwitch.value = value;
+    mediasfuParameters.hostFirstSwitch = value;
+  }
+
+  void updateMicAction(bool value) {
+    micAction.value = value;
+    mediasfuParameters.micAction = value;
+  }
+
+  void updateScreenAction(bool value) {
+    screenAction.value = value;
+    mediasfuParameters.screenAction = value;
+  }
+
+  void updateChatAction(bool value) {
+    chatAction.value = value;
+    mediasfuParameters.chatAction = value;
+  }
+
+  void updateAudioRequestState(String? value) {
+    audioRequestState.value = value!;
+    mediasfuParameters.audioRequestState = value;
+  }
+
+  void updateScreenRequestState(String? value) {
+    screenRequestState.value = value!;
+    mediasfuParameters.screenRequestState = value;
+  }
+
+  void updateChatRequestState(String? value) {
+    chatRequestState.value = value!;
+    mediasfuParameters.chatRequestState = value;
+  }
+
+  void updateAudioRequestTime(int? value) {
+    audioRequestTime.value = value;
+    mediasfuParameters.audioRequestTime = value;
+  }
+
+  void updateScreenRequestTime(int? value) {
+    screenRequestTime.value = value;
+    mediasfuParameters.screenRequestTime = value;
+  }
+
+  void updateChatRequestTime(int? value) {
+    chatRequestTime.value = value;
+    mediasfuParameters.chatRequestTime = value;
+  }
+
+  void updateOldSoundIds(List<String> value) {
+    oldSoundIds.value = value;
+    mediasfuParameters.oldSoundIds = value;
+  }
+
+  void updateHostLabel(String value) {
+    hostLabel.value = value;
+    mediasfuParameters.hostLabel = value;
+  }
+
+  void updateMainScreenFilled(bool value) {
+    mainScreenFilled.value = value;
+    mediasfuParameters.mainScreenFilled = value;
+  }
+
+  void updateLocalStreamScreen(value) {
+    localStreamScreen.value = value;
+    mediasfuParameters.localStreamScreen = value;
+  }
+
+  void updateScreenAlreadyOn(bool value) {
+    screenAlreadyOn.value = value;
+    mediasfuParameters.screenAlreadyOn = value;
+    setState(() {
+      screenShareActive = value;
+    });
+  }
+
+  void updateChatAlreadyOn(bool value) {
+    chatAlreadyOn.value = value;
+    mediasfuParameters.chatAlreadyOn = value;
+  }
+
+  void updateRedirectURL(value) {
+    redirectURL.value = value;
+    mediasfuParameters.redirectURL = value;
+  }
+
+  void updateOldAllStreams(value) {
+    oldAllStreams.value = value;
+    mediasfuParameters.oldAllStreams = value;
+  }
+
+  void updateAdminVidID(String value) {
+    adminVidID.value = value;
+    mediasfuParameters.adminVidID = value;
+  }
+
+  void updateStreamNames(List<Stream> value) {
+    streamNames.value = value;
+    mediasfuParameters.streamNames = value;
+  }
+
+  void updateNonAlVideoStreams(List<Stream> value) {
+    nonAlVideoStreams.value = value;
+    mediasfuParameters.nonAlVideoStreams = value;
+  }
+
+  void updateSortAudioLoudness(bool value) {
+    sortAudioLoudness.value = value;
+    mediasfuParameters.sortAudioLoudness = value;
+  }
+
+  void updateAudioDecibels(List<AudioDecibels> value) {
+    audioDecibels.value = value;
+    mediasfuParameters.audioDecibels = value;
+  }
+
+  void updateMixedAlVideoStreams(List<Stream> value) {
+    mixedAlVideoStreams.value = value;
+    mediasfuParameters.mixedAlVideoStreams = value;
+  }
+
+  void updateNonAlVideoStreamsMuted(List<Stream> value) {
+    nonAlVideoStreamsMuted.value = value;
+    mediasfuParameters.nonAlVideoStreamsMuted = value;
+  }
+
+  void updatePaginatedStreams(List<List<Stream>> value) {
+    paginatedStreams.value = value;
+    mediasfuParameters.paginatedStreams = value;
+  }
+
+  void updateLocalStreamAudio(MediaStream? value) {
+    localStreamAudio.value = value;
+    mediasfuParameters.localStreamAudio = value;
+  }
+
+  void updateDefAudioID(String value) {
+    defAudioID.value = value;
+    mediasfuParameters.defAudioID = value;
+  }
+
+  void updateUserDefaultAudioInputDevice(String value) {
+    userDefaultAudioInputDevice.value = value;
+    mediasfuParameters.userDefaultAudioInputDevice = value;
+  }
+
+  void updateUserDefaultAudioOutputDevice(String value) {
+    userDefaultAudioOutputDevice.value = value;
+    mediasfuParameters.userDefaultAudioOutputDevice = value;
+  }
+
+  void updatePrevAudioInputDevice(String value) {
+    prevAudioInputDevice.value = value;
+    mediasfuParameters.prevAudioInputDevice = value;
+  }
+
+  void updatePrevVideoInputDevice(String value) {
+    prevVideoInputDevice.value = value;
+    mediasfuParameters.prevVideoInputDevice = value;
+  }
+
+  void updateAudioPaused(bool value) {
+    audioPaused.value = value;
+    mediasfuParameters.audioPaused = value;
+  }
+
+  void updateMainScreenPerson(String value) {
+    mainScreenPerson.value = value;
+    mediasfuParameters.mainScreenPerson = value;
+  }
+
+  void updateAdminOnMainScreen(bool value) {
+    adminOnMainScreen.value = value;
+    mediasfuParameters.adminOnMainScreen = value;
+  }
+
+  void updateScreenStates(List<ScreenState> value) {
+    screenStates.value = value;
+    mediasfuParameters.screenStates = value;
+  }
+
+  void updatePrevScreenStates(List<ScreenState> value) {
+    prevScreenStates.value = value;
+    mediasfuParameters.prevScreenStates = value;
+  }
+
+  void updateUpdateDateState(dynamic value) {
+    updateDateState.value = value;
+    mediasfuParameters.updateDateState = value;
+  }
+
+  void updateLastUpdate(dynamic value) {
+    lastUpdate.value = value;
+    mediasfuParameters.lastUpdate = value;
+  }
+
+  void updateNForReadjustRecord(int value) {
+    nForReadjustRecord.value = value;
+    mediasfuParameters.nForReadjustRecord = value;
+  }
+
+  void updateFixedPageLimit(int value) {
+    fixedPageLimit.value = value;
+    mediasfuParameters.fixedPageLimit = value;
+  }
+
+  void updateRemoveAltGrid(bool value) {
+    removeAltGrid.value = value;
+    mediasfuParameters.removeAltGrid = value;
+  }
+
+  void updateNForReadjust(int value) {
+    nForReadjust.value = value;
+    mediasfuParameters.nForReadjust = value;
+  }
+
+  void updateLastReorderTime(int value) {
+    lastReorderTime.value = value;
+    mediasfuParameters.lastReorderTime = value;
+  }
+
+  void updateAudStreamNames(List<Stream> value) {
+    audStreamNames.value = value;
+    mediasfuParameters.audStreamNames = value;
+  }
+
+  void updateCurrentUserPage(int value) {
+    currentUserPage.value = value;
+    mediasfuParameters.currentUserPage = value;
+  }
+
+  void updateMainHeightWidth(value) {
+    bool doUpdate = value.floor() != mainHeightWidth.floor();
+    setState(() {
+      mainHeightWidth = value.toDouble();
+      mediasfuParameters.mainHeightWidth = value.toDouble();
+    });
+
+    if (doUpdate && validated) {
+      try {
+        onScreenChanges(
+          OnScreenChangesOptions(
+            changed: true,
+            parameters: mediasfuParameters,
+          ),
+        );
+      } catch (error) {}
+
+      try {
+        prepopulateUserMedia(
+          PrepopulateUserMediaOptions(
+            name: hostLabel.value,
+            parameters: mediasfuParameters,
+          ),
+        );
+      } catch (error) {}
+    }
+  }
+
+  void updatePrevMainHeightWidth(value) {
+    prevMainHeightWidth.value = value;
+    mediasfuParameters.prevMainHeightWidth = value;
+  }
+
+  void updatePrevDoPaginate(bool value) {
+    if (value != prevDoPaginate.value) {
+      prevDoPaginate.value = value;
+      mediasfuParameters.prevDoPaginate = value;
+    }
+  }
+
+  void updateDoPaginate(bool value) {
+    if (value != doPaginate.value) {
+      // doPaginate.value = value;
+      setState(() {
+        doPaginate.value = value;
+        mediasfuParameters.doPaginate = value;
+      });
+    }
+  }
+
+  void updateShareEnded(bool value) {
+    shareEnded.value = value;
+    mediasfuParameters.shareEnded = value;
+  }
+
+  void updateLStreams(value) {
+    lStreams.value = value;
+    mediasfuParameters.lStreams = value;
+  }
+
+  void updateChatRefStreams(value) {
+    chatRefStreams.value = value;
+    mediasfuParameters.chatRefStreams = value;
+  }
+
+  void updateControlHeight(value) {
+    setState(() {
+      controlHeight.value = value;
+      mediasfuParameters.controlHeight = value;
+    });
+  }
+
+  void updateIsWideScreen(bool value) {
+    isWideScreen.value = value;
+    mediasfuParameters.isWideScreen = value;
+  }
+
+  void updateIsMediumScreen(bool value) {
+    isMediumScreen.value = value;
+    mediasfuParameters.isMediumScreen = value;
+  }
+
+  void updateIsSmallScreen(bool value) {
+    isSmallScreen.value = value;
+    mediasfuParameters.isSmallScreen = value;
+  }
+
+  void updateAddGrid(bool value) {
+    addGrid.value = value;
+    mediasfuParameters.addGrid = value;
+  }
+
+  void updateAddAltGrid(bool value) {
+    addAltGrid.value = value;
+    mediasfuParameters.addAltGrid = value;
+  }
+
+  void updateGridRows(int value) {
+    gridRows.value = value;
+    mediasfuParameters.gridRows = value;
+  }
+
+  void updateGridCols(int value) {
+    gridCols.value = value;
+    mediasfuParameters.gridCols = value;
+  }
+
+  void updateAltGridRows(int value) {
+    altGridRows.value = value;
+    mediasfuParameters.altGridRows = value;
+  }
+
+  void updateAltGridCols(int value) {
+    altGridCols.value = value;
+    mediasfuParameters.altGridCols = value;
+  }
+
+  void updateNumberPages(int value) {
+    numberPages.value = value;
+    mediasfuParameters.numberPages = value;
+  }
+
+  void updateCurrentStreams(value) {
+    currentStreams.value = value;
+    mediasfuParameters.currentStreams = value;
+  }
+
+  void updateShowMiniView(bool value) {
+    showMiniView.value = value;
+    mediasfuParameters.showMiniView = value;
+  }
+
+  void updateNStream(value) {
+    nStream.value = value;
+    mediasfuParameters.nStream = value;
+  }
+
+  void updateDeferReceive(bool value) {
+    deferReceive.value = value;
+    mediasfuParameters.deferReceive = value;
+  }
+
+  void updateAllAudioStreams(value) {
+    allAudioStreams.value = value;
+    mediasfuParameters.allAudioStreams = value;
+  }
+
+  void updateRemoteScreenStream(value) {
+    remoteScreenStream.value = value;
+    mediasfuParameters.remoteScreenStream = value;
+  }
+
+  void updateScreenProducer(value) {
+    screenProducer.value = value;
+    mediasfuParameters.screenProducer = value;
+  }
+
+  void updateGotAllVids(bool value) {
+    gotAllVids.value = value;
+    mediasfuParameters.gotAllVids = value;
+  }
+
+  void updatePaginationHeightWidth(value) {
+    setState(() {
+      paginationHeightWidth.value = value;
+      mediasfuParameters.paginationHeightWidth = value;
+    });
+  }
+
+  void updatePaginationDirection(String value) {
+    paginationDirection.value = value;
+    mediasfuParameters.paginationDirection = value;
+  }
+
+  void updateGridSizes(GridSizes value) {
+    gridSizes.value = value;
+    mediasfuParameters.gridSizes = value;
+  }
+
+  void updateScreenForceFullDisplay(bool value) {
+    screenForceFullDisplay.value = value;
+    mediasfuParameters.screenForceFullDisplay = value;
+  }
+
+  void updateMainGridStream(value) {
+    setState(() {
+      mainGridStream = value;
+      mediasfuParameters.mainGridStream = value;
+    });
+  }
+
+  void updateOtherGridStreams(value) {
+    setState(() {
+      otherGridStreams = value;
+      mediasfuParameters.otherGridStreams = value;
+    });
+  }
+
+  void updateAudioOnlyStreams(value) {
+    audioOnlyStreams.value = value;
+    mediasfuParameters.audioOnlyStreams = value;
+  }
+
+  void updateVideoInputs(value) {
+    videoInputs.value = value;
+    mediasfuParameters.videoInputs = value;
+  }
+
+  void updateAudioInputs(value) {
+    audioInputs.value = value;
+    mediasfuParameters.audioInputs = value;
+  }
+
+  void updateMeetingProgressTime(value) {
+    meetingProgressTime.value = value;
+    mediasfuParameters.meetingProgressTime = value;
+  }
+
+  void updateMeetingElapsedTime(value) {
+    meetingElapsedTime.value = value;
+    mediasfuParameters.meetingElapsedTime = value;
+  }
+
+  void updateRefParticipants(List<Participant> value) {
+    refParticipants.value = value;
+    mediasfuParameters.refParticipants = value;
+  }
+
+  void updateMessages(List<Message> value) {
+    messages.value = value;
+    mediasfuParameters.messages = value;
+  }
+
+  void updateStartDirectMessage(bool value) {
+    startDirectMessage.value = value;
+    mediasfuParameters.startDirectMessage = value;
+  }
+
+  void updateDirectMessageDetails(Participant? value) {
+    directMessageDetails.value = value;
+    mediasfuParameters.directMessageDetails = value;
+  }
+
+  void updateShowMessagesBadge(bool value) {
+    setState(() {
+      showMessagesBadge.value = value;
+      mediasfuParameters.showMessagesBadge = value;
+    });
+  }
+
+  void updateAudioSetting(String value) {
+    audioSetting.value = value;
+    mediasfuParameters.audioSetting = value;
+  }
+
+  void updateVideoSetting(String value) {
+    videoSetting.value = value;
+    mediasfuParameters.videoSetting = value;
+  }
+
+  void updateScreenshareSetting(String value) {
+    screenshareSetting.value = value;
+    mediasfuParameters.screenshareSetting = value;
+  }
+
+  void updateChatSetting(String value) {
+    chatSetting.value = value;
+    mediasfuParameters.chatSetting = value;
+  }
+
+  void updateAutoWave(bool value) {
+    autoWave.value = value;
+    mediasfuParameters.autoWave = value;
+  }
+
+  void updateForceFullDisplay(bool value) {
+    forceFullDisplay.value = value;
+    mediasfuParameters.forceFullDisplay = value;
+  }
+
+  void updatePrevForceFullDisplay(bool value) {
+    prevForceFullDisplay.value = value;
+    mediasfuParameters.prevForceFullDisplay = value;
+  }
+
+  void updatePrevMeetingDisplayType(String value) {
+    prevMeetingDisplayType.value = value;
+    mediasfuParameters.prevMeetingDisplayType = value;
+  }
+
+  void updateWaitingRoomFilter(String value) {
+    waitingRoomFilter.value = value;
+    mediasfuParameters.waitingRoomFilter = value;
+  }
+
+  void updateWaitingRoomList(List<WaitingRoomParticipant> value) {
+    waitingRoomList.value = value;
+    filteredWaitingRoomList.value = value;
+    waitingRoomCounter.value = value.length;
+  }
+
+  void updateWaitingRoomCounter(int value) {
+    waitingRoomCounter.value = value;
+    mediasfuParameters.waitingRoomCounter = value;
+  }
+
+  void updateRequestFilter(String value) {
+    requestFilter.value = value;
+    mediasfuParameters.requestFilter = value;
+  }
+
+  void updateRequestList(List<Request> value) {
+    requestList.value = value;
+    filteredRequestList.value = value;
+    requestCounter.value = value.length;
+    mediasfuParameters.requestList = value;
+    mediasfuParameters.filteredRequestList = value;
+    mediasfuParameters.requestCounter = value.length;
+  }
+
+  void updateRequestCounter(int value) {
+    requestCounter.value = value;
+    mediasfuParameters.requestCounter = value;
+  }
+
+  void updateAlertVisible(bool value) {
+    alertVisible.value = value;
+    mediasfuParameters.alertVisible = value;
+  }
+
+  void updateAlertMessage(String value) {
+    alertMessage.value = value;
+    mediasfuParameters.alertMessage = value;
+  }
+
+  void updateAlertType(String value) {
+    alertType.value = value;
+    mediasfuParameters.alertType = value;
+  }
+
+  void updateAlertDuration(int value) {
+    alertDuration.value = value;
+    mediasfuParameters.alertDuration = value;
+  }
+
+  void updateProgressTimerVisible(bool value) {
+    progressTimerVisible.value = value;
+    mediasfuParameters.progressTimerVisible = value;
+  }
+
+  void updateProgressTimerValue(int value) {
+    progressTimerValue.value = value;
+    mediasfuParameters.progressTimerValue = value;
+  }
+
+  void updateTotalReqWait(int value) {
+    setState(() {
+      totalReqWait.value = value;
+      mediasfuParameters.totalReqWait = value;
+    });
+  }
+
+  void updateIsMenuModalVisible(bool value) {
+    isMenuModalVisible.value = value;
+    mediasfuParameters.isMenuModalVisible = value;
+  }
+
+  void updateIsRecordingModalVisible(bool value) {
+    isRecordingModalVisible.value = value;
+    mediasfuParameters.isRecordingModalVisible = value;
+    if (value) {
+      updateConfirmedToRecord(false);
+    } else {
+      if (clearedToRecord.value == true &&
+          clearedToResume.value == true &&
+          recordStarted.value == true) {
+        updateShowRecordButtons(true);
+      }
+    }
+  }
+
+  void updateIsSettingsModalVisible(bool value) {
+    isSettingsModalVisible.value = value;
+    mediasfuParameters.isSettingsModalVisible = value;
+  }
+
+  void updateIsRequestsModalVisible(bool value) {
+    isRequestsModalVisible.value = value;
+    mediasfuParameters.isRequestsModalVisible = value;
+  }
+
+  void updateIsWaitingModalVisible(bool value) {
+    isWaitingModalVisible.value = value;
+    mediasfuParameters.isWaitingModalVisible = value;
+  }
+
+  void updateIsCoHostModalVisible(bool value) {
+    isCoHostModalVisible.value = value;
+    mediasfuParameters.isCoHostModalVisible = value;
+  }
+
+  void updateIsMediaSettingsModalVisible(bool value) {
+    isMediaSettingsModalVisible.value = value;
+    mediasfuParameters.isMediaSettingsModalVisible = value;
+  }
+
+  void updateIsDisplaySettingsModalVisible(bool value) {
+    isDisplaySettingsModalVisible.value = value;
+    mediasfuParameters.isDisplaySettingsModalVisible = value;
+  }
+
+  void updateIsParticipantsModalVisible(bool value) {
+    isParticipantsModalVisible.value = value;
+    mediasfuParameters.isParticipantsModalVisible = value;
+  }
+
+  void updateIsMessagesModalVisible(bool value) {
+    isMessagesModalVisible.value = value;
+    mediasfuParameters.isMessagesModalVisible = value;
+  }
+
+  void updateIsConfirmExitModalVisible(bool value) {
+    isConfirmExitModalVisible.value = value;
+    mediasfuParameters.isConfirmExitModalVisible = value;
+  }
+
+  void updateIsConfirmHereModalVisible(bool value) {
+    isConfirmHereModalVisible.value = value;
+    mediasfuParameters.isConfirmHereModalVisible = value;
+  }
+
+  void updateIsShareEventModalVisible(bool value) {
+    isShareEventModalVisible.value = value;
+    mediasfuParameters.isShareEventModalVisible = value;
+  }
+
+  void updateIsLoadingModalVisible(bool value) {
+    isLoadingModalVisible.value = value;
+    mediasfuParameters.isLoadingModalVisible = value;
+  }
+
   void updateRecordingMediaOptions(String value) {
     recordingMediaOptions.value = value;
+    mediasfuParameters.recordingMediaOptions = value;
     clearedToRecord.value = false;
+    mediasfuParameters.clearedToRecord = false;
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingAudioOptions(String value) {
     recordingAudioOptions.value = value;
+    mediasfuParameters.recordingAudioOptions = value;
     clearedToRecord.value = false;
+    mediasfuParameters.clearedToRecord = false;
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingVideoOptions(String value) {
     recordingVideoOptions.value = value;
+    mediasfuParameters.recordingVideoOptions = value;
     clearedToRecord.value = false;
+    mediasfuParameters.clearedToRecord = false;
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingVideoType(String value) {
     recordingVideoType.value = value;
+    mediasfuParameters.recordingVideoType = value;
     clearedToRecord.value = false;
+    mediasfuParameters.clearedToRecord = false;
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingVideoOptimized(bool value) {
     recordingVideoOptimized.value = value;
+    mediasfuParameters.recordingVideoOptimized = value;
     clearedToRecord.value = false;
+    mediasfuParameters.clearedToRecord = false;
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingDisplayType(String value) {
     recordingDisplayType.value = value;
+    mediasfuParameters.recordingDisplayType = value;
     clearedToRecord.value = false;
+    mediasfuParameters.clearedToRecord = false;
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingAddHLS(bool value) {
     recordingAddHLS.value = value;
+    mediasfuParameters.recordingAddHLS = value;
     clearedToRecord.value = false;
+    mediasfuParameters.clearedToRecord = false;
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingNameTags(bool value) {
     recordingNameTags.value = value;
+    mediasfuParameters.recordingNameTags = value;
     clearedToRecord.value = false;
+    mediasfuParameters.clearedToRecord = false;
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingBackgroundColor(String value) {
     recordingBackgroundColor.value = value;
+    mediasfuParameters.recordingBackgroundColor = value;
     clearedToRecord.value = false;
+    mediasfuParameters.clearedToRecord = false;
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingNameTagsColor(String value) {
     recordingNameTagsColor.value = value;
+    mediasfuParameters.recordingNameTagsColor = value;
     clearedToRecord.value = false;
+    mediasfuParameters.clearedToRecord = false;
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingAddText(bool value) {
     recordingAddText.value = value;
+    mediasfuParameters.recordingAddText = value;
     clearedToRecord.value = false;
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingCustomText(String value) {
     recordingCustomText.value = value;
+    mediasfuParameters.recordingCustomText = value;
     clearedToRecord.value = false;
+    mediasfuParameters.clearedToRecord = false;
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingCustomTextPosition(String value) {
     recordingCustomTextPosition.value = value;
+    mediasfuParameters.recordingCustomTextPosition = value;
     clearedToRecord.value = false;
+    mediasfuParameters.clearedToRecord = false;
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingCustomTextColor(String value) {
     recordingCustomTextColor.value = value;
+    mediasfuParameters.recordingCustomTextColor = value;
     clearedToRecord.value = false;
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingOrientationVideo(String value) {
     recordingOrientationVideo.value = value;
+    mediasfuParameters.recordingOrientationVideo = value;
     clearedToRecord.value = false;
+    mediasfuParameters.clearedToRecord = false;
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateClearedToResume(bool value) {
     clearedToResume.value = value;
+    mediasfuParameters.clearedToResume = value;
   }
 
   void updateClearedToRecord(bool value) {
     clearedToRecord.value = value;
-  }
-
-  void _updateRecordState() {
-    if (recordStarted.value && !recordStopped.value) {
-      if (!recordPaused.value) {
-        setState(() {
-          recordState = 'red';
-        });
-      } else {
-        setState(() {
-          recordState = 'yellow';
-        });
-      }
-    } else {
-      setState(() {
-        recordState = 'green';
-      });
-    }
+    mediasfuParameters.clearedToRecord = value;
   }
 
   void updateRecordState(String value) {
     recordState = value;
+    mediasfuParameters.recordState = value;
     _updateRecordState();
   }
 
   void updateShowRecordButtons(bool value) {
     setState(() {
       showRecordButtons.value = value;
+      mediasfuParameters.showRecordButtons = value;
     });
   }
 
   void updateRecordingProgressTime(String value) {
     setState(() {
       recordingProgressTime.value = value;
+      mediasfuParameters.recordingProgressTime = value;
     });
   }
 
   void updateAudioSwitching(bool value) {
     audioSwitching.value = value;
+    mediasfuParameters.audioSwitching = value;
   }
 
   void updateVideoSwitching(bool value) {
     videoSwitching.value = value;
+    mediasfuParameters.videoSwitching = value;
   }
-
-  // Media related variables
-  final ValueNotifier<bool> videoAlreadyOn = ValueNotifier(false);
-  final ValueNotifier<bool> audioAlreadyOn = ValueNotifier(false);
-
-  final ValueNotifier<Map<String, double>> componentSizes = ValueNotifier({
-    'mainHeight': 0,
-    'otherHeight': 0,
-    'mainWidth': 0,
-    'otherWidth': 0,
-  });
 
   void updateVideoAlreadyOn(bool value) {
     videoAlreadyOn.value = value;
+    mediasfuParameters.videoAlreadyOn = value;
 
     setState(() {
       videoActive = value;
@@ -1928,913 +2420,336 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
 
   void updateAudioAlreadyOn(bool value) {
     audioAlreadyOn.value = value;
-
+    mediasfuParameters.audioAlreadyOn = value;
     setState(() {
       micActive = value;
     });
   }
 
-  void updateComponentSizes(Map<String, double> sizes) {
-    // Check if the component sizes have changed
-    final doUpdate =
-        sizes['mainHeight'] != componentSizes.value['mainHeight'] ||
-            sizes['otherHeight'] != componentSizes.value['otherHeight'] ||
-            sizes['mainWidth'] != componentSizes.value['mainWidth'] ||
-            sizes['otherWidth'] != componentSizes.value['otherWidth'];
+  void updateComponentSizes(ComponentSizes sizes) {
+    final doUpdate = sizes.mainHeight != componentSizes.value.mainHeight ||
+        sizes.otherHeight != componentSizes.value.otherHeight ||
+        sizes.mainWidth != componentSizes.value.mainWidth ||
+        sizes.otherWidth != componentSizes.value.otherWidth;
 
     if (doUpdate && validated) {
       componentSizes.value = sizes;
+      mediasfuParameters.componentSizes = sizes;
       try {
         _updateControlHeight();
       } catch (error) {}
 
       try {
-        onScreenChanges(
-            changed: true,
-            parameters: {...getAllParams(), ...mediaSFUFunctions()});
+        onScreenChanges(OnScreenChangesOptions(
+            changed: true, parameters: mediasfuParameters));
       } catch (error) {}
 
       try {
-        prepopulateUserMedia(
-            name: hostLabel.value,
-            parameters: {...getAllParams(), ...mediaSFUFunctions()});
+        prepopulateUserMedia(PrepopulateUserMediaOptions(
+            name: hostLabel.value, parameters: mediasfuParameters));
       } catch (error) {}
     }
   }
 
-  // Permissions related variables
-  final ValueNotifier<bool> hasCameraPermission = ValueNotifier(false);
-  final ValueNotifier<bool> hasAudioPermission = ValueNotifier(false);
-
   void updateHasCameraPermission(bool value) {
     hasCameraPermission.value = value;
+    mediasfuParameters.hasCameraPermission = value;
   }
 
   void updateHasAudioPermission(bool value) {
     hasAudioPermission.value = value;
+    mediasfuParameters.hasAudioPermission = value;
   }
 
-  Future<bool> requestPermissionCamera() async {
-    return true;
-    // final status = await Permission.camera.request();
-    // if (status == PermissionStatus.granted) {
-    //   hasCameraPermission.value = true;
-    //   return true;
-    // } else {
-    //   return false;
-    // }
-  }
-
-  Future<bool> requestPermissionAudio() async {
-    return true;
-    // final status = await Permission.microphone.request();
-    // if (status == PermissionStatus.granted) {
-    //   hasAudioPermission.value = true;
-    //   return true;
-    // } else {
-    //   return false;
-    // }
-  }
-
-  //transports related variables
-  final ValueNotifier<bool> transportCreated = ValueNotifier(false);
-  final ValueNotifier<bool> transportCreatedVideo = ValueNotifier(false);
-  final ValueNotifier<bool> transportCreatedAudio = ValueNotifier(false);
-  final ValueNotifier<bool> transportCreatedScreen = ValueNotifier(false);
-  final ValueNotifier<dynamic> producerTransport = ValueNotifier(null);
-  final ValueNotifier<dynamic> videoProducer = ValueNotifier(null);
-  final ValueNotifier<dynamic> params = ValueNotifier(null);
-  final ValueNotifier<dynamic> videoParams = ValueNotifier(null);
-  final ValueNotifier<dynamic> audioParams = ValueNotifier(null);
-  final ValueNotifier<dynamic> audioProducer = ValueNotifier(null);
-  final ValueNotifier<List<dynamic>> consumerTransports = ValueNotifier([]);
-  final ValueNotifier<List<dynamic>> consumingTransports = ValueNotifier([]);
-
-  final ValueNotifier<List<dynamic>> polls = ValueNotifier([]);
-  final ValueNotifier<Map<String, dynamic>?> poll = ValueNotifier(null);
-  final ValueNotifier<bool> isPollModalVisible = ValueNotifier(false);
-
-  // Update functions
   void updateTransportCreated(bool value) {
     transportCreated.value = value;
+    mediasfuParameters.transportCreated = value;
   }
 
   void updateTransportCreatedVideo(bool value) {
     transportCreatedVideo.value = value;
+    mediasfuParameters.transportCreatedVideo = value;
   }
 
   void updateTransportCreatedAudio(bool value) {
     transportCreatedAudio.value = value;
+    mediasfuParameters.transportCreatedAudio = value;
   }
 
   void updateTransportCreatedScreen(bool value) {
     transportCreatedScreen.value = value;
+    mediasfuParameters.transportCreatedScreen = value;
   }
 
-  void updateProducerTransport(dynamic value) {
+  void updateProducerTransport(Transport? value) {
     producerTransport.value = value;
+    mediasfuParameters.producerTransport = value;
   }
 
-  void updateVideoProducer(dynamic value) {
+  void updateVideoProducer(Producer? value) {
     videoProducer.value = value;
+    mediasfuParameters.videoProducer = value;
   }
 
-  void updateParams(dynamic value) {
+  void updateParams(ProducerOptionsType? value) {
     params.value = value;
+    mediasfuParameters.params = value;
   }
 
-  void updateVideoParams(dynamic value) {
+  void updateVideoParams(ProducerOptionsType? value) {
     videoParams.value = value;
+    mediasfuParameters.videoParams = value;
   }
 
-  void updateAudioParams(dynamic value) {
+  void updateAudioParams(ProducerOptionsType? value) {
     audioParams.value = value;
+    mediasfuParameters.audioParams = value;
   }
 
-  void updateAudioProducer(dynamic value) {
+  void updateAudioProducer(Producer? value) {
     audioProducer.value = value;
+    mediasfuParameters.audioProducer = value;
   }
 
-  void updateConsumerTransports(List<dynamic> value) {
+  void updateConsumerTransports(List<TransportType> value) {
     consumerTransports.value = value;
+    mediasfuParameters.consumerTransports = value;
   }
 
-  void updateConsumingTransports(List<dynamic> value) {
+  void updateConsumingTransports(List<String> value) {
     consumingTransports.value = value;
+    mediasfuParameters.consumingTransports = value;
   }
 
-  void updatePolls(List<dynamic> value) {
+  void updatePolls(List<Poll> value) {
     polls.value = value;
+    mediasfuParameters.polls = value;
   }
 
-  void updatePoll(Map<String, dynamic>? value) {
+  void updatePoll(Poll? value) {
     poll.value = value;
+    mediasfuParameters.poll = value;
   }
 
   void updateIsPollModalVisible(bool value) {
     isPollModalVisible.value = value;
+    mediasfuParameters.isPollModalVisible = value;
   }
 
-// Breakout rooms related variables
-  final ValueNotifier<List<dynamic>> breakoutRooms = ValueNotifier([]);
-  final ValueNotifier<int> currentRoomIndex = ValueNotifier(0);
-  final ValueNotifier<bool> canStartBreakout = ValueNotifier(false);
-  final ValueNotifier<bool> breakOutRoomStarted = ValueNotifier(false);
-  final ValueNotifier<bool> breakOutRoomEnded = ValueNotifier(false);
-  final ValueNotifier<int> hostNewRoom = ValueNotifier(-1);
-  final ValueNotifier<List<dynamic>> limitedBreakRoom = ValueNotifier([]);
-  final ValueNotifier<int> mainRoomsLength = ValueNotifier(0);
-  final ValueNotifier<int> memberRoom = ValueNotifier(-1);
-  final ValueNotifier<bool> isBreakoutRoomsModalVisible = ValueNotifier(false);
-
-  void updateBreakoutRooms(List<dynamic> value) {
+  void updateBreakoutRooms(List<List<BreakoutParticipant>> value) {
     breakoutRooms.value = value;
+    mediasfuParameters.breakoutRooms = value;
   }
 
   void updateCurrentRoomIndex(int value) {
     currentRoomIndex.value = value;
+    mediasfuParameters.currentRoomIndex = value;
   }
 
   void updateCanStartBreakout(bool value) {
     canStartBreakout.value = value;
+    mediasfuParameters.canStartBreakout = value;
   }
 
   void updateBreakOutRoomStarted(bool value) {
     breakOutRoomStarted.value = value;
+    mediasfuParameters.breakOutRoomStarted = value;
   }
 
   void updateBreakOutRoomEnded(bool value) {
     breakOutRoomEnded.value = value;
+    mediasfuParameters.breakOutRoomEnded = value;
   }
 
   void updateHostNewRoom(int value) {
     hostNewRoom.value = value;
+    mediasfuParameters.hostNewRoom = value;
   }
 
-  void updateLimitedBreakRoom(List<dynamic> value) {
+  void updateLimitedBreakRoom(List<BreakoutParticipant> value) {
     limitedBreakRoom.value = value;
+    mediasfuParameters.limitedBreakRoom = value;
   }
 
   void updateMainRoomsLength(int value) {
     mainRoomsLength.value = value;
+    mediasfuParameters.mainRoomsLength = value;
   }
 
   void updateMemberRoom(int value) {
     memberRoom.value = value;
+    mediasfuParameters.memberRoom = value;
   }
 
   void updateIsBreakoutRoomsModalVisible(bool value) {
     isBreakoutRoomsModalVisible.value = value;
+    mediasfuParameters.isBreakoutRoomsModalVisible = value;
   }
 
-  String checkOrientation() {
-    return MediaQuery.of(context).orientation == Orientation.portrait
-        ? 'portrait'
-        : 'landscape';
+// Update functions
+  void updateCustomImage(String? value) {
+    customImage.value = value;
+    mediasfuParameters.customImage = value;
   }
 
-  final ValueNotifier<bool> isPortrait = ValueNotifier<bool>(true);
-
-  Map<String, dynamic> getUpdatedAllParams() {
-    return {
-      ...getAllParams(),
-      ...mediaSFUFunctions(),
-    };
+  void updateSelectedImage(String? value) {
+    selectedImage.value = value;
+    mediasfuParameters.selectedImage = value;
   }
 
-  Map<String, dynamic> mediaSFUFunctions() {
-    return {
-      'updateMiniCardsGrid': updateMiniCardsGrid,
-      'mixStreams': mixStreams,
-      'dispStreams': dispStreams,
-      'stopShareScreen': stopShareScreen,
-      'checkScreenShare': checkScreenShare,
-      'startShareScreen': startShareScreen,
-      'requestScreenShare': requestScreenShare,
-      'reorderStreams': reorderStreams,
-      'prepopulateUserMedia': prepopulateUserMedia,
-      'getVideos': getVideos,
-      'rePort': rePort,
-      'trigger': trigger,
-      'consumerResume': consumerResume,
-      'connectSendTransport': connectSendTransport,
-      'connectSendTransportAudio': connectSendTransportAudio,
-      'connectSendTransportVideo': connectSendTransportVideo,
-      'connectSendTransportScreen': connectSendTransportScreen,
-      'processConsumerTransports': processConsumerTransports,
-      'resumePauseStreams': resumePauseStreams,
-      'readjust': readjust,
-      'checkGrid': checkGrid,
-      'getEstimate': getEstimate,
-      'calculateRowsAndColumns': calculateRowsAndColumns,
-      'addVideosGrid': addVideosGrid,
-      'onScreenChanges': onScreenChanges,
-      'sleep': sleep,
-      'changeVids': changeVids,
-      'compareActiveNames': compareActiveNames,
-      'compareScreenStates': compareScreenStates,
-      'createSendTransport': createSendTransport,
-      'resumeSendTransportAudio': resumeSendTransportAudio,
-      'receiveAllPipedTransports': receiveAllPipedTransports,
-      'disconnectSendTransportVideo': disconnectSendTransportVideo,
-      'disconnectSendTransportAudio': disconnectSendTransportAudio,
-      'disconnectSendTransportScreen': disconnectSendTransportScreen,
-      'getPipedProducersAlt': getPipedProducersAlt,
-      'signalNewConsumerTransport': signalNewConsumerTransport,
-      'connectRecvTransport': connectRecvTransport,
-      'reUpdateInter': reUpdateInter,
-      'updateParticipantAudioDecibels': updateParticipantAudioDecibels,
-      'closeAndResize': closeAndResize,
-      'autoAdjust': autoAdjust,
-      'switchUserVideoAlt': switchUserVideoAlt,
-      'switchUserVideo': switchUserVideo,
-      'switchUserAudio': switchUserAudio,
-      'getDomains': getDomains,
-      'formatNumber': formatNumber,
-      'connectIps': connectIps,
-      'createDeviceClient': createDeviceClient,
-      'handleCreatePoll': handleCreatePoll,
-      'handleVotePoll': handleVotePoll,
-      'handleEndPoll': handleEndPoll,
-      'resumePauseAudioStreams': resumePauseAudioStreams,
-      'processConsumerTransportsAudio': processConsumerTransportsAudio,
-    };
+  void updateSegmentVideo(MediaStream? value) {
+    segmentVideo.value = value;
+    mediasfuParameters.segmentVideo = value;
   }
 
-  Map<String, dynamic> getAllParams() {
-    return {
-      'localUIMode': widget.useSeed,
+  void updateSelfieSegmentation(dynamic value) {
+    selfieSegmentation.value = value;
+    mediasfuParameters.selfieSegmentation = value;
+  }
 
-      // Room Details
-      'roomName': roomName.value,
-      'member': member.value,
-      'adminPasscode': adminPasscode.value,
-      'youAreCoHost': youAreCoHost.value,
-      'youAreHost': youAreHost.value,
-      'islevel': islevel.value,
-      'confirmedToRecord': confirmedToRecord.value,
-      'meetingDisplayType': meetingDisplayType.value,
-      'meetingVideoOptimized': meetingVideoOptimized.value,
-      'eventType': eventType.value,
-      'participants': participants.value,
-      'filteredParticipants': filteredParticipants.value,
-      'participantsCounter': participantsCounter.value,
-      'participantsFilter': participantsFilter.value,
+  void updatePauseSegmentation(bool value) {
+    pauseSegmentation.value = value;
+    mediasfuParameters.pauseSegmentation = value;
+  }
 
-      // More room details - media
-      'consumeSockets': consumeSockets.value,
-      'rtpCapabilities': rtpCapabilities.value,
-      'roomRecvIPs': roomRecvIPs.value,
-      'meetingRoomParams': meetingRoomParams.value,
-      'itemPageLimit': itemPageLimit.value,
-      'audioOnlyRoom': audioOnlyRoom.value,
-      'addForBasic': addForBasic.value,
-      'screenPageLimit': screenPageLimit.value,
-      'shareScreenStarted': shareScreenStarted.value,
-      'shared': shared.value,
-      'targetOrientation': targetOrientation.value,
-      'vidCons': vidCons.value,
-      'frameRate': frameRate.value,
-      'hParams': hParams.value,
-      'vParams': vParams.value,
-      'screenParams': screenParams.value,
-      'aParams': aParams.value,
+  void updateProcessedStream(MediaStream? value) {
+    processedStream.value = value;
+    mediasfuParameters.processedStream = value;
+  }
 
-      // More room details - recording
-      'recordingAudioPausesLimit': recordingAudioPausesLimit.value,
-      'recordingAudioPausesCount': recordingAudioPausesCount.value,
-      'recordingAudioSupport': recordingAudioSupport.value,
-      'recordingAudioPeopleLimit': recordingAudioPeopleLimit.value,
-      'recordingAudioParticipantsTimeLimit':
-          recordingAudioParticipantsTimeLimit.value,
-      'recordingVideoPausesCount': recordingVideoPausesCount.value,
-      'recordingVideoPausesLimit': recordingVideoPausesLimit.value,
-      'recordingVideoSupport': recordingVideoSupport.value,
-      'recordingVideoPeopleLimit': recordingVideoPeopleLimit.value,
-      'recordingVideoParticipantsTimeLimit':
-          recordingVideoParticipantsTimeLimit.value,
-      'recordingAllParticipantsSupport': recordingAllParticipantsSupport.value,
-      'recordingVideoParticipantsSupport':
-          recordingVideoParticipantsSupport.value,
-      'recordingAllParticipantsFullRoomSupport':
-          recordingAllParticipantsFullRoomSupport.value,
-      'recordingVideoParticipantsFullRoomSupport':
-          recordingVideoParticipantsFullRoomSupport.value,
-      'recordingPreferredOrientation': recordingPreferredOrientation.value,
-      'recordingSupportForOtherOrientation':
-          recordingSupportForOtherOrientation.value,
-      'recordingMultiFormatsSupport': recordingMultiFormatsSupport.value,
-      'userRecordingParams': userRecordingParams.value,
-      'canRecord': canRecord.value,
-      'startReport': startReport.value,
-      'endReport': endReport.value,
-      'recordStartTime': recordStartTime.value,
-      'recordElapsedTime': recordElapsedTime.value,
-      'isTimerRunning': isTimerRunning.value,
-      'canPauseResume': canPauseResume.value,
-      'recordChangeSeconds': recordChangeSeconds.value,
-      'pauseLimit': pauseLimit.value,
-      'pauseRecordCount': pauseRecordCount.value,
-      'canLaunchRecord': canLaunchRecord.value,
-      'stopLaunchRecord': stopLaunchRecord.value,
-      'participantsAll': participantsAll.value,
-      'firstAll': firstAll.value,
-      'updateMainWindow': updateMainWindow.value,
-      'firstRound': firstRound.value,
-      'landScaped': landScaped.value,
-      'lockScreen': lockScreen.value,
-      'screenId': screenId.value,
-      'allVideoStreams': allVideoStreams.value,
-      'newLimitedStreams': newLimitedStreams.value,
-      'newLimitedStreamsIDs': newLimitedStreamsIDs.value,
-      'activeSounds': activeSounds.value,
-      'screenShareIDStream': screenShareIDStream.value,
-      'screenShareNameStream': screenShareNameStream.value,
-      'adminIDStream': adminIDStream.value,
-      'adminNameStream': adminNameStream.value,
-      'youYouStream': youYouStream.value,
-      'youYouStreamIDs': youYouStreamIDs.value,
-      'localStream': localStream.value,
-      'recordStarted': recordStarted.value,
-      'recordResumed': recordResumed.value,
-      'recordPaused': recordPaused.value,
-      'recordStopped': recordStopped.value,
-      'adminRestrictSetting': adminRestrictSetting.value,
-      'videoRequestState': videoRequestState.value,
-      'videoRequestTime': videoRequestTime.value,
-      'videoAction': videoAction.value,
-      'localStreamVideo': localStreamVideo.value,
-      'userDefaultVideoInputDevice': userDefaultVideoInputDevice.value,
-      'currentFacingMode': currentFacingMode.value,
-      'prevFacingMode': prevFacingMode.value,
-      'defVideoID': defVideoID.value,
-      'allowed': allowed.value,
-      'dispActiveNames': dispActiveNames.value,
-      'pDispActiveNames': pDispActiveNames.value,
-      'activeNames': activeNames.value,
-      'prevActiveNames': prevActiveNames.value,
-      'pActiveNames': pActiveNames.value,
-      'membersReceived': membersReceived.value,
-      'deferScreenReceived': deferScreenReceived.value,
-      'hostFirstSwitch': hostFirstSwitch.value,
-      'micAction': micAction.value,
-      'screenAction': screenAction.value,
-      'chatAction': chatAction.value,
-      'audioRequestState': audioRequestState.value,
-      'screenRequestState': screenRequestState.value,
-      'chatRequestState': chatRequestState.value,
-      'audioRequestTime': audioRequestTime.value,
-      'screenRequestTime': screenRequestTime.value,
-      'chatRequestTime': chatRequestTime.value,
-      'updateRequestIntervalSeconds': updateRequestIntervalSeconds.value,
-      'oldSoundIds': oldSoundIds.value,
-      'hostLabel': hostLabel.value,
-      'mainScreenFilled': mainScreenFilled.value,
-      'localStreamScreen': localStreamScreen.value,
-      'screenAlreadyOn': screenAlreadyOn.value,
-      'chatAlreadyOn': chatAlreadyOn.value,
-      'redirectURL': redirectURL.value,
-      'oldAllStreams': oldAllStreams.value,
-      'adminVidID': adminVidID.value,
-      'streamNames': streamNames.value,
-      'nonAlVideoStreams': nonAlVideoStreams.value,
-      'sortAudioLoudness': sortAudioLoudness.value,
-      'audioDecibels': audioDecibels.value,
-      'mixedAlVideoStreams': mixedAlVideoStreams.value,
-      'nonAlVideoStreamsMuted': nonAlVideoStreamsMuted.value,
-      'paginatedStreams': paginatedStreams.value,
-      'localStreamAudio': localStreamAudio.value,
-      'defAudioID': defAudioID.value,
-      'userDefaultAudioInputDevice': userDefaultAudioInputDevice.value,
-      'userDefaultAudioOutputDevice': userDefaultAudioOutputDevice.value,
-      'prevAudioInputDevice': prevAudioInputDevice.value,
-      'prevVideoInputDevice': prevVideoInputDevice.value,
-      'audioPaused': audioPaused.value,
-      'mainScreenPerson': mainScreenPerson.value,
-      'adminOnMainScreen': adminOnMainScreen.value,
-      'screenStates': screenStates.value,
-      'prevScreenStates': prevScreenStates.value,
-      'updateDateState': updateDateState.value,
-      'lastUpdate': lastUpdate.value,
-      'nForReadjustRecord': nForReadjustRecord.value,
-      'fixedPageLimit': fixedPageLimit.value,
-      'removeAltGrid': removeAltGrid.value,
-      'nForReadjust': nForReadjust.value,
-      'lastReOrderTime': lastReOrderTime.value,
-      'reOrderInterval': reOrderInterval.value,
-      'fastReOrderInterval': fastReOrderInterval.value,
-      'audStreamNames': audStreamNames.value,
-      'currentUserPage': currentUserPage.value,
-      'mainHeightWidth': mainHeightWidth,
-      'prevMainHeightWidth': prevMainHeightWidth.value,
-      'prevDoPaginate': prevDoPaginate.value,
-      'doPaginate': doPaginate.value,
-      'shareEnded': shareEnded.value,
-      'lStreams': lStreams.value,
-      'chatRefStreams': chatRefStreams.value,
-      'controlHeight': controlHeight.value,
-      'isWideScreen': isWideScreen.value,
-      'isMediumScreen': isMediumScreen.value,
-      'isSmallScreen': isSmallScreen.value,
-      'addGrid': addGrid.value,
-      'addAltGrid': addAltGrid.value,
-      'gridRows': gridRows.value,
-      'gridCols': gridCols.value,
-      'altGridRows': altGridRows.value,
-      'altGridCols': altGridCols.value,
-      'numberPages': numberPages.value,
-      'currentStreams': currentStreams.value,
-      'showMiniView': showMiniView.value,
-      'nStream': nStream.value,
-      'deferReceive': deferReceive.value,
-      'allAudioStreams': allAudioStreams.value,
-      'screenProducer': screenProducer.value,
-      'remoteScreenStream': remoteScreenStream.value,
-      'gotAllVids': gotAllVids.value,
-      'paginationHeightWidth': paginationHeightWidth.value,
-      'paginationDirection': paginationDirection.value,
-      'gridSizes': gridSizes.value,
-      'screenForceFullDisplay': screenForceFullDisplay.value,
-      'mainGridStream': mainGridStream,
-      'otherGridStreams': otherGridStreams,
-      'audioOnlyStreams': audioOnlyStreams.value,
-      'videoInputs': videoInputs.value,
-      'audioInputs': audioInputs.value,
-      'meetingProgressTime': meetingProgressTime.value,
-      'meetingElapsedTime': meetingElapsedTime.value,
-      'refParticipants': refParticipants.value,
+  void updateKeepBackground(bool value) {
+    keepBackground.value = value;
+    mediasfuParameters.keepBackground = value;
+  }
 
-      'messages': messages.value,
-      'startDirectMessage': startDirectMessage.value,
-      'directMessageDetails': directMessageDetails.value,
-      'coHost': coHost.value,
-      'coHostResponsibility': coHostResponsibility.value,
-      'audioSetting': audioSetting.value,
-      'videoSetting': videoSetting.value,
-      'screenshareSetting': screenshareSetting.value,
-      'chatSetting': chatSetting.value,
-      'autoWave': autoWave.value,
-      'forceFullDisplay': forceFullDisplay.value,
-      'prevForceFullDisplay': prevForceFullDisplay.value,
-      'prevMeetingDisplayType': prevMeetingDisplayType.value,
-      'waitingRoomFilter': waitingRoomFilter.value,
-      'waitingRoomList': waitingRoomList.value,
-      'waitingRoomCounter': waitingRoomCounter.value,
-      'filteredWaitingRoomList': filteredWaitingRoomList.value,
-      'requestFilter': requestFilter.value,
-      'requestList': requestList.value,
-      'requestCounter': requestCounter.value,
-      'filteredRequestList': filteredRequestList.value,
-      'totalReqWait': totalReqWait.value,
-      'alertVisible': alertVisible.value,
-      'alertMessage': alertMessage.value,
-      'alertType': alertType.value,
-      'alertDuration': alertDuration.value,
-      'progressTimerVisible': progressTimerVisible.value,
-      'progressTimerValue': progressTimerValue.value,
-      'isMenuModalVisible': isMenuModalVisible.value,
-      'isRecordingModalVisible': isRecordingModalVisible.value,
-      'isSettingsModalVisible': isSettingsModalVisible.value,
-      'isRequestsModalVisible': isRequestsModalVisible.value,
-      'isWaitingModalVisible': isWaitingModalVisible.value,
-      'isCoHostModalVisible': isCoHostModalVisible.value,
-      'isMediaSettingsModalVisible': isMediaSettingsModalVisible.value,
-      'isDisplaySettingsModalVisible': isDisplaySettingsModalVisible.value,
-      'isParticipantsModalVisible': isParticipantsModalVisible.value,
-      'isMessagesModalVisible': isMessagesModalVisible.value,
-      'isConfirmExitModalVisible': isConfirmExitModalVisible.value,
-      'isConfirmHereModalVisible': isConfirmHereModalVisible.value,
-      'isLoadingModalVisible': isLoadingModalVisible.value,
+  void updateBackgroundHasChanged(bool value) {
+    backgroundHasChanged.value = value;
+    mediasfuParameters.backgroundHasChanged = value;
+  }
 
-      // Recording Options
-      'recordingMediaOptions': recordingMediaOptions.value,
-      'recordingAudioOptions': recordingAudioOptions.value,
-      'recordingVideoOptions': recordingVideoOptions.value,
-      'recordingVideoType': recordingVideoType.value,
-      'recordingVideoOptimized': recordingVideoOptimized.value,
-      'recordingDisplayType': recordingDisplayType.value,
-      'recordingAddHLS': recordingAddHLS.value,
-      'recordingAddText': recordingAddText.value,
-      'recordingCustomText': recordingCustomText.value,
-      'recordingCustomTextPosition': recordingCustomTextPosition.value,
-      'recordingCustomTextColor': recordingCustomTextColor.value,
-      'recordingNameTags': recordingNameTags.value,
-      'recordingBackgroundColor': recordingBackgroundColor.value,
-      'recordingNameTagsColor': recordingNameTagsColor.value,
-      'recordingOrientationVideo': recordingOrientationVideo.value,
-      'clearedToResume': clearedToResume.value,
-      'clearedToRecord': clearedToRecord.value,
-      'recordState': recordState,
-      'showRecordButtons': showRecordButtons.value,
-      'recordingProgressTime': recordingProgressTime.value,
-      'audioSwitching': audioSwitching.value,
-      'videoSwitching': videoSwitching.value,
-      'videoAlreadyOn': videoAlreadyOn.value,
-      'audioAlreadyOn': audioAlreadyOn.value,
-      'componentSizes': componentSizes.value,
-      'hasCameraPermission': hasCameraPermission.value,
-      'hasAudioPermission': hasAudioPermission.value,
-      'transportCreated': transportCreated.value,
-      'transportCreatedVideo': transportCreatedVideo.value,
-      'transportCreatedAudio': transportCreatedAudio.value,
-      'transportCreatedScreen': transportCreatedScreen.value,
-      'producerTransport': producerTransport.value,
-      'videoProducer': videoProducer.value,
-      'params': params.value,
-      'videoParams': videoParams.value,
-      'audioParams': audioParams.value,
-      'audioProducer': audioProducer.value,
-      'consumerTransports': consumerTransports.value,
-      'consumingTransports': consumingTransports.value,
-      // Polls
-      'polls': polls.value,
-      'poll': poll.value,
-      'isPollModalVisible': isPollModalVisible.value,
+  void updateVirtualStream(MediaStream? value) {
+    virtualStream.value = value;
+    mediasfuParameters.virtualStream = value;
+  }
 
-      // Breakout rooms
-      'breakoutRooms': breakoutRooms.value,
-      'currentRoomIndex': currentRoomIndex.value,
-      'canStartBreakout': canStartBreakout.value,
-      'breakOutRoomStarted': breakOutRoomStarted.value,
-      'breakOutRoomEnded': breakOutRoomEnded.value,
-      'hostNewRoom': hostNewRoom.value,
-      'limitedBreakRoom': limitedBreakRoom.value,
-      'mainRoomsLength': mainRoomsLength.value,
-      'memberRoom': memberRoom.value,
-      'isBreakoutRoomsModalVisible': isBreakoutRoomsModalVisible.value,
+  void updateMainCanvas(dynamic value) {
+    mainCanvas.value = value;
+    mediasfuParameters.mainCanvas = value;
+  }
 
-      'validated': validated,
-      'device': device.value,
-      'socket': socket.value,
+  void updatePrevKeepBackground(bool value) {
+    prevKeepBackground.value = value;
+    mediasfuParameters.prevKeepBackground = value;
+  }
 
-      // Update functions for Room Details
-      'updateRoomName': updateRoomName,
-      'updateMember': updateMember,
-      'updateAdminPasscode': updateAdminPasscode,
-      'updateYouAreCoHost': updateYouAreCoHost,
-      'updateYouAreHost': updateYouAreHost,
-      'updateIslevel': updateIslevel,
-      'updateCoHost': updateCoHost,
-      'updateCoHostResponsibility': updateCoHostResponsibility,
-      'updateConfirmedToRecord': updateConfirmedToRecord,
-      'updateMeetingDisplayType': updateMeetingDisplayType,
-      'updateMeetingVideoOptimized': updateMeetingVideoOptimized,
-      'updateEventType': updateEventType,
-      'updateParticipants': updateParticipants,
-      'updateParticipantsCounter': updateParticipantsCounter,
-      'updateParticipantsFilter': updateParticipantsFilter,
+  void updateAppliedBackground(bool value) {
+    appliedBackground.value = value;
+    mediasfuParameters.appliedBackground = value;
+  }
 
-      // Update functions for more room details - media
-      'updateConsumeSockets': updateConsumeSockets,
-      'updateRtpCapabilities': updateRtpCapabilities,
-      'updateRoomRecvIPs': updateRoomRecvIPs,
-      'updateMeetingRoomParams': updateMeetingRoomParams,
-      'updateItemPageLimit': updateItemPageLimit,
-      'updateAudioOnlyRoom': updateAudioOnlyRoom,
-      'updateAddForBasic': updateAddForBasic,
-      'updateScreenPageLimit': updateScreenPageLimit,
-      'updateShareScreenStarted': updateShareScreenStarted,
-      'updateShared': updateShared,
-      'updateTargetOrientation': updateTargetOrientation,
-      'updateVidCons': updateVidCons,
-      'updateFrameRate': updateFrameRate,
-      'updateHParams': updateHParams,
-      'updateVParams': updateVParams,
-      'updateScreenParams': updateScreenParams,
-      'updateAParams': updateAParams,
+  void updateIsBackgroundModalVisible(bool value) {
+    isBackgroundModalVisible.value = value;
+    mediasfuParameters.isBackgroundModalVisible = value;
+  }
 
-      // Update functions for more room details - recording
-      'updateRecordingAudioPausesLimit': updateRecordingAudioPausesLimit,
-      'updateRecordingAudioPausesCount': updateRecordingAudioPausesCount,
-      'updateRecordingAudioSupport': updateRecordingAudioSupport,
-      'updateRecordingAudioPeopleLimit': updateRecordingAudioPeopleLimit,
-      'updateRecordingAudioParticipantsTimeLimit':
-          updateRecordingAudioParticipantsTimeLimit,
-      'updateRecordingVideoPausesCount': updateRecordingVideoPausesCount,
-      'updateRecordingVideoPausesLimit': updateRecordingVideoPausesLimit,
-      'updateRecordingVideoSupport': updateRecordingVideoSupport,
-      'updateRecordingVideoPeopleLimit': updateRecordingVideoPeopleLimit,
-      'updateRecordingVideoParticipantsTimeLimit':
-          updateRecordingVideoParticipantsTimeLimit,
-      'updateRecordingAllParticipantsSupport':
-          updateRecordingAllParticipantsSupport,
-      'updateRecordingVideoParticipantsSupport':
-          updateRecordingVideoParticipantsSupport,
-      'updateRecordingAllParticipantsFullRoomSupport':
-          updateRecordingAllParticipantsFullRoomSupport,
-      'updateRecordingVideoParticipantsFullRoomSupport':
-          updateRecordingVideoParticipantsFullRoomSupport,
-      'updateRecordingPreferredOrientation':
-          updateRecordingPreferredOrientation,
-      'updateRecordingSupportForOtherOrientation':
-          updateRecordingSupportForOtherOrientation,
-      'updateRecordingMultiFormatsSupport': updateRecordingMultiFormatsSupport,
+  void updateAutoClickBackground(bool value) {
+    autoClickBackground.value = value;
+    mediasfuParameters.autoClickBackground = value;
+  }
 
-      // Update functions for user recording params
-      'updateUserRecordingParams': updateUserRecordingParams,
-      'updateCanRecord': updateCanRecord,
-      'updateStartReport': updateStartReport,
-      'updateEndReport': updateEndReport,
-      'updateRecordTimerInterval': updateRecordTimerInterval,
-      'updateRecordStartTime': updateRecordStartTime,
-      'updateRecordElapsedTime': updateRecordElapsedTime,
-      'updateIsTimerRunning': updateIsTimerRunning,
-      'updateCanPauseResume': updateCanPauseResume,
-      'updateRecordChangeSeconds': updateRecordChangeSeconds,
-      'updatePauseLimit': updatePauseLimit,
-      'updatePauseRecordCount': updatePauseRecordCount,
-      'updateCanLaunchRecord': updateCanLaunchRecord,
-      'updateStopLaunchRecord': updateStopLaunchRecord,
+  void updateWhiteboardUsers(List<WhiteboardUser> value) {
+    whiteboardUsers.value = value;
+    mediasfuParameters.whiteboardUsers = value;
+  }
 
-      // Update function for participants all
-      'updateParticipantsAll': updateParticipantsAll,
+  void updateCurrentWhiteboardIndex(int? value) {
+    currentWhiteboardIndex.value = value;
+    mediasfuParameters.currentWhiteboardIndex = value;
+  }
 
-      'updateFirstAll': updateFirstAll,
-      'updateUpdateMainWindow': updateUpdateMainWindow,
-      'updateFirstRound': updateFirstRound,
-      'updateLandScaped': updateLandScaped,
-      'updateLockScreen': updateLockScreen,
-      'updateScreenId': updateScreenId,
-      'updateAllVideoStreams': updateAllVideoStreams,
-      'updateNewLimitedStreams': updateNewLimitedStreams,
-      'updateNewLimitedStreamsIDs': updateNewLimitedStreamsIDs,
-      'updateActiveSounds': updateActiveSounds,
-      'updateScreenShareIDStream': updateScreenShareIDStream,
-      'updateScreenShareNameStream': updateScreenShareNameStream,
-      'updateAdminIDStream': updateAdminIDStream,
-      'updateAdminNameStream': updateAdminNameStream,
-      'updateYouYouStream': updateYouYouStream,
-      'updateYouYouStreamIDs': updateYouYouStreamIDs,
-      'updateLocalStream': updateLocalStream,
-      'updateRecordStarted': updateRecordStarted,
-      'updateRecordResumed': updateRecordResumed,
-      'updateRecordPaused': updateRecordPaused,
-      'updateRecordStopped': updateRecordStopped,
-      'updateAdminRestrictSetting': updateAdminRestrictSetting,
-      'updateVideoRequestState': updateVideoRequestState,
-      'updateVideoRequestTime': updateVideoRequestTime,
-      'updateVideoAction': updateVideoAction,
-      'updateLocalStreamVideo': updateLocalStreamVideo,
-      'updateUserDefaultVideoInputDevice': updateUserDefaultVideoInputDevice,
-      'updateCurrentFacingMode': updateCurrentFacingMode,
-      'updateRefParticipants': updateRefParticipants,
-      'updateDefVideoID': updateDefVideoID,
-      'updateAllowed': updateAllowed,
-      'updateDispActiveNames': updateDispActiveNames,
-      'updatePDispActiveNames': updatePDispActiveNames,
-      'updateActiveNames': updateActiveNames,
-      'updatePrevActiveNames': updatePrevActiveNames,
-      'updatePActiveNames': updatePActiveNames,
-      'updateMembersReceived': updateMembersReceived,
-      'updateDeferScreenReceived': updateDeferScreenReceived,
-      'updateHostFirstSwitch': updateHostFirstSwitch,
-      'updateMicAction': updateMicAction,
-      'updateScreenAction': updateScreenAction,
-      'updateChatAction': updateChatAction,
-      'updateAudioRequestState': updateAudioRequestState,
-      'updateScreenRequestState': updateScreenRequestState,
-      'updateChatRequestState': updateChatRequestState,
-      'updateAudioRequestTime': updateAudioRequestTime,
-      'updateScreenRequestTime': updateScreenRequestTime,
-      'updateChatRequestTime': updateChatRequestTime,
-      'updateOldSoundIds': updateOldSoundIds,
-      'updateHostLabel': updateHostLabel,
-      'updateMainScreenFilled': updateMainScreenFilled,
-      'updateLocalStreamScreen': updateLocalStreamScreen,
-      'updateScreenAlreadyOn': updateScreenAlreadyOn,
-      'updateChatAlreadyOn': updateChatAlreadyOn,
-      'updateRedirectURL': updateRedirectURL,
-      'updateOldAllStreams': updateOldAllStreams,
-      'updateAdminVidID': updateAdminVidID,
-      'updateStreamNames': updateStreamNames,
-      'updateNonAlVideoStreams': updateNonAlVideoStreams,
-      'updateSortAudioLoudness': updateSortAudioLoudness,
-      'updateAudioDecibels': updateAudioDecibels,
-      'updateMixedAlVideoStreams': updateMixedAlVideoStreams,
-      'updateNonAlVideoStreamsMuted': updateNonAlVideoStreamsMuted,
-      'updatePaginatedStreams': updatePaginatedStreams,
-      'updateLocalStreamAudio': updateLocalStreamAudio,
-      'updateDefAudioID': updateDefAudioID,
-      'updateUserDefaultAudioInputDevice': updateUserDefaultAudioInputDevice,
-      'updateUserDefaultAudioOutputDevice': updateUserDefaultAudioOutputDevice,
-      'updatePrevAudioInputDevice': updatePrevAudioInputDevice,
-      'updatePrevVideoInputDevice': updatePrevVideoInputDevice,
-      'updateAudioPaused': updateAudioPaused,
-      'updateMainScreenPerson': updateMainScreenPerson,
-      'updateAdminOnMainScreen': updateAdminOnMainScreen,
-      'updateScreenStates': updateScreenStates,
-      'updatePrevScreenStates': updatePrevScreenStates,
-      'updateUpdateDateState': updateUpdateDateState,
-      'updateLastUpdate': updateLastUpdate,
-      'updateNForReadjustRecord': updateNForReadjustRecord,
-      'updateFixedPageLimit': updateFixedPageLimit,
-      'updateRemoveAltGrid': updateRemoveAltGrid,
-      'updateNForReadjust': updateNForReadjust,
-      'updateLastReOrderTime': updateLastReOrderTime,
-      'updateAudStreamNames': updateAudStreamNames,
-      'updateCurrentUserPage': updateCurrentUserPage,
-      'updatePrevFacingMode': updatePrevFacingMode,
-      'updateMainHeightWidth': updateMainHeightWidth,
-      'updatePrevMainHeightWidth': updatePrevMainHeightWidth,
-      'updatePrevDoPaginate': updatePrevDoPaginate,
-      'updateDoPaginate': updateDoPaginate,
-      'updateShareEnded': updateShareEnded,
-      'updateLStreams': updateLStreams,
-      'updateChatRefStreams': updateChatRefStreams,
-      'updateControlHeight': updateControlHeight,
-      'updateIsWideScreen': updateIsWideScreen,
-      'updateIsMediumScreen': updateIsMediumScreen,
-      'updateIsSmallScreen': updateIsSmallScreen,
-      'updateAddGrid': updateAddGrid,
-      'updateAddAltGrid': updateAddAltGrid,
-      'updateGridRows': updateGridRows,
-      'updateGridCols': updateGridCols,
-      'updateAltGridRows': updateAltGridRows,
-      'updateAltGridCols': updateAltGridCols,
-      'updateNumberPages': updateNumberPages,
-      'updateCurrentStreams': updateCurrentStreams,
-      'updateShowMiniView': updateShowMiniView,
-      'updateNStream': updateNStream,
-      'updateDeferReceive': updateDeferReceive,
-      'updateAllAudioStreams': updateAllAudioStreams,
-      'updateRemoteScreenStream': updateRemoteScreenStream,
-      'updateScreenProducer': updateScreenProducer,
-      'updateGotAllVids': updateGotAllVids,
-      'updatePaginationHeightWidth': updatePaginationHeightWidth,
-      'updatePaginationDirection': updatePaginationDirection,
-      'updateGridSizes': updateGridSizes,
-      'updateScreenForceFullDisplay': updateScreenForceFullDisplay,
-      'updateMainGridStream': updateMainGridStream,
-      'updateOtherGridStreams': updateOtherGridStreams,
-      'updateAudioOnlyStreams': updateAudioOnlyStreams,
-      'updateVideoInputs': updateVideoInputs,
-      'updateAudioInputs': updateAudioInputs,
-      'updateMeetingProgressTime': updateMeetingProgressTime,
-      'updateMeetingElapsedTime': updateMeetingElapsedTime,
+  void updateCanStartWhiteboard(bool value) {
+    canStartWhiteboard.value = value;
+    mediasfuParameters.canStartWhiteboard = value;
+  }
 
-      // Update functions for messages
-      'updateMessages': updateMessages,
-      'updateStartDirectMessage': updateStartDirectMessage,
-      'updateDirectMessageDetails': updateDirectMessageDetails,
-      'updateShowMessagesBadge': updateShowMessagesBadge,
+  void updateWhiteboardStarted(bool value) {
+    whiteboardStarted.value = value;
+    mediasfuParameters.whiteboardStarted = value;
+  }
 
-      // Event settings
-      'updateAudioSetting': updateAudioSetting,
-      'updateVideoSetting': updateVideoSetting,
-      'updateScreenshareSetting': updateScreenshareSetting,
-      'updateChatSetting': updateChatSetting,
+  void updateWhiteboardEnded(bool value) {
+    whiteboardEnded.value = value;
+    mediasfuParameters.whiteboardEnded = value;
+  }
 
-      // Display settings
-      'updateDisplayOption': updateDisplayOption,
-      'updateAutoWave': updateAutoWave,
-      'updateForceFullDisplay': updateForceFullDisplay,
-      'updatePrevForceFullDisplay': updatePrevForceFullDisplay,
-      'updatePrevMeetingDisplayType': updatePrevMeetingDisplayType,
+  void updateWhiteboardLimit(int value) {
+    whiteboardLimit.value = value;
+    mediasfuParameters.whiteboardLimit = value;
+  }
 
-      // Waiting room
-      'updateWaitingRoomFilter': updateWaitingRoomFilter,
-      'updateWaitingRoomList': updateWaitingRoomList,
-      'updateWaitingRoomCounter': updateWaitingRoomCounter,
+  void updateIsWhiteboardModalVisible(bool value) {
+    isWhiteboardModalVisible.value = value;
+    mediasfuParameters.isWhiteboardModalVisible = value;
+  }
 
-      // Requests
-      'updateRequestFilter': updateRequestFilter,
-      'updateRequestList': updateRequestList,
-      'updateRequestCounter': updateRequestCounter,
+  void updateIsConfigureWhiteboardModalVisible(bool value) {
+    isConfigureWhiteboardModalVisible.value = value;
+    mediasfuParameters.isConfigureWhiteboardModalVisible = value;
+  }
 
-      // Total requests and waiting room
-      'updateTotalReqWait': updateTotalReqWait,
+  void updateShapes(List<dynamic> value) {
+    shapes.value = value;
+    mediasfuParameters.shapes = value;
+  }
 
-      // Show Alert modal
-      'updateIsMenuModalVisible': updateIsMenuModalVisible,
-      'updateIsRecordingModalVisible': updateIsRecordingModalVisible,
-      'updateIsSettingsModalVisible': updateIsSettingsModalVisible,
-      'updateIsRequestsModalVisible': updateIsRequestsModalVisible,
-      'updateIsWaitingModalVisible': updateIsWaitingModalVisible,
-      'updateIsCoHostModalVisible': updateIsCoHostModalVisible,
-      'updateIsMediaSettingsModalVisible': updateIsMediaSettingsModalVisible,
-      'updateIsDisplaySettingsModalVisible':
-          updateIsDisplaySettingsModalVisible,
+  void updateUseImageBackground(bool value) {
+    useImageBackground.value = value;
+    mediasfuParameters.useImageBackground = value;
+  }
 
-      // Other Modals
-      'updateIsParticipantsModalVisible': updateIsParticipantsModalVisible,
-      'updateIsMessagesModalVisible': updateIsMessagesModalVisible,
-      'updateIsConfirmExitModalVisible': updateIsConfirmExitModalVisible,
-      'updateIsConfirmHereModalVisible': updateIsConfirmHereModalVisible,
-      'updateIsLoadingModalVisible': updateIsLoadingModalVisible,
+  void updateRedoStack(List<dynamic> value) {
+    redoStack.value = value;
+    mediasfuParameters.redoStack = value;
+  }
 
-      // Recording Options
-      'updateRecordingMediaOptions': updateRecordingMediaOptions,
-      'updateRecordingAudioOptions': updateRecordingAudioOptions,
-      'updateRecordingVideoOptions': updateRecordingVideoOptions,
-      'updateRecordingVideoType': updateRecordingVideoType,
-      'updateRecordingVideoOptimized': updateRecordingVideoOptimized,
-      'updateRecordingDisplayType': updateRecordingDisplayType,
-      'updateRecordingAddHLS': updateRecordingAddHLS,
-      'updateRecordingAddText': updateRecordingAddText,
-      'updateRecordingCustomText': updateRecordingCustomText,
-      'updateRecordingCustomTextPosition': updateRecordingCustomTextPosition,
-      'updateRecordingCustomTextColor': updateRecordingCustomTextColor,
-      'updateRecordingNameTags': updateRecordingNameTags,
-      'updateRecordingBackgroundColor': updateRecordingBackgroundColor,
-      'updateRecordingNameTagsColor': updateRecordingNameTagsColor,
-      'updateRecordingOrientationVideo': updateRecordingOrientationVideo,
-      'updateClearedToResume': updateClearedToResume,
-      'updateClearedToRecord': updateClearedToRecord,
-      'updateRecordState': updateRecordState,
-      'updateShowRecordButtons': updateShowRecordButtons,
-      'updateRecordingProgressTime': updateRecordingProgressTime,
-      'updateAudioSwitching': updateAudioSwitching,
-      'updateVideoSwitching': updateVideoSwitching,
+  void updateUndoStack(List<String> value) {
+    undoStack.value = value;
+    mediasfuParameters.undoStack = value;
+  }
 
-      // Media states
-      'updateVideoAlreadyOn': updateVideoAlreadyOn,
-      'updateAudioAlreadyOn': updateAudioAlreadyOn,
-      'updateComponentSizes': updateComponentSizes,
+  void updateCanvasStream(MediaStream? value) {
+    canvasStream.value = value;
+    mediasfuParameters.canvasStream = value;
+  }
 
-      // Permissions
-      'updateHasCameraPermission': updateHasCameraPermission,
-      'updateHasAudioPermission': updateHasAudioPermission,
+  void updateCanvasWhiteboard(dynamic value) {
+    canvasWhiteboard.value = value;
+    mediasfuParameters.canvasWhiteboard = value;
+  }
 
-      // Transports
-      'updateTransportCreated': updateTransportCreated,
-      'updateTransportCreatedVideo': updateTransportCreatedVideo,
-      'updateTransportCreatedAudio': updateTransportCreatedAudio,
-      'updateTransportCreatedScreen': updateTransportCreatedScreen,
-      'updateProducerTransport': updateProducerTransport,
-      'updateVideoProducer': updateVideoProducer,
-      'updateParams': updateParams,
-      'updateVideoParams': updateVideoParams,
-      'updateAudioParams': updateAudioParams,
-      'updateAudioProducer': updateAudioProducer,
-      'updateConsumerTransports': updateConsumerTransports,
-      'updateConsumingTransports': updateConsumingTransports,
+  void updateCanvasScreenboard(dynamic value) {
+    canvasScreenboard.value = value;
+    mediasfuParameters.canvasScreenboard = value;
+  }
 
-      //polls
-      'updatePolls': updatePolls,
-      'updatePoll': updatePoll,
-      'updateIsPollModalVisible': updateIsPollModalVisible,
+  void updateProcessedScreenStream(MediaStream? value) {
+    processedScreenStream.value = value;
+    mediasfuParameters.processedScreenStream = value;
+  }
 
-      //breakout rooms
-      'updateBreakoutRooms': updateBreakoutRooms,
-      'updateCurrentRoomIndex': updateCurrentRoomIndex,
-      'updateCanStartBreakout': updateCanStartBreakout,
-      'updateBreakOutRoomStarted': updateBreakOutRoomStarted,
-      'updateBreakOutRoomEnded': updateBreakOutRoomEnded,
-      'updateHostNewRoom': updateHostNewRoom,
-      'updateLimitedBreakRoom': updateLimitedBreakRoom,
-      'updateMainRoomsLength': updateMainRoomsLength,
-      'updateMemberRoom': updateMemberRoom,
-      'updateIsBreakoutRoomsModalVisible': updateIsBreakoutRoomsModalVisible,
+  void updateAnnotateScreenStream(bool value) {
+    annotateScreenStream.value = value;
+    mediasfuParameters.annotateScreenStream = value;
+  }
 
-      'checkOrientation': checkOrientation,
+  void updateMainScreenCanvas(dynamic value) {
+    mainScreenCanvas.value = value;
+    mediasfuParameters.mainScreenCanvas = value;
+  }
 
-      'updateDevice': updateDevice,
-      'updateSocket': updateSocket,
-      'updateValidated': updateValidated,
-
-      'showAlert': showAlert,
-      'getUpdatedAllParams': getUpdatedAllParams,
-    };
+  void updateIsScreenboardModalVisible(bool value) {
+    isScreenboardModalVisible.value = value;
+    mediasfuParameters.isScreenboardModalVisible = value;
   }
 
   /// Show an alert message.
@@ -2858,30 +2773,8 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
   bool menuActive = false;
   bool commentsActive = false;
 
-  List<Map<String, dynamic>> recordButton = [];
-
-  void initializeRecordButton() {
-    recordButton = [
-      // Record Button
-      {
-        'icon': Icons.fiber_manual_record,
-        'active': false,
-        'text': 'Record',
-        'onPress': () {
-          // Action for the Record button
-          launchRecording(
-            parameters: getAllParams(),
-          );
-        },
-        'activeColor': const Color.fromARGB(255, 244, 3, 3),
-        'inActiveColor': const Color.fromARGB(255, 251, 9, 9),
-        'show': true,
-      },
-    ];
-  }
-
   // Record Buttons
-  List<Map<String, dynamic>> recordButtons = [];
+  List<AltButton> recordButtons = [];
 
   // Initialize Record Buttons
   // The record buttons are displayed in the control bar
@@ -2889,31 +2782,35 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
   void initializeRecordButtons() {
     recordButtons = [
       // Play/Pause Button
-      {
-        // name: 'Pause',
-        'icon': Icons.play_circle_filled,
-        'active': !recordPaused.value,
-        'onPress': () => updateRecording(
-            parameters: {...getAllParams(), ...mediaSFUFunctions()}),
-        'activeColor': Colors.black,
-        'inActiveColor': Colors.black,
-        'alternateIcon': Icons.pause_circle_filled,
-        'show': true,
-      },
+      AltButton(
+        // name: Pause,
+        icon: Icons.play_circle_filled,
+        active: !recordPaused.value,
+        onPress: () => updateRecording(UpdateRecordingOptions(
+          parameters: mediasfuParameters,
+        )),
+        activeColor: Colors.black,
+        inActiveColor: Colors.black,
+        alternateIcon: Icons.pause_circle_filled,
+        show: true,
+      ),
       // Stop Button
-      {
-        // name: 'Stop',
-        'icon': Icons.stop_circle,
-        'active': false,
-        'onPress': () => stopRecording(
-            parameters: {...getAllParams(), ...mediaSFUFunctions()}),
-        'activeColor': Colors.green,
-        'inActiveColor': Colors.black,
-        'show': true,
-      },
+      AltButton(
+        // name: Stop,
+        icon: Icons.stop_circle,
+        active: false,
+        onPress: () => stopRecording(
+          StopRecordingOptions(
+            parameters: mediasfuParameters,
+          ),
+        ),
+        activeColor: Colors.green,
+        inActiveColor: Colors.black,
+        show: true,
+      ),
       // Timer Display
-      {
-        'customComponent': Container(
+      AltButton(
+        customComponent: Container(
           color: Colors.transparent,
           padding: const EdgeInsets.all(0),
           margin: const EdgeInsets.all(2),
@@ -2925,294 +2822,290 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
             ),
           ),
         ),
-        'show': true,
-      },
+        show: true,
+      ),
       // Status Button
-      {
-        // name: 'Status',
-        'icon': Icons.circle,
-        'active': false,
-        'onPress': () => (),
-        'activeColor': Colors.black,
-        'inActiveColor':
-            recordPaused.value == false ? Colors.red : Colors.yellow,
-        'show': true,
-      },
+      AltButton(
+        // name: Status,
+        icon: Icons.circle,
+        active: false,
+        onPress: () => (),
+        activeColor: Colors.black,
+        inActiveColor: recordPaused.value == false ? Colors.red : Colors.yellow,
+        show: true,
+      ),
       // Settings Button
-      {
-        // name: 'Settings',
-        'icon': Icons.settings,
-        'active': false,
-        'onPress': () => launchRecording(parameters: {...getAllParams()}),
-        'activeColor': Colors.green,
-        'inActiveColor': Colors.black,
-        'show': true,
-      },
+      AltButton(
+        // name: Settings,
+        icon: Icons.settings,
+        active: false,
+        onPress: () => launchRecording(
+          LaunchRecordingOptions(
+              updateIsRecordingModalVisible: updateIsRecordingModalVisible,
+              isRecordingModalVisible: isRecordingModalVisible.value,
+              stopLaunchRecord: stopLaunchRecord.value,
+              canLaunchRecord: canLaunchRecord.value,
+              recordingAudioSupport: recordingAudioSupport.value,
+              recordingVideoSupport: recordingVideoSupport.value,
+              updateCanRecord: updateCanRecord,
+              updateClearedToRecord: updateClearedToRecord,
+              recordStarted: recordStarted.value,
+              recordPaused: recordPaused.value,
+              localUIMode: widget.options.useLocalUIMode == true),
+        ),
+
+        activeColor: Colors.green,
+        inActiveColor: Colors.black,
+        show: true,
+      )
     ];
   }
 
-  List<Map<String, dynamic>> customMenuButtons = [];
+  List<CustomButton> customMenuButtons = [];
 
   void initializeCustomMenuButtons() {
     customMenuButtons = [
       // Record Button
-      {
-        'icon': Icons.fiber_manual_record,
-        'text': 'Record',
-        'action': () {
+      CustomButton(
+        icon: Icons.fiber_manual_record,
+        text: 'Record',
+        action: () {
           // Action for the Record button
           launchRecording(
-            parameters: getAllParams(),
+            LaunchRecordingOptions(
+                updateIsRecordingModalVisible: updateIsRecordingModalVisible,
+                isRecordingModalVisible: isRecordingModalVisible.value,
+                stopLaunchRecord: stopLaunchRecord.value,
+                canLaunchRecord: canLaunchRecord.value,
+                recordingAudioSupport: recordingAudioSupport.value,
+                recordingVideoSupport: recordingVideoSupport.value,
+                updateCanRecord: updateCanRecord,
+                updateClearedToRecord: updateClearedToRecord,
+                recordStarted: recordStarted.value,
+                recordPaused: recordPaused.value,
+                localUIMode: widget.options.useLocalUIMode == true),
           );
         },
-        'show': !showRecordButtons.value && islevel.value == '2',
-      },
+        show: !showRecordButtons.value && islevel.value == '2',
+      ),
       // Custom Record Buttons
-      {
+      CustomButton(
         // You can define custom UI components directly in Flutter
         // In this case, you'll need to handle the custom UI rendering separately
         // You can replace this with a custom widget/component as needed
-        'customComponent': ControlButtonsAltComponent(
-            buttons: recordButtons,
-            direction: 'horizontal',
-            showAspect: true,
-            location: 'bottom',
-            position: 'middle'),
-        'show': showRecordButtons.value && islevel.value == '2',
-        'action': () {},
-      },
+        customComponent: ControlButtonsAltComponent(
+          options: ControlButtonsAltComponentOptions(
+              buttons: recordButtons,
+              direction: 'horizontal',
+              showAspect: true,
+              location: 'bottom',
+              position: 'middle'),
+        ),
+        show: showRecordButtons.value && islevel.value == '2',
+        action: () {},
+      ),
       // Event Settings Button
-      {
-        'icon': Icons.settings,
-        'text': 'Event Settings',
-        'modalId': 'settingsModal',
-        'action': () {
+      CustomButton(
+        icon: Icons.settings,
+        text: 'Event Settings',
+        action: () {
           // Action for the Event Settings button
           launchSettings(
-            updateIsSettingsModalVisible: updateIsSettingsModalVisible,
-            isSettingsModalVisible: isSettingsModalVisible.value,
+            LaunchSettingsOptions(
+                updateIsSettingsModalVisible: updateIsSettingsModalVisible,
+                isSettingsModalVisible: isSettingsModalVisible.value),
           );
         },
-        'show': islevel.value == '2',
-      },
+        show: islevel.value == '2',
+      ),
       // Requests Button
-      {
-        'icon': Icons.group,
-        'text': 'Requests',
-        'modalId': 'requestsModal',
-        'action': () {
+      CustomButton(
+        icon: Icons.group,
+        text: 'Requests',
+        action: () {
           // Action for the Requests button
-          launchRequests(parameters: {
-            'updateIsRequestsModalVisible': updateIsRequestsModalVisible,
-            'isRequestsModalVisible': isRequestsModalVisible.value,
-          });
+          launchRequests(
+            LaunchRequestsOptions(
+              updateIsRequestsModalVisible: updateIsRequestsModalVisible,
+              isRequestsModalVisible: isRequestsModalVisible.value,
+            ),
+          );
         },
-        'show': islevel.value == '2' ||
+        show: islevel.value == '2' ||
             (coHost.value == member.value &&
-                coHostResponsibility.value.any((item) =>
-                    item['name'] == 'media' && item['value'] == true)),
-      },
+                coHostResponsibility.value
+                    .any((item) => item.name == 'media' && item.value == true)),
+      ),
       // Waiting Button
-      {
-        'icon': Icons.access_time,
-        'text': 'Waiting',
-        'modalId': 'waitingRoomModal',
-        'action': () {
+      CustomButton(
+        icon: Icons.access_time,
+        text: 'Waiting',
+        action: () {
           // Action for the Waiting button
           launchWaiting(
+            LaunchWaitingOptions(
               updateIsWaitingModalVisible: updateIsWaitingModalVisible,
-              isWaitingModalVisible: isWaitingModalVisible.value);
+              isWaitingModalVisible: isWaitingModalVisible.value,
+            ),
+          );
         },
-        'show': islevel.value == '2' ||
+        show: islevel.value == '2' ||
             (coHost.value == member.value &&
-                coHostResponsibility.value.any((item) =>
-                    item['name'] == 'waiting' && item['value'] == true)),
-      },
+                coHostResponsibility.value.any(
+                    (item) => item.name == 'waiting' && item.value == true)),
+      ),
       // Co-host Button
-      {
-        'icon': Icons.person_add,
-        'text': 'Co-host',
-        'modalId': 'cohostModal',
-        'action': () {
+      CustomButton(
+        icon: Icons.person_add,
+        text: 'Co-host',
+        action: () {
           // Action for the Co-host button
-          launchCoHost(parameters: {
-            'updateIsCoHostModalVisible': updateIsCoHostModalVisible,
-            'isCoHostModalVisible': isCoHostModalVisible.value,
-          });
+          launchCoHost(
+            LaunchCoHostOptions(
+              updateIsCoHostModalVisible: updateIsCoHostModalVisible,
+              isCoHostModalVisible: isCoHostModalVisible.value,
+            ),
+          );
         },
-        'show': islevel.value == '2',
-      },
+        show: islevel.value == '2',
+      ),
       //Set Media Button
-      {
-        'icon': Icons.settings,
-        'text': 'Set Media',
-        'modalId': 'mediaSettingsModal',
-        'action': () {
+      CustomButton(
+        icon: Icons.settings,
+        text: 'Set Media',
+        action: () {
           // Action for the Set Media button
-          launchMediaSettings(parameters: {
-            ...getAllParams(),
-            ...mediaSFUFunctions(),
-            'onWeb': kIsWeb,
-            'device': device.value,
-            'socket': socket.value,
-            'showAlert': showAlert,
-            'checkPermission': checkPermission,
-            'streamSuccessVideo': streamSuccessVideo,
-            'hasCameraPermission': hasCameraPermission.value,
-            'requestPermissionCamera': requestPermissionCamera,
-            'checkMediaPermission': !kIsWeb,
-            'streamSuccessAudioSwitch': streamSuccessAudioSwitch,
-            'hasAudioPermission': hasAudioPermission.value,
-            'requestPermissionAudio': requestPermissionAudio,
-            'streamSuccessAudio': streamSuccessAudio,
-          });
+          launchMediaSettings(
+            LaunchMediaSettingsOptions(
+              updateIsMediaSettingsModalVisible:
+                  updateIsMediaSettingsModalVisible,
+              isMediaSettingsModalVisible: isMediaSettingsModalVisible.value,
+              audioInputs: audioInputs.value,
+              videoInputs: videoInputs.value,
+              updateAudioInputs: updateAudioInputs,
+              updateVideoInputs: updateVideoInputs,
+              videoAlreadyOn: videoAlreadyOn.value,
+              audioAlreadyOn: audioAlreadyOn.value,
+              onWeb: kIsWeb,
+              updateIsLoadingModalVisible: updateIsLoadingModalVisible,
+            ),
+          );
         },
-        'show': true,
-      },
+        show: true,
+      ),
       // Display Button
-      {
-        'icon': Icons.desktop_windows,
-        'text': 'Display',
-        'modalId': 'displaySettingsModal',
-        'action': () {
+      CustomButton(
+        icon: Icons.desktop_windows,
+        text: 'Display',
+        action: () {
           // Action for the Display button
-          launchDisplaySettings(
+          launchDisplaySettings(LaunchDisplaySettingsOptions(
             updateIsDisplaySettingsModalVisible:
                 updateIsDisplaySettingsModalVisible,
             isDisplaySettingsModalVisible: isDisplaySettingsModalVisible.value,
+          ));
+        },
+        show: true,
+      ),
+      CustomButton(
+        icon: Icons.poll,
+        text: 'Poll',
+        action: () {
+          // Action for the Poll button
+          launchPoll(
+            LaunchPollOptions(
+              updateIsPollModalVisible: updateIsPollModalVisible,
+              isPollModalVisible: isPollModalVisible.value,
+            ),
           );
         },
-        'show': true,
-      },
-      {
-        'icon': Icons.poll,
-        'text': 'Poll',
-        'modalId': 'pollModal',
-        'action': () {
-          // Action for the Poll button
-          launchPoll(parameters: {
-            'updateIsPollModalVisible': updateIsPollModalVisible,
-            'isPollModalVisible': isPollModalVisible.value,
-          });
-        },
-        'show': true,
-      },
-
-      {
-        'icon': Icons.group_outlined,
-        'text': 'Breakout Rooms',
-        'modalId': 'breakoutRoomsModal',
-        'action': () {
+        show: true,
+      ),
+      // Breakout Rooms Button
+      CustomButton(
+        icon: Icons.group_outlined,
+        text: 'Breakout Rooms',
+        action: () {
           // Action for the Breakout Rooms button
-          launchBreakoutRooms(parameters: {
-            'updateIsBreakoutRoomsModalVisible':
-                updateIsBreakoutRoomsModalVisible,
-            'isBreakoutRoomsModalVisible': isBreakoutRoomsModalVisible.value,
-          });
+          launchBreakoutRooms(
+            LaunchBreakoutRoomsOptions(
+              updateIsBreakoutRoomsModalVisible:
+                  updateIsBreakoutRoomsModalVisible,
+              isBreakoutRoomsModalVisible: isBreakoutRoomsModalVisible.value,
+            ),
+          );
         },
-        'show': islevel.value == '2',
-      },
+        show: islevel.value == '2',
+      ),
     ];
   }
 
   // Control Buttons
-  List<Map<String, dynamic>> controlButtons = [];
+  List<ControlButton> controlButtons = [];
 
   // Initialize Control Buttons
   // The control buttons are displayed in the control bar
 
   void initializeControlButtons() {
     controlButtons = [
-      {
-        'icon': Icons.mic_off_outlined,
-        'alternateIcon': Icons.mic_outlined,
-        'active': micActive,
-        'onPress': () => clickAudio(
-              parameters: {
-                ...getAllParams(),
-                ...mediaSFUFunctions(),
-                'onWeb': kIsWeb,
-                'device': device.value,
-                'socket': socket.value,
-                'showAlert': showAlert,
-                'checkPermission': checkPermission,
-                'streamSuccessAudio': streamSuccessAudio,
-                'hasAudioPermission': hasAudioPermission.value,
-                'requestPermissionAudio': requestPermissionAudio,
-                'checkMediaPermission': !kIsWeb,
-              },
-            ),
-        'activeColor': Colors.green,
-        'inActiveColor': Colors.red,
-        'disabled': audioSwitching.value,
-      },
-      {
-        'icon': Icons.videocam_off_outlined,
-        'alternateIcon': Icons.videocam_outlined,
-        'active': videoActive,
-        'onPress': () => clickVideo(
-              parameters: {
-                ...getAllParams(),
-                ...mediaSFUFunctions(),
-                'onWeb': kIsWeb,
-                'device': device.value,
-                'socket': socket.value,
-                'showAlert': showAlert,
-                'checkPermission': checkPermission,
-                'streamSuccessVideo': streamSuccessVideo,
-                'hasCameraPermission': hasCameraPermission.value,
-                'requestPermissionCamera': requestPermissionCamera,
-                'checkMediaPermission': !kIsWeb,
-              },
-            ),
-        'activeColor': Colors.green,
-        'inActiveColor': Colors.red,
-        'disabled': videoSwitching.value,
-      },
-      {
-        'icon': Icons.desktop_windows_outlined,
-        'alternateIconComponent': const Icon(Icons.desktop_access_disabled,
-            size: 20, color: Colors.red),
-        'active': screenShareActive,
-        'onPress': () => clickScreenShare(
-              parameters: {
-                ...getAllParams(),
-                ...mediaSFUFunctions(),
-                'device': device.value,
-                'streamSuccessScreen': streamSuccessScreen,
-                'onWeb': kIsWeb,
-                'checkPermission': checkPermission,
-              },
-            ),
-        'activeColor': Colors.green,
-        'inActiveColor': Colors.red,
-        'disabled': false,
-      },
-      {
-        'icon': Icons.phone_outlined,
-        'active': endCallActive,
-        'onPress': () => launchConfirmExit(
-              updateIsConfirmExitModalVisible: updateIsConfirmExitModalVisible,
-              isConfirmExitModalVisible: isConfirmExitModalVisible.value,
-            ),
-        'activeColor': Colors.green,
-        'inActiveColor': Colors.red,
-        'disabled': false,
-      },
-      {
-        'icon': Icons.group_outlined,
-        'active': participantsActive,
-        'onPress': () => launchParticipants(
-              updateIsParticipantsModalVisible:
-                  updateIsParticipantsModalVisible,
-              isParticipantsModalVisible: isParticipantsModalVisible.value,
-            ),
-        'activeColor': Colors.black,
-        'inActiveColor': Colors.black,
-        'disabled': false,
-      },
-      {
-        'customComponent': Stack(
+      ControlButton(
+        icon: Icons.mic_off_outlined,
+        alternateIcon: Icons.mic_outlined,
+        active: micActive,
+        onPress: () =>
+            clickAudio(ClickAudioOptions(parameters: mediasfuParameters)),
+        activeColor: Colors.green,
+        inActiveColor: Colors.red,
+        disabled: audioSwitching.value,
+      ),
+      ControlButton(
+        icon: Icons.videocam_off_outlined,
+        alternateIcon: Icons.videocam_outlined,
+        active: videoActive,
+        onPress: () =>
+            clickVideo(ClickVideoOptions(parameters: mediasfuParameters)),
+        activeColor: Colors.green,
+        inActiveColor: Colors.red,
+        disabled: videoSwitching.value,
+      ),
+      ControlButton(
+        icon: Icons.desktop_windows_outlined,
+        alternateIcon: Icons.desktop_access_disabled,
+        active: screenShareActive,
+        onPress: () => clickScreenShare(
+            ClickScreenShareOptions(parameters: mediasfuParameters)),
+        activeColor: Colors.green,
+        inActiveColor: Colors.red,
+        disabled: false,
+      ),
+      ControlButton(
+        icon: Icons.phone_outlined,
+        active: endCallActive,
+        onPress: () => launchConfirmExit(
+          LaunchConfirmExitOptions(
+            updateIsConfirmExitModalVisible: updateIsConfirmExitModalVisible,
+            isConfirmExitModalVisible: isConfirmExitModalVisible.value,
+          ),
+        ),
+        activeColor: Colors.green,
+        inActiveColor: Colors.red,
+        disabled: false,
+      ),
+      ControlButton(
+        icon: Icons.group_outlined,
+        active: participantsActive,
+        onPress: () => launchParticipants(
+          LaunchParticipantsOptions(
+            updateIsParticipantsModalVisible: updateIsParticipantsModalVisible,
+            isParticipantsModalVisible: isParticipantsModalVisible.value,
+          ),
+        ),
+        activeColor: Colors.black,
+        inActiveColor: Colors.black,
+        disabled: false,
+      ),
+      ControlButton(
+        customComponent: Stack(
           children: [
             const Icon(Icons.menu, size: 20, color: Colors.black),
             Positioned(
@@ -3235,13 +3128,15 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
             ),
           ],
         ),
-        'onPress': () => launchMenuModal(
-              updateIsMenuModalVisible: updateIsMenuModalVisible,
-              isMenuModalVisible: isMenuModalVisible.value,
-            ),
-      },
-      {
-        'customComponent': Stack(
+        onPress: () => launchMenuModal(
+          LaunchMenuModalOptions(
+            updateIsMenuModalVisible: updateIsMenuModalVisible,
+            isMenuModalVisible: isMenuModalVisible.value,
+          ),
+        ),
+      ),
+      ControlButton(
+        customComponent: Stack(
           children: [
             const Icon(Icons.chat_bubble_outline,
                 size: 20, color: Colors.black),
@@ -3267,11 +3162,13 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
               ),
           ],
         ),
-        'onPress': () => launchMessages(
-              updateIsMessagesModalVisible: updateIsMessagesModalVisible,
-              isMessagesModalVisible: isMessagesModalVisible.value,
-            ),
-      },
+        onPress: () => launchMessages(
+          LaunchMessagesOptions(
+            updateIsMessagesModalVisible: updateIsMessagesModalVisible,
+            isMessagesModalVisible: isMessagesModalVisible.value,
+          ),
+        ),
+      ),
     ];
   }
 
@@ -3281,56 +3178,12 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
     super.dispose();
   }
 
-  Map<String, double> computeDimensionsMethod(
-    BuildContext context, {
-    double containerWidthFraction = 1,
-    double containerHeightFraction = 1,
-    required double mainSize,
-    bool doStack = true,
-    required double defaultFraction,
-  }) {
-    final EdgeInsets safeAreaInsets = MediaQuery.of(context).padding +
-        MediaQuery.of(context).systemGestureInsets;
-    double parentWidth =
-        (MediaQuery.of(context).size.width) * containerWidthFraction;
-    double parentHeight =
-        (MediaQuery.of(context).size.height - safeAreaInsets.top) *
-            containerHeightFraction *
-            defaultFraction;
-    bool isWideScreen = parentWidth > 768;
-
-    if (doStack) {
-      return isWideScreen
-          ? {
-              'mainHeight': (parentHeight).floorToDouble(),
-              'otherHeight': (parentHeight).floorToDouble(),
-              'mainWidth': ((mainSize / 100) * parentWidth).floorToDouble(),
-              'otherWidth':
-                  (((100 - mainSize) / 100) * parentWidth).floorToDouble(),
-            }
-          : {
-              'mainHeight': (((mainSize / 100) * parentHeight)).floorToDouble(),
-              'otherHeight':
-                  ((((100 - mainSize) / 100) * parentHeight)).floorToDouble(),
-              'mainWidth': parentWidth.floorToDouble(),
-              'otherWidth': parentWidth.floorToDouble(),
-            };
-    } else {
-      return {
-        'mainHeight': parentHeight.floorToDouble(),
-        'otherHeight': parentHeight.floorToDouble(),
-        'mainWidth': parentWidth.floorToDouble(),
-        'otherWidth': parentWidth.floorToDouble(),
-      };
-    }
-  }
-
   void _handleOrientationChange() {
     _updateControlHeight();
   }
 
   Future<void> joinroom({
-    required io.Socket socket,
+    required io.Socket? socket,
     required String roomName,
     required String islevel,
     required String member,
@@ -3348,21 +3201,20 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
           apiUserName: apiUserName);
 
       if (kDebugMode) {
-        print('data: ${data['success']} $roomName');
+        print('Room success and name: ${data.success} $roomName');
       }
 
-      if (data != null && data['success'] == true) {
+      if (data.success == true) {
         // Update roomData
-        roomData.value = data;
+        updateRoomData(data);
 
         // Update room parameters
         try {
+          updateRoomData(data);
           updateRoomParametersClient(
-            parameters: {
-              ...getAllParams(),
-              ...mediaSFUFunctions(),
-              'data': data,
-            },
+            options: UpdateRoomParametersClientOptions(
+              parameters: mediasfuParameters,
+            ),
           );
         } catch (error) {
           if (kDebugMode) {
@@ -3371,18 +3223,20 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
         }
 
         // Update islevel
-        updateIslevel(data['isHost'] ? '2' : '1');
+        updateIslevel(data.isHost == true ? '2' : '1');
 
         // Update admin passcode
-        if (data['secureCode'] != null && data['secureCode'] != '') {
-          updateAdminPasscode(data['secureCode']);
+        if (data.secureCode != null && data.secureCode != '') {
+          updateAdminPasscode(data.secureCode!);
         }
 
         // Create device client
-        if (data['rtpCapabilities'] != null) {
+        if (data.rtpCapabilities != null) {
           try {
-            Device device_ = await createDeviceClient(
-              rtpCapabilities: data['rtpCapabilities'],
+            Device? device_ = await createDeviceClient(
+              options: CreateDeviceClientOptions(
+                rtpCapabilities: data.rtpCapabilities,
+              ),
             );
 
             updateDevice(device_);
@@ -3391,9 +3245,9 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
       } else {
         // Handle error cases
         updateValidated(false);
-        if (data != null && data['reason'] != null) {
+        if (data.reason != null) {
           showAlert(
-            message: data['reason'],
+            message: data.reason!,
             type: 'danger',
             duration: 3000,
           );
@@ -3406,8 +3260,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
     }
   }
 
-  Future<void> disconnectAllSockets(
-      List<Map<String, io.Socket>> consumeSockets) async {
+  Future<void> disconnectAllSockets(List<ConsumeSocket> consumeSockets) async {
     for (final socketMap in consumeSockets) {
       final ip = socketMap.keys.first;
       final socket = socketMap[ip];
@@ -3443,37 +3296,21 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
 
       try {
         if (videoAlreadyOn.value) {
-          await clickVideo(parameters: {
-            ...getAllParams(),
-            ...mediaSFUFunctions(),
-            'onWeb': kIsWeb,
-            'device': device.value,
-            'socket': socket.value,
-            'showAlert': showAlert,
-            'checkPermission': checkPermission,
-            'streamSuccessVideo': streamSuccessVideo,
-            'hasCameraPermission': hasCameraPermission.value,
-            'requestPermissionCamera': requestPermissionCamera,
-            'checkMediaPermission': !kIsWeb,
-          });
+          await clickVideo(
+            ClickVideoOptions(
+              parameters: mediasfuParameters,
+            ),
+          );
         }
       } catch (e) {}
 
       try {
         if (audioAlreadyOn.value) {
-          clickAudio(parameters: {
-            ...getAllParams(),
-            ...mediaSFUFunctions(),
-            'onWeb': kIsWeb,
-            'device': device.value,
-            'socket': socket.value,
-            'showAlert': showAlert,
-            'checkPermission': checkPermission,
-            'streamSuccessAudio': streamSuccessAudio,
-            'hasAudioPermission': hasAudioPermission.value,
-            'requestPermissionAudio': requestPermissionAudio,
-            'checkMediaPermission': !kIsWeb,
-          });
+          clickAudio(
+            ClickAudioOptions(
+              parameters: mediasfuParameters,
+            ),
+          );
         }
       } catch (e) {}
 
@@ -3494,7 +3331,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
         await disconnectAllSockets(consumeSockets.value);
       } catch (e) {}
 
-      updateStatesToInitialValues();
+      updateStatesToInitialValues(mediasfuParameters, initialValues);
       updateMeetingProgressTime('00:00:00');
       updateMeetingElapsedTime(0);
       updateRecordingProgressTime('00:00:00');
@@ -3518,30 +3355,34 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
             await closeAndReset();
           } catch (e) {}
 
-          disconnect(parameters: {
-            'showAlert': showAlert,
-            'redirectURL': redirectURL.value,
-            'onWeb': kIsWeb,
-            'updateValidated': updateValidated,
-          });
+          disconnect(
+            DisconnectOptions(
+              onWeb: kIsWeb,
+              showAlert: showAlert,
+              updateValidated: updateValidated,
+              redirectURL: redirectURL.value,
+            ),
+          );
         });
 
         socket.value!.on('allMembers', (membersData) async {
           try {
             // Handle 'allMembers' event
+            AllMembersData response = AllMembersData.fromJson(membersData);
             if (membersData != null) {
               await allMembers(
-                apiUserName: apiUserName,
-                apiKey:
-                    "null", //not recommended - use apiToken instead. Use for testing/development only
-                apiToken: apiToken,
-                members: membersData['members'],
-                requestss: membersData['requests'] ?? requestList.value,
-                coHoste: membersData['coHost'] ?? coHost.value,
-                coHostRes: membersData['coHostResponsibilities'] ??
-                    coHostResponsibility.value,
-                parameters: {...getAllParams(), ...mediaSFUFunctions()},
-                consumeSockets: consumeSockets.value,
+                AllMembersOptions(
+                  apiUserName: apiUserName,
+                  apiKey:
+                      "null", //not recommended - use apiToken instead. Use for testing/development only
+                  apiToken: apiToken,
+                  members: response.members,
+                  requests: response.requests,
+                  coHost: response.coHost ?? coHost.value,
+                  coHostRes: response.coHostResponsibilities,
+                  parameters: mediasfuParameters,
+                  consumeSockets: consumeSockets.value,
+                ),
               );
             }
           } catch (error) {
@@ -3554,20 +3395,21 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
         socket.value!.on('allMembersRest', (membersData) async {
           // Handle 'allMembersRest' event
           try {
+            AllMembersRestData response =
+                AllMembersRestData.fromJson(membersData);
             if (membersData != null) {
-              await allMembersRest(
+              await allMembersRest(AllMembersRestOptions(
                 apiUserName: apiUserName,
                 apiKey:
                     'null', //not recommended - use apiToken instead. Use for testing/development only
-                members: membersData['members'],
+                members: response.members,
                 apiToken: apiToken,
-                settings: membersData['settings'],
-                coHoste: membersData['coHost'] ?? coHost.value,
-                coHostRes: membersData['coHostResponsibilities'] ??
-                    coHostResponsibility.value,
-                parameters: {...getAllParams(), ...mediaSFUFunctions()},
+                settings: response.settings,
+                coHost: response.coHost ?? coHost.value,
+                coHostRes: response.coHostResponsibilities,
+                parameters: mediasfuParameters,
                 consumeSockets: consumeSockets.value,
-              );
+              ));
             }
           } catch (error) {
             if (kDebugMode) {
@@ -3580,8 +3422,12 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
           try {
             // Handle 'userWaiting' event
             userWaiting(
-              name: data['name'],
-              parameters: {...getAllParams(), ...mediaSFUFunctions()},
+              UserWaitingOptions(
+                name: data['name'],
+                showAlert: showAlert,
+                totalReqWait: totalReqWait.value,
+                updateTotalReqWait: updateTotalReqWait,
+              ),
             );
           } catch (error) {
             if (kDebugMode) {
@@ -3594,8 +3440,10 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
           try {
             // Handle 'personJoined' event
             personJoined(
-              name: data['name'],
-              parameters: {...getAllParams(), ...mediaSFUFunctions()},
+              PersonJoinedOptions(
+                name: data['name'],
+                showAlert: showAlert,
+              ),
             );
           } catch (error) {
             if (kDebugMode) {
@@ -3606,12 +3454,27 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
 
         socket.value!.on('allWaitingRoomMembers', (waitingData) async {
           try {
+            List<WaitingRoomParticipant> waitingParticipants = [];
+            if (waitingData['waitingParticipants'] != null ||
+                waitingData['waitingParticipantss'] != null) {
+              dynamic waitingList = waitingData['waitingParticipants'] ??
+                  waitingData['waitingParticipantss'] ??
+                  waitingData['waitingParticipants'];
+              // Convert waitingParticipants to a List of WaitingRoomParticipant objects
+              waitingParticipants = (waitingList as List)
+                  .map((item) => WaitingRoomParticipant.fromMap(item))
+                  .toList();
+            } else {
+              waitingParticipants = waitingRoomList.value;
+            }
+
             // Handle 'allWaitingRoomMembers' event
             allWaitingRoomMembers(
-              waitingParticipants: waitingData['waitingParticipants'] ??
-                  waitingData['waitingParticipantss'] ??
-                  waitingRoomList.value,
-              parameters: {...getAllParams(), ...mediaSFUFunctions()},
+              AllWaitingRoomMembersOptions(
+                waitingParticipants: waitingParticipants,
+                updateWaitingRoomList: updateWaitingRoomList,
+                updateTotalReqWait: updateTotalReqWait,
+              ),
             );
           } catch (error) {
             if (kDebugMode) {
@@ -3622,10 +3485,13 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
 
         socket.value!.on('roomRecordParams', (data) async {
           try {
+            RecordParameters roomRecordParameters =
+                RecordParameters.fromMap(data);
             // Handle 'roomRecordParams' event
             roomRecordParams(
-              recordParams: data['recordParams'],
-              parameters: {...getAllParams(), ...mediaSFUFunctions()},
+              RoomRecordParamsOptions(
+                  recordParams: roomRecordParameters,
+                  parameters: mediasfuParameters),
             );
           } catch (error) {
             if (kDebugMode) {
@@ -3638,8 +3504,10 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
           // Handle 'ban' event
           try {
             banParticipant(
-              name: data['name'],
-              parameters: {...getAllParams(), ...mediaSFUFunctions()},
+              BanParticipantOptions(
+                name: data['name'],
+                parameters: mediasfuParameters,
+              ),
             );
           } catch (error) {
             if (kDebugMode) {
@@ -3651,12 +3519,31 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
         socket.value!.on('updatedCoHost', (data) async {
           // Handle 'updatedCoHost' event
           try {
+            List<CoHostResponsibility>? coHostResponsibilities = [];
+            // Parse coHost responsibilities from incoming data
+            if (data['coHostResponsibilities'] != null) {
+              coHostResponsibilities =
+                  (data['coHostResponsibilities'] as List<dynamic>)
+                      .map((item) => CoHostResponsibility.fromMap(
+                          item as Map<String, dynamic>))
+                      .toList();
+            } else {
+              coHostResponsibilities = coHostResponsibility.value;
+            }
+
             updatedCoHost(
-              coHost: data['coHost'] ?? data['coHoste'] ?? coHost.value,
-              coHostResponsibility: data['coHostResponsibilities'] ??
-                  data['coHostRes'] ??
-                  coHostResponsibility.value,
-              parameters: {...getAllParams(), ...mediaSFUFunctions()},
+              UpdatedCoHostOptions(
+                eventType: eventType.value,
+                islevel: islevel.value,
+                member: member.value,
+                youAreCoHost: youAreCoHost.value,
+                updateCoHost: updateCoHost,
+                updateCoHostResponsibility: updateCoHostResponsibility,
+                updateYouAreCoHost: updateYouAreCoHost,
+                coHost: data['coHost'] ?? coHost.value,
+                coHostResponsibility: coHostResponsibilities,
+                showAlert: showAlert,
+              ),
             );
           } catch (error) {
             if (kDebugMode) {
@@ -3667,10 +3554,16 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
 
         socket.value!.on('participantRequested', (data) async {
           try {
+            Request request = Request.fromMap(data['userRequest']);
             // Handle 'participantRequested' event
             participantRequested(
-              userRequest: data['userRequest'],
-              parameters: {...getAllParams(), ...mediaSFUFunctions()},
+              ParticipantRequestedOptions(
+                userRequest: request,
+                requestList: requestList.value,
+                waitingRoomList: waitingRoomList.value,
+                updateRequestList: updateRequestList,
+                updateTotalReqWait: updateTotalReqWait,
+              ),
             );
           } catch (error) {
             if (kDebugMode) {
@@ -3682,10 +3575,17 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
         socket.value!.on('screenProducerId', (data) async {
           // Handle 'screenProducerId' event
           try {
-            screenProducerId(
+            screenProducerId(ScreenProducerIdOptions(
               producerId: data['producerId'],
-              parameters: {...getAllParams(), ...mediaSFUFunctions()},
-            );
+              screenId: screenId.value,
+              membersReceived: membersReceived.value,
+              shareScreenStarted: shareScreenStarted.value,
+              deferScreenReceived: deferScreenReceived.value,
+              participants: participants.value,
+              updateScreenId: updateScreenId,
+              updateShareScreenStarted: updateShareScreenStarted,
+              updateDeferScreenReceived: updateDeferScreenReceived,
+            ));
           } catch (error) {
             if (kDebugMode) {
               // print('Error handling screenProducerId event: $error');
@@ -3696,9 +3596,15 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
         socket.value!.on('updateMediaSettings', (data) async {
           // Handle 'updateMediaSettings' event
           try {
+            Settings settings = Settings.fromList(data['settings']);
             updateMediaSettings(
-              settings: data['settings'],
-              parameters: {...getAllParams(), ...mediaSFUFunctions()},
+              UpdateMediaSettingsOptions(
+                settings: settings,
+                updateAudioSetting: updateAudioSetting,
+                updateVideoSetting: updateVideoSetting,
+                updateScreenshareSetting: updateScreenshareSetting,
+                updateChatSetting: updateChatSetting,
+              ),
             );
           } catch (error) {
             if (kDebugMode) {
@@ -3711,10 +3617,12 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
           // Handle 'producer-media-paused' event
           try {
             await producerMediaPaused(
-              producerId: data['producerId'],
-              kind: data['kind'],
-              name: data['name'],
-              parameters: {...getAllParams(), ...mediaSFUFunctions()},
+              ProducerMediaPausedOptions(
+                producerId: data['producerId'],
+                kind: data['kind'],
+                name: data['name'],
+                parameters: mediasfuParameters,
+              ),
             );
           } catch (error) {
             if (kDebugMode) {
@@ -3727,9 +3635,10 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
           // Handle 'producer-media-resumed' event
           try {
             await producerMediaResumed(
-              kind: data['kind'],
-              name: data['name'],
-              parameters: {...getAllParams(), ...mediaSFUFunctions()},
+              ProducerMediaResumedOptions(
+                  kind: data['kind'],
+                  name: data['name'],
+                  parameters: mediasfuParameters),
             );
           } catch (error) {
             if (kDebugMode) {
@@ -3742,9 +3651,11 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
           // Handle 'producer-media-closed' event
           try {
             await producerMediaClosed(
-              producerId: data['producerId'],
-              kind: data['kind'],
-              parameters: {...getAllParams(), ...mediaSFUFunctions()},
+              ProducerMediaClosedOptions(
+                producerId: data['producerId'],
+                kind: data['kind'],
+                parameters: mediasfuParameters,
+              ),
             );
           } catch (error) {
             if (kDebugMode) {
@@ -3756,10 +3667,10 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
         socket.value!.on('controlMediaHost', (data) async {
           // Handle 'controlMediaHost' event
           try {
-            controlMediaHost(
+            controlMediaHost(ControlMediaHostOptions(
               type: data['type'],
-              parameters: {...getAllParams(), ...mediaSFUFunctions()},
-            );
+              parameters: mediasfuParameters,
+            ));
           } catch (error) {
             if (kDebugMode) {
               // print('Error handling controlMediaHost event: $error');
@@ -3773,23 +3684,26 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
             await closeAndReset();
           } catch (e) {}
 
-          await meetingEnded(parameters: {
-            'showAlert': showAlert,
-            'redirectURL': redirectURL.value,
-            'onWeb': kIsWeb,
-            'eventType': eventType.value,
-            'updateValidated': updateValidated,
-          });
+          await meetingEnded(
+              options: MeetingEndedOptions(
+            showAlert: showAlert,
+            redirectURL: redirectURL.value,
+            updateValidated: updateValidated,
+            onWeb: kIsWeb,
+            eventType: eventType.value,
+          ));
         });
 
         socket.value!.on('disconnectUserSelf', (_) async {
           // Handle 'disconnectUserSelf' event
           try {
-            await disconnectUserSelf(parameters: {
-              'socket': socket.value,
-              'member': member.value,
-              'roomName': roomName.value,
-            });
+            await disconnectUserSelf(
+              DisconnectUserSelfOptions(
+                socket: socket.value,
+                member: member.value,
+                roomName: roomName.value,
+              ),
+            );
           } catch (error) {
             if (kDebugMode) {
               // print('Error handling disconnectUserSelf event: $error');
@@ -3800,10 +3714,19 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
         socket.value!.on('receiveMessage', (data) async {
           // Handle 'receiveMessage' event
           try {
+            Message message = Message.fromMap(data['message']);
             await receiveMessage(
-              message: data['message'],
-              parameters: {...getAllParams(), ...mediaSFUFunctions()},
-              messages: messages.value,
+              ReceiveMessageOptions(
+                message: message,
+                messages: messages.value,
+                participantsAll: participants.value,
+                member: member.value,
+                eventType: eventType.value,
+                islevel: islevel.value,
+                coHost: coHost.value,
+                updateMessages: updateMessages,
+                updateShowMessagesBadge: updateShowMessagesBadge,
+              ),
             );
           } catch (error) {
             if (kDebugMode) {
@@ -3816,11 +3739,10 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
           // Handle 'meetingTimeRemaining' event
           try {
             await meetingTimeRemaining(
-              timeRemaining: data['timeRemaining'],
-              parameters: {
-                'eventType': eventType.value,
-                'showAlert': showAlert
-              },
+              options: MeetingTimeRemainingOptions(
+                  timeRemaining: data['timeRemaining'],
+                  eventType: eventType.value,
+                  showAlert: showAlert),
             );
           } catch (error) {
             if (kDebugMode) {
@@ -3833,12 +3755,9 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
           // Handle 'meetingStillThere' event
           try {
             await meetingStillThere(
-                timeRemaining: data['timeRemaining'],
-                parameters: {
-                  'updateIsConfirmHereModalVisible':
-                      updateIsConfirmHereModalVisible,
-                  'isConfirmHereModalVisible': isConfirmHereModalVisible.value
-                });
+                options: MeetingStillThereOptions(
+              updateIsConfirmHereModalVisible: updateIsConfirmHereModalVisible,
+            ));
           } catch (error) {
             if (kDebugMode) {
               // print('Error handling meetingStillThere event: $error');
@@ -3850,11 +3769,11 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
           // Handle 'startRecords' event
           try {
             startRecords(
-              parameters: {
-                'roomName': roomName.value,
-                'member': member.value,
-                'socket': socket.value,
-              },
+              StartRecordsOptions(
+                roomName: roomName.value,
+                member: member.value,
+                socket: socket.value,
+              ),
             );
           } catch (error) {
             if (kDebugMode) {
@@ -3866,12 +3785,14 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
         socket.value!.on('reInitiateRecording', (_) async {
           // Handle 'reInitiateRecording' event
           try {
-            reInitiateRecording(parameters: {
-              'roomName': roomName.value,
-              'member': member.value,
-              'socket': socket.value,
-              'adminRestrictSetting': adminRestrictSetting.value,
-            });
+            reInitiateRecording(
+              ReInitiateRecordingOptions(
+                roomName: roomName.value,
+                member: member.value,
+                socket: socket.value,
+                adminRestrictSetting: adminRestrictSetting.value,
+              ),
+            );
           } catch (error) {
             if (kDebugMode) {
               // print('Error handling reInitiateRecording event: $error');
@@ -3882,17 +3803,17 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
         socket.value!.on('updateConsumingDomains', (data) async {
           // Handle 'updateConsumingDomains' event
           try {
-            updateConsumingDomains(
-                domains: data['domains'],
-                altDomains: data['alt_domains'],
-                parameters: {
-                  ...getAllParams(),
-                  ...mediaSFUFunctions(),
-                  'apiUserName': apiUserName,
-                  'apiKey':
-                      null, //not recommended - use apiToken instead. Use for testing/development only
-                  'apiToken': apiToken,
-                });
+            UpdateConsumingDomainsData updateConsumingDomainsData =
+                UpdateConsumingDomainsData.fromJson(data);
+
+            updateConsumingDomains(UpdateConsumingDomainsOptions(
+              domains: updateConsumingDomainsData.domains,
+              altDomains: updateConsumingDomainsData.altDomains,
+              apiUserName: apiUserName,
+              apiToken: apiToken,
+              apiKey: "",
+              parameters: mediasfuParameters,
+            ));
           } catch (error) {
             if (kDebugMode) {
               // print('Error handling updateConsumingDomains event: $error');
@@ -3903,25 +3824,26 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
         socket.value!.on('RecordingNotice', (data) async {
           // Handle 'RecordingNotice' event
           try {
-            await RecordingNotice(
+            UserRecordingParams? userRecording;
+            if (data.containsKey('userRecordingParam') &&
+                (data['userRecordingParam'] != null &&
+                    data['userRecordingParam'].isNotEmpty)) {
+              userRecording =
+                  UserRecordingParams.fromMap(data['userRecordingParam']);
+            } else {
+              userRecording = userRecordingParams.value;
+            }
+
+            await recordingNotice(RecordingNoticeOptions(
               state: data['state'],
-              userRecordingParam: (data.containsKey('userRecordingParam') &&
-                      (data['userRecordingParam'] != null &&
-                          data['userRecordingParam'].isNotEmpty))
-                  ? data['userRecordingParam']
-                  : userRecordingParams.value,
-              pauseCount:
-                  data.containsKey('pauseCount') ? data['pauseCount'] ?? 0 : 0,
-              timeDone:
-                  data.containsKey('timeDone') ? data['timeDone'] ?? 0 : 0,
-              parameters: {
-                ...getAllParams(),
-                ...mediaSFUFunctions(),
-              },
-            );
+              userRecordingParam: userRecording,
+              pauseCount: data['pauseCount'] ?? 0,
+              timeDone: data['timeDone'] ?? 0,
+              parameters: mediasfuParameters,
+            ));
           } catch (error) {
             if (kDebugMode) {
-              // print('Error handling RecordingNotice event: $error');
+              //print('Error handling RecordingNotice event: $error');
             }
           }
         });
@@ -3929,10 +3851,10 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
         socket.value!.on('timeLeftRecording', (data) async {
           // Handle 'timeLeftRecording' event
           try {
-            timeLeftRecording(
+            timeLeftRecording(TimeLeftRecordingOptions(
               timeLeft: data['timeLeft'],
               showAlert: showAlert,
-            );
+            ));
           } catch (error) {
             if (kDebugMode) {
               // print('Error handling timeLeftRecording event: $error');
@@ -3943,10 +3865,10 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
         socket.value!.on('stoppedRecording', (data) async {
           // Handle 'stoppedRecording' event
           try {
-            stoppedRecording(
+            stoppedRecording(StoppedRecordingOptions(
                 state: data['state'],
                 reason: data['reason'],
-                parameters: {'showAlert': showAlert});
+                showAlert: showAlert));
           } catch (error) {
             if (kDebugMode) {
               // print('Error handling stoppedRecording event: $error');
@@ -3957,12 +3879,30 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
         socket.value!.on('hostRequestResponse', (data) async {
           // Handle 'hostRequestResponse' event
           try {
+            RequestResponse requestResponse =
+                RequestResponse.fromMap(data['requestResponse']);
             hostRequestResponse(
-                requestResponse: data['requestResponse'],
-                parameters: {
-                  ...getAllParams(),
-                  ...mediaSFUFunctions(),
-                });
+              HostRequestResponseOptions(
+                requestResponse: requestResponse,
+                showAlert: showAlert,
+                requestList: requestList.value,
+                updateRequestList: updateRequestList,
+                updateMicAction: updateMicAction,
+                updateVideoAction: updateVideoAction,
+                updateScreenAction: updateScreenAction,
+                updateChatAction: updateChatAction,
+                updateAudioRequestState: updateAudioRequestState,
+                updateVideoRequestState: updateVideoRequestState,
+                updateScreenRequestState: updateScreenRequestState,
+                updateChatRequestState: updateChatRequestState,
+                updateAudioRequestTime: updateAudioRequestTime,
+                updateVideoRequestTime: updateVideoRequestTime,
+                updateScreenRequestTime: updateScreenRequestTime,
+                updateChatRequestTime: updateChatRequestTime,
+                updateRequestIntervalSeconds:
+                    updateRequestIntervalSeconds.value,
+              ),
+            );
           } catch (error) {
             if (kDebugMode) {
               // print('Error handling hostRequestResponse event: $error');
@@ -3972,38 +3912,44 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
 
         socket.value!.on('pollUpdated', (data) async {
           try {
-            await pollUpdated(
-              data: data,
-              parameters: {
-                ...getAllParams(),
-                ...mediaSFUFunctions(),
-              },
-            );
+            PollUpdatedData pollUpdatedData = PollUpdatedData.fromMap(data);
+
+            await pollUpdated(PollUpdatedOptions(
+              data: pollUpdatedData,
+              polls: polls.value,
+              poll: poll.value,
+              member: member.value,
+              islevel: islevel.value,
+              showAlert: showAlert,
+              updatePolls: updatePolls,
+              updatePoll: updatePoll,
+              updateIsPollModalVisible: updateIsPollModalVisible,
+            ));
           } catch (error) {
             if (kDebugMode) {
-              print('Error handling pollUpdated event: $error');
+              // print('Error handling pollUpdated event: $error');
             }
           }
         });
 
         socket.value!.on('breakoutRoomUpdated', (data) async {
           try {
-            await breakoutRoomUpdated(
-              data: data,
-              parameters: {
-                ...getAllParams(),
-                ...mediaSFUFunctions(),
-              },
-            );
+            BreakoutRoomUpdatedData breakoutRoomUpdatedData =
+                BreakoutRoomUpdatedData.fromMap(data);
+
+            await breakoutRoomUpdated(BreakoutRoomUpdatedOptions(
+              data: breakoutRoomUpdatedData,
+              parameters: mediasfuParameters,
+            ));
           } catch (error) {
             if (kDebugMode) {
-              print('Error handling breakoutRoomUpdated event: $error');
+              // print('Error handling breakoutRoomUpdated event: $error');
             }
           }
         });
 
         await joinroom(
-          socket: socket.value!,
+          socket: socket.value,
           roomName: roomName.value,
           islevel: islevel.value,
           member: member.value,
@@ -4011,15 +3957,18 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
           apiUserName: apiUserName,
         );
 
-        await receiveRoomMessages(socket: socket.value!, parameters: {
-          'roomName': roomName.value,
-          'messages': messages.value,
-          'updateMessages': updateMessages,
-        });
+        await receiveRoomMessages(ReceiveRoomMessagesOptions(
+          socket: socket.value,
+          roomName: roomName.value,
+          updateMessages: updateMessages,
+        ));
 
         prepopulateUserMedia(
+          PrepopulateUserMediaOptions(
             name: hostLabel.value,
-            parameters: {...getAllParams(), ...mediaSFUFunctions()});
+            parameters: mediasfuParameters,
+          ),
+        );
 
         return socket.value!;
       } else {
@@ -4028,17 +3977,15 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
     }
 
     if (validated) {
-      updateAllVideoStreams([
-        {
-          'producerId': 'youyou',
-          'stream': null,
-          'id': 'youyou',
-          'name': 'youyou'
-        }
-      ]);
+      updateAllVideoStreams(
+          [Stream(id: 'youyou', name: 'youyou', producerId: 'youyou')]);
 
       updateStreamNames([
-        {'id': 'youyou', 'name': 'youyou'}
+        Stream(
+          id: 'youyou',
+          name: 'youyou',
+          producerId: 'youyou',
+        )
       ]);
 
       Future<void> connectAndAddSocketMethods() async {
@@ -4051,15 +3998,14 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
       }
 
       try {
-        if (!widget.useLocalUIMode) {
+        if (widget.options.useLocalUIMode != true) {
           updateIsLoadingModalVisible(true);
           connectAndAddSocketMethods().then((_) {
             startMeetingProgressTimer(
-                startTime: DateTime.now().millisecondsSinceEpoch ~/ 1000,
-                parameters: {
-                  ...getAllParams(),
-                  ...mediaSFUFunctions(),
-                });
+                options: StartMeetingProgressTimerOptions(
+              startTime: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+              parameters: mediasfuParameters,
+            ));
             updateIsLoadingModalVisible(false);
           }).catchError((error, stackTrace) {
             updateIsLoadingModalVisible(false);
@@ -4069,7 +4015,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
           });
         } else {
           updateIsLoadingModalVisible(false);
-          io.Socket socket_ = io.io("https://example.com", <String, dynamic>{
+          io.Socket? socket_ = io.io("https://example.com", <String, dynamic>{
             'transports': ['websocket'],
           });
           updateSocket(socket_);
@@ -4083,33 +4029,833 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
     }
   }
 
+  late MediasfuParameters mediasfuParameters;
+
   @override
   void initState() {
     super.initState();
+    mediasfuParameters = MediasfuParameters(
+        updateMiniCardsGrid: updateMiniCardsGrid,
+        mixStreams: mixStreams,
+        dispStreams: dispStreams,
+        stopShareScreen: stopShareScreen,
+        checkScreenShare: checkScreenShare,
+        startShareScreen: startShareScreen,
+        requestScreenShare: requestScreenShare,
+        reorderStreams: reorderStreams,
+        prepopulateUserMedia: prepopulateUserMedia,
+        getVideos: getVideos,
+        rePort: rePort,
+        trigger: trigger,
+        consumerResume: consumerResume,
+        connectSendTransport: connectSendTransport,
+        connectSendTransportAudio: connectSendTransportAudio,
+        connectSendTransportVideo: connectSendTransportVideo,
+        connectSendTransportScreen: connectSendTransportScreen,
+        processConsumerTransports: processConsumerTransports,
+        resumePauseStreams: resumePauseStreams,
+        readjust: readjust,
+        checkGrid: checkGrid,
+        getEstimate: getEstimate,
+        calculateRowsAndColumns: calculateRowsAndColumns,
+        addVideosGrid: addVideosGrid,
+        onScreenChanges: onScreenChanges,
+        sleep: sleep,
+        changeVids: changeVids,
+        compareActiveNames: compareActiveNames,
+        compareScreenStates: compareScreenStates,
+        createSendTransport: createSendTransport,
+        resumeSendTransportAudio: resumeSendTransportAudio,
+        receiveAllPipedTransports: receiveAllPipedTransports,
+        disconnectSendTransportVideo: disconnectSendTransportVideo,
+        disconnectSendTransportAudio: disconnectSendTransportAudio,
+        disconnectSendTransportScreen: disconnectSendTransportScreen,
+        getPipedProducersAlt: getPipedProducersAlt,
+        signalNewConsumerTransport: signalNewConsumerTransport,
+        connectRecvTransport: connectRecvTransport,
+        reUpdateInter: reUpdateInter,
+        updateParticipantAudioDecibels: updateParticipantAudioDecibels,
+        closeAndResize: closeAndResize,
+        autoAdjust: autoAdjust,
+        switchUserVideoAlt: switchUserVideoAlt,
+        switchUserVideo: switchUserVideo,
+        switchUserAudio: switchUserAudio,
+        getDomains: getDomains,
+        formatNumber: formatNumber,
+        connectIps: connectIps,
+        createDeviceClient: createDeviceClient,
+        handleCreatePoll: handleCreatePoll,
+        handleVotePoll: handleVotePoll,
+        handleEndPoll: handleEndPoll,
+        resumePauseAudioStreams: resumePauseAudioStreams,
+        processConsumerTransportsAudio: processConsumerTransportsAudio,
+        checkPermission: checkPermission,
+        streamSuccessVideo: streamSuccessVideo,
+        streamSuccessAudio: streamSuccessAudio,
+        streamSuccessScreen: streamSuccessScreen,
+        streamSuccessAudioSwitch: streamSuccessAudioSwitch,
+        clickVideo: clickVideo,
+        clickAudio: clickAudio,
+        clickScreenShare: clickScreenShare,
+        switchVideoAlt: switchVideoAlt,
+        requestPermissionCamera: requestPermissionCamera,
+        requestPermissionAudio: requestPermissionAudio,
+        localUIMode: widget.options.useLocalUIMode == true,
 
-    // If using seed data, generate random participants and messages
-    if (widget.useSeed) {
+        // Room Details
+        roomName: roomName.value,
+        member: member.value,
+        adminPasscode: adminPasscode.value,
+        youAreCoHost: youAreCoHost.value,
+        youAreHost: youAreHost.value,
+        islevel: islevel.value,
+        confirmedToRecord: confirmedToRecord.value,
+        meetingDisplayType: meetingDisplayType.value,
+        meetingVideoOptimized: meetingVideoOptimized.value,
+        eventType: eventType.value,
+        participants: participants.value,
+        filteredParticipants: filteredParticipants.value,
+        participantsCounter: participantsCounter.value,
+        participantsFilter: participantsFilter.value,
+
+        // More room details - media
+        consumeSockets: consumeSockets.value,
+        rtpCapabilities: rtpCapabilities.value,
+        roomRecvIPs: roomRecvIPs.value,
+        meetingRoomParams: meetingRoomParams.value,
+        itemPageLimit: itemPageLimit.value,
+        audioOnlyRoom: audioOnlyRoom.value,
+        addForBasic: addForBasic.value,
+        screenPageLimit: screenPageLimit.value,
+        shareScreenStarted: shareScreenStarted.value,
+        shared: shared.value,
+        targetOrientation: targetOrientation.value,
+        targetResolution: targetResolution.value,
+        targetResolutionHost: targetResolutionHost.value,
+        vidCons: vidCons.value,
+        frameRate: frameRate.value,
+        hParams: hParams.value,
+        vParams: vParams.value,
+        screenParams: screenParams.value,
+        aParams: aParams.value,
+
+        // More room details - recording
+        recordingAudioPausesLimit: recordingAudioPausesLimit.value,
+        recordingAudioPausesCount: recordingAudioPausesCount.value,
+        recordingAudioSupport: recordingAudioSupport.value,
+        recordingAudioPeopleLimit: recordingAudioPeopleLimit.value,
+        recordingAudioParticipantsTimeLimit:
+            recordingAudioParticipantsTimeLimit.value,
+        recordingVideoPausesCount: recordingVideoPausesCount.value,
+        recordingVideoPausesLimit: recordingVideoPausesLimit.value,
+        recordingVideoSupport: recordingVideoSupport.value,
+        recordingVideoPeopleLimit: recordingVideoPeopleLimit.value,
+        recordingVideoParticipantsTimeLimit:
+            recordingVideoParticipantsTimeLimit.value,
+        recordingAllParticipantsSupport: recordingAllParticipantsSupport.value,
+        recordingVideoParticipantsSupport:
+            recordingVideoParticipantsSupport.value,
+        recordingAllParticipantsFullRoomSupport:
+            recordingAllParticipantsFullRoomSupport.value,
+        recordingVideoParticipantsFullRoomSupport:
+            recordingVideoParticipantsFullRoomSupport.value,
+        recordingPreferredOrientation: recordingPreferredOrientation.value,
+        recordingSupportForOtherOrientation:
+            recordingSupportForOtherOrientation.value,
+        recordingMultiFormatsSupport: recordingMultiFormatsSupport.value,
+        userRecordingParams: userRecordingParams.value,
+        canRecord: canRecord.value,
+        startReport: startReport.value,
+        endReport: endReport.value,
+        recordTimerInterval: recordTimerInterval.value,
+        recordStartTime: recordStartTime.value,
+        recordElapsedTime: recordElapsedTime.value,
+        isTimerRunning: isTimerRunning.value,
+        canPauseResume: canPauseResume.value,
+        recordChangeSeconds: recordChangeSeconds.value,
+        pauseLimit: pauseLimit.value,
+        pauseRecordCount: pauseRecordCount.value,
+        canLaunchRecord: canLaunchRecord.value,
+        stopLaunchRecord: stopLaunchRecord.value,
+        participantsAll: participantsAll.value,
+        firstAll: firstAll.value,
+        updateMainWindow: updateMainWindow.value,
+        firstRound: firstRound.value,
+        landScaped: landScaped.value,
+        lockScreen: lockScreen.value,
+        screenId: screenId.value,
+        allVideoStreams: allVideoStreams.value,
+        newLimitedStreams: newLimitedStreams.value,
+        newLimitedStreamsIDs: newLimitedStreamsIDs.value,
+        activeSounds: activeSounds.value,
+        screenShareIDStream: screenShareIDStream.value,
+        screenShareNameStream: screenShareNameStream.value,
+        adminIDStream: adminIDStream.value,
+        adminNameStream: adminNameStream.value,
+        youYouStream: youYouStream.value,
+        youYouStreamIDs: youYouStreamIDs.value,
+        localStream: localStream.value,
+        recordStarted: recordStarted.value,
+        recordResumed: recordResumed.value,
+        recordPaused: recordPaused.value,
+        recordStopped: recordStopped.value,
+        adminRestrictSetting: adminRestrictSetting.value,
+        videoRequestState: videoRequestState.value,
+        videoRequestTime: videoRequestTime.value,
+        videoAction: videoAction.value,
+        localStreamVideo: localStreamVideo.value,
+        userDefaultVideoInputDevice: userDefaultVideoInputDevice.value,
+        currentFacingMode: currentFacingMode.value,
+        prevFacingMode: prevFacingMode.value,
+        defVideoID: defVideoID.value,
+        allowed: allowed.value,
+        dispActiveNames: dispActiveNames.value,
+        pDispActiveNames: pDispActiveNames.value,
+        activeNames: activeNames.value,
+        prevActiveNames: prevActiveNames.value,
+        pActiveNames: pActiveNames.value,
+        membersReceived: membersReceived.value,
+        deferScreenReceived: deferScreenReceived.value,
+        hostFirstSwitch: hostFirstSwitch.value,
+        micAction: micAction.value,
+        screenAction: screenAction.value,
+        chatAction: chatAction.value,
+        audioRequestState: audioRequestState.value,
+        screenRequestState: screenRequestState.value,
+        chatRequestState: chatRequestState.value,
+        audioRequestTime: audioRequestTime.value,
+        screenRequestTime: screenRequestTime.value,
+        chatRequestTime: chatRequestTime.value,
+        updateRequestIntervalSeconds: updateRequestIntervalSeconds.value,
+        oldSoundIds: oldSoundIds.value,
+        hostLabel: hostLabel.value,
+        mainScreenFilled: mainScreenFilled.value,
+        localStreamScreen: localStreamScreen.value,
+        screenAlreadyOn: screenAlreadyOn.value,
+        chatAlreadyOn: chatAlreadyOn.value,
+        redirectURL: redirectURL.value,
+        oldAllStreams: oldAllStreams.value,
+        adminVidID: adminVidID.value,
+        streamNames: streamNames.value,
+        nonAlVideoStreams: nonAlVideoStreams.value,
+        sortAudioLoudness: sortAudioLoudness.value,
+        audioDecibels: audioDecibels.value,
+        mixedAlVideoStreams: mixedAlVideoStreams.value,
+        nonAlVideoStreamsMuted: nonAlVideoStreamsMuted.value,
+        paginatedStreams: paginatedStreams.value,
+        localStreamAudio: localStreamAudio.value,
+        defAudioID: defAudioID.value,
+        userDefaultAudioInputDevice: userDefaultAudioInputDevice.value,
+        userDefaultAudioOutputDevice: userDefaultAudioOutputDevice.value,
+        prevAudioInputDevice: prevAudioInputDevice.value,
+        prevVideoInputDevice: prevVideoInputDevice.value,
+        audioPaused: audioPaused.value,
+        mainScreenPerson: mainScreenPerson.value,
+        adminOnMainScreen: adminOnMainScreen.value,
+        screenStates: screenStates.value,
+        prevScreenStates: prevScreenStates.value,
+        updateDateState: updateDateState.value,
+        lastUpdate: lastUpdate.value,
+        nForReadjustRecord: nForReadjustRecord.value,
+        fixedPageLimit: fixedPageLimit.value,
+        removeAltGrid: removeAltGrid.value,
+        nForReadjust: nForReadjust.value,
+        lastReorderTime: lastReorderTime.value,
+        reorderInterval: reorderInterval.value,
+        fastReorderInterval: fastReorderInterval.value,
+        audStreamNames: audStreamNames.value,
+        currentUserPage: currentUserPage.value,
+        mainHeightWidth: mainHeightWidth,
+        prevMainHeightWidth: prevMainHeightWidth.value,
+        prevDoPaginate: prevDoPaginate.value,
+        doPaginate: doPaginate.value,
+        shareEnded: shareEnded.value,
+        lStreams: lStreams.value,
+        chatRefStreams: chatRefStreams.value,
+        controlHeight: controlHeight.value,
+        isWideScreen: isWideScreen.value,
+        isMediumScreen: isMediumScreen.value,
+        isSmallScreen: isSmallScreen.value,
+        addGrid: addGrid.value,
+        addAltGrid: addAltGrid.value,
+        gridRows: gridRows.value,
+        gridCols: gridCols.value,
+        altGridRows: altGridRows.value,
+        altGridCols: altGridCols.value,
+        numberPages: numberPages.value,
+        currentStreams: currentStreams.value,
+        showMiniView: showMiniView.value,
+        nStream: nStream.value,
+        deferReceive: deferReceive.value,
+        allAudioStreams: allAudioStreams.value,
+        screenProducer: screenProducer.value,
+        remoteScreenStream: remoteScreenStream.value,
+        gotAllVids: gotAllVids.value,
+        paginationHeightWidth: paginationHeightWidth.value,
+        paginationDirection: paginationDirection.value,
+        gridSizes: gridSizes.value,
+        screenForceFullDisplay: screenForceFullDisplay.value,
+        mainGridStream: mainGridStream,
+        otherGridStreams: otherGridStreams,
+        audioOnlyStreams: audioOnlyStreams.value,
+        videoInputs: videoInputs.value,
+        audioInputs: audioInputs.value,
+        meetingProgressTime: meetingProgressTime.value,
+        meetingElapsedTime: meetingElapsedTime.value,
+        refParticipants: refParticipants.value,
+        messages: messages.value,
+        startDirectMessage: startDirectMessage.value,
+        directMessageDetails: directMessageDetails.value,
+        showMessagesBadge: showMessagesBadge.value,
+        coHost: coHost.value,
+        coHostResponsibility: coHostResponsibility.value,
+        audioSetting: audioSetting.value,
+        videoSetting: videoSetting.value,
+        screenshareSetting: screenshareSetting.value,
+        chatSetting: chatSetting.value,
+        autoWave: autoWave.value,
+        forceFullDisplay: forceFullDisplay.value,
+        prevForceFullDisplay: prevForceFullDisplay.value,
+        prevMeetingDisplayType: prevMeetingDisplayType.value,
+        waitingRoomFilter: waitingRoomFilter.value,
+        waitingRoomList: waitingRoomList.value,
+        waitingRoomCounter: waitingRoomCounter.value,
+        filteredWaitingRoomList: filteredWaitingRoomList.value,
+        requestFilter: requestFilter.value,
+        requestList: requestList.value,
+        requestCounter: requestCounter.value,
+        filteredRequestList: filteredRequestList.value,
+        totalReqWait: totalReqWait.value,
+        alertVisible: alertVisible.value,
+        alertMessage: alertMessage.value,
+        alertType: alertType.value,
+        alertDuration: alertDuration.value,
+        progressTimerVisible: progressTimerVisible.value,
+        progressTimerValue: progressTimerValue.value,
+        isMenuModalVisible: isMenuModalVisible.value,
+        isRecordingModalVisible: isRecordingModalVisible.value,
+        isSettingsModalVisible: isSettingsModalVisible.value,
+        isRequestsModalVisible: isRequestsModalVisible.value,
+        isWaitingModalVisible: isWaitingModalVisible.value,
+        isCoHostModalVisible: isCoHostModalVisible.value,
+        isMediaSettingsModalVisible: isMediaSettingsModalVisible.value,
+        isDisplaySettingsModalVisible: isDisplaySettingsModalVisible.value,
+        isParticipantsModalVisible: isParticipantsModalVisible.value,
+        isMessagesModalVisible: isMessagesModalVisible.value,
+        isConfirmExitModalVisible: isConfirmExitModalVisible.value,
+        isConfirmHereModalVisible: isConfirmHereModalVisible.value,
+        isShareEventModalVisible: isShareEventModalVisible.value,
+        isLoadingModalVisible: isLoadingModalVisible.value,
+
+        // Recording Options
+        recordingMediaOptions: recordingMediaOptions.value,
+        recordingAudioOptions: recordingAudioOptions.value,
+        recordingVideoOptions: recordingVideoOptions.value,
+        recordingVideoType: recordingVideoType.value,
+        recordingVideoOptimized: recordingVideoOptimized.value,
+        recordingDisplayType: recordingDisplayType.value,
+        recordingAddHLS: recordingAddHLS.value,
+        recordingAddText: recordingAddText.value,
+        recordingCustomText: recordingCustomText.value,
+        recordingCustomTextPosition: recordingCustomTextPosition.value,
+        recordingCustomTextColor: recordingCustomTextColor.value,
+        recordingNameTags: recordingNameTags.value,
+        recordingBackgroundColor: recordingBackgroundColor.value,
+        recordingNameTagsColor: recordingNameTagsColor.value,
+        recordingOrientationVideo: recordingOrientationVideo.value,
+        clearedToResume: clearedToResume.value,
+        clearedToRecord: clearedToRecord.value,
+        recordState: recordState,
+        showRecordButtons: showRecordButtons.value,
+        recordingProgressTime: recordingProgressTime.value,
+        audioSwitching: audioSwitching.value,
+        videoSwitching: videoSwitching.value,
+        videoAlreadyOn: videoAlreadyOn.value,
+        audioAlreadyOn: audioAlreadyOn.value,
+        componentSizes: componentSizes.value,
+        hasCameraPermission: hasCameraPermission.value,
+        hasAudioPermission: hasAudioPermission.value,
+        transportCreated: transportCreated.value,
+        transportCreatedVideo: transportCreatedVideo.value,
+        transportCreatedAudio: transportCreatedAudio.value,
+        transportCreatedScreen: transportCreatedScreen.value,
+        producerTransport: producerTransport.value,
+        videoProducer: videoProducer.value,
+        params: params.value,
+        videoParams: videoParams.value,
+        audioParams: audioParams.value,
+        audioProducer: audioProducer.value,
+        consumerTransports: consumerTransports.value,
+        consumingTransports: consumingTransports.value,
+        // Polls
+        polls: polls.value,
+        poll: poll.value,
+        isPollModalVisible: isPollModalVisible.value,
+
+        // Breakout rooms
+        breakoutRooms: breakoutRooms.value,
+        currentRoomIndex: currentRoomIndex.value,
+        canStartBreakout: canStartBreakout.value,
+        breakOutRoomStarted: breakOutRoomStarted.value,
+        breakOutRoomEnded: breakOutRoomEnded.value,
+        hostNewRoom: hostNewRoom.value,
+        limitedBreakRoom: limitedBreakRoom.value,
+        mainRoomsLength: mainRoomsLength.value,
+        memberRoom: memberRoom.value,
+        isBreakoutRoomsModalVisible: isBreakoutRoomsModalVisible.value,
+        validated: validated,
+        device: device.value,
+        socket: socket.value,
+        checkMediaPermission: !kIsWeb,
+        onWeb: kIsWeb,
+
+        // Update functions for Room Details
+        updateRoomName: updateRoomName,
+        updateMember: updateMember,
+        updateAdminPasscode: updateAdminPasscode,
+        updateYouAreCoHost: updateYouAreCoHost,
+        updateYouAreHost: updateYouAreHost,
+        updateIslevel: updateIslevel,
+        updateCoHost: updateCoHost,
+        updateCoHostResponsibility: updateCoHostResponsibility,
+        updateConfirmedToRecord: updateConfirmedToRecord,
+        updateMeetingDisplayType: updateMeetingDisplayType,
+        updateMeetingVideoOptimized: updateMeetingVideoOptimized,
+        updateEventType: updateEventType,
+        updateParticipants: updateParticipants,
+        updateParticipantsCounter: updateParticipantsCounter,
+        updateParticipantsFilter: updateParticipantsFilter,
+
+        // Update functions for more room details - media
+        updateConsumeSockets: updateConsumeSockets,
+        updateRtpCapabilities: updateRtpCapabilities,
+        updateRoomRecvIPs: updateRoomRecvIPs,
+        updateMeetingRoomParams: updateMeetingRoomParams,
+        updateItemPageLimit: updateItemPageLimit,
+        updateAudioOnlyRoom: updateAudioOnlyRoom,
+        updateAddForBasic: updateAddForBasic,
+        updateScreenPageLimit: updateScreenPageLimit,
+        updateShareScreenStarted: updateShareScreenStarted,
+        updateShared: updateShared,
+        updateTargetOrientation: updateTargetOrientation,
+        updateTargetResolution: updateTargetResolution,
+        updateTargetResolutionHost: updateTargetResolutionHost,
+        updateVidCons: updateVidCons,
+        updateFrameRate: updateFrameRate,
+        updateHParams: updateHParams,
+        updateVParams: updateVParams,
+        updateScreenParams: updateScreenParams,
+        updateAParams: updateAParams,
+
+        // Update functions for more room details - recording
+        updateRecordingAudioPausesLimit: updateRecordingAudioPausesLimit,
+        updateRecordingAudioPausesCount: updateRecordingAudioPausesCount,
+        updateRecordingAudioSupport: updateRecordingAudioSupport,
+        updateRecordingAudioPeopleLimit: updateRecordingAudioPeopleLimit,
+        updateRecordingAudioParticipantsTimeLimit:
+            updateRecordingAudioParticipantsTimeLimit,
+        updateRecordingVideoPausesCount: updateRecordingVideoPausesCount,
+        updateRecordingVideoPausesLimit: updateRecordingVideoPausesLimit,
+        updateRecordingVideoSupport: updateRecordingVideoSupport,
+        updateRecordingVideoPeopleLimit: updateRecordingVideoPeopleLimit,
+        updateRecordingVideoParticipantsTimeLimit:
+            updateRecordingVideoParticipantsTimeLimit,
+        updateRecordingAllParticipantsSupport:
+            updateRecordingAllParticipantsSupport,
+        updateRecordingVideoParticipantsSupport:
+            updateRecordingVideoParticipantsSupport,
+        updateRecordingAllParticipantsFullRoomSupport:
+            updateRecordingAllParticipantsFullRoomSupport,
+        updateRecordingVideoParticipantsFullRoomSupport:
+            updateRecordingVideoParticipantsFullRoomSupport,
+        updateRecordingPreferredOrientation:
+            updateRecordingPreferredOrientation,
+        updateRecordingSupportForOtherOrientation:
+            updateRecordingSupportForOtherOrientation,
+        updateRecordingMultiFormatsSupport: updateRecordingMultiFormatsSupport,
+
+        // Update functions for user recording params
+        updateUserRecordingParams: updateUserRecordingParams,
+        updateCanRecord: updateCanRecord,
+        updateStartReport: updateStartReport,
+        updateEndReport: updateEndReport,
+        updateRecordTimerInterval: updateRecordTimerInterval,
+        updateRecordStartTime: updateRecordStartTime,
+        updateRecordElapsedTime: updateRecordElapsedTime,
+        updateIsTimerRunning: updateIsTimerRunning,
+        updateCanPauseResume: updateCanPauseResume,
+        updateRecordChangeSeconds: updateRecordChangeSeconds,
+        updatePauseLimit: updatePauseLimit,
+        updatePauseRecordCount: updatePauseRecordCount,
+        updateCanLaunchRecord: updateCanLaunchRecord,
+        updateStopLaunchRecord: updateStopLaunchRecord,
+
+        // Update function for participants all
+        updateParticipantsAll: updateParticipantsAll,
+        updateFirstAll: updateFirstAll,
+        updateUpdateMainWindow: updateUpdateMainWindow,
+        updateFirstRound: updateFirstRound,
+        updateLandScaped: updateLandScaped,
+        updateLockScreen: updateLockScreen,
+        updateScreenId: updateScreenId,
+        updateAllVideoStreams: updateAllVideoStreams,
+        updateNewLimitedStreams: updateNewLimitedStreams,
+        updateNewLimitedStreamsIDs: updateNewLimitedStreamsIDs,
+        updateActiveSounds: updateActiveSounds,
+        updateScreenShareIDStream: updateScreenShareIDStream,
+        updateScreenShareNameStream: updateScreenShareNameStream,
+        updateAdminIDStream: updateAdminIDStream,
+        updateAdminNameStream: updateAdminNameStream,
+        updateYouYouStream: updateYouYouStream,
+        updateYouYouStreamIDs: updateYouYouStreamIDs,
+        updateLocalStream: updateLocalStream,
+        updateRecordStarted: updateRecordStarted,
+        updateRecordResumed: updateRecordResumed,
+        updateRecordPaused: updateRecordPaused,
+        updateRecordStopped: updateRecordStopped,
+        updateAdminRestrictSetting: updateAdminRestrictSetting,
+        updateVideoRequestState: updateVideoRequestState,
+        updateVideoRequestTime: updateVideoRequestTime,
+        updateVideoAction: updateVideoAction,
+        updateLocalStreamVideo: updateLocalStreamVideo,
+        updateUserDefaultVideoInputDevice: updateUserDefaultVideoInputDevice,
+        updateCurrentFacingMode: updateCurrentFacingMode,
+        updateRefParticipants: updateRefParticipants,
+        updateDefVideoID: updateDefVideoID,
+        updateAllowed: updateAllowed,
+        updateDispActiveNames: updateDispActiveNames,
+        updatePDispActiveNames: updatePDispActiveNames,
+        updateActiveNames: updateActiveNames,
+        updatePrevActiveNames: updatePrevActiveNames,
+        updatePActiveNames: updatePActiveNames,
+        updateMembersReceived: updateMembersReceived,
+        updateDeferScreenReceived: updateDeferScreenReceived,
+        updateHostFirstSwitch: updateHostFirstSwitch,
+        updateMicAction: updateMicAction,
+        updateScreenAction: updateScreenAction,
+        updateChatAction: updateChatAction,
+        updateAudioRequestState: updateAudioRequestState,
+        updateScreenRequestState: updateScreenRequestState,
+        updateChatRequestState: updateChatRequestState,
+        updateAudioRequestTime: updateAudioRequestTime,
+        updateScreenRequestTime: updateScreenRequestTime,
+        updateChatRequestTime: updateChatRequestTime,
+        updateOldSoundIds: updateOldSoundIds,
+        updateHostLabel: updateHostLabel,
+        updateMainScreenFilled: updateMainScreenFilled,
+        updateLocalStreamScreen: updateLocalStreamScreen,
+        updateScreenAlreadyOn: updateScreenAlreadyOn,
+        updateChatAlreadyOn: updateChatAlreadyOn,
+        updateRedirectURL: updateRedirectURL,
+        updateOldAllStreams: updateOldAllStreams,
+        updateAdminVidID: updateAdminVidID,
+        updateStreamNames: updateStreamNames,
+        updateNonAlVideoStreams: updateNonAlVideoStreams,
+        updateSortAudioLoudness: updateSortAudioLoudness,
+        updateAudioDecibels: updateAudioDecibels,
+        updateMixedAlVideoStreams: updateMixedAlVideoStreams,
+        updateNonAlVideoStreamsMuted: updateNonAlVideoStreamsMuted,
+        updatePaginatedStreams: updatePaginatedStreams,
+        updateLocalStreamAudio: updateLocalStreamAudio,
+        updateDefAudioID: updateDefAudioID,
+        updateUserDefaultAudioInputDevice: updateUserDefaultAudioInputDevice,
+        updateUserDefaultAudioOutputDevice: updateUserDefaultAudioOutputDevice,
+        updatePrevAudioInputDevice: updatePrevAudioInputDevice,
+        updatePrevVideoInputDevice: updatePrevVideoInputDevice,
+        updateAudioPaused: updateAudioPaused,
+        updateMainScreenPerson: updateMainScreenPerson,
+        updateAdminOnMainScreen: updateAdminOnMainScreen,
+        updateScreenStates: updateScreenStates,
+        updatePrevScreenStates: updatePrevScreenStates,
+        updateUpdateDateState: updateUpdateDateState,
+        updateLastUpdate: updateLastUpdate,
+        updateNForReadjustRecord: updateNForReadjustRecord,
+        updateFixedPageLimit: updateFixedPageLimit,
+        updateRemoveAltGrid: updateRemoveAltGrid,
+        updateNForReadjust: updateNForReadjust,
+        updateLastReorderTime: updateLastReorderTime,
+        updateAudStreamNames: updateAudStreamNames,
+        updateCurrentUserPage: updateCurrentUserPage,
+        updatePrevFacingMode: updatePrevFacingMode,
+        updateMainHeightWidth: updateMainHeightWidth,
+        updatePrevMainHeightWidth: updatePrevMainHeightWidth,
+        updatePrevDoPaginate: updatePrevDoPaginate,
+        updateDoPaginate: updateDoPaginate,
+        updateShareEnded: updateShareEnded,
+        updateLStreams: updateLStreams,
+        updateChatRefStreams: updateChatRefStreams,
+        updateControlHeight: updateControlHeight,
+        updateIsWideScreen: updateIsWideScreen,
+        updateIsMediumScreen: updateIsMediumScreen,
+        updateIsSmallScreen: updateIsSmallScreen,
+        updateAddGrid: updateAddGrid,
+        updateAddAltGrid: updateAddAltGrid,
+        updateGridRows: updateGridRows,
+        updateGridCols: updateGridCols,
+        updateAltGridRows: updateAltGridRows,
+        updateAltGridCols: updateAltGridCols,
+        updateNumberPages: updateNumberPages,
+        updateCurrentStreams: updateCurrentStreams,
+        updateShowMiniView: updateShowMiniView,
+        updateNStream: updateNStream,
+        updateDeferReceive: updateDeferReceive,
+        updateAllAudioStreams: updateAllAudioStreams,
+        updateRemoteScreenStream: updateRemoteScreenStream,
+        updateScreenProducer: updateScreenProducer,
+        updateGotAllVids: updateGotAllVids,
+        updatePaginationHeightWidth: updatePaginationHeightWidth,
+        updatePaginationDirection: updatePaginationDirection,
+        updateGridSizes: updateGridSizes,
+        updateScreenForceFullDisplay: updateScreenForceFullDisplay,
+        updateMainGridStream: updateMainGridStream,
+        updateOtherGridStreams: updateOtherGridStreams,
+        updateAudioOnlyStreams: updateAudioOnlyStreams,
+        updateVideoInputs: updateVideoInputs,
+        updateAudioInputs: updateAudioInputs,
+        updateMeetingProgressTime: updateMeetingProgressTime,
+        updateMeetingElapsedTime: updateMeetingElapsedTime,
+
+        // Update functions for messages
+        updateMessages: updateMessages,
+        updateStartDirectMessage: updateStartDirectMessage,
+        updateDirectMessageDetails: updateDirectMessageDetails,
+        updateShowMessagesBadge: updateShowMessagesBadge,
+
+        // Event settings
+        updateAudioSetting: updateAudioSetting,
+        updateVideoSetting: updateVideoSetting,
+        updateScreenshareSetting: updateScreenshareSetting,
+        updateChatSetting: updateChatSetting,
+
+        // Display settings
+        updateAutoWave: updateAutoWave,
+        updateForceFullDisplay: updateForceFullDisplay,
+        updatePrevForceFullDisplay: updatePrevForceFullDisplay,
+        updatePrevMeetingDisplayType: updatePrevMeetingDisplayType,
+
+        // Waiting room
+        updateWaitingRoomFilter: updateWaitingRoomFilter,
+        updateWaitingRoomList: updateWaitingRoomList,
+        updateWaitingRoomCounter: updateWaitingRoomCounter,
+
+        // Requests
+        updateRequestFilter: updateRequestFilter,
+        updateRequestList: updateRequestList,
+        updateRequestCounter: updateRequestCounter,
+
+        // Total requests and waiting room
+        updateTotalReqWait: updateTotalReqWait,
+
+        // Show Alert modal
+        updateIsMenuModalVisible: updateIsMenuModalVisible,
+        updateIsRecordingModalVisible: updateIsRecordingModalVisible,
+        updateIsSettingsModalVisible: updateIsSettingsModalVisible,
+        updateIsRequestsModalVisible: updateIsRequestsModalVisible,
+        updateIsWaitingModalVisible: updateIsWaitingModalVisible,
+        updateIsCoHostModalVisible: updateIsCoHostModalVisible,
+        updateIsMediaSettingsModalVisible: updateIsMediaSettingsModalVisible,
+        updateIsDisplaySettingsModalVisible:
+            updateIsDisplaySettingsModalVisible,
+
+        // Other Modals
+        updateIsParticipantsModalVisible: updateIsParticipantsModalVisible,
+        updateIsMessagesModalVisible: updateIsMessagesModalVisible,
+        updateIsConfirmExitModalVisible: updateIsConfirmExitModalVisible,
+        updateIsConfirmHereModalVisible: updateIsConfirmHereModalVisible,
+        updateIsLoadingModalVisible: updateIsLoadingModalVisible,
+
+        // Recording Options
+        updateRecordingMediaOptions: updateRecordingMediaOptions,
+        updateRecordingAudioOptions: updateRecordingAudioOptions,
+        updateRecordingVideoOptions: updateRecordingVideoOptions,
+        updateRecordingVideoType: updateRecordingVideoType,
+        updateRecordingVideoOptimized: updateRecordingVideoOptimized,
+        updateRecordingDisplayType: updateRecordingDisplayType,
+        updateRecordingAddHLS: updateRecordingAddHLS,
+        updateRecordingAddText: updateRecordingAddText,
+        updateRecordingCustomText: updateRecordingCustomText,
+        updateRecordingCustomTextPosition: updateRecordingCustomTextPosition,
+        updateRecordingCustomTextColor: updateRecordingCustomTextColor,
+        updateRecordingNameTags: updateRecordingNameTags,
+        updateRecordingBackgroundColor: updateRecordingBackgroundColor,
+        updateRecordingNameTagsColor: updateRecordingNameTagsColor,
+        updateRecordingOrientationVideo: updateRecordingOrientationVideo,
+        updateClearedToResume: updateClearedToResume,
+        updateClearedToRecord: updateClearedToRecord,
+        updateRecordState: updateRecordState,
+        updateShowRecordButtons: updateShowRecordButtons,
+        updateRecordingProgressTime: updateRecordingProgressTime,
+        updateAudioSwitching: updateAudioSwitching,
+        updateVideoSwitching: updateVideoSwitching,
+
+        // Media states
+        updateVideoAlreadyOn: updateVideoAlreadyOn,
+        updateAudioAlreadyOn: updateAudioAlreadyOn,
+        updateComponentSizes: updateComponentSizes,
+
+        // Permissions
+        updateHasCameraPermission: updateHasCameraPermission,
+        updateHasAudioPermission: updateHasAudioPermission,
+
+        // Transports
+        updateTransportCreated: updateTransportCreated,
+        updateTransportCreatedVideo: updateTransportCreatedVideo,
+        updateTransportCreatedAudio: updateTransportCreatedAudio,
+        updateTransportCreatedScreen: updateTransportCreatedScreen,
+        updateProducerTransport: updateProducerTransport,
+        updateVideoProducer: updateVideoProducer,
+        updateParams: updateParams,
+        updateVideoParams: updateVideoParams,
+        updateAudioParams: updateAudioParams,
+        updateAudioProducer: updateAudioProducer,
+        updateConsumerTransports: updateConsumerTransports,
+        updateConsumingTransports: updateConsumingTransports,
+
+        //polls
+        updatePolls: updatePolls,
+        updatePoll: updatePoll,
+        updateIsPollModalVisible: updateIsPollModalVisible,
+
+        //breakout rooms
+        updateBreakoutRooms: updateBreakoutRooms,
+        updateCurrentRoomIndex: updateCurrentRoomIndex,
+        updateCanStartBreakout: updateCanStartBreakout,
+        updateBreakOutRoomStarted: updateBreakOutRoomStarted,
+        updateBreakOutRoomEnded: updateBreakOutRoomEnded,
+        updateHostNewRoom: updateHostNewRoom,
+        updateLimitedBreakRoom: updateLimitedBreakRoom,
+        updateMainRoomsLength: updateMainRoomsLength,
+        updateMemberRoom: updateMemberRoom,
+        updateIsBreakoutRoomsModalVisible: updateIsBreakoutRoomsModalVisible,
+        checkOrientation: checkOrientation,
+        roomData: ResponseJoinRoom(),
+        updateDevice: updateDevice,
+        updateSocket: updateSocket,
+        updateValidated: updateValidated,
+        showAlert: showAlert,
+        customImage: customImage.value,
+        selectedImage: selectedImage.value,
+        segmentVideo: segmentVideo.value,
+        selfieSegmentation: selfieSegmentation.value,
+        pauseSegmentation: pauseSegmentation.value,
+        processedStream: processedStream.value,
+        keepBackground: keepBackground.value,
+        backgroundHasChanged: backgroundHasChanged.value,
+        virtualStream: virtualStream.value,
+        mainCanvas: mainCanvas.value,
+        prevKeepBackground: prevKeepBackground.value,
+        appliedBackground: appliedBackground.value,
+        isBackgroundModalVisible: isBackgroundModalVisible.value,
+        autoClickBackground: autoClickBackground.value,
+
+        // Update functions
+        updateCustomImage: updateCustomImage,
+        updateSelectedImage: updateSelectedImage,
+        updateSegmentVideo: updateSegmentVideo,
+        updateSelfieSegmentation: updateSelfieSegmentation,
+        updatePauseSegmentation: updatePauseSegmentation,
+        updateProcessedStream: updateProcessedStream,
+        updateKeepBackground: updateKeepBackground,
+        updateBackgroundHasChanged: updateBackgroundHasChanged,
+        updateVirtualStream: updateVirtualStream,
+        updateMainCanvas: updateMainCanvas,
+        updatePrevKeepBackground: updatePrevKeepBackground,
+        updateAppliedBackground: updateAppliedBackground,
+        updateIsBackgroundModalVisible: updateIsBackgroundModalVisible,
+        updateAutoClickBackground: updateAutoClickBackground,
+
+        // Whiteboard-related variables
+        whiteboardUsers: whiteboardUsers.value,
+        currentWhiteboardIndex: currentWhiteboardIndex.value,
+        canStartWhiteboard: canStartWhiteboard.value,
+        whiteboardStarted: whiteboardStarted.value,
+        whiteboardEnded: whiteboardEnded.value,
+        whiteboardLimit: whiteboardLimit.value,
+        isWhiteboardModalVisible: isWhiteboardModalVisible.value,
+        isConfigureWhiteboardModalVisible:
+            isConfigureWhiteboardModalVisible.value,
+        shapes: shapes.value,
+        useImageBackground: useImageBackground.value,
+        redoStack: redoStack.value,
+        undoStack: undoStack.value,
+        canvasStream: canvasStream.value,
+        canvasWhiteboard: canvasWhiteboard.value,
+
+        // Screenboard-related variables
+        canvasScreenboard: canvasScreenboard.value,
+        processedScreenStream: processedScreenStream.value,
+        annotateScreenStream: annotateScreenStream.value,
+        mainScreenCanvas: mainScreenCanvas.value,
+        isScreenboardModalVisible: isScreenboardModalVisible.value,
+
+        // Whiteboard update functions
+        updateWhiteboardUsers: updateWhiteboardUsers,
+        updateCurrentWhiteboardIndex: updateCurrentWhiteboardIndex,
+        updateCanStartWhiteboard: updateCanStartWhiteboard,
+        updateWhiteboardStarted: updateWhiteboardStarted,
+        updateWhiteboardEnded: updateWhiteboardEnded,
+        updateWhiteboardLimit: updateWhiteboardLimit,
+        updateIsWhiteboardModalVisible: updateIsWhiteboardModalVisible,
+        updateIsConfigureWhiteboardModalVisible:
+            updateIsConfigureWhiteboardModalVisible,
+        updateShapes: updateShapes,
+        updateUseImageBackground: updateUseImageBackground,
+        updateRedoStack: updateRedoStack,
+        updateUndoStack: updateUndoStack,
+        updateCanvasStream: updateCanvasStream,
+        updateCanvasWhiteboard: updateCanvasWhiteboard,
+        updateCanvasScreenboard: updateCanvasScreenboard,
+        updateProcessedScreenStream: updateProcessedScreenStream,
+        updateAnnotateScreenStream: updateAnnotateScreenStream,
+        updateMainScreenCanvas: updateMainScreenCanvas,
+        updateIsScreenboardModalVisible: updateIsScreenboardModalVisible,
+        getUpdatedAllParams: () => mediasfuParameters);
+
+    // If using seed data, generate random participants and message
+    if (widget.options.useSeed == true && widget.options.seedData != null) {
       try {
-        updateMember(widget.seedData['member']!);
-        updateParticipants(widget.seedData['participants']!);
-        updateParticipantsCounter(widget.seedData['participants']!.length);
-        updateFilteredParticipants(widget.seedData['participants']!);
-        updateMessages(widget.seedData['messages']!);
-        updateRequestList(widget.seedData['requests']!);
-        updateWaitingRoomList(widget.seedData['waitingList']!);
-        updateWaitingRoomCounter(widget.seedData['waitingList']!.length);
+        updateMember(widget.options.seedData!.member!);
+        updateParticipants(widget.options.seedData!.participants!);
+        updateParticipantsCounter(
+            widget.options.seedData!.participants!.length);
+        updateFilteredParticipants(widget.options.seedData!.participants!);
+        updateMessages(widget.options.seedData!.messages!);
+
+        updateRequestList(widget.options.seedData!.requests!);
+        updateWaitingRoomList(widget.options.seedData!.waitingList!);
+        updateWaitingRoomCounter(widget.options.seedData!.waitingList!.length);
       } catch (error) {
         if (kDebugMode) {
-          print('Error in seed data: $error');
+          print('Error setting seed data: $error');
         }
       }
     }
 
-    if (widget.useLocalUIMode) {
+    if (widget.options.useLocalUIMode == true) {
       updateValidated(true);
     }
 
     isPortrait.addListener(_handleOrientationChange);
+  }
+
+  void updateStatesToInitialValues(MediasfuParameters mediasfuParameters,
+      Map<String, dynamic> initialValues) async {
+    for (String key in initialValues.keys) {
+      try {
+        String updateFunctionName =
+            'update${key[0].toUpperCase()}${key.substring(1)}';
+        if (mediasfuParameters.updateFunctions
+            .containsKey(updateFunctionName)) {
+          // Call the appropriate update function with the value from initialValues
+          mediasfuParameters.updateFunctions[updateFunctionName]
+              ?.call(initialValues[key]);
+        }
+      } catch (error) {
+        if (kDebugMode) {
+          // print('Error updating $key: $error');
+        }
+      }
+    }
   }
 
   @override
@@ -4138,148 +4884,132 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
   }
 
   Widget buildEventRoom(BuildContext context) {
-    initializeRecordButton();
     initializeControlButtons();
 
     return validated
         ? MainContainerComponent(
-            backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
-            children: [
-              MainAspectComponent(
-                backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
-                updateIsWideScreen: updateIsWideScreen,
-                updateIsMediumScreen: updateIsMediumScreen,
-                updateIsSmallScreen: updateIsSmallScreen,
-                defaultFraction: 1 - controlHeight.value,
-                showControls: eventType.value == 'webinar' ||
-                    eventType.value == 'conference',
-                children: [
-                  ValueListenableBuilder<Map<String, double>>(
-                      valueListenable: componentSizes,
-                      builder: (context, componentSizes, child) {
-                        return MainScreenComponent(
-                          doStack: true,
-                          mainSize: mainHeightWidth,
-                          updateComponentSizes: updateComponentSizes,
-                          defaultFraction: 1 - controlHeight.value,
-                          showControls: eventType.value == 'webinar' ||
-                              eventType.value == 'conference',
-                          children: [
-                            ValueListenableBuilder<Map<String, int>>(
-                              valueListenable: gridSizes,
-                              builder: (context, gridSizes, child) {
-                                return MainGridComponent(
-                                  height: componentSizes['mainHeight'] ?? 0,
-                                  width: componentSizes['mainWidth'] ?? 0,
-                                  backgroundColor:
-                                      const Color.fromRGBO(217, 227, 234, 0.99),
-                                  mainSize: mainHeightWidth,
-                                  showAspect: mainHeightWidth > 0,
-                                  timeBackgroundColor: recordState == 'green'
-                                      ? Colors.green
-                                      : recordState == 'yellow'
-                                          ? Colors.yellow
-                                          : Colors.red,
-                                  meetingProgressTime:
-                                      meetingProgressTime.value,
-                                  showTimer: true,
-                                  children: [
-                                    FlexibleVideo(
-                                      backgroundColor: const Color.fromRGBO(
-                                          217, 227, 234, 0.99),
-                                      customWidth:
-                                          componentSizes['mainWidth'] ?? 0,
-                                      customHeight:
-                                          componentSizes['mainHeight'] ?? 0,
-                                      rows: 1,
-                                      columns: 1,
-                                      componentsToRender: mainGridStream,
-                                      showAspect: mainGridStream.isNotEmpty,
-                                    ),
-                                    ValueListenableBuilder<String>(
-                                        valueListenable: meetingProgressTime,
-                                        builder: (context, meetingProgressTime,
-                                            child) {
-                                          return MeetingProgressTimer(
-                                            meetingProgressTime:
-                                                meetingProgressTime,
-                                            initialBackgroundColor:
+            options: MainContainerComponentOptions(
+              backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
+              children: [
+                MainAspectComponent(
+                  options: MainAspectComponentOptions(
+                    backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
+                    updateIsWideScreen: updateIsWideScreen,
+                    updateIsMediumScreen: updateIsMediumScreen,
+                    updateIsSmallScreen: updateIsSmallScreen,
+                    defaultFraction: 1 - controlHeight.value,
+                    showControls: eventType.value == EventType.webinar ||
+                        eventType.value == EventType.conference,
+                    children: [
+                      ValueListenableBuilder<ComponentSizes>(
+                          valueListenable: componentSizes,
+                          builder: (context, componentSizes, child) {
+                            return MainScreenComponent(
+                              options: MainScreenComponentOptions(
+                                doStack: true,
+                                mainSize: mainHeightWidth,
+                                updateComponentSizes: updateComponentSizes,
+                                defaultFraction: 1 - controlHeight.value,
+                                showControls:
+                                    eventType.value == EventType.webinar ||
+                                        eventType.value == EventType.conference,
+                                children: [
+                                  ValueListenableBuilder<GridSizes>(
+                                    valueListenable: gridSizes,
+                                    builder: (context, gridSizes, child) {
+                                      return MainGridComponent(
+                                        options: MainGridComponentOptions(
+                                          height: componentSizes.mainHeight,
+                                          width: componentSizes.mainWidth,
+                                          backgroundColor: const Color.fromRGBO(
+                                              217, 227, 234, 0.99),
+                                          mainSize: mainHeightWidth,
+                                          showAspect: mainHeightWidth > 0,
+                                          timeBackgroundColor:
+                                              recordState == 'green'
+                                                  ? Colors.green
+                                                  : recordState == 'yellow'
+                                                      ? Colors.yellow
+                                                      : Colors.red,
+                                          meetingProgressTime:
+                                              meetingProgressTime.value,
+                                          showTimer: true,
+                                          children: [
+                                            FlexibleVideo(
+                                                options: FlexibleVideoOptions(
+                                              backgroundColor:
+                                                  const Color.fromRGBO(
+                                                      217, 227, 234, 0.99),
+                                              customWidth:
+                                                  componentSizes.mainWidth,
+                                              customHeight:
+                                                  componentSizes.mainHeight,
+                                              rows: 1,
+                                              columns: 1,
+                                              componentsToRender:
+                                                  mainGridStream,
+                                              showAspect:
+                                                  mainGridStream.isNotEmpty,
+                                            )),
+                                            ValueListenableBuilder<String>(
+                                                valueListenable:
+                                                    meetingProgressTime,
+                                                builder: (context,
+                                                    meetingProgressTime,
+                                                    child) {
+                                                  return MeetingProgressTimer(
+                                                      options:
+                                                          MeetingProgressTimerOptions(
+                                                    meetingProgressTime:
+                                                        meetingProgressTime,
+                                                    initialBackgroundColor:
+                                                        recordState == 'green'
+                                                            ? Colors.green
+                                                            : recordState ==
+                                                                    'yellow'
+                                                                ? Colors.yellow
+                                                                : Colors.red,
+                                                    showTimer: true,
+                                                  ));
+                                                }),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  ValueListenableBuilder<GridSizes>(
+                                      valueListenable: gridSizes,
+                                      builder: (context, gridSizes, child) {
+                                        return OtherGridComponent(
+                                          options: OtherGridComponentOptions(
+                                            height: componentSizes.otherHeight,
+                                            width: componentSizes.otherWidth,
+                                            backgroundColor:
+                                                const Color.fromRGBO(
+                                                    217, 227, 234, 0.99),
+                                            showAspect: mainHeightWidth == 100
+                                                ? false
+                                                : true,
+                                            timeBackgroundColor:
                                                 recordState == 'green'
                                                     ? Colors.green
                                                     : recordState == 'yellow'
                                                         ? Colors.yellow
                                                         : Colors.red,
-                                            showTimer: true,
-                                          );
-                                        }),
-                                  ],
-                                );
-                              },
-                            ),
-                            ValueListenableBuilder<Map<String, int>>(
-                                valueListenable: gridSizes,
-                                builder: (context, gridSizes, child) {
-                                  return OtherGridComponent(
-                                    height: componentSizes['otherHeight'] ?? 0,
-                                    width: componentSizes['otherWidth'] ?? 0,
-                                    backgroundColor: const Color.fromRGBO(
-                                        217, 227, 234, 0.99),
-                                    showAspect:
-                                        mainHeightWidth == 100 ? false : true,
-                                    timeBackgroundColor: recordState == 'green'
-                                        ? Colors.green
-                                        : recordState == 'yellow'
-                                            ? Colors.yellow
-                                            : Colors.red,
-                                    showTimer:
-                                        mainHeightWidth == 0 ? true : false,
-                                    meetingProgressTime:
-                                        meetingProgressTime.value,
-                                    children: [
-                                      AudioGrid(
-                                        componentsToRender:
-                                            audioOnlyStreams.value,
-                                      ),
-                                      Container(
-                                        padding: EdgeInsets.only(
-                                          top: doPaginate.value
-                                              ? paginationDirection.value ==
-                                                      'horizontal'
-                                                  ? paginationHeightWidth.value
-                                                      .toDouble()
-                                                  : 0
-                                              : 0,
-                                          left: doPaginate.value
-                                              ? paginationDirection.value ==
-                                                      'vertical'
-                                                  ? paginationHeightWidth.value
-                                                      .toDouble()
-                                                  : 0
-                                              : 0,
-                                        ),
-                                        child: FlexibleGrid(
-                                          customWidth: gridSizes['gridWidth']
-                                                  ?.toDouble() ??
-                                              0,
-                                          customHeight: gridSizes['gridHeight']
-                                                  ?.toDouble() ??
-                                              0,
-                                          rows: gridRows.value,
-                                          columns: gridCols.value,
-                                          componentsToRender:
-                                              otherGridStreams[0],
-                                          backgroundColor: const Color.fromRGBO(
-                                              217, 227, 234, 0.99),
-                                          showAspect: addGrid.value &&
-                                              otherGridStreams[0].isNotEmpty,
-                                        ),
-                                      ),
-                                      Container(
-                                        padding: EdgeInsets.only(
-                                          top: gridSizes['gridHeight']
-                                                  ?.toDouble() ??
-                                              0 +
-                                                  (doPaginate.value
+                                            showTimer: mainHeightWidth == 0
+                                                ? true
+                                                : false,
+                                            meetingProgressTime:
+                                                meetingProgressTime.value,
+                                            children: [
+                                              AudioGrid(
+                                                  options: AudioGridOptions(
+                                                componentsToRender:
+                                                    audioOnlyStreams.value,
+                                              )),
+                                              Container(
+                                                padding: EdgeInsets.only(
+                                                  top: doPaginate.value
                                                       ? paginationDirection
                                                                   .value ==
                                                               'horizontal'
@@ -4287,171 +5017,237 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
                                                               .value
                                                               .toDouble()
                                                           : 0
-                                                      : 0),
-                                          left: doPaginate.value
-                                              ? paginationDirection.value ==
-                                                      'vertical'
-                                                  ? paginationHeightWidth.value
-                                                      .toDouble()
-                                                  : 0
-                                              : 0,
-                                        ),
-                                        child: FlexibleGrid(
-                                          customWidth: gridSizes['altGridWidth']
-                                                  ?.toDouble() ??
-                                              0,
-                                          customHeight:
-                                              gridSizes['altGridHeight']
-                                                      ?.toDouble() ??
-                                                  0,
-                                          rows: altGridRows.value,
-                                          columns: altGridCols.value,
-                                          componentsToRender:
-                                              otherGridStreams[1],
-                                          backgroundColor: const Color.fromRGBO(
-                                              217, 227, 234, 0.99),
-                                          showAspect: addAltGrid.value &&
-                                              otherGridStreams[1].isNotEmpty,
-                                        ),
-                                      ),
-                                      ValueListenableBuilder<String>(
-                                          valueListenable: meetingProgressTime,
-                                          builder: (context,
-                                              meetingProgressTime, child) {
-                                            return MeetingProgressTimer(
-                                              meetingProgressTime:
-                                                  meetingProgressTime,
-                                              initialBackgroundColor:
-                                                  recordState == 'green'
-                                                      ? Colors.green
-                                                      : recordState == 'yellow'
-                                                          ? Colors.yellow
-                                                          : Colors.red,
-                                              showTimer: mainHeightWidth == 0
-                                                  ? true
-                                                  : false,
-                                            );
-                                          }),
-                                      Visibility(
-                                        visible: doPaginate.value,
-                                        child: SizedBox(
-                                          width: paginationDirection.value ==
-                                                  'horizontal'
-                                              ? double.infinity
-                                              : paginationHeightWidth.value
-                                                  .toDouble(),
-                                          height: paginationDirection.value ==
-                                                  'horizontal'
-                                              ? paginationHeightWidth.value
-                                                  .toDouble()
-                                              : double.infinity,
-                                          child: Pagination(
-                                            totalPages: numberPages.value,
-                                            currentUserPage:
-                                                currentUserPage.value,
-                                            showAspect: doPaginate.value,
-                                            paginationHeight:
-                                                paginationHeightWidth.value
-                                                    .toDouble(),
-                                            direction:
-                                                paginationDirection.value,
-                                            parameters: {
-                                              ...getAllParams(),
-                                              ...mediaSFUFunctions()
-                                            },
+                                                      : 0,
+                                                  left: doPaginate.value
+                                                      ? paginationDirection
+                                                                  .value ==
+                                                              'vertical'
+                                                          ? paginationHeightWidth
+                                                              .value
+                                                              .toDouble()
+                                                          : 0
+                                                      : 0,
+                                                ),
+                                                child: FlexibleGrid(
+                                                    options:
+                                                        FlexibleGridOptions(
+                                                  customWidth: gridSizes
+                                                      .gridWidth
+                                                      ?.toDouble(),
+                                                  customHeight: gridSizes
+                                                      .gridHeight
+                                                      ?.toDouble(),
+                                                  rows: gridRows.value,
+                                                  columns: gridCols.value,
+                                                  componentsToRender:
+                                                      otherGridStreams[0],
+                                                  backgroundColor:
+                                                      const Color.fromRGBO(
+                                                          217, 227, 234, 0.99),
+                                                  showAspect: addGrid.value &&
+                                                      otherGridStreams[0]
+                                                          .isNotEmpty,
+                                                )),
+                                              ),
+                                              Container(
+                                                padding: EdgeInsets.only(
+                                                  top: gridSizes.gridHeight
+                                                          ?.toDouble() ??
+                                                      0 +
+                                                          (doPaginate.value
+                                                              ? paginationDirection
+                                                                          .value ==
+                                                                      'horizontal'
+                                                                  ? paginationHeightWidth
+                                                                      .value
+                                                                      .toDouble()
+                                                                  : 0
+                                                              : 0),
+                                                  left: doPaginate.value
+                                                      ? paginationDirection
+                                                                  .value ==
+                                                              'vertical'
+                                                          ? paginationHeightWidth
+                                                              .value
+                                                              .toDouble()
+                                                          : 0
+                                                      : 0,
+                                                ),
+                                                child: FlexibleGrid(
+                                                    options:
+                                                        FlexibleGridOptions(
+                                                  customWidth: gridSizes
+                                                          .altGridWidth
+                                                          ?.toDouble() ??
+                                                      0,
+                                                  customHeight: gridSizes
+                                                          .altGridHeight
+                                                          ?.toDouble() ??
+                                                      0,
+                                                  rows: altGridRows.value,
+                                                  columns: altGridCols.value,
+                                                  componentsToRender:
+                                                      otherGridStreams[1],
+                                                  backgroundColor:
+                                                      const Color.fromRGBO(
+                                                          217, 227, 234, 0.99),
+                                                  showAspect:
+                                                      addAltGrid.value &&
+                                                          otherGridStreams[1]
+                                                              .isNotEmpty,
+                                                )),
+                                              ),
+                                              ValueListenableBuilder<String>(
+                                                  valueListenable:
+                                                      meetingProgressTime,
+                                                  builder: (context,
+                                                      meetingProgressTime,
+                                                      child) {
+                                                    return MeetingProgressTimer(
+                                                        options:
+                                                            MeetingProgressTimerOptions(
+                                                      meetingProgressTime:
+                                                          meetingProgressTime,
+                                                      initialBackgroundColor:
+                                                          recordState == 'green'
+                                                              ? Colors.green
+                                                              : recordState ==
+                                                                      'yellow'
+                                                                  ? Colors
+                                                                      .yellow
+                                                                  : Colors.red,
+                                                      showTimer:
+                                                          mainHeightWidth == 0
+                                                              ? true
+                                                              : false,
+                                                    ));
+                                                  }),
+                                              Visibility(
+                                                visible: doPaginate.value,
+                                                child: SizedBox(
+                                                  width: paginationDirection
+                                                              .value ==
+                                                          'horizontal'
+                                                      ? double.infinity
+                                                      : paginationHeightWidth
+                                                          .value
+                                                          .toDouble(),
+                                                  height: paginationDirection
+                                                              .value ==
+                                                          'horizontal'
+                                                      ? paginationHeightWidth
+                                                          .value
+                                                          .toDouble()
+                                                      : double.infinity,
+                                                  child: Pagination(
+                                                      options:
+                                                          PaginationOptions(
+                                                    totalPages:
+                                                        numberPages.value,
+                                                    currentUserPage:
+                                                        currentUserPage.value,
+                                                    showAspect:
+                                                        doPaginate.value,
+                                                    paginationHeight:
+                                                        paginationHeightWidth
+                                                            .value
+                                                            .toDouble(),
+                                                    direction:
+                                                        paginationDirection
+                                                            .value,
+                                                    parameters:
+                                                        mediasfuParameters,
+                                                  )),
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                }),
-                          ],
-                        );
-                      }),
-                ],
-              ),
-              Visibility(
-                visible: eventType.value == 'webinar' ||
-                    eventType.value == 'conference',
-                child: ValueListenableBuilder<double>(
-                  valueListenable: controlHeight,
-                  builder: (context, controlHeight, child) {
-                    return SubAspectComponent(
-                        backgroundColor:
-                            const Color.fromRGBO(217, 227, 234, 0.99),
-                        showControls: eventType.value == 'webinar' ||
-                            eventType.value == 'conference',
-                        defaultFractionSub: 40, //40 pixels
-                        children: [
-                          ControlButtonsComponent(
-                            buttons: controlButtons,
-                            buttonColor:
-                                const Color.fromARGB(255, 234, 178, 178),
-                            buttonBackgroundColor: const {
-                              'default': Colors.transparent,
-                              'pressed': Colors.transparent,
-                            },
-                            alignment: MainAxisAlignment.spaceBetween,
-                            vertical: false, // Set to true for vertical layout
-                          ),
-                        ]);
-                  },
+                                        );
+                                      }),
+                                ],
+                              ),
+                            );
+                          }),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                Visibility(
+                  visible: eventType.value == EventType.webinar ||
+                      eventType.value == EventType.conference,
+                  child: ValueListenableBuilder<double>(
+                    valueListenable: controlHeight,
+                    builder: (context, controlHeight, child) {
+                      return SubAspectComponent(
+                        options: SubAspectComponentOptions(
+                            backgroundColor:
+                                const Color.fromRGBO(217, 227, 234, 0.99),
+                            showControls:
+                                eventType.value == EventType.webinar ||
+                                    eventType.value == EventType.conference,
+                            defaultFractionSub: 40, //40 pixels
+                            children: [
+                              ControlButtonsComponent(
+                                  options: ControlButtonsComponentOptions(
+                                buttons: controlButtons,
+                                buttonBackgroundColor: Colors.transparent,
+                                alignment: MainAxisAlignment.spaceBetween,
+                                vertical:
+                                    false, // Set to true for vertical layout
+                              )),
+                            ]),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           )
-        : widget.PrejoinPage != null
-            ? renderPrejoinPage() ?? renderWelcomePage()
+        : widget.options.credentials != null &&
+                widget.options.credentials!.apiKey.isNotEmpty &&
+                widget.options.credentials!.apiKey != 'your_api_key'
+            ? renderpreJoinPageWidget() ?? renderWelcomePage()
             : renderWelcomePage();
   }
 
   Widget renderWelcomePage() {
     return WelcomePage(
-      parameters: {
-        'showAlert': showAlert,
-        'isLoadingModalVisible': isLoadingModalVisible,
-        'updateIsLoadingModalVisible': updateIsLoadingModalVisible,
-        'onWeb': kIsWeb,
-        'eventType': eventType.value,
-        'connectSocket': connectSocket,
-        'socket': socket.value,
-        'updateSocket': updateSocket,
-        'updateValidated': updateValidated,
-        'updateApiUserName': updateApiUserName,
-        'updateApiToken': updateApiToken,
-        'updateLink': updateLink,
-        'updateRoomName': updateRoomName,
-        'updateMember': updateMember,
-        'validated': validated,
-      },
+      options: WelcomePageOptions(
+        imgSrc:
+            widget.options.imgSrc ?? 'https://mediasfu.com/images/logo192.png',
+        updateIsLoadingModalVisible: updateIsLoadingModalVisible,
+        updateValidated: updateValidated,
+        updateApiUserName: updateApiUserName,
+        updateApiToken: updateApiToken,
+        updateLink: updateLink,
+        updateRoomName: updateRoomName,
+        updateMember: updateMember,
+        showAlert: showAlert,
+        connectSocket: connectSocket,
+        updateSocket: updateSocket,
+      ),
     );
   }
 
-  Widget? renderPrejoinPage() {
-    if (widget.PrejoinPage != null) {
-      return widget.PrejoinPage!(
-        parameters: {
-          'showAlert': showAlert,
-          'isLoadingModalVisible': isLoadingModalVisible,
-          'updateIsLoadingModalVisible': updateIsLoadingModalVisible,
-          'onWeb': kIsWeb,
-          'eventType': eventType.value,
-          'connectSocket': connectSocket,
-          'socket': socket.value,
-          'updateSocket': updateSocket,
-          'updateValidated': updateValidated,
-          'updateApiUserName': updateApiUserName,
-          'updateApiToken': updateApiToken,
-          'updateLink': updateLink,
-          'updateRoomName': updateRoomName,
-          'updateMember': updateMember,
-          'validated': validated,
-        },
-        credentials: widget.credentials,
-      );
-    } else {
-      return Container();
-    }
+  Widget? renderpreJoinPageWidget() {
+    return PreJoinPage(
+        // return widget.options.preJoinPageWidget!(
+        options: PreJoinPageOptions(
+          imgSrc: widget.options.imgSrc ??
+              'https://mediasfu.com/images/logo192.png',
+          updateIsLoadingModalVisible: updateIsLoadingModalVisible,
+          updateValidated: updateValidated,
+          updateApiUserName: updateApiUserName,
+          updateApiToken: updateApiToken,
+          updateLink: updateLink,
+          updateRoomName: updateRoomName,
+          updateMember: updateMember,
+          showAlert: showAlert,
+          connectSocket: connectSocket,
+          updateSocket: updateSocket,
+        ),
+        credentials: widget.options.credentials ??
+            Credentials(apiUserName: '', apiKey: ''),
+        customBuilder: widget.options.preJoinPageWidget);
   }
 
   Widget _buildRoomInterface() {
@@ -4491,15 +5287,16 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
       valueListenable: isMenuModalVisible,
       builder: (context, isMenuModalVisible, child) {
         return MenuModal(
+            options: MenuModalOptions(
           backgroundColor: const Color.fromRGBO(181, 233, 229, 0.97),
           isVisible: isMenuModalVisible,
-          updateIsMenuModalVisible: updateIsMenuModalVisible,
           onClose: () => updateIsMenuModalVisible(false),
           customButtons: customMenuButtons,
           roomName: roomName.value,
           adminPasscode: adminPasscode.value,
           islevel: islevel.value,
-        );
+          eventType: eventType.value,
+        ));
       },
     );
   }
@@ -4512,17 +5309,16 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
           valueListenable: recordUIChanged,
           builder: (context, recordUIChanged, child) {
             return RecordingModal(
-              backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
-              isRecordingModalVisible: isRecordingModalVisible,
-              onClose: () {
-                updateIsRecordingModalVisible(false);
-              },
-              startRecording: startRecording,
-              confirmRecording: confirmRecording,
-              parameters: {
-                ...getAllParams(),
-                ...mediaSFUFunctions(),
-              },
+              options: RecordingModalOptions(
+                backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
+                isRecordingModalVisible: isRecordingModalVisible,
+                onClose: () {
+                  updateIsRecordingModalVisible(false);
+                },
+                startRecording: startRecording,
+                confirmRecording: confirmRecording,
+                parameters: mediasfuParameters,
+              ),
             );
           },
         );
@@ -4534,26 +5330,24 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
     return ValueListenableBuilder<bool>(
       valueListenable: isRequestsModalVisible,
       builder: (context, isRequestsVisible, child) {
-        return ValueListenableBuilder<List<dynamic>>(
+        return ValueListenableBuilder<List<Request>>(
           valueListenable: filteredRequestList,
           builder: (context, filteredRequestList, child) {
             return RequestsModal(
-              backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
-              isRequestsModalVisible: isRequestsVisible,
-              onRequestClose: () {
-                updateIsRequestsModalVisible(false);
-              },
-              requestCounter: requestCounter.value,
-              onRequestFilterChange: onRequestFilterChange,
-              updateRequestList: updateRequestList,
-              requestList: filteredRequestList,
-              roomName: roomName.value,
-              socket: socket.value,
-              parameters: {
-                'updateRequestCounter': updateRequestCounter,
-                'updateRequestFilter': updateRequestFilter,
-                'updateRequestList': updateRequestList,
-              },
+              options: RequestsModalOptions(
+                backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
+                isRequestsModalVisible: isRequestsVisible,
+                onRequestClose: () {
+                  updateIsRequestsModalVisible(false);
+                },
+                requestCounter: requestCounter.value,
+                onRequestFilterChange: onRequestFilterChange,
+                updateRequestList: updateRequestList,
+                requestList: filteredRequestList,
+                roomName: roomName.value,
+                socket: socket.value,
+                parameters: mediasfuParameters,
+              ),
             );
           },
         );
@@ -4565,26 +5359,24 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
     return ValueListenableBuilder<bool>(
       valueListenable: isWaitingModalVisible,
       builder: (context, isWaitingModalVisible, child) {
-        return ValueListenableBuilder<List<dynamic>>(
+        return ValueListenableBuilder<List<WaitingRoomParticipant>>(
           valueListenable: filteredWaitingRoomList,
           builder: (context, filteredWaitingRoomList, child) {
             return WaitingRoomModal(
-              backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
-              isWaitingModalVisible: isWaitingModalVisible,
-              onWaitingRoomClose: () {
-                updateIsWaitingModalVisible(false);
-              },
-              waitingRoomCounter: waitingRoomCounter.value,
-              onWaitingRoomFilterChange: onWaitingRoomFilterChange,
-              waitingRoomList: filteredWaitingRoomList,
-              updateWaitingList: updateWaitingRoomList,
-              roomName: roomName.value,
-              socket: socket.value,
-              parameters: {
-                'updateWaitingRoomCounter': updateWaitingRoomCounter,
-                'updateWaitingRoomFilter': updateWaitingRoomFilter,
-                'updateWaitingRoomList': updateWaitingRoomList,
-              },
+              options: WaitingRoomModalOptions(
+                backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
+                isWaitingModalVisible: isWaitingModalVisible,
+                onWaitingRoomClose: () {
+                  updateIsWaitingModalVisible(false);
+                },
+                waitingRoomCounter: waitingRoomCounter.value,
+                onWaitingRoomFilterChange: onWaitingRoomFilterChange,
+                waitingRoomList: filteredWaitingRoomList,
+                updateWaitingList: updateWaitingRoomList,
+                roomName: roomName.value,
+                socket: socket.value,
+                parameters: mediasfuParameters,
+              ),
             );
           },
         );
@@ -4597,16 +5389,14 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
       valueListenable: isDisplaySettingsModalVisible,
       builder: (context, isDisplaySettingsVisible, child) {
         return DisplaySettingsModal(
+            options: DisplaySettingsModalOptions(
           backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
-          isDisplaySettingsModalVisible: isDisplaySettingsVisible,
-          onDisplaySettingsClose: () {
+          isVisible: isDisplaySettingsVisible,
+          onClose: () {
             updateIsDisplaySettingsModalVisible(false);
           },
-          parameters: {
-            ...getAllParams(),
-            ...mediaSFUFunctions(),
-          },
-        );
+          parameters: mediasfuParameters,
+        ));
       },
     );
   }
@@ -4616,16 +5406,25 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
       valueListenable: isSettingsModalVisible,
       builder: (context, isSettingsVisible, child) {
         return EventSettingsModal(
+            options: EventSettingsModalOptions(
           backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
-          isEventSettingsModalVisible: isSettingsVisible,
-          onEventSettingsClose: () {
+          isVisible: isSettingsVisible,
+          updateIsSettingsModalVisible: updateIsSettingsModalVisible,
+          onClose: () {
             updateIsSettingsModalVisible(false);
           },
-          parameters: {
-            ...getAllParams(),
-            ...mediaSFUFunctions(),
-          },
-        );
+          audioSetting: audioSetting.value,
+          videoSetting: videoSetting.value,
+          screenshareSetting: screenshareSetting.value,
+          chatSetting: chatSetting.value,
+          updateAudioSetting: updateAudioSetting,
+          updateVideoSetting: updateVideoSetting,
+          updateScreenshareSetting: updateScreenshareSetting,
+          updateChatSetting: updateChatSetting,
+          roomName: roomName.value,
+          socket: socket.value,
+          showAlert: showAlert,
+        ));
       },
     );
   }
@@ -4635,24 +5434,21 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
       valueListenable: isCoHostModalVisible,
       builder: (context, isCoHostVisible, child) {
         return CoHostModal(
-          isCoHostModalVisible: isCoHostVisible,
-          onCoHostClose: () {
-            updateIsCoHostModalVisible(false);
-          },
-          currentCohost: coHost.value,
-          participants: participants.value,
-          coHostResponsibility: coHostResponsibility.value,
-          parameters: {
-            'updateCoHost': updateCoHost,
-            'updateCoHostResponsibility': updateCoHostResponsibility,
-            'updateIsCoHostModalVisible': updateIsCoHostModalVisible,
-            'showAlert': showAlert,
-            'coHost': coHost.value,
-            'coHostResponsibility': coHostResponsibility.value,
-            'roomName': roomName.value,
-            'member': member.value,
-            'socket': socket.value,
-          },
+          options: CoHostModalOptions(
+            isCoHostModalVisible: isCoHostVisible,
+            onCoHostClose: () {
+              updateIsCoHostModalVisible(false);
+            },
+            updateIsCoHostModalVisible: updateIsCoHostModalVisible,
+            currentCohost: coHost.value,
+            participants: participants.value,
+            coHostResponsibility: coHostResponsibility.value,
+            roomName: roomName.value,
+            showAlert: showAlert,
+            updateCoHostResponsibility: updateCoHostResponsibility,
+            updateCoHost: updateCoHost,
+            socket: socket.value,
+          ),
         );
       },
     );
@@ -4666,32 +5462,16 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
           valueListenable: filteredParticipants,
           builder: (context, filteredParticipants, child) {
             return ParticipantsModal(
-              backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
-              isParticipantsModalVisible: isParticipantsVisible,
-              onParticipantsClose: () {
-                updateIsParticipantsModalVisible(false);
-              },
-              participantsCounter: participantsCounter.value,
-              onParticipantsFilterChange: onParticipantsFilterChange,
-              parameters: {
-                'updateParticipants': updateParticipants,
-                'updateIsParticipantsModalVisible':
-                    updateIsParticipantsModalVisible,
-                'updateDirectMessageDetails': updateDirectMessageDetails,
-                'updateStartDirectMessage': updateStartDirectMessage,
-                'updateIsMessagesModalVisible': updateIsMessagesModalVisible,
-                'showAlert': showAlert,
-                'participants': filteredParticipants,
-                'roomName': roomName.value,
-                'islevel': islevel.value,
-                'member': member.value,
-                'coHostResponsibility': coHostResponsibility.value,
-                'coHost': coHost.value,
-                'eventType': eventType.value,
-                'startDirectMessage': startDirectMessage.value,
-                'directMessageDetails': directMessageDetails.value,
-                'socket': socket.value,
-              },
+              options: ParticipantsModalOptions(
+                backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
+                isParticipantsModalVisible: isParticipantsVisible,
+                onParticipantsClose: () {
+                  updateIsParticipantsModalVisible(false);
+                },
+                participantsCounter: participantsCounter.value,
+                onParticipantsFilterChange: onParticipantsFilterChange,
+                parameters: mediasfuParameters,
+              ),
             );
           },
         );
@@ -4703,38 +5483,34 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
     return ValueListenableBuilder<bool>(
       valueListenable: isMessagesModalVisible,
       builder: (context, isMessagesVisible, child) {
-        return ValueListenableBuilder<List<dynamic>>(
+        return ValueListenableBuilder<List<Message>>(
           valueListenable: messages,
           builder: (context, messages, child) {
             return MessagesModal(
-              backgroundColor: eventType.value == 'webinar' ||
-                      eventType.value == 'conference'
-                  ? const Color(0xFFF5F5F5)
-                  : const Color.fromRGBO(255, 255, 255, 0.25),
-              isMessagesModalVisible: isMessagesVisible,
-              onMessagesClose: () {
-                updateIsMessagesModalVisible(false);
-              },
-              messages: messages,
-              parameters: {
-                'updateIsMessagesModalVisible': updateIsMessagesModalVisible,
-                'participantsAll': participantsAll.value,
-                'youAreHost': youAreHost.value,
-                'eventType': eventType.value,
-                'chatSetting': chatSetting.value,
-                'member': member.value,
-                'islevel': islevel.value,
-                'coHostResponsibility': coHostResponsibility.value,
-                'coHost': coHost.value,
-                'showAlert': showAlert,
-                'startDirectMessage': startDirectMessage.value,
-                'updateStartDirectMessage': updateStartDirectMessage,
-                'directMessageDetails': directMessageDetails.value,
-                'updateDirectMessageDetails': updateDirectMessageDetails,
-                'socket': socket.value,
-                'roomName': roomName.value,
-                'youAreCoHost': youAreCoHost.value
-              },
+              options: MessagesModalOptions(
+                backgroundColor: eventType.value == EventType.webinar ||
+                        eventType.value == EventType.conference
+                    ? const Color(0xFFF5F5F5)
+                    : const Color.fromRGBO(255, 255, 255, 0.25),
+                isMessagesModalVisible: isMessagesVisible,
+                onMessagesClose: () {
+                  updateIsMessagesModalVisible(false);
+                },
+                messages: messages,
+                eventType: eventType.value,
+                member: member.value,
+                islevel: islevel.value,
+                coHostResponsibility: coHostResponsibility.value,
+                coHost: coHost.value,
+                startDirectMessage: startDirectMessage.value,
+                directMessageDetails: directMessageDetails.value,
+                updateStartDirectMessage: updateStartDirectMessage,
+                updateDirectMessageDetails: updateDirectMessageDetails,
+                showAlert: showAlert,
+                roomName: roomName.value,
+                socket: socket.value,
+                chatSetting: chatSetting.value,
+              ),
             );
           },
         );
@@ -4747,28 +5523,14 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
       valueListenable: isMediaSettingsModalVisible,
       builder: (context, isMediaSettingsVisible, child) {
         return MediaSettingsModal(
-          backgroundColor: const Color.fromARGB(247, 210, 219, 218),
-          isMediaSettingsModalVisible: isMediaSettingsVisible,
-          onMediaSettingsClose: () {
-            updateIsMediaSettingsModalVisible(false);
-          },
-          parameters: {
-            ...getAllParams(),
-            ...mediaSFUFunctions(),
-            'onWeb': kIsWeb,
-            'device': device.value,
-            'socket': socket.value,
-            'showAlert': showAlert,
-            'checkPermission': checkPermission,
-            'streamSuccessVideo': streamSuccessVideo,
-            'hasCameraPermission': hasCameraPermission.value,
-            'requestPermissionCamera': requestPermissionCamera,
-            'checkMediaPermission': !kIsWeb,
-            'streamSuccessAudioSwitch': streamSuccessAudioSwitch,
-            'hasAudioPermission': hasAudioPermission.value,
-            'requestPermissionAudio': requestPermissionAudio,
-            'streamSuccessAudio': streamSuccessAudio,
-          },
+          options: MediaSettingsModalOptions(
+            backgroundColor: const Color.fromARGB(247, 210, 219, 218),
+            isVisible: isMediaSettingsVisible,
+            onClose: () {
+              updateIsMediaSettingsModalVisible(false);
+            },
+            parameters: mediasfuParameters,
+          ),
         );
       },
     );
@@ -4779,19 +5541,17 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
       valueListenable: isConfirmExitModalVisible,
       builder: (context, isConfirmExitVisible, child) {
         return ConfirmExitModal(
-          isConfirmExitModalVisible: isConfirmExitVisible,
-          onConfirmExitClose: () {
-            updateIsConfirmExitModalVisible(false);
-          },
-          parameters: {
-            'islevel': islevel.value,
-            'updateIsConfirmExitModalVisible': updateIsConfirmExitModalVisible,
-            'isConfirmExitModalVisible': isConfirmExitModalVisible,
-            'showAlert': showAlert,
-            'roomName': roomName.value,
-            'member': member.value,
-            'socket': socket.value,
-          },
+          options: ConfirmExitModalOptions(
+            backgroundColor: const Color.fromRGBO(181, 233, 229, 0.97),
+            isVisible: isConfirmExitVisible,
+            onClose: () {
+              updateIsConfirmExitModalVisible(false);
+            },
+            islevel: islevel.value,
+            roomName: roomName.value,
+            member: member.value,
+            socket: socket.value,
+          ),
         );
       },
     );
@@ -4802,20 +5562,16 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
       valueListenable: isConfirmHereModalVisible,
       builder: (context, isConfirmHereModalVisible, child) {
         return ConfirmHereModal(
-          backgroundColor: const Color.fromRGBO(181, 233, 229, 0.97),
-          isConfirmHereModalVisible: isConfirmHereModalVisible,
-          // updateIsConfirmHereModalVisible: updateIsConfirmHereModalVisible,
-          onConfirmHereClose: () {
-            updateIsConfirmHereModalVisible(false);
-          },
-          parameters: {
-            'updateIsConfirmHereModalVisible': updateIsConfirmHereModalVisible,
-            'isConfirmHereModalVisible': isConfirmHereModalVisible,
-            'showAlert': showAlert,
-            'roomName': roomName.value,
-            'socket': socket.value,
-            'member': member.value,
-          },
+          options: ConfirmHereModalOptions(
+            backgroundColor: const Color.fromRGBO(181, 233, 229, 0.97),
+            isConfirmHereModalVisible: isConfirmHereModalVisible,
+            onConfirmHereClose: () {
+              updateIsConfirmHereModalVisible(false);
+            },
+            roomName: roomName.value,
+            socket: socket.value,
+            member: member.value,
+          ),
         );
       },
     );
@@ -4826,17 +5582,16 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
       valueListenable: isShareEventModalVisible,
       builder: (context, isShareEventModalVisible, child) {
         return ShareEventModal(
-          isShareEventModalVisible: isShareEventModalVisible,
-          // updateIsShareEventModalVisible: updateIsShareEventModalVisible,
-          onShareEventClose: () {
-            updateIsShareEventModalVisible(false);
-          },
-          onCopyMeetingId: () {},
-          onCopyMeetingPasscode: () {},
-          onCopyShareLink: () {},
-          roomName: roomName.value,
-          islevel: islevel.value,
-          adminPasscode: adminPasscode.value,
+          options: ShareEventModalOptions(
+            isShareEventModalVisible: isShareEventModalVisible,
+            // updateIsShareEventModalVisible: updateIsShareEventModalVisible,
+            onShareEventClose: () {
+              updateIsShareEventModalVisible(false);
+            },
+            roomName: roomName.value,
+            islevel: islevel.value,
+            adminPasscode: adminPasscode.value,
+          ),
         );
       },
     );
@@ -4849,20 +5604,27 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
           if (!isPollVisible) {
             return const SizedBox.shrink();
           }
-          return ValueListenableBuilder<List<dynamic>>(
+          return ValueListenableBuilder<List<Poll>>(
             valueListenable: polls,
             builder: (context, polls, child) {
               return PollModal(
-                isPollModalVisible: isPollVisible,
-                onClose: () {
-                  updateIsPollModalVisible(false);
-                },
-                parameters: {
-                  ...getAllParams(),
-                  ...mediaSFUFunctions(),
-                  'socket': socket.value,
-                  'showAlert': showAlert,
-                },
+                options: PollModalOptions(
+                  isPollModalVisible: isPollVisible,
+                  onClose: () {
+                    updateIsPollModalVisible(false);
+                  },
+                  member: member.value,
+                  islevel: islevel.value,
+                  polls: polls,
+                  poll: poll.value,
+                  socket: socket.value,
+                  roomName: roomName.value,
+                  showAlert: showAlert,
+                  updateIsPollModalVisible: updateIsPollModalVisible,
+                  handleCreatePoll: handleCreatePoll,
+                  handleEndPoll: handleEndPoll,
+                  handleVotePoll: handleVotePoll,
+                ),
               );
             },
           );
@@ -4884,15 +5646,14 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
               valueListenable: filteredParticipants,
               builder: (context, filteredParticipants, child) {
                 return BreakoutRoomsModal(
-                  backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
-                  isVisible: isBreakoutRoomsVisible,
-                  onBreakoutRoomsClose: () {
-                    updateIsBreakoutRoomsModalVisible(false);
-                  },
-                  parameters: {
-                    ...getAllParams(),
-                    ...mediaSFUFunctions(),
-                  },
+                  options: BreakoutRoomsModalOptions(
+                    backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
+                    isVisible: isBreakoutRoomsVisible,
+                    onBreakoutRoomsClose: () {
+                      updateIsBreakoutRoomsModalVisible(false);
+                    },
+                    parameters: mediasfuParameters,
+                  ),
                 );
               },
             );
@@ -4910,14 +5671,16 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
           return const SizedBox(); // or return null or empty container based on your requirement
         }
         return AlertComponent(
-          visible: isVisible,
-          message: alertMessage.value,
-          type: alertType.value,
-          duration: alertDuration.value,
-          onHide: () {
-            updateAlertVisible(false);
-          },
-          textColor: const Color(0xFFFFFFFF),
+          options: AlertComponentOptions(
+            visible: isVisible,
+            message: alertMessage.value,
+            type: alertType.value,
+            duration: alertDuration.value,
+            onHide: () {
+              updateAlertVisible(false);
+            },
+            textColor: const Color(0xFFFFFFFF),
+          ),
         );
       },
     );
@@ -4928,9 +5691,11 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
       valueListenable: isLoadingModalVisible,
       builder: (context, isLoadingModalVisible, child) {
         return LoadingModal(
-          isVisible: isLoadingModalVisible,
-          backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
-          displayColor: Colors.black,
+          options: LoadingModalOptions(
+            isVisible: isLoadingModalVisible,
+            backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
+            displayColor: Colors.black,
+          ),
         );
       },
     );

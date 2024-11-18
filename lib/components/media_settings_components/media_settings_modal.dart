@@ -1,63 +1,78 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
-import '../../methods/utils/get_modal_position.dart' show getModalPosition;
-import '../../methods/stream_methods/switch_video.dart' show switchVideo;
-import '../../methods/stream_methods/switch_audio.dart' show switchAudio;
-import '../../methods/stream_methods/switch_video_alt.dart' show switchVideoAlt;
+import '../../methods/utils/get_modal_position.dart'
+    show getModalPosition, GetModalPositionOptions;
+import '../../methods/stream_methods/switch_video.dart'
+    show
+        switchVideo,
+        SwitchVideoOptions,
+        SwitchVideoParameters,
+        SwitchVideoType;
+import '../../methods/stream_methods/switch_audio.dart'
+    show
+        switchAudio,
+        SwitchAudioOptions,
+        SwitchAudioParameters,
+        SwitchAudioType;
+import '../../methods/stream_methods/switch_video_alt.dart'
+    show
+        switchVideoAlt,
+        SwitchVideoAltOptions,
+        SwitchVideoAltParameters,
+        SwitchVideoAltType;
 
-/// MediaSettingsModal - A modal widget for adjusting media settings.
+/// `MediaSettingsModalParameters` - Abstract class defining required parameters
+/// for configuring media settings.
 ///
-/// This widget provides options to select cameras and microphones, and switch between them.
+/// ### Abstract Getters:
+/// - `userDefaultVideoInputDevice`: Default video input device ID.
+/// - `userDefaultAudioInputDevice`: Default audio input device ID.
+/// - `videoInputs`: List of available video input devices.
+/// - `audioInputs`: List of available audio input devices.
+/// - `isMediaSettingsModalVisible`: Boolean for media settings modal visibility.
+/// - `updateIsMediaSettingsModalVisible`: Function to update visibility.
 ///
-/// Whether the media settings modal is visible.
-/// final bool isMediaSettingsModalVisible;
-///
-/// A callback function called when the media settings modal is closed.
-/// final Function() onMediaSettingsClose;
-///
-/// The function to switch cameras when the switch camera button is pressed.
-/// final SwitchVideoAlt switchCameraOnPress;
-///
-/// The function to switch video preferences.
-/// final Future<void> Function({required String videoPreference, required Map<String, dynamic> parameters}) switchVideoOnPress;
-///
-/// The function to switch audio preferences.
-/// final void Function({required String audioPreference, required Map<String, dynamic> parameters}) switchAudioOnPress;
-///
-/// The parameters associated with the media settings modal.
-/// final Map<String, dynamic> parameters;
-///
-/// The position of the modal.
-/// final String position;
-///
-/// The background color of the modal.
-/// final Color backgroundColor;
+/// ### Example Usage:
+/// ```dart
+/// class CustomMediaSettingsModalParameters implements MediaSettingsModalParameters {
+///   @override
+///   String get userDefaultVideoInputDevice => 'default_video';
+///   @override
+///   String get userDefaultAudioInputDevice => 'default_audio';
+///   // ... other implementations
+/// }
+/// ```
+abstract class MediaSettingsModalParameters
+    implements
+        SwitchVideoParameters,
+        SwitchAudioParameters,
+        SwitchVideoAltParameters {
+  String get userDefaultVideoInputDevice;
+  String get userDefaultAudioInputDevice;
+  List<MediaDeviceInfo> get videoInputs;
+  List<MediaDeviceInfo> get audioInputs;
+  bool get isMediaSettingsModalVisible;
+  void Function(bool) get updateIsMediaSettingsModalVisible;
 
-typedef SwitchVideoAlt = Future<void> Function({
-  required Map<String, dynamic> parameters,
-});
+  MediaSettingsModalParameters Function() get getUpdatedAllParams;
 
-typedef GetUpdatedAllParams = Map<String, dynamic> Function();
+  // dynamic operator [](String key);
+}
 
-class MediaSettingsModal extends StatelessWidget {
-  final bool isMediaSettingsModalVisible;
-  final Function() onMediaSettingsClose;
-  final SwitchVideoAlt switchCameraOnPress; // Adjusted type
-  final Future<void> Function(
-          {required String videoPreference,
-          required Map<String, dynamic> parameters})
-      switchVideoOnPress; // Adjusted type
-  final void Function(
-      {required String audioPreference,
-      required Map<String, dynamic> parameters}) switchAudioOnPress;
-  final Map<String, dynamic> parameters;
+/// MediaSettingsModalOptions - Defines configuration options for the `MediaSettingsModal`.
+class MediaSettingsModalOptions {
+  final bool isVisible;
+  final VoidCallback onClose;
+  final SwitchVideoAltType switchCameraOnPress;
+  final SwitchVideoType switchVideoOnPress;
+  final SwitchAudioType switchAudioOnPress;
+  final MediaSettingsModalParameters parameters;
   final String position;
   final Color backgroundColor;
 
-  const MediaSettingsModal({
-    super.key,
-    required this.isMediaSettingsModalVisible,
-    required this.onMediaSettingsClose,
+  MediaSettingsModalOptions({
+    required this.isVisible,
+    required this.onClose,
     this.switchCameraOnPress = switchVideoAlt,
     this.switchVideoOnPress = switchVideo,
     this.switchAudioOnPress = switchAudio,
@@ -65,63 +80,142 @@ class MediaSettingsModal extends StatelessWidget {
     this.position = 'topRight',
     this.backgroundColor = Colors.blue,
   });
+}
+
+typedef MediaSettingsModalType = MediaSettingsModal Function({
+  required MediaSettingsModalOptions options,
+});
+
+/// `MediaSettingsModalOptions` - Configuration options for the `MediaSettingsModal`.
+/// - `isVisible`: Boolean to control modal visibility.
+/// - `onClose`: Callback function to handle modal close.
+/// - `switchCameraOnPress`: Function to handle camera switch action.
+/// - `switchVideoOnPress`: Function to handle video switch action.
+/// - `switchAudioOnPress`: Function to handle audio switch action.
+/// - `parameters`: Instance of `MediaSettingsModalParameters`.
+/// - `position`: Modal position on the screen (e.g., 'topRight').
+/// - `backgroundColor`: Background color of the modal.
+///
+/// ### Example Usage:
+/// ```dart
+/// MediaSettingsModal(
+///   options: MediaSettingsModalOptions(
+///     isVisible: true,
+///     onClose: () => print("Modal closed"),
+///     parameters: CustomMediaSettingsModalParameters(),
+///     backgroundColor: Colors.blue,
+///   ),
+/// );
+/// ```
+
+/// `MediaSettingsModal` - A modal widget to configure media settings.
+///
+/// This widget provides dropdowns to select video and audio devices, and a button to switch the camera.
+///
+/// ### Parameters:
+/// - `options` (MediaSettingsModalOptions): Configuration options for the modal.
+///
+/// ### Widget Structure:
+/// - Header with a title and close icon.
+/// - Dropdowns for selecting camera and microphone devices.
+/// - Button to switch the camera.
+///
+/// ### Customization:
+/// - Use the `MediaSettingsModalOptions` to control appearance and behavior.
+/// - Options include custom background color, modal position, and device selection handlers.
+///
+/// ### Example Usage:
+/// ```dart
+/// MediaSettingsModal(
+///   options: MediaSettingsModalOptions(
+///     isVisible: true,
+///     onClose: () => print("Modal closed"),
+///     parameters: CustomMediaSettingsModalParameters(),
+///   ),
+/// );
+/// ```
+///
+class MediaSettingsModal extends StatelessWidget {
+  final MediaSettingsModalOptions options;
+
+  const MediaSettingsModal({super.key, required this.options});
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    var modalWidth = 0.80 * screenWidth;
-    if (modalWidth > 400) {
-      modalWidth = 400;
-    }
-    final modalHeight = MediaQuery.of(context).size.height * 0.65;
+    final double modalWidth = screenWidth * 0.8 > 400 ? 400 : screenWidth * 0.8;
+    final double modalHeight = MediaQuery.of(context).size.height * 0.65;
 
-    GetUpdatedAllParams getUpdatedAllParams = parameters['getUpdatedAllParams'];
+    final MediaSettingsModalParameters parameters =
+        options.parameters.getUpdatedAllParams();
 
-    final List<MediaDeviceInfo> videoInputs =
-        getUpdatedAllParams()['videoInputs'];
-    final List<MediaDeviceInfo> audioInputs =
-        getUpdatedAllParams()['audioInputs'];
-    String? selectedVideoInput =
-        getUpdatedAllParams()['userDefaultVideoInputDevice'];
-    String? selectedAudioInput =
-        getUpdatedAllParams()['userDefaultAudioInputDevice'];
+    final List<MediaDeviceInfo> videoInputs = parameters.videoInputs;
+    final List<MediaDeviceInfo> audioInputs = parameters.audioInputs;
+    String? selectedVideoInput = parameters.userDefaultVideoInputDevice;
+    String? selectedAudioInput = parameters.userDefaultAudioInputDevice;
 
-    if ((selectedVideoInput == null || selectedVideoInput.isEmpty) &&
-        videoInputs.isNotEmpty) {
+    if ((selectedVideoInput.isEmpty) && videoInputs.isNotEmpty) {
       selectedVideoInput = videoInputs[0].deviceId;
-    }
-    if ((selectedAudioInput == null || selectedAudioInput.isEmpty) &&
-        audioInputs.isNotEmpty) {
-      selectedAudioInput = audioInputs[0].deviceId;
+    } else {
+      // if selectedVideoInput is not in the list of videoInputs, set it to the first videoInput
+      if (!videoInputs
+          .any((element) => element.deviceId == selectedVideoInput)) {
+        selectedVideoInput = videoInputs.isNotEmpty
+            ? videoInputs[0].deviceId
+            : 'No Video Devices';
+      }
     }
 
-    handleSwitchCamera() {
-      // Handle switching camera logic
-      switchCameraOnPress(parameters: parameters);
+    if ((selectedAudioInput.isEmpty) && audioInputs.isNotEmpty) {
+      selectedAudioInput = audioInputs[0].deviceId;
+    } else {
+      // if selectedAudioInput is not in the list of audioInputs, set it to the first audioInput
+      if (!audioInputs
+          .any((element) => element.deviceId == selectedAudioInput)) {
+        selectedAudioInput = audioInputs.isNotEmpty
+            ? audioInputs[0].deviceId
+            : 'No Audio Devices';
+      }
+    }
+
+    void handleSwitchCamera() {
+      final optionsSwitch = SwitchVideoAltOptions(
+        parameters: parameters,
+      );
+      options.switchCameraOnPress(
+        optionsSwitch,
+      );
     }
 
     return Visibility(
-      visible: isMediaSettingsModalVisible,
+      visible: options.isVisible,
       child: Stack(
         children: [
           Positioned(
-            top: getModalPosition(
-                position, context, modalWidth, modalHeight)['top'],
-            right: getModalPosition(
-                position, context, modalWidth, modalHeight)['right'],
+            top: getModalPosition(GetModalPositionOptions(
+              position: options.position,
+              modalWidth: modalWidth,
+              modalHeight: modalHeight,
+              context: context,
+            ))['top'],
+            right: getModalPosition(GetModalPositionOptions(
+              position: options.position,
+              modalWidth: modalWidth,
+              modalHeight: modalHeight,
+              context: context,
+            ))['right'],
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Container(
                 padding: const EdgeInsets.all(10),
-                color: backgroundColor,
-                width: modalWidth, // Adjust the width as needed
+                color: options.backgroundColor,
+                width: modalWidth,
                 height: modalHeight,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      mainAxisSize: MainAxisSize.max,
                       children: [
                         const Text(
                           'Media Settings',
@@ -133,7 +227,7 @@ class MediaSettingsModal extends StatelessWidget {
                         ),
                         IconButton(
                           icon: const Icon(Icons.close),
-                          onPressed: () => onMediaSettingsClose(),
+                          onPressed: options.onClose,
                         ),
                       ],
                     ),
@@ -152,16 +246,17 @@ class MediaSettingsModal extends StatelessWidget {
                           ),
                         ),
                         SingleChildScrollView(
-                          // Wrap DropdownButton with SingleChildScrollView
                           scrollDirection: Axis.horizontal,
                           child: DropdownButton<String>(
                             value: selectedVideoInput,
                             onChanged: (String? newValue) async {
-                              await switchVideoOnPress(
+                              final optionsSwitch = SwitchVideoOptions(
                                 videoPreference: newValue!,
                                 parameters: parameters,
                               );
-                              selectedVideoInput = newValue;
+                              await options.switchVideoOnPress(
+                                optionsSwitch,
+                              );
                             },
                             items: videoInputs
                                 .map<DropdownMenuItem<String>>((input) {
@@ -187,16 +282,17 @@ class MediaSettingsModal extends StatelessWidget {
                           ),
                         ),
                         SingleChildScrollView(
-                          // Wrap DropdownButton with SingleChildScrollView
                           scrollDirection: Axis.horizontal,
                           child: DropdownButton<String>(
                             value: selectedAudioInput,
                             onChanged: (String? newValue) {
-                              switchAudioOnPress(
+                              final optionsSwitch = SwitchAudioOptions(
                                 audioPreference: newValue!,
                                 parameters: parameters,
                               );
-                              selectedAudioInput = newValue;
+                              options.switchAudioOnPress(
+                                optionsSwitch,
+                              );
                             },
                             items: audioInputs
                                 .map<DropdownMenuItem<String>>((input) {
@@ -211,7 +307,7 @@ class MediaSettingsModal extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
                     ElevatedButton(
-                      onPressed: () => handleSwitchCamera(),
+                      onPressed: handleSwitchCamera,
                       child: const Text('Switch Camera'),
                     ),
                   ],

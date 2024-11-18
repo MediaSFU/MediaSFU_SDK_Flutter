@@ -1,138 +1,238 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import '../../types/types.dart'
+    show
+        OnScreenChangesType,
+        StopShareScreenType,
+        DisconnectSendTransportVideoType,
+        DisconnectSendTransportAudioType,
+        DisconnectSendTransportScreenType,
+        OnScreenChangesParameters,
+        StopShareScreenParameters,
+        DisconnectSendTransportVideoParameters,
+        DisconnectSendTransportAudioParameters,
+        DisconnectSendTransportScreenParameters,
+        DisconnectSendTransportVideoOptions,
+        DisconnectSendTransportAudioOptions,
+        DisconnectSendTransportScreenOptions,
+        OnScreenChangesOptions,
+        StopShareScreenOptions;
 
-/// Controls the media of the participant based on the request from the host/co-host.
+/// Defines parameters for controlling media host actions in a meeting or room.
+abstract class ControlMediaHostParameters
+    implements
+        OnScreenChangesParameters,
+        StopShareScreenParameters,
+        DisconnectSendTransportVideoParameters,
+        DisconnectSendTransportAudioParameters,
+        DisconnectSendTransportScreenParameters {
+  // Core properties as abstract getters
+  ValueChanged<bool> get updateAdminRestrictSetting;
+  MediaStream? get localStream;
+  ValueChanged<MediaStream?> get updateLocalStream;
+  ValueChanged<bool> get updateAudioAlreadyOn;
+  MediaStream? get localStreamScreen;
+  ValueChanged<MediaStream?> get updateLocalStreamScreen;
+  MediaStream? get localStreamVideo;
+  ValueChanged<MediaStream?> get updateLocalStreamVideo;
+  ValueChanged<bool> get updateScreenAlreadyOn;
+  ValueChanged<bool> get updateVideoAlreadyOn;
+  ValueChanged<bool> get updateChatAlreadyOn;
+
+  // MediaSFU functions as abstract getters
+  OnScreenChangesType get onScreenChanges;
+  StopShareScreenType get stopShareScreen;
+  DisconnectSendTransportVideoType get disconnectSendTransportVideo;
+  DisconnectSendTransportAudioType get disconnectSendTransportAudio;
+  DisconnectSendTransportScreenType get disconnectSendTransportScreen;
+
+  // Method to retrieve updated parameters as an abstract getter
+  ControlMediaHostParameters Function() get getUpdatedAllParams;
+
+  // Allows dynamic property access if needed
+  // dynamic operator [](String key);
+}
+
+/// Defines the options needed for controlling media actions on the host side.
+class ControlMediaHostOptions {
+  final String type; // 'audio', 'video', 'screenshare', 'chat', or 'all'
+  final ControlMediaHostParameters parameters;
+
+  ControlMediaHostOptions({
+    required this.type,
+    required this.parameters,
+  });
+}
+
+typedef ControlMediaHostType = Future<void> Function(
+    ControlMediaHostOptions options);
+
+/// Controls media actions based on the specified [ControlMediaHostOptions].
 ///
-/// The [type] parameter specifies the type of media to control, such as 'audio', 'video', 'screenshare', 'chat', or 'all'.
-/// The [parameters] parameter is a map that contains various callback functions and values used for controlling the media host.
+/// This function manages media control actions (such as disabling audio, video, or screenshare)
+/// for the host in a meeting or room. It performs actions based on the provided `type` and
+/// updates the relevant media states through callbacks in `ControlMediaHostParameters`.
 ///
-/// The callback functions include:
-/// - [onScreenChanges]: A function that is called when the screen changes.
-/// - [stopShareScreen]: A function that is called to stop sharing the screen.
-/// - [disconnectSendTransportVideo]: A function that is called to disconnect the video send transport.
-/// - [disconnectSendTransportAudio]: A function that is called to disconnect the audio send transport.
-/// - [disconnectSendTransportScreen]: A function that is called to disconnect the screen send transport.
+/// - [options] defines the media action type and the parameters needed for the function:
+///   - `type`: Specifies the media type to control, which can be `'audio'`, `'video'`,
+///     `'screenshare'`, `'chat'`, or `'all'`.
+///   - `parameters`: Contains the callbacks and media streams to manage each media action,
+///     such as disconnecting transports, updating local streams, and stopping screenshare.
 ///
-/// The value change functions include:
-/// - [updateAudioAlreadyOn]: A function that is called to update the audio already on status.
-/// - [updateVideoAlreadyOn]: A function that is called to update the video already on status.
-/// - [updateScreenAlreadyOn]: A function that is called to update the screen already on status.
-/// - [updateChatAlreadyOn]: A function that is called to update the chat already on status.
-/// - [updateLocalStream]: A function that is called to update the local media stream.
-/// - [updateLocalStreamScreen]: A function that is called to update the local screen media stream.
-/// - [updateAdminRestrictSetting]: A function that is called to update the admin restrict setting.
+/// ### Function Actions
+/// - If `type` is `'audio'`, disables audio in the local stream and disconnects the audio transport.
+/// - If `type` is `'video'`, disables video in the local and video streams, and disconnects the video transport.
+/// - If `type` is `'screenshare'`, stops the screenshare stream and disconnects the screenshare transport.
+/// - If `type` is `'chat'`, updates the chat state to be inactive.
+/// - If `type` is `'all'`, performs all media actions: disables audio, video, and screenshare, and disconnects each transport.
 ///
-/// This function controls the media host based on the given [type] and [parameters].
-/// It performs various actions such as enabling/disabling audio/video tracks, disconnecting send transports,
-/// stopping screen sharing, and updating status variables.
-/// If the [type] is 'all', it performs all the actions mentioned above.
+/// ### Example Usage:
+/// ```dart
+/// final options = ControlMediaHostOptions(
+///   type: 'video',
+///   parameters: ControlMediaHostParameters(
+///     updateAdminRestrictSetting: (value) => print('Admin restriction set to: $value'),
+///     localStream: MediaStream(),
+///     updateLocalStream: (stream) => print('Local stream updated: $stream'),
+///     updateAudioAlreadyOn: (value) => print('Audio already on updated: $value'),
+///     localStreamScreen: MediaStream(),
+///     updateLocalStreamScreen: (stream) => print('Local screen stream updated: $stream'),
+///     localStreamVideo: MediaStream(),
+///     updateLocalStreamVideo: (stream) => print('Local video stream updated: $stream'),
+///     updateScreenAlreadyOn: (value) => print('Screen already on updated: $value'),
+///     updateVideoAlreadyOn: (value) => print('Video already on updated: $value'),
+///     updateChatAlreadyOn: (value) => print('Chat already on updated: $value'),
+///     onScreenChanges: (isOn) async => print('Screen changes: $isOn'),
+///     stopShareScreen: () async => print('Screenshare stopped'),
+///     disconnectSendTransportVideo: () async => print('Video transport disconnected'),
+///     disconnectSendTransportAudio: () async => print('Audio transport disconnected'),
+///     disconnectSendTransportScreen: () async => print('Screen transport disconnected'),
+///   ),
+/// );
 ///
-/// Throws an error if any error occurs during the control process.
+/// await controlMediaHost(options);
+/// ```
+///
+/// In this example:
+/// - The `type` is set to `'video'`, so the function disables video in the local stream
+///   and disconnects the video transport.
+/// - Callbacks are provided for each media action, printing updates to the console as
+///   the function progresses through the control actions.
 
-typedef OnScreenChanges = Future<void> Function(
-    {bool changed, required Map<String, dynamic> parameters});
-typedef StopShareScreen = Future<void> Function(
-    {required Map<String, dynamic> parameters});
-typedef DisconnectSendTransportVideo = Future<void> Function(
-    {required Map<String, dynamic> parameters});
-typedef DisconnectSendTransportAudio = Future<void> Function(
-    {required Map<String, dynamic> parameters});
-typedef DisconnectSendTransportScreen = Future<void> Function(
-    {required Map<String, dynamic> parameters});
+Future<void> controlMediaHost(ControlMediaHostOptions options) async {
+  final params = options.parameters.getUpdatedAllParams();
 
-typedef ValueChanged<T> = void Function(T value);
-
-void controlMediaHost({
-  required String type,
-  required Map<String, dynamic> parameters,
-}) async {
-  // mediasfu functions
-  final OnScreenChanges onScreenChanges = parameters['onScreenChanges'];
-  final StopShareScreen stopShareScreen = parameters['stopShareScreen'];
-  final DisconnectSendTransportVideo disconnectSendTransportVideo =
-      parameters['disconnectSendTransportVideo'];
-  final DisconnectSendTransportAudio disconnectSendTransportAudio =
-      parameters['disconnectSendTransportAudio'];
-  final DisconnectSendTransportScreen disconnectSendTransportScreen =
-      parameters['disconnectSendTransportScreen'];
-
-  final ValueChanged<bool> updateAudioAlreadyOn =
-      parameters['updateAudioAlreadyOn'];
-  final ValueChanged<bool> updateVideoAlreadyOn =
-      parameters['updateVideoAlreadyOn'];
-  final ValueChanged<bool> updateScreenAlreadyOn =
-      parameters['updateScreenAlreadyOn'];
-  final ValueChanged<bool> updateChatAlreadyOn =
-      parameters['updateChatAlreadyOn'];
-  final ValueChanged<MediaStream> updateLocalStream =
-      parameters['updateLocalStream'];
-  final ValueChanged<MediaStream> updateLocalStreamScreen =
-      parameters['updateLocalStreamScreen'];
-  final ValueChanged<bool> updateAdminRestrictSetting =
-      parameters['updateAdminRestrictSetting'];
-
-  bool adminRestrictSetting = true;
-  updateAdminRestrictSetting(adminRestrictSetting);
+  params.updateAdminRestrictSetting(true);
 
   try {
-    if (type == 'audio') {
-      parameters['localStream'].getAudioTracks()[0].enabled = false;
-      updateLocalStream(parameters['localStream']);
-      await disconnectSendTransportAudio(parameters: parameters);
-      updateAudioAlreadyOn(false);
-    } else if (type == 'video') {
-      parameters['localStream'].getVideoTracks()[0].enabled = false;
-      updateLocalStream(parameters['localStream']);
-      await disconnectSendTransportVideo(parameters: parameters);
-      updateVideoAlreadyOn(false);
-      await onScreenChanges(changed: true, parameters: parameters);
-    } else if (type == 'screenshare') {
-      parameters['localStreamScreen'].getVideoTracks()[0].enabled = false;
-      updateLocalStreamScreen(parameters['localStreamScreen']);
-      await disconnectSendTransportScreen(parameters: parameters);
-      await stopShareScreen(parameters: parameters);
-      updateScreenAlreadyOn(false);
-    } else if (type == 'chat') {
-      updateChatAlreadyOn(false);
-    } else if (type == 'all') {
-      try {
-        parameters['localStream'].getAudioTracks()[0].enabled = false;
-        updateLocalStream(parameters['localStream']);
-        await disconnectSendTransportAudio(parameters: parameters);
-        updateAudioAlreadyOn(false);
-      } catch (error) {
-        if (kDebugMode) {
-          print('Error controlling audio: $error');
-        }
-      }
+    switch (options.type) {
+      case 'audio':
+        params.localStream?.getAudioTracks().first.enabled = false;
+        params.updateLocalStream(params.localStream);
+        final optionsDisconnect = DisconnectSendTransportAudioOptions(
+          parameters: params,
+        );
+        await params.disconnectSendTransportAudio(optionsDisconnect);
+        params.updateAudioAlreadyOn(false);
+        break;
 
-      try {
-        parameters['localStreamScreen'].getVideoTracks()[0].enabled = false;
-        updateLocalStreamScreen(parameters['localStreamScreen']);
-        await disconnectSendTransportScreen(parameters: parameters);
-        await stopShareScreen(parameters: parameters);
-        updateScreenAlreadyOn(false);
-      } catch (error) {
-        if (kDebugMode) {
-          print('Error controlling screenshare: $error');
-        }
-      }
+      case 'video':
+        params.localStream?.getVideoTracks().first.enabled = false;
+        params.updateLocalStream(params.localStream);
+        final optionsDisconnect = DisconnectSendTransportVideoOptions(
+          parameters: params,
+        );
+        await params.disconnectSendTransportVideo(optionsDisconnect);
+        final optionsOnScreen = OnScreenChangesOptions(
+          changed: true,
+          parameters: params,
+        );
+        await params.onScreenChanges(optionsOnScreen);
+        params.updateVideoAlreadyOn(false);
 
-      try {
-        parameters['localStream'].getVideoTracks()[0].enabled = false;
-        updateLocalStream(parameters['localStream']);
-        await disconnectSendTransportVideo(parameters: parameters);
-        updateVideoAlreadyOn(false);
-        await onScreenChanges(changed: true, parameters: parameters);
-      } catch (error) {
-        if (kDebugMode) {
-          print('Error controlling video: $error');
+        params.localStreamVideo?.getVideoTracks().first.enabled = false;
+        params.updateLocalStreamVideo(params.localStreamVideo);
+        await params.disconnectSendTransportVideo(optionsDisconnect);
+        await params.onScreenChanges(optionsOnScreen);
+        params.updateVideoAlreadyOn(false);
+        break;
+
+      case 'screenshare':
+        params.localStreamScreen?.getVideoTracks().first.enabled = false;
+        params.updateLocalStreamScreen(params.localStreamScreen);
+        final optionsDisconnect = DisconnectSendTransportScreenOptions(
+          parameters: params,
+        );
+        await params.disconnectSendTransportScreen(optionsDisconnect);
+        final optionsStopShare = StopShareScreenOptions(
+          parameters: params,
+        );
+        await params.stopShareScreen(optionsStopShare);
+        params.updateScreenAlreadyOn(false);
+        break;
+
+      case 'chat':
+        params.updateChatAlreadyOn(false);
+        break;
+
+      case 'all':
+        try {
+          params.localStream?.getAudioTracks().first.enabled = false;
+          params.updateLocalStream(params.localStream);
+          final optionsDisconnect = DisconnectSendTransportAudioOptions(
+            parameters: params,
+          );
+          await params.disconnectSendTransportAudio(optionsDisconnect);
+          params.updateAudioAlreadyOn(false);
+        } catch (error) {
+          if (kDebugMode) print('Error controlling audio: $error');
         }
-      }
+
+        try {
+          params.localStreamScreen?.getVideoTracks().first.enabled = false;
+          params.updateLocalStreamScreen(params.localStreamScreen);
+          final optionsDisconnect = DisconnectSendTransportScreenOptions(
+            parameters: params,
+          );
+          await params.disconnectSendTransportScreen(optionsDisconnect);
+          final optionsStopShare = StopShareScreenOptions(
+            parameters: params,
+          );
+          await params.stopShareScreen(optionsStopShare);
+          params.updateScreenAlreadyOn(false);
+        } catch (error) {
+          if (kDebugMode) print('Error controlling screenshare: $error');
+        }
+
+        try {
+          params.localStream?.getVideoTracks().first.enabled = false;
+          params.updateLocalStream(params.localStream);
+          final optionsDisconnect = DisconnectSendTransportVideoOptions(
+            parameters: params,
+          );
+          await params.disconnectSendTransportVideo(optionsDisconnect);
+          final optionsOnScreen = OnScreenChangesOptions(
+            changed: true,
+            parameters: params,
+          );
+          await params.onScreenChanges(optionsOnScreen);
+          params.updateVideoAlreadyOn(false);
+
+          params.localStreamVideo?.getVideoTracks().first.enabled = false;
+          params.updateLocalStreamVideo(params.localStreamVideo);
+          await params.disconnectSendTransportVideo(optionsDisconnect);
+          await params.onScreenChanges(optionsOnScreen);
+          params.updateVideoAlreadyOn(false);
+        } catch (error) {
+          if (kDebugMode) print('Error controlling video: $error');
+        }
+        break;
+
+      default:
+        throw ArgumentError('Invalid media control type');
     }
   } catch (error) {
-    if (kDebugMode) {
-      print('Error in controlMediaHost: $error');
-    }
+    if (kDebugMode) print('Error in controlMediaHost: $error');
   }
 }
