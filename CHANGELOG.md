@@ -1,3 +1,7 @@
+### 2.0.1
+
+* Minor fix for initial values.
+
 ### 2.0.0
 
 * Major refactor of the SDK to support the latest version of the MediaSFU server.
