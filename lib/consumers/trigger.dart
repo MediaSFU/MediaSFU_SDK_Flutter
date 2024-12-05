@@ -8,6 +8,7 @@ import 'package:socket_io_client/socket_io_client.dart' show Socket;
 /// Interface for Trigger parameters, similar to the React Native TypeScript interface.
 abstract class TriggerParameters {
   Socket? get socket;
+  Socket? get localSocket;
   String get roomName;
   List<ScreenState> get screenStates;
   List<Participant> get participants;
@@ -65,6 +66,7 @@ typedef TriggerType = Future<void> Function(TriggerOptions options);
 /// ```dart
 /// final params = TriggerParameters(
 ///   socket: mySocket,
+///   localSocket: myLocalSocket,
 ///   roomName: "myRoom",
 ///   screenStates: [ScreenState(mainScreenPerson: "user1", mainScreenFilled: true)],
 ///   participants: [Participant(name: "admin", islevel: "2")],
@@ -95,6 +97,7 @@ Future<void> trigger(TriggerOptions options) async {
     parameters = parameters.getUpdatedAllParams();
 
     final socket = parameters.socket;
+    final localSocket = parameters.localSocket;
     final roomName = parameters.roomName;
     final screenStates = parameters.screenStates;
     final participants = parameters.participants;
@@ -111,6 +114,11 @@ Future<void> trigger(TriggerOptions options) async {
     final updateLastUpdate = parameters.updateLastUpdate;
     final updateNForReadjust = parameters.updateNForReadjust;
     final autoAdjust = parameters.autoAdjust;
+
+    Socket socketRef = socket!;
+    if (localSocket != null && localSocket.id != null) {
+      socketRef = localSocket;
+    }
 
     // Determine admin and main screen participant
     String? personOnMainScreen =
@@ -171,7 +179,7 @@ Future<void> trigger(TriggerOptions options) async {
 
       // Emit update if new timestamp or different last update
       if (lastUpdate == null || updateDateState != timestamp) {
-        socket!.emitWithAck(
+        socketRef.emitWithAck(
           'updateScreenClient',
           {
             'roomName': roomName,
@@ -215,7 +223,7 @@ Future<void> trigger(TriggerOptions options) async {
           100 - ((adjustedValues[0] / 12) * 100).floor();
 
       if (lastUpdate == null || updateDateState != timestamp) {
-        socket!.emitWithAck(
+        socketRef.emitWithAck(
           'updateScreenClient',
           {
             'roomName': roomName,

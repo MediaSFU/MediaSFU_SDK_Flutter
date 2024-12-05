@@ -12,6 +12,7 @@ import '../../methods/utils/get_modal_position.dart'
 /// - `backgroundColor`: Modal background color.
 /// - `countdownDuration`: Duration for countdown in seconds.
 /// - `socket`: WebSocket connection.
+/// - `localSocket`: Local WebSocket connection.
 /// - `roomName`: Room name for session.
 /// - `member`: Member ID for user.
 
@@ -19,6 +20,7 @@ class ConfirmHereModalOptions {
   final bool isConfirmHereModalVisible;
   final VoidCallback onConfirmHereClose;
   final io.Socket? socket;
+  final io.Socket? localSocket;
   final String roomName;
   final String member;
   final Color backgroundColor;
@@ -29,6 +31,7 @@ class ConfirmHereModalOptions {
     required this.isConfirmHereModalVisible,
     required this.onConfirmHereClose,
     this.socket,
+    this.localSocket,
     required this.roomName,
     required this.member,
     this.backgroundColor = const Color(0xFF83c0e9),
@@ -49,6 +52,7 @@ typedef ConfirmHereModalType = Widget Function(
 ///     isConfirmHereModalVisible: true,
 ///     onConfirmHereClose: () => print("Modal closed"),
 ///     socket: io.Socket(),
+///     localSocket: io.Socket(),
 ///     roomName: "room1",
 ///     member: "user1",
 ///   ),
@@ -104,11 +108,24 @@ class _ConfirmHereModalState extends State<ConfirmHereModal> {
       if (counter <= 0) {
         stopCountdown();
         widget.options.onConfirmHereClose();
-        widget.options.socket!.emit('disconnectUser', {
+        widget.options.socket?.emit('disconnectUser', {
           'member': widget.options.member,
           'roomName': widget.options.roomName,
           'ban': false
         });
+
+        try {
+          if (widget.options.localSocket != null &&
+              widget.options.localSocket!.id != null) {
+            widget.options.localSocket?.emit('disconnectUser', {
+              'member': widget.options.member,
+              'roomName': widget.options.roomName,
+              'ban': false
+            });
+          }
+        } catch (e) {
+          // Handle silently
+        }
       }
     });
   }

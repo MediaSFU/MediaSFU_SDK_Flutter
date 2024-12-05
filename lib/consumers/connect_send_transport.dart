@@ -44,12 +44,14 @@ class ConnectSendTransportOptions {
   final ConnectSendTransportParameters parameters;
   final Map<String, dynamic>? audioConstraints;
   final Map<String, dynamic>? videoConstraints;
+  String? targetOption;
 
   ConnectSendTransportOptions({
     required this.option,
     required this.parameters,
     this.audioConstraints,
     this.videoConstraints,
+    this.targetOption = 'all',
   });
 }
 
@@ -65,6 +67,7 @@ typedef ConnectSendTransportType = Future<void> Function(
 ///
 /// ### Parameters:
 /// - `options` (`ConnectSendTransportOptions`): Contains:
+///   - `targetOption` (`String?`): Specifies the target option for connection ('all' by default).
 ///   - `option` (`String`): Specifies the media type to connect ('audio', 'video', 'screen', or 'all').
 ///   - `parameters` (`ConnectSendTransportParameters`): Holds necessary configurations, streams, and functions for connection:
 ///     - `connectSendTransportAudio`, `connectSendTransportVideo`, `connectSendTransportScreen`: Functions for initiating transport.
@@ -91,6 +94,7 @@ typedef ConnectSendTransportType = Future<void> Function(
 /// ```dart
 /// final options = ConnectSendTransportOptions(
 ///   option: 'all',
+///   targetOption: 'all',
 ///   parameters: myConnectSendTransportParameters,
 /// );
 ///
@@ -117,6 +121,7 @@ Future<void> connectSendTransport(
     final whiteboardEnded = options.parameters.whiteboardEnded;
     final shared = options.parameters.shared;
     final islevel = options.parameters.islevel;
+    final targetOption = options.targetOption;
 
     final connectSendTransportAudio =
         options.parameters.connectSendTransportAudio;
@@ -129,6 +134,7 @@ Future<void> connectSendTransport(
     if (options.option == 'audio') {
       final optionsAudio = ConnectSendTransportAudioOptions(
         stream: options.parameters.localStreamAudio!,
+        targetOption: targetOption,
         parameters: options.parameters,
         audioConstraints: options.audioConstraints,
       );
@@ -137,6 +143,7 @@ Future<void> connectSendTransport(
       );
     } else if (options.option == 'video') {
       final optionsVideo = ConnectSendTransportVideoOptions(
+        targetOption: targetOption!,
         videoParams: videoParams!,
         parameters: options.parameters,
         videoConstraints: options.videoConstraints,
@@ -151,6 +158,7 @@ Future<void> connectSendTransport(
           islevel == '2' &&
           !shared) {
         final optionsScreen = ConnectSendTransportScreenOptions(
+          targetOption: targetOption!,
           stream: canvasStream,
           parameters: options.parameters,
         );
@@ -159,6 +167,7 @@ Future<void> connectSendTransport(
         );
       } else if (localStreamScreen != null) {
         final optionsScreen = ConnectSendTransportScreenOptions(
+          targetOption: targetOption!,
           stream: localStreamScreen,
           parameters: options.parameters,
         );
@@ -169,6 +178,7 @@ Future<void> connectSendTransport(
     } else {
       // Connect both audio and video send transports
       final optionsAudio = ConnectSendTransportAudioOptions(
+        targetOption: targetOption,
         stream: options.parameters.localStreamAudio!,
         parameters: options.parameters,
         audioConstraints: options.audioConstraints,
@@ -177,6 +187,7 @@ Future<void> connectSendTransport(
         optionsAudio,
       );
       final optionsVideo = ConnectSendTransportVideoOptions(
+        targetOption: targetOption!,
         videoParams: videoParams!,
         parameters: options.parameters,
         videoConstraints: options.videoConstraints,

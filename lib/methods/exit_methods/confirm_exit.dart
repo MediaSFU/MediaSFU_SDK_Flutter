@@ -3,12 +3,14 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 /// Defines the options for confirming the exit of a member from a room.
 class ConfirmExitOptions {
   final io.Socket? socket;
+  io.Socket? localSocket;
   final String member;
   final String roomName;
   final bool ban;
 
   ConfirmExitOptions({
     this.socket,
+    this.localSocket,
     required this.member,
     required this.roomName,
     this.ban = false,
@@ -27,6 +29,7 @@ typedef ConfirmExitType = Future<void> Function(ConfirmExitOptions options);
 /// ```dart
 /// final options = ConfirmExitOptions(
 ///   socket: socketInstance,
+///   localSocket: socketInstance,
 ///   member: "JohnDoe",
 ///   roomName: "Room123",
 ///   ban: true,
@@ -42,4 +45,12 @@ Future<void> confirmExit(ConfirmExitOptions options) async {
     'roomName': options.roomName,
     'ban': options.ban,
   });
+
+  if (options.localSocket != null && options.localSocket!.id != null) {
+    options.localSocket!.emit('disconnectUser', {
+      'member': options.member,
+      'roomName': options.roomName,
+      'ban': options.ban,
+    });
+  }
 }

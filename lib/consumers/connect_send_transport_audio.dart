@@ -40,6 +40,7 @@ abstract class ConnectSendTransportAudioParameters
   bool get videoAlreadyOn;
   ShowAlert? get showAlert;
   Transport? get producerTransport;
+  Transport? get localProducerTransport;
 
   // Update Functions
   void Function(List<Participant> participants) get updateParticipants;
@@ -55,6 +56,8 @@ abstract class ConnectSendTransportAudioParameters
       get updateUserDefaultAudioInputDevice;
   void Function(bool updateMainWindow) get updateUpdateMainWindow;
   void Function(Transport producerTransport) get updateProducerTransport;
+  void Function(Transport? localProducerTransport)?
+      get updateLocalProducerTransport;
 
   // MediaSFU functions
   ResumeSendTransportAudioType get resumeSendTransportAudio;
@@ -68,13 +71,47 @@ class ConnectSendTransportAudioOptions {
   MediaStream stream;
   final ConnectSendTransportAudioParameters parameters;
   final Map<String, dynamic>? audioConstraints;
+  String? targetOption; // 'all', 'local', 'remote'
 
   ConnectSendTransportAudioOptions(
-      {required this.stream, required this.parameters, this.audioConstraints});
+      {required this.stream,
+      required this.parameters,
+      this.audioConstraints,
+      this.targetOption = 'all'});
 }
 
 typedef ConnectSendTransportAudioType = Future<void> Function(
     ConnectSendTransportAudioOptions options);
+
+/// Connects the local send transport for audio by producing audio data and updating the local audio producer and transport.
+Future<void> connectLocalSendTransportAudio({
+  required ConnectSendTransportAudioOptions options,
+}) async {
+  try {
+    final parameters = options.parameters;
+    final audioParams = parameters.audioParams;
+
+    if (parameters.localProducerTransport != null && audioParams != null) {
+      // Produce audio on the local transport
+      parameters.localProducerTransport!.produce(
+        track: options.stream.getAudioTracks().first,
+        stream: options.stream,
+        source: 'mic',
+      );
+
+      // Update local audio producer and transport
+      if (parameters.updateLocalProducerTransport != null) {
+        parameters
+            .updateLocalProducerTransport!(parameters.localProducerTransport!);
+      }
+    }
+  } catch (error) {
+    if (kDebugMode) {
+      print('Error connecting local audio transport: $error');
+    }
+    rethrow; // Re-throw to allow parent function to handle it
+  }
+}
 
 /// Sets up and connects the audio stream for media sharing, handling updates to
 /// local audio streams and producer transports.
@@ -83,6 +120,7 @@ typedef ConnectSendTransportAudioType = Future<void> Function(
 /// - `options` (`ConnectSendTransportAudioOptions`): Options containing:
 ///   - `stream` (`MediaStream`): The audio stream to be used.
 ///   - `audioConstraints` (`Map<String, dynamic>`): Constraints for the audio stream, if any.
+///   - `targetOption` (`String?`): Specifies the target option for connection ('all' by default).
 ///   - `parameters` (`ConnectSendTransportAudioParameters`): Contains all necessary parameters and update functions.
 ///
 /// ### Workflow:
@@ -102,6 +140,7 @@ typedef ConnectSendTransportAudioType = Future<void> Function(
 /// ```dart
 /// final audioOptions = ConnectSendTransportAudioOptions(
 ///   stream: myAudioStream,
+///   targetOption: 'all',
 ///   audioConstraints: myAudioConstraints,
 ///   parameters: myConnectSendTransportAudioParameters,
 /// );
@@ -122,6 +161,7 @@ Future<void> connectSendTransportAudio(
     final audioConstraints = options.audioConstraints;
     MediaStream stream = options.stream;
     final ConnectSendTransportAudioParameters parameters = options.parameters;
+    final targetOption = options.targetOption;
 
     // Destructuring the parameters for easier access
     MediaStream? localStreamAudio =
@@ -168,14 +208,33 @@ Future<void> connectSendTransportAudio(
 
     // Connect the send transport for audio by producing audio data
     //get the first codec from the first video track
-    parameters.producerTransport!.produce(
-      track: stream.getAudioTracks().first,
-      stream: stream,
-      source: 'mic',
-    );
+    if (targetOption == 'all' || targetOption == 'remote') {
+      parameters.producerTransport!.produce(
+        track: stream.getAudioTracks().first,
+        stream: stream,
+        source: 'mic',
+      );
+    }
 
     // Update the audio producer and producer transport objects
     parameters.updateProducerTransport(parameters.producerTransport!);
+
+    if (targetOption == 'all' || targetOption == 'local') {
+      try {
+        final optionsLocal = ConnectSendTransportAudioOptions(
+          stream: stream,
+          parameters: parameters,
+          audioConstraints: audioConstraints,
+        );
+        await connectLocalSendTransportAudio(
+          options: optionsLocal,
+        );
+      } catch (error) {
+        if (kDebugMode) {
+          print('Error connecting local audio transport: $error');
+        }
+      }
+    }
   } catch (error) {
     // Handle error if showAlert is available
     if (kDebugMode) {

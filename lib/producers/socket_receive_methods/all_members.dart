@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:socket_io_client/socket_io_client.dart';
+
 import '../../types/types.dart'
     show
         Participant,
@@ -7,15 +9,18 @@ import '../../types/types.dart'
         ReorderStreamsParameters,
         SleepType,
         ConnectIpsParameters,
+        ConnectLocalIpsParameters,
         OnScreenChangesParameters,
         OnScreenChangesType,
         ConnectIpsType,
+        ConnectLocalIpsType,
         ConsumeSocket,
         CoHostResponsibility,
         WaitingRoomParticipant,
         ReorderStreamsOptions,
         OnScreenChangesOptions,
         ConnectIpsOptions,
+        ConnectLocalIpsOptions,
         SleepOptions;
 
 /// Callback function type for updating participant data.
@@ -35,7 +40,8 @@ abstract class AllMembersParameters
     implements
         OnScreenChangesParameters,
         ConnectIpsParameters,
-        ReorderStreamsParameters {
+        ReorderStreamsParameters,
+        ConnectLocalIpsParameters {
   // Core properties as abstract getters
   List<Participant> get participantsAll;
   List<Participant> get participants;
@@ -58,6 +64,7 @@ abstract class AllMembersParameters
   bool get hostFirstSwitch;
   List<WaitingRoomParticipant> get waitingRoomList;
   String get islevel;
+  Socket? get socket;
 
   // Update functions as abstract getters
   UpdateParticipantsAll get updateParticipantsAll;
@@ -78,8 +85,11 @@ abstract class AllMembersParameters
   // Mediasfu functions as abstract getters
   OnScreenChangesType get onScreenChanges;
   ConnectIpsType get connectIps;
+  ConnectLocalIpsType? get connectLocalIps;
   SleepType get sleep;
   ReorderStreamsType get reorderStreams;
+
+  AllMembersParameters Function() get getUpdatedAllParams;
 
   // dynamic operator [](String key);
 }
@@ -146,6 +156,7 @@ typedef AllMembersType = Future<void> Function(AllMembersOptions options);
 ///     hostFirstSwitch: false,
 ///     waitingRoomList: [WaitingRoomParticipant(name: 'Charlie')],
 ///     islevel: '2',
+///     socket: socketInstance,
 ///     updateParticipantsAll: (updatedList) => print('Participants all updated: $updatedList'),
 ///     updateParticipants: (filteredList) => print('Filtered participants updated: $filteredList'),
 ///     updateRequestList: (updatedRequests) => print('Requests updated: $updatedRequests'),
@@ -162,6 +173,7 @@ typedef AllMembersType = Future<void> Function(AllMembersOptions options);
 ///     updateTotalReqWait: (total) => print('Total request wait count updated: $total'),
 ///     onScreenChanges: (params) async => print('Screen changes detected'),
 ///     connectIps: (connectOptions) async => print('Connected to IPs with options: $connectOptions'),
+///     connectLocalIps: (connectOptions) async => print('Connected to local IPs with options: $connectOptions'),
 ///     sleep: (ms) async => print('Sleeping for $ms milliseconds'),
 ///     reorderStreams: (options) async => print('Reordered streams with options: $options'),
 ///   ),
@@ -215,7 +227,12 @@ Future<void> allMembers(AllMembersOptions options) async {
     }
   }
 
-  if (!params.membersReceived) {
+  bool onLocal = false;
+  if (params.roomRecvIPs.length == 1 && params.roomRecvIPs[0] == 'none') {
+    onLocal = true;
+  }
+
+  if (!params.membersReceived && !onLocal) {
     if (params.roomRecvIPs.isEmpty) {
       Timer.periodic(const Duration(milliseconds: 10), (timer) async {
         if (params.roomRecvIPs.isNotEmpty) {
@@ -226,6 +243,21 @@ Future<void> allMembers(AllMembersOptions options) async {
     } else {
       await _handleConnections(options, params);
     }
+  }
+
+  if (onLocal && !params.membersReceived) {
+    final optionsLocal = ConnectLocalIpsOptions(
+      socket: params.socket,
+      parameters: params,
+    );
+    if (params.connectLocalIps != null) {
+      await params.connectLocalIps!(
+        optionsLocal,
+      );
+    }
+
+    await params.sleep(SleepOptions(ms: 50));
+    params.updateIsLoadingModalVisible(false);
   }
 
   final updatedRequests = options.requests

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
@@ -103,6 +104,7 @@ abstract class BreakoutRoomsModalParameters {
   List<Participant> get participants;
   ShowAlert? get showAlert;
   io.Socket? get socket;
+  io.Socket? get localSocket;
   int get itemPageLimit;
   String get meetingDisplayType;
   String get prevMeetingDisplayType;
@@ -753,6 +755,25 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
           );
         }
       });
+
+      if (widget.options.parameters.localSocket != null &&
+          widget.options.parameters.localSocket!.id != null) {
+        try {
+          widget.options.parameters.localSocket!.emitWithAck(emitName, {
+            'breakoutRooms': filteredBreakoutRoomsMap,
+            'newParticipantAction': newParticipantAction,
+            'roomName': widget.options.parameters.roomName,
+          }, ack: (response) {
+            if (response['success']) {
+              // Handle success
+            }
+          });
+        } catch (e) {
+          if (kDebugMode) {
+            print('Error starting local breakout rooms: $e');
+          }
+        }
+      }
     }
   }
 
@@ -780,6 +801,23 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
         );
       }
     });
+
+    if (widget.options.parameters.localSocket != null &&
+        widget.options.parameters.localSocket!.id != null) {
+      try {
+        widget.options.parameters.localSocket!.emitWithAck('stopBreakout', {
+          'roomName': widget.options.parameters.roomName,
+        }, ack: (response) {
+          if (response['success']) {
+            // Handle success
+          }
+        });
+      } catch (e) {
+        if (kDebugMode) {
+          print('Error stopping local breakout rooms: $e');
+        }
+      }
+    }
   }
 
   @override

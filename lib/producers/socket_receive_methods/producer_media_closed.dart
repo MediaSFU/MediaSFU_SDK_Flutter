@@ -125,10 +125,8 @@ Future<void> producerMediaClosed(
   if (producerToClose.producerId.isNotEmpty) {
     try {
       await producerToClose['consumerTransport'].close();
-    } catch (error) {
-      if (kDebugMode) {
-        print('Error closing consumer transport: $error');
-      }
+    } catch (e) {
+      // do nothing
     }
 
     try {

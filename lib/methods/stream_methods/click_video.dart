@@ -104,6 +104,7 @@ typedef ClickVideoType = Future<void> Function(ClickVideoOptions options);
 /// ### Helper Functions:
 /// - **_buildMediaConstraints**: Builds media constraints using device ID and other parameters.
 /// - **_buildAltMediaConstraints**: Builds alternative media constraints when the preferred device is unavailable.
+/// - **_buildFinalMediaConstraints**: Builds final media constraints for the video stream.
 /// - **_attemptStream**: Attempts to initialize the video stream with the specified constraints.
 ///
 /// ### Example Usage:
@@ -295,12 +296,18 @@ Future<void> clickVideo(ClickVideoOptions options) async {
           await _attemptStream(
               mediaConstraints, streamSuccessVideo, parameters, showAlert);
         } catch (error) {
-          showAlert?.call(
-            message:
-                'Allow access to your camera or check if it is not being used by another application.',
-            type: 'danger',
-            duration: 3000,
-          );
+          mediaConstraints = _buildFinalMediaConstraints(vidCons);
+          try {
+            await _attemptStream(
+                mediaConstraints, streamSuccessVideo, parameters, showAlert);
+          } catch (error) {
+            showAlert?.call(
+              message:
+                  'Allow access to your camera or check if it is not being used by another application.',
+              type: 'danger',
+              duration: 3000,
+            );
+          }
         }
       }
     }
@@ -341,6 +348,20 @@ Map<String, dynamic> _buildAltMediaConstraints(
         'width': vidConsMap['width'],
         'height': vidConsMap['height'],
         'frameRate': {'ideal': frameRate},
+      },
+    },
+    'audio': false,
+  };
+}
+
+Map<String, dynamic> _buildFinalMediaConstraints(VidCons vidCons) {
+  final vidConsMap = vidCons.toMap();
+
+  return {
+    'video': {
+      'mandatory': {
+        'width': vidConsMap['width'],
+        'height': vidConsMap['height'],
       },
     },
     'audio': false,

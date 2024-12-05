@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
+import 'package:socket_io_client/socket_io_client.dart';
 import '../../types/types.dart'
     show
         Participant,
@@ -8,6 +9,7 @@ import '../../types/types.dart'
         OnScreenChangesType,
         Request,
         ConnectIpsType,
+        ConnectLocalIpsType,
         ReorderStreamsType,
         Settings,
         ConsumeSocket,
@@ -15,10 +17,12 @@ import '../../types/types.dart'
         SleepType,
         OnScreenChangesParameters,
         ConnectIpsParameters,
+        ConnectLocalIpsParameters,
         ReorderStreamsParameters,
         OnScreenChangesOptions,
         SleepOptions,
-        ConnectIpsOptions;
+        ConnectIpsOptions,
+        ConnectLocalIpsOptions;
 
 /// Callback function type definitions
 typedef UpdateParticipantsAll = void Function(List<Participant>);
@@ -36,7 +40,8 @@ abstract class AllMembersRestParameters
     implements
         OnScreenChangesParameters,
         ConnectIpsParameters,
-        ReorderStreamsParameters {
+        ReorderStreamsParameters,
+        ConnectLocalIpsParameters {
   // Core properties as abstract getters
   List<Participant> get participantsAll;
   List<Participant> get participants;
@@ -56,6 +61,7 @@ abstract class AllMembersRestParameters
   String get videoSetting;
   String get screenshareSetting;
   String get chatSetting;
+  Socket? get socket;
 
   // Update functions as abstract getters
   UpdateParticipantsAll get updateParticipantsAll;
@@ -78,6 +84,7 @@ abstract class AllMembersRestParameters
   // Mediasfu functions as abstract getters
   OnScreenChangesType get onScreenChanges;
   ConnectIpsType get connectIps;
+  ConnectLocalIpsType? get connectLocalIps;
   SleepType get sleep;
   ReorderStreamsType get reorderStreams;
 
@@ -142,6 +149,7 @@ typedef AllMembersRestType = Future<void> Function(
 ///   videoSetting: 'allow',
 ///   screenshareSetting: 'allow',
 ///   chatSetting: 'allow',
+///   socket: io.io('https://your-socket-server.com', <String, dynamic>{
 ///   updateParticipantsAll: (list) => print('Participants all updated: $list'),
 ///   updateParticipants: (list) => print('Filtered participants updated: $list'),
 ///   updateRequestList: (list) => print('Request list updated: $list'),
@@ -160,6 +168,7 @@ typedef AllMembersRestType = Future<void> Function(
 ///   updateIsLoadingModalVisible: (visible) => print('Loading modal visibility updated: $visible'),
 ///   onScreenChanges: (params) async => print('Screen changes detected'),
 ///   connectIps: (connectOptions) async => print('Connected to IPs with options: $connectOptions'),
+///   connectLocalIps: (connectLocalOptions) async => print('Connected to local IPs with options: $connectLocalOptions'),
 ///   sleep: (ms) async => print('Sleeping for $ms milliseconds'),
 ///   reorderStreams: (options) async => print('Reordered streams with options: $options'),
 /// );
@@ -243,42 +252,64 @@ Future<void> allMembersRest(
       }
     }
 
+    bool onLocal = false;
+    if (roomRecvIPs.length == 1 && roomRecvIPs[0] == 'none') {
+      onLocal = true;
+    }
+
     // Checking roomRecvIPs and connecting to the server if not yet received
-    if (!membersReceived) {
-      if (roomRecvIPs.isEmpty) {
-        Timer.periodic(const Duration(milliseconds: 10), (timer) async {
-          if (roomRecvIPs.isNotEmpty) {
-            timer.cancel();
-            await _handleServerConnection(
-              deferScreenReceived: deferScreenReceived,
-              screenId: screenId,
-              consumeSockets: consumeSockets,
-              roomRecvIPs: roomRecvIPs,
-              apiUserName: apiUserName,
-              apiKey: apiKey,
-              apiToken: apiToken,
-              parameters: parameters,
-              connectIps: parameters.connectIps,
-            );
-            parameters.updateIsLoadingModalVisible(false);
-          }
-        });
-      } else {
-        await _handleServerConnection(
-          deferScreenReceived: deferScreenReceived,
-          screenId: screenId,
-          consumeSockets: consumeSockets,
-          roomRecvIPs: roomRecvIPs,
-          apiUserName: apiUserName,
-          apiKey: apiKey,
-          apiToken: apiToken,
-          parameters: parameters,
-          connectIps: parameters.connectIps,
-        );
-        parameters.updateIsLoadingModalVisible(false);
+    if (!onLocal) {
+      if (!membersReceived) {
+        if (roomRecvIPs.isEmpty) {
+          Timer.periodic(const Duration(milliseconds: 10), (timer) async {
+            if (roomRecvIPs.isNotEmpty) {
+              timer.cancel();
+              await _handleServerConnection(
+                deferScreenReceived: deferScreenReceived,
+                screenId: screenId,
+                consumeSockets: consumeSockets,
+                roomRecvIPs: roomRecvIPs,
+                apiUserName: apiUserName,
+                apiKey: apiKey,
+                apiToken: apiToken,
+                parameters: parameters,
+                connectIps: parameters.connectIps,
+              );
+              parameters.updateIsLoadingModalVisible(false);
+            }
+          });
+        } else {
+          await _handleServerConnection(
+            deferScreenReceived: deferScreenReceived,
+            screenId: screenId,
+            consumeSockets: consumeSockets,
+            roomRecvIPs: roomRecvIPs,
+            apiUserName: apiUserName,
+            apiKey: apiKey,
+            apiToken: apiToken,
+            parameters: parameters,
+            connectIps: parameters.connectIps,
+          );
+          parameters.updateIsLoadingModalVisible(false);
+        }
+      } else if (screenId.isNotEmpty && deferScreenReceived) {
+        parameters.updateShareScreenStarted(true);
       }
-    } else if (screenId.isNotEmpty && deferScreenReceived) {
-      parameters.updateShareScreenStarted(true);
+    }
+
+    if (onLocal && !membersReceived) {
+      final optionsLocal = ConnectLocalIpsOptions(
+        socket: parameters.socket,
+        parameters: parameters,
+      );
+      if (parameters.connectLocalIps != null) {
+        await parameters.connectLocalIps!(
+          optionsLocal,
+        );
+      }
+
+      await parameters.sleep(SleepOptions(ms: 50));
+      parameters.updateIsLoadingModalVisible(false);
     }
 
     // Filtering requests based on current participants
@@ -312,9 +343,9 @@ Future<void> allMembersRest(
       parameters.updateScreenshareSetting(settings.settings[2]);
       parameters.updateChatSetting(settings.settings[3]);
     }
-  } catch (error) {
+  } catch (error, s) {
     if (kDebugMode) {
-      print('Errors in allMembersRest: $error');
+      print('Errors in allMembersRest: $error $s');
     }
     rethrow;
   }

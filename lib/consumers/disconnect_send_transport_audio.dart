@@ -10,8 +10,15 @@ import '../types/types.dart'
 /// Represents the parameters required to disconnect the audio send transport.
 abstract class DisconnectSendTransportAudioParameters
     implements PrepopulateUserMediaParameters {
+  // Remote Audio Transport and Producer
   Producer? get audioProducer;
   io.Socket? get socket;
+
+  // Local Audio Transport and Producer
+  Producer? get localAudioProducer;
+  io.Socket? get localSocket;
+
+  // Other Parameters
   bool get videoAlreadyOn;
   String get islevel;
   bool get lockScreen;
@@ -22,15 +29,15 @@ abstract class DisconnectSendTransportAudioParameters
 
   /// Function to update the audio producer state.
   void Function(Producer? audioProducer) get updateAudioProducer;
-
-  /// Function to update the main window state.
+  void Function(Producer? localAudioProducer)? get updateLocalAudioProducer;
   void Function(bool updateMainWindow) get updateUpdateMainWindow;
 
-  /// Function to prepopulate user media.
+  // Mediasfu Functions
   PrepopulateUserMediaType get prepopulateUserMedia;
 
   // Dynamic access to additional properties if needed
   // dynamic operator [](String key);
+  // void operator []=(String key, dynamic value);
 }
 
 /// Represents the options required to disconnect the audio send transport.
@@ -46,53 +53,118 @@ class DisconnectSendTransportAudioOptions {
 typedef DisconnectSendTransportAudioType = Future<void> Function(
     DisconnectSendTransportAudioOptions options);
 
-/// Disconnects the send transport for audio by pausing the audio producer and updating the UI.
-///
-/// This function is responsible for pausing the current audio producer and managing the corresponding
-/// UI changes. Additionally, it notifies the server to pause the audio producer in the current room.
+/// Disconnects the local send transport for audio by pausing the local audio producer and notifying the server.
 ///
 /// ### Parameters:
-/// - `options` (`DisconnectSendTransportAudioOptions`): Holds the parameters required for the operation,
-///   such as the audio producer instance, socket connection, and relevant UI state.
+/// - `options` (`DisconnectSendTransportAudioOptions`): Contains the parameters required for disconnecting the local audio transport.
 ///
-/// ### Function Flow:
-/// 1. **Pause Audio Producer**:
-///    - If an active audio producer exists, it is paused, and the UI is updated to reflect this change.
-/// 2. **UI Update**:
-///    - Based on conditions (such as video status, user level, and screen lock status), the main window UI
-///      is updated. If no video is active, and certain conditions are met, user media may be prepopulated.
-/// 3. **Server Notification**:
-///    - Emits a `pauseProducerMedia` event to the server, specifying that the audio producer has been paused
-///      in the current room, thus notifying the server of the status change.
+/// ### Workflow:
+/// 1. **Pause Local Audio Producer**:
+///    - If an active local audio producer exists, it is paused, and the local state is updated.
+/// 2. **Notify Server**:
+///    - Emits a `pauseProducerMedia` event to the server to notify about the paused local audio producer.
 ///
-/// ### Exceptions:
-/// - Catches and logs any errors that occur during the process. Further error handling can be implemented
-///   as needed, such as user alerts or retries.
+/// ### Returns:
+/// - A `Future<void>` that completes when the local audio transport is successfully disconnected.
+///
+/// ### Error Handling:
+/// - Logs errors to the console in debug mode and rethrows them for higher-level handling.
+///
+/// ### Example Usage:
+/// ```dart
+/// final options = DisconnectSendTransportAudioOptions(
+///   parameters: myDisconnectSendTransportAudioParameters,
+/// );
+///
+/// disconnectLocalSendTransportAudio(options)
+///   .then(() => print('Local audio send transport disconnected successfully'))
+///   .catchError((error) => print('Error disconnecting local audio send transport: $error'));
+/// ```
+Future<void> disconnectLocalSendTransportAudio(
+    DisconnectSendTransportAudioOptions options) async {
+  try {
+    final parameters = options.parameters;
+
+    final Producer? localAudioProducer = parameters.localAudioProducer;
+    final io.Socket? localSocket = parameters.localSocket;
+    final String roomName = parameters.roomName;
+    final void Function(Producer? localAudioProducer)?
+        updateLocalAudioProducer = parameters.updateLocalAudioProducer;
+
+    if (localSocket == null || localSocket.id == null) {
+      // Local socket is not connected; nothing to disconnect
+      return;
+    }
+
+    // Pause the local audio producer
+    if (localAudioProducer != null) {
+      localAudioProducer
+          .pause(); // MediaSFU prefers pause instead of close for recording
+      updateLocalAudioProducer?.call(null); // Set to null after pausing
+    }
+
+    // Notify the server about pausing the local audio producer
+    localSocket.emit('pauseProducerMedia', {
+      'mediaTag': 'audio',
+      'roomName': roomName,
+    });
+  } catch (error) {
+    if (kDebugMode) {
+      print('Error disconnecting local audio send transport: $error');
+    }
+    rethrow; // Re-throw to propagate the error
+  }
+}
+
+/// Disconnects the send transport for audio by pausing the audio producer(s) and updating the UI accordingly.
+///
+/// This function supports both a primary and a local audio producer, delegating local handling to a separate function.
+///
+/// ### Parameters:
+/// - `options` (`DisconnectSendTransportAudioOptions`): Contains the parameters required for disconnecting the audio send transport.
+///
+/// ### Workflow:
+/// 1. **Pause Primary Audio Producer**:
+///    - If an active primary audio producer exists, it is paused, and the primary state is updated.
+/// 2. **Update UI**:
+///    - Based on conditions (such as video status, user level, and screen lock status), the main window UI is updated.
+///    - If no video is active and certain conditions are met, user media may be prepopulated.
+/// 3. **Notify Server**:
+///    - Emits a `pauseProducerMedia` event to the server to notify about the paused primary audio producer.
+/// 4. **Handle Local Audio Transport**:
+///    - Invokes `disconnectLocalSendTransportAudio` to handle the local audio transport disconnection.
+///
+/// ### Returns:
+/// - A `Future<void>` that completes when the audio send transport(s) are successfully disconnected.
+///
+/// ### Error Handling:
+/// - Logs errors to the console in debug mode and rethrows them for higher-level handling.
 ///
 /// ### Example Usage:
 /// ```dart
 /// final options = DisconnectSendTransportAudioOptions(
 ///   parameters: MyDisconnectSendTransportAudioParameters(
 ///     audioProducer: myAudioProducer,
+///     localAudioProducer: myLocalAudioProducer,
 ///     socket: mySocket,
+///     localSocket: myLocalSocket,
 ///     videoAlreadyOn: false,
-///     islevel: '2',
+///     islevel: '1',
 ///     lockScreen: false,
 ///     shared: false,
-///     updateMainWindow: false,
-///     hostLabel: 'host123',
-///     roomName: 'room1',
-///     updateAudioProducer: (producer) => print('Audio Producer Updated: $producer'),
-///     updateUpdateMainWindow: (update) => print('Main Window Update: $update'),
-///     prepopulateUserMedia: myPrepopulateUserMedia,
+///     updateMainWindow: true,
+///     hostLabel: 'Host',
+///     roomName: 'Room 1',
+///     updateAudioProducer: (producer) => print('Updated audio producer: $producer'),
+///     updateLocalAudioProducer: (producer) => print('Updated local audio producer: $producer'),
+///     updateUpdateMainWindow: (state) => print('Main window state updated: $state'),
+///     prepopulateUserMedia: myPrepopulateUserMediaFunction,
 ///   ),
 /// );
 ///
-/// disconnectSendTransportAudio(options).then((_) {
-///   print('Audio transport disconnected successfully');
-/// }).catchError((error) {
-///   print('Error disconnecting audio transport: $error');
-/// });
+/// disconnectSendTransportAudio(options)
+///   .then(() => print('Audio send transport disconnected successfully'))
+///   .catchError((error) => print('Error disconnecting audio send transport: $error'));
 /// ```
 ///
 /// ### Notes:
@@ -157,6 +229,16 @@ Future<void> disconnectSendTransportAudio(
       'mediaTag': 'audio',
       'roomName': roomName,
     });
+
+    // Handle local audio transport disconnection
+    try {
+      await disconnectLocalSendTransportAudio(options);
+    } catch (localError) {
+      if (kDebugMode) {
+        print('Error disconnecting local audio send transport: $localError');
+      }
+      // Optionally, handle the local error (e.g., show a notification)
+    }
   } catch (error) {
     if (kDebugMode) {
       print('MediaSFU - disconnectSendTransportAudio error: $error');

@@ -12,6 +12,7 @@ abstract class StopRecordingParameters {
   // Core properties as abstract getters
   String get roomName;
   io.Socket? get socket;
+  io.Socket? get localSocket;
   ShowAlert? get showAlert;
   bool get startReport;
   bool get endReport;
@@ -67,6 +68,7 @@ typedef StopRecordingType = Future<void> Function(StopRecordingOptions options);
 /// final stopParams = StopRecordingParameters(
 ///   roomName: 'Room_123',
 ///   socket: io.Socket(),
+///   localSocket: io.Socket(),
 ///   showAlert: (message, type, duration) => print('Alert: $message'),
 ///   startReport: true,
 ///   endReport: false,
@@ -109,7 +111,13 @@ Future<void> stopRecording(StopRecordingOptions options) async {
     if (stop == true) {
       const String action = 'stopRecord';
 
-      parameters.socket!.emitWithAck(
+      io.Socket socketRef = parameters.socket!;
+      if (parameters.localSocket != null &&
+          parameters.localSocket!.id != null) {
+        socketRef = parameters.localSocket!;
+      }
+
+      socketRef.emitWithAck(
         action,
         {'roomName': parameters.roomName},
         ack: (data) async {

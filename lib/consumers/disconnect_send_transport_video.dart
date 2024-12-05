@@ -4,21 +4,28 @@ import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
 import '../types/types.dart'
     show ReorderStreamsType, ReorderStreamsParameters, ReorderStreamsOptions;
 
-/// Callback types
-typedef UpdateVideoProducer = void Function(Producer? videoProducer);
-typedef UpdateUpdateMainWindow = void Function(bool updateMainWindow);
-
-/// Represents the parameters required to disconnect the video send transport.
+/// Callback types/// Represents the parameters required to disconnect the video send transport.
 abstract class DisconnectSendTransportVideoParameters {
+  // Remote Video Transport and Producer
   Producer? get videoProducer;
   io.Socket? get socket;
+
+  // Local Video Transport and Producer
+  Producer? get localVideoProducer;
+  io.Socket? get localSocket;
+
+  // Other Parameters
   String get islevel;
   String get roomName;
   bool get lockScreen;
   bool get updateMainWindow;
 
-  UpdateVideoProducer get updateVideoProducer;
-  UpdateUpdateMainWindow get updateUpdateMainWindow;
+  // Update Functions
+  void Function(Producer? videoProducer) get updateVideoProducer;
+  void Function(Producer? localVideoProducer)? get updateLocalVideoProducer;
+  void Function(bool updateMainWindow) get updateUpdateMainWindow;
+
+  // Mediasfu Functions
   ReorderStreamsType get reorderStreams;
 
   // Function to get updated parameters
@@ -41,21 +48,91 @@ class DisconnectSendTransportVideoOptions {
 typedef DisconnectSendTransportVideoType = Future<void> Function(
     DisconnectSendTransportVideoOptions options);
 
-/// Disconnects the send transport for video by closing the video producer, updating the UI, and notifying the server.
-///
-/// This function handles video disconnection through these key actions:
-/// 1. **Closes the Video Producer**:
-///    - If there is an active `videoProducer`, it is closed, stopping video transmission on the client side.
-///    - Updates the producer state to reflect the closure.
-/// 2. **Server Notification**:
-///    - Notifies the server about the paused video sharing by emitting the `pauseProducerMedia` event with the `video` media tag.
-/// 3. **UI Updates**:
-///    - Adjusts the main window display state based on the `islevel` and `lockScreen` properties.
-///    - Reorders streams on the UI according to the updated parameters, enhancing the visual layout.
+/// Disconnects the local send transport for video by closing the local video producer and notifying the server.
 ///
 /// ### Parameters:
-/// - `options` (`DisconnectSendTransportVideoOptions`): The options for disconnecting the video send transport.
-///   - Contains required parameters, including the video producer, socket connection, room name, and callback functions.
+/// - `options` (`DisconnectSendTransportVideoOptions`): Contains the parameters required for disconnecting the local video transport.
+///
+/// ### Workflow:
+/// 1. **Close Local Video Producer**:
+///    - If an active local video producer exists, it is closed.
+///    - The local state is updated to reflect the closed producer.
+/// 2. **Notify Server**:
+///    - Emits `pauseProducerMedia` event with `mediaTag` as `video` to notify about the paused local video producer.
+///
+/// ### Returns:
+/// - A `Future<void>` that completes when the local video transport is successfully disconnected.
+///
+/// ### Error Handling:
+/// - Logs errors to the console in debug mode and rethrows them for higher-level handling.
+///
+/// ### Example Usage:
+/// ```dart
+/// final options = DisconnectSendTransportVideoOptions(
+///   parameters: myDisconnectSendTransportVideoParameters,
+/// );
+///
+/// disconnectLocalSendTransportVideo(options)
+///   .then(() => print('Local video send transport disconnected successfully'))
+///   .catchError((error) => print('Error disconnecting local video send transport: $error'));
+/// ```
+Future<void> disconnectLocalSendTransportVideo(
+    DisconnectSendTransportVideoOptions options) async {
+  try {
+    final parameters = options.parameters;
+
+    final Producer? localVideoProducer = parameters.localVideoProducer;
+    final io.Socket? localSocket = parameters.localSocket;
+    final String roomName = parameters.roomName;
+    final void Function(Producer? localVideoProducer)?
+        updateLocalVideoProducer = parameters.updateLocalVideoProducer;
+
+    if (localSocket == null || localSocket.id == null) {
+      // Local socket is not connected; nothing to disconnect
+      return;
+    }
+
+    // Close the local video producer and update the state
+    if (localVideoProducer != null) {
+      localVideoProducer.close();
+      updateLocalVideoProducer?.call(null); // Set to null after closing
+    }
+
+    // Notify the server about closing the local video producer and pausing video sharing
+    localSocket.emit('pauseProducerMedia', {
+      'mediaTag': 'video',
+      'roomName': roomName,
+    });
+  } catch (error) {
+    if (kDebugMode) {
+      print('Error disconnecting local send transport for video: $error');
+    }
+    rethrow; // Re-throw to propagate the error
+  }
+}
+
+/// Disconnects the send transport for video by closing the video producer(s), updating the UI, and notifying the server.
+///
+/// This function supports both a primary and a local video producer, delegating local handling to a separate function.
+///
+/// ### Parameters:
+/// - `options` (`DisconnectSendTransportVideoOptions`): Contains the parameters required for disconnecting the video send transport.
+///
+/// ### Workflow:
+/// 1. **Close Primary Video Producer**:
+///    - If an active primary video producer exists, it is closed.
+///    - The primary state is updated to reflect the closed producer.
+/// 2. **Notify Server**:
+///    - Emits `pauseProducerMedia` event with `mediaTag` as `video` to notify about the paused primary video producer.
+/// 3. **Update UI**:
+///    - Based on `islevel` and `lockScreen` status, updates the main window state.
+/// 4. **Reorder Streams**:
+///    - Calls `reorderStreams` to adjust the stream layout based on the current state.
+/// 5. **Handle Local Video Transport Disconnection**:
+///    - Invokes `disconnectLocalSendTransportVideo` to handle the local video transport disconnection.
+///
+/// ### Returns:
+/// - A `Future<void>` that completes when the video send transport(s) are successfully disconnected.
 ///
 /// ### Error Handling:
 /// - Catches and logs any errors encountered during the disconnection process.
@@ -66,14 +143,17 @@ typedef DisconnectSendTransportVideoType = Future<void> Function(
 /// final options = DisconnectSendTransportVideoOptions(
 ///   parameters: MyDisconnectSendTransportVideoParameters(
 ///     videoProducer: myVideoProducer,
+///     localVideoProducer: myLocalVideoProducer,
 ///     socket: mySocket,
+///     localSocket: myLocalSocket,
 ///     islevel: '2',
 ///     roomName: 'myRoom',
 ///     lockScreen: false,
 ///     updateMainWindow: true,
 ///     updateVideoProducer: (producer) => print('Video producer updated: $producer'),
-///     updateUpdateMainWindow: (value) => print('Main window updated: $value'),
-///     reorderStreams: (options) => print('Streams reordered: $options'),
+///     updateLocalVideoProducer: (producer) => print('Local video producer updated: $producer'),
+///     updateUpdateMainWindow: (state) => print('Main window updated: $state'),
+///     reorderStreams: reorderStreamsFunction,
 ///     getUpdatedAllParams: () => myUpdatedParameters,
 ///   ),
 /// );
@@ -106,9 +186,9 @@ Future<void> disconnectSendTransportVideo(
     final bool lockScreen = parameters.lockScreen;
 
     // Callbacks
-    final UpdateVideoProducer updateVideoProducer =
+    final void Function(Producer? videoProducer) updateVideoProducer =
         parameters.updateVideoProducer;
-    final UpdateUpdateMainWindow updateUpdateMainWindow =
+    final void Function(bool updateMainWindow) updateUpdateMainWindow =
         parameters.updateUpdateMainWindow;
     final ReorderStreamsType reorderStreams = parameters.reorderStreams;
 
@@ -136,6 +216,16 @@ Future<void> disconnectSendTransportVideo(
     await reorderStreams(
       optionsReorder,
     );
+
+    // Handle local video transport disconnection
+    try {
+      await disconnectLocalSendTransportVideo(options);
+    } catch (localError) {
+      if (kDebugMode) {
+        print('Error disconnecting local video send transport: $localError');
+      }
+      // Optionally, handle the local error (e.g., show a notification)
+    }
   } catch (error) {
     if (kDebugMode) {
       print('Error disconnecting send transport for video: $error');

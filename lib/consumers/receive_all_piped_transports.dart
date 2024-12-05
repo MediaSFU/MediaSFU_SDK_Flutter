@@ -25,10 +25,12 @@ abstract class ReceiveAllPipedTransportsParameters
 
 class ReceiveAllPipedTransportsOptions {
   final io.Socket nsock;
+  bool? community;
   final ReceiveAllPipedTransportsParameters parameters;
 
   ReceiveAllPipedTransportsOptions({
     required this.nsock,
+    this.community = false,
     required this.parameters,
   });
 }
@@ -43,6 +45,7 @@ typedef ReceiveAllPipedTransportsType = Future<void> Function(
 ///
 /// Parameters:
 /// - [nsock] (`io.Socket`): The socket instance used for communication.
+/// - [community] (`String`): To connect to community edition.
 /// - [parameters] (`ReceiveAllPipedTransportsParameters`): The parameters required to receive piped transports.
 ///  - [roomName] (`String`): The name of the room to receive piped transports.
 /// - [member] (`String`): The name of the member to receive piped transports.
@@ -53,6 +56,7 @@ typedef ReceiveAllPipedTransportsType = Future<void> Function(
 /// receiveAllPipedTransports(
 ///  ReceiveAllPipedTransportsOptions(
 ///   nsock: socket,
+///   community: true,
 ///  parameters: ReceiveAllPipedTransportsParameters(
 ///   roomName: 'roomA',
 ///  member: 'userB',
@@ -68,18 +72,32 @@ Future<void> receiveAllPipedTransports(
   final nsock = options.nsock;
   final parameters = options.parameters;
   final completer = Completer<void>();
+  final community = options.community;
 
   try {
     final options = ['0', '1', '2'];
 
+    String emitName = 'createReceiveAllTransportsPiped';
+    Map<String, dynamic> details = {
+      'roomName': parameters.roomName,
+      'member': parameters.member
+    };
+    if (community == true) {
+      emitName = 'createReceiveAllTransports';
+      details = {
+        'islevel': '0',
+      };
+    }
+
     nsock.emitWithAck(
-      'createReceiveAllTransportsPiped',
-      {'roomName': parameters.roomName, 'member': parameters.member},
+      emitName,
+      details,
       ack: (response) async {
         if (response['producersExist'] == true) {
           // Retrieve piped producers for each level if producers exist
           for (final islevel in options) {
             final optionsGetPipedProducersAlt = GetPipedProducersAltOptions(
+              community: community,
               nsock: nsock,
               islevel: islevel,
               parameters: parameters,

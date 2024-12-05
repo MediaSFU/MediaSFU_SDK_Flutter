@@ -23,6 +23,7 @@ class MenuModalOptions {
   final String adminPasscode;
   final String islevel;
   final EventType eventType;
+  String? localLink;
 
   MenuModalOptions({
     this.backgroundColor = const Color(0xFF83C0E9),
@@ -35,6 +36,7 @@ class MenuModalOptions {
     required this.adminPasscode,
     required this.islevel,
     required this.eventType,
+    this.localLink = '',
   });
 }
 
@@ -51,6 +53,7 @@ typedef MenuModalType = Widget Function(MenuModalOptions options);
 /// - `adminPasscode`: Passcode for the meeting, visible only to admins.
 /// - `islevel`: User level, with level `2` indicating an admin.
 /// - `eventType`: Type of event (from `EventType`).
+/// - `localLink`: Local link for Community Edition servers.
 ///
 /// Example usage:
 /// ```dart
@@ -70,6 +73,7 @@ typedef MenuModalType = Widget Function(MenuModalOptions options);
 ///     adminPasscode: "adminPass123",
 ///     islevel: "2",
 ///     eventType: EventType.conference,
+///     localLink: "http://localhost:3000",
 ///   ),
 /// );
 /// ```
@@ -194,6 +198,7 @@ class MenuModal extends StatelessWidget {
                             options: ShareButtonsComponentOptions(
                               meetingID: options.roomName,
                               eventType: options.eventType,
+                              localLink: options.localLink,
                             ),
                           ),
                         ],

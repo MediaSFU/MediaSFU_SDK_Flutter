@@ -558,7 +558,7 @@ Future<void> consumerResume(ConsumerResumeOptions options) async {
         // If not screenshare, filter out admin streams
         if (!shareScreenStarted) {
           Participant? admin = participants.firstWhere(
-            (p) => p.isAdmin == true && p.islevel == '2',
+            (p) => (p.isAdmin == true || p.isHost == true) && p.islevel == '2',
             orElse: () => Participant(
               audioID: '',
               videoID: '',

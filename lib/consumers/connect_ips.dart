@@ -142,7 +142,10 @@ Future<List<dynamic>> connectIps(ConnectIpsOptions options) async {
           orElse: () => {},
         );
 
-        if (existingSocket.isNotEmpty || ip.isEmpty) {
+        if (existingSocket.isNotEmpty ||
+            ip.isEmpty ||
+            ip == '' ||
+            ip == 'none') {
           continue;
         }
 

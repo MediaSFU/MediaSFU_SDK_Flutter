@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'dart:async';
+import '../../types/types.dart' show MeetingRoomParams, RecordingParams;
 
 /// Validates the provided API key or token.
 /// Returns `true` if the API key or token is valid, otherwise throws an exception.
@@ -12,6 +13,49 @@ Future<bool> validateApiKeyToken(String value) async {
   return true;
 }
 
+/// Response for local socket connection.
+class ResponseLocalConnection {
+  final io.Socket? socket;
+  final ResponseLocalConnectionData? data;
+
+  ResponseLocalConnection({this.socket, this.data});
+}
+
+/// Data received during local socket connection.
+class ResponseLocalConnectionData {
+  final String socketId;
+  final String mode;
+  final String? apiUserName;
+  final String? apiKey;
+  final bool allowRecord;
+  final MeetingRoomParams eventRoomParams;
+  final RecordingParams recordingParams;
+
+  ResponseLocalConnectionData({
+    required this.socketId,
+    required this.mode,
+    this.apiUserName,
+    this.apiKey,
+    required this.allowRecord,
+    required this.eventRoomParams,
+    required this.recordingParams,
+  });
+
+  /// Converts a map into a `ResponseLocalConnectionData` object.
+  factory ResponseLocalConnectionData.fromMap(Map<String, dynamic> map) {
+    return ResponseLocalConnectionData(
+      socketId: map['socketId'],
+      mode: map['mode'],
+      apiUserName: map['apiUserName'],
+      apiKey: map['apiKey'],
+      allowRecord: map['allowRecord'],
+      eventRoomParams: MeetingRoomParams.fromJson(map['meetingRoomParams_']),
+      recordingParams: RecordingParams.fromJson(map['recordingParams_']),
+    );
+  }
+}
+
+/// Options for connecting to a socket.
 class ConnectSocketOptions {
   final String apiUserName;
   final String? apiKey;
@@ -26,8 +70,12 @@ class ConnectSocketOptions {
   });
 }
 
-typedef ConnectSocketType = Future<io.Socket> Function(
-    ConnectSocketOptions options);
+/// Options for connecting to a local socket.
+class ConnectLocalSocketOptions {
+  final String link;
+
+  ConnectLocalSocketOptions({required this.link});
+}
 
 class DisconnectSocketOptions {
   final io.Socket? socket;
@@ -35,8 +83,12 @@ class DisconnectSocketOptions {
   DisconnectSocketOptions({this.socket});
 }
 
+typedef ConnectSocketType = Future<io.Socket> Function(
+    ConnectSocketOptions options);
 typedef DisconnectSocketType = Future<bool> Function(
     DisconnectSocketOptions options);
+typedef ConnectLocalSocketType = Future<ResponseLocalConnection> Function(
+    ConnectLocalSocketOptions options);
 
 /// Connects to a media socket with the specified options.
 /// Validates the API key or token and initiates a socket connection.
@@ -110,11 +162,62 @@ Future<io.Socket> connectSocket(ConnectSocketOptions options) async {
   return completer.future;
 }
 
+/// Connects to a media socket with the specified options.
+/// Returns a `ResponseLocalConnection` containing the socket and connection data.
+/// Throws an exception if inputs are invalid or if connection fails.
+/// Example usage:
+/// ```dart
+/// final options = ConnectLocalSocketOptions(
+///  link: "http://localhost:3000",
+/// );
+/// try {
+///  final response = await connectLocalSocket(options);
+/// print("Connected to local socket with ID: ${response.data.socketId}");
+/// } catch (error) {
+/// print("Failed to connect to local socket: $error");
+///
+/// }
+/// ```
+///
+
+/// Connects to a local media socket with the specified options.
+/// Returns a `ResponseLocalConnection` containing the socket and connection data.
+Future<ResponseLocalConnection> connectLocalSocket(
+    ConnectLocalSocketOptions options) async {
+  if (options.link.isEmpty) throw Exception('Socket link required.');
+
+  final socket = io.io('${options.link}/media', <String, dynamic>{
+    'transports': ['websocket'],
+  });
+  // final socket = io.io('${options.link}/media', {
+  //   'transports': ['websocket'],
+  //   'query': {},
+  // });
+
+  final completer = Completer<ResponseLocalConnection>();
+
+  // Handle connection success
+  socket.on('connection-success', (data) {
+    final connectionData =
+        ResponseLocalConnectionData.fromMap(Map<String, dynamic>.from(data));
+    completer.complete(
+        ResponseLocalConnection(socket: socket, data: connectionData));
+  });
+
+  // Handle connection error
+  socket.onConnectError((error) {
+    completer.completeError(
+        Exception('Error connecting to local media socket: $error'));
+  });
+
+  return completer.future;
+}
+
 /// Disconnects the given socket instance.
 /// Returns `true` upon successful disconnection.
 Future<bool> disconnectSocket(DisconnectSocketOptions options) async {
   final socket = options.socket;
-  if (socket!.connected) {
+  if (socket != null && socket.connected) {
     socket.disconnect();
     return true;
   }

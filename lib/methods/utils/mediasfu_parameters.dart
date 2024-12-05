@@ -239,6 +239,7 @@ class MediasfuParameters
   List<Stream> allAudioStreams;
   List<Stream> remoteScreenStream;
   Producer? screenProducer;
+  Producer? localScreenProducer;
   bool gotAllVids;
   double paginationHeightWidth;
   String paginationDirection;
@@ -377,15 +378,19 @@ class MediasfuParameters
   // Transports
   // ---------------------
   bool transportCreated;
+  bool? localTransportCreated;
   bool transportCreatedVideo;
   bool transportCreatedAudio;
   bool transportCreatedScreen;
   Transport? producerTransport;
+  Transport? localProducerTransport;
   Producer? videoProducer;
+  Producer? localVideoProducer;
   ProducerOptionsType? params;
   ProducerOptionsType? videoParams;
   ProducerOptionsType? audioParams;
   Producer? audioProducer;
+  Producer? localAudioProducer;
   List<TransportType> consumerTransports;
   List<String> consumingTransports;
 
@@ -414,6 +419,7 @@ class MediasfuParameters
   bool validated;
   Device? device;
   Socket? socket;
+  Socket? localSocket;
   bool checkMediaPermission;
   bool onWeb;
 
@@ -595,6 +601,7 @@ class MediasfuParameters
   void Function(List<Stream>) updateAllAudioStreams;
   void Function(List<Stream>) updateRemoteScreenStream;
   void Function(Producer?) updateScreenProducer;
+  void Function(Producer?)? updateLocalScreenProducer;
   void Function(bool) updateGotAllVids;
   void Function(int) updatePaginationHeightWidth;
   void Function(String) updatePaginationDirection;
@@ -668,15 +675,19 @@ class MediasfuParameters
   void Function(bool) updateHasCameraPermission;
   void Function(bool) updateHasAudioPermission;
   void Function(bool) updateTransportCreated;
+  void Function(bool)? updateLocalTransportCreated;
   void Function(bool) updateTransportCreatedVideo;
   void Function(bool) updateTransportCreatedAudio;
   void Function(bool) updateTransportCreatedScreen;
   void Function(Transport?) updateProducerTransport;
+  void Function(Transport?)? updateLocalProducerTransport;
   void Function(Producer?) updateVideoProducer;
+  void Function(Producer?)? updateLocalVideoProducer;
   void Function(ProducerOptionsType?) updateParams;
   void Function(ProducerOptionsType?) updateVideoParams;
   void Function(ProducerOptionsType?) updateAudioParams;
   void Function(Producer?) updateAudioProducer;
+  void Function(Producer?)? updateLocalAudioProducer;
   void Function(List<TransportType>) updateConsumerTransports;
   void Function(List<String>) updateConsumingTransports;
   void Function(List<Poll>) updatePolls;
@@ -696,6 +707,7 @@ class MediasfuParameters
   String Function() checkOrientation;
   void Function(Device?) updateDevice;
   void Function(Socket?) updateSocket;
+  void Function(Socket?)? updateLocalSocket;
   void Function(bool) updateValidated;
   ShowAlert showAlert;
   ResponseJoinRoom roomData; // joinRoom response
@@ -749,6 +761,7 @@ class MediasfuParameters
   final GetDomainsType getDomains;
   final FormatNumberType formatNumber;
   final ConnectIpsType connectIps;
+  ConnectLocalIpsType? connectLocalIps;
   final CreateDeviceClientType createDeviceClient;
   final HandleCreatePollType handleCreatePoll;
   final HandleVotePollType handleVotePoll;
@@ -1047,6 +1060,7 @@ class MediasfuParameters
     required this.allAudioStreams,
     required this.remoteScreenStream,
     this.screenProducer,
+    this.localScreenProducer,
     required this.gotAllVids,
     required this.paginationHeightWidth,
     required this.paginationDirection,
@@ -1185,15 +1199,19 @@ class MediasfuParameters
     // Transports Initialization
     // ---------------------
     required this.transportCreated,
+    this.localTransportCreated,
     required this.transportCreatedVideo,
     required this.transportCreatedAudio,
     required this.transportCreatedScreen,
     this.producerTransport,
+    this.localProducerTransport,
     this.videoProducer,
+    this.localVideoProducer,
     this.params,
     this.videoParams,
     this.audioParams,
     this.audioProducer,
+    this.localAudioProducer,
     required this.consumerTransports,
     required this.consumingTransports,
 
@@ -1222,6 +1240,7 @@ class MediasfuParameters
     required this.validated,
     this.device,
     this.socket,
+    this.localSocket,
     required this.checkMediaPermission,
     required this.onWeb,
     required this.roomData,
@@ -1404,6 +1423,7 @@ class MediasfuParameters
     required this.updateAllAudioStreams,
     required this.updateRemoteScreenStream,
     required this.updateScreenProducer,
+    this.updateLocalScreenProducer,
     required this.updateGotAllVids,
     required this.updatePaginationHeightWidth,
     required this.updatePaginationDirection,
@@ -1477,15 +1497,19 @@ class MediasfuParameters
     required this.updateHasCameraPermission,
     required this.updateHasAudioPermission,
     required this.updateTransportCreated,
+    this.updateLocalTransportCreated,
     required this.updateTransportCreatedVideo,
     required this.updateTransportCreatedAudio,
     required this.updateTransportCreatedScreen,
     required this.updateProducerTransport,
+    this.updateLocalProducerTransport,
     required this.updateVideoProducer,
+    this.updateLocalVideoProducer,
     required this.updateParams,
     required this.updateVideoParams,
     required this.updateAudioParams,
     required this.updateAudioProducer,
+    this.updateLocalAudioProducer,
     required this.updateConsumerTransports,
     required this.updateConsumingTransports,
     required this.updatePolls,
@@ -1504,6 +1528,7 @@ class MediasfuParameters
     required this.checkOrientation,
     required this.updateDevice,
     required this.updateSocket,
+    this.updateLocalSocket,
     required this.updateValidated,
     required this.showAlert,
 
@@ -1558,6 +1583,7 @@ class MediasfuParameters
     required this.getDomains,
     required this.formatNumber,
     required this.connectIps,
+    this.connectLocalIps,
     required this.createDeviceClient,
     required this.handleCreatePoll,
     required this.handleVotePoll,
@@ -1847,6 +1873,7 @@ class MediasfuParameters
         'updateAllAudioStreams': updateAllAudioStreams,
         'updateRemoteScreenStream': updateRemoteScreenStream,
         'updateScreenProducer': updateScreenProducer,
+        'updateLocalScreenProducer': updateLocalScreenProducer,
         'updateGotAllVids': updateGotAllVids,
         'updatePaginationHeightWidth': updatePaginationHeightWidth,
         'updatePaginationDirection': updatePaginationDirection,
@@ -1921,15 +1948,19 @@ class MediasfuParameters
         'updateHasCameraPermission': updateHasCameraPermission,
         'updateHasAudioPermission': updateHasAudioPermission,
         'updateTransportCreated': updateTransportCreated,
+        'updateLocalTransportCreated': updateLocalTransportCreated,
         'updateTransportCreatedVideo': updateTransportCreatedVideo,
         'updateTransportCreatedAudio': updateTransportCreatedAudio,
         'updateTransportCreatedScreen': updateTransportCreatedScreen,
         'updateProducerTransport': updateProducerTransport,
+        'updateLocalProducerTransport': updateLocalProducerTransport,
         'updateVideoProducer': updateVideoProducer,
+        'updateLocalVideoProducer': updateLocalVideoProducer,
         'updateParams': updateParams,
         'updateVideoParams': updateVideoParams,
         'updateAudioParams': updateAudioParams,
         'updateAudioProducer': updateAudioProducer,
+        'updateLocalAudioProducer': updateLocalAudioProducer,
         'updateConsumerTransports': updateConsumerTransports,
         'updateConsumingTransports': updateConsumingTransports,
         'updatePolls': updatePolls,
@@ -1947,6 +1978,7 @@ class MediasfuParameters
         'updateIsBreakoutRoomsModalVisible': updateIsBreakoutRoomsModalVisible,
         'updateDevice': updateDevice,
         'updateSocket': updateSocket,
+        'updateLocalSocket': updateLocalSocket,
         'updateValidated': updateValidated
       };
 }

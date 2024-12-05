@@ -109,9 +109,12 @@ import '../../methods/breakout_rooms_methods/launch_breakout_rooms.dart'
     show launchBreakoutRooms, LaunchBreakoutRoomsOptions;
 
 // Mediasfu functions -- examples
-import '../../sockets/socket_manager.dart' show connectSocket;
+import '../../sockets/socket_manager.dart'
+    show connectSocket, connectLocalSocket;
 import '../../producer_client/producer_client_emits/join_room_client.dart'
     show joinRoomClient, JoinRoomClientOptions;
+import '../../producers/producer_emits/join_local_room.dart'
+    show joinLocalRoom, JoinLocalRoomOptions;
 import '../../producer_client/producer_client_emits/update_room_parameters_client.dart'
     show updateRoomParametersClient, UpdateRoomParametersClientOptions;
 import '../../producer_client/producer_client_emits/create_device_client.dart'
@@ -197,6 +200,7 @@ import '../../consumers/receive_room_messages.dart'
     show receiveRoomMessages, ReceiveRoomMessagesOptions;
 import '../../methods/utils/format_number.dart' show formatNumber;
 import '../../consumers/connect_ips.dart' show connectIps;
+import '../../consumers/connect_local_ips.dart' show connectLocalIps;
 
 import '../../methods/polls_methods/poll_updated.dart'
     show pollUpdated, PollUpdatedOptions;
@@ -305,9 +309,12 @@ import '../../types/types.dart'
         PollUpdatedData,
         PreJoinPageType,
         ProducerOptionsType,
+        ReceiveAllPipedTransportsOptions,
+        ReceiveAllPipedTransportsType,
         RecordParameters,
         Request,
         RequestResponse,
+        ResponseJoinLocalRoom,
         ResponseJoinRoom,
         ScreenState,
         SeedData,
@@ -319,11 +326,14 @@ import '../../types/types.dart'
         VidCons,
         WaitingRoomParticipant,
         WhiteboardUser;
-
+import '../../methods/utils/create_response_join_room.dart'
+    show createResponseJoinRoom, CreateResponseJoinRoomOptions;
 import '../../methods/utils/mediasfu_parameters.dart' show MediasfuParameters;
 
 class MediasfuWebinarOptions {
   PreJoinPageType? preJoinPageWidget;
+  String? localLink;
+  bool? connectMediaSFU;
   Credentials? credentials;
   bool? useLocalUIMode;
   SeedData? seedData;
@@ -332,6 +342,8 @@ class MediasfuWebinarOptions {
 
   MediasfuWebinarOptions({
     this.preJoinPageWidget,
+    this.localLink = '',
+    this.connectMediaSFU = true,
     this.credentials,
     this.useLocalUIMode,
     this.seedData,
@@ -350,6 +362,8 @@ class MediasfuWebinarOptions {
 /// MediasfuWebinar(
 ///   options: MediasfuWebinarOptions(
 ///     preJoinPageWidget: PreJoinPage(),
+///     localLink: 'https://your-local-link.com',
+///     connectMediaSFU: true,
 ///     credentials: myCredentials,
 ///     useLocalUIMode: true,
 ///     seedData: mySeedData,
@@ -515,6 +529,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
 
   // Update states (variables) to initial values
   ValueNotifier<io.Socket?> socket = ValueNotifier<io.Socket?>(null);
+  ValueNotifier<io.Socket?> localSocket = ValueNotifier<io.Socket?>(null);
   ValueNotifier<ResponseJoinRoom?> roomData =
       ValueNotifier<ResponseJoinRoom?>(ResponseJoinRoom());
   ValueNotifier<Device?> device = ValueNotifier<Device?>(null);
@@ -772,6 +787,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
   final ValueNotifier<List<Stream>> allAudioStreams = ValueNotifier([]);
   final ValueNotifier<List<Stream>> remoteScreenStream = ValueNotifier([]);
   final ValueNotifier<Producer?> screenProducer = ValueNotifier(null);
+  final ValueNotifier<Producer?>? localScreenProducer = ValueNotifier(null);
   final ValueNotifier<bool> gotAllVids = ValueNotifier(false);
   final ValueNotifier<double> paginationHeightWidth = ValueNotifier(40);
   final ValueNotifier<String> paginationDirection = ValueNotifier('horizontal');
@@ -827,15 +843,19 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
 
   //transports related variables
   final ValueNotifier<bool> transportCreated = ValueNotifier(false);
+  final ValueNotifier<bool>? localTransportCreated = ValueNotifier(false);
   final ValueNotifier<bool> transportCreatedVideo = ValueNotifier(false);
   final ValueNotifier<bool> transportCreatedAudio = ValueNotifier(false);
   final ValueNotifier<bool> transportCreatedScreen = ValueNotifier(false);
   final ValueNotifier<Transport?> producerTransport = ValueNotifier(null);
+  final ValueNotifier<Transport?>? localProducerTransport = ValueNotifier(null);
   final ValueNotifier<Producer?> videoProducer = ValueNotifier(null);
+  final ValueNotifier<Producer?>? localVideoProducer = ValueNotifier(null);
   final ValueNotifier<ProducerOptionsType?> params = ValueNotifier(null);
   final ValueNotifier<ProducerOptionsType?> videoParams = ValueNotifier(null);
   final ValueNotifier<ProducerOptionsType?> audioParams = ValueNotifier(null);
   final ValueNotifier<Producer?> audioProducer = ValueNotifier(null);
+  final ValueNotifier<Producer?>? localAudioProducer = ValueNotifier(null);
   final ValueNotifier<List<TransportType>> consumerTransports =
       ValueNotifier([]);
   final ValueNotifier<List<String>> consumingTransports = ValueNotifier([]);
@@ -983,6 +1003,13 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
     mediasfuParameters.socket = value;
   }
 
+  void updateLocalSocket(io.Socket? value) {
+    setState(() {
+      localSocket.value = value;
+      mediasfuParameters.localSocket = value;
+    });
+  }
+
   void updateDevice(Device? value) {
     device.value = value;
     mediasfuParameters.device = value;
@@ -1025,6 +1052,11 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
   }
 
   void updateMember(String value) {
+    if (value.contains("_")) {
+      updateIslevel(value.split("_")[1]);
+      value = value.split("_")[0];
+    }
+
     member.value = value;
     mediasfuParameters.member = value;
   }
@@ -1967,6 +1999,11 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
     mediasfuParameters.screenProducer = value;
   }
 
+  void updateLocalScreenProducer(value) {
+    localScreenProducer!.value = value;
+    mediasfuParameters.localScreenProducer = value;
+  }
+
   void updateGotAllVids(bool value) {
     gotAllVids.value = value;
     mediasfuParameters.gotAllVids = value;
@@ -2466,6 +2503,11 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
     mediasfuParameters.transportCreated = value;
   }
 
+  void updateLocalTransportCreated(bool value) {
+    localTransportCreated!.value = value;
+    mediasfuParameters.localTransportCreated = value;
+  }
+
   void updateTransportCreatedVideo(bool value) {
     transportCreatedVideo.value = value;
     mediasfuParameters.transportCreatedVideo = value;
@@ -2486,9 +2528,19 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
     mediasfuParameters.producerTransport = value;
   }
 
+  void updateLocalProducerTransport(Transport? value) {
+    localProducerTransport!.value = value;
+    mediasfuParameters.localProducerTransport = value;
+  }
+
   void updateVideoProducer(Producer? value) {
     videoProducer.value = value;
     mediasfuParameters.videoProducer = value;
+  }
+
+  void updateLocalVideoProducer(Producer? value) {
+    localVideoProducer!.value = value;
+    mediasfuParameters.localVideoProducer = value;
   }
 
   void updateParams(ProducerOptionsType? value) {
@@ -2509,6 +2561,11 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
   void updateAudioProducer(Producer? value) {
     audioProducer.value = value;
     mediasfuParameters.audioProducer = value;
+  }
+
+  void updateLocalAudioProducer(Producer? value) {
+    localAudioProducer!.value = value;
+    mediasfuParameters.localAudioProducer = value;
   }
 
   void updateConsumerTransports(List<TransportType> value) {
@@ -3189,73 +3246,183 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
     required String member,
     required String sec,
     required String apiUserName,
+    bool isLocal = false,
   }) async {
     // Join room and get data from server
     try {
-      var data = await joinRoom(
+      ResponseJoinRoom? data;
+
+      if (!isLocal) {
+        data = await joinRoom(
           socket: socket,
           roomName: roomName,
           islevel: islevel,
           member: member,
           sec: sec,
-          apiUserName: apiUserName);
+          apiUserName: apiUserName,
+        );
+      } else {
+        ResponseJoinLocalRoom localData = await joinLocalRoom(
+          JoinLocalRoomOptions(
+            socket: socket,
+            roomName: roomName,
+            islevel: islevel,
+            member: member,
+            sec: sec,
+            apiUserName: apiUserName,
+            parameters: PreJoinPageParameters(
+              imgSrc: widget.options.imgSrc ??
+                  'https://mediasfu.com/images/logo192.png',
+              showAlert: showAlert,
+              updateIsLoadingModalVisible: updateIsLoadingModalVisible,
+              connectSocket: connectSocket,
+              connectLocalSocket: connectLocalSocket,
+              updateSocket: updateSocket,
+              updateLocalSocket: updateLocalSocket,
+              updateValidated: updateValidated,
+              updateApiUserName: updateApiUserName,
+              updateApiToken: updateApiToken,
+              updateLink: updateLink,
+              updateRoomName: updateRoomName,
+              updateMember: updateMember,
+            ),
+            checkConnect: widget.options.localLink!.isNotEmpty &&
+                widget.options.connectMediaSFU == true &&
+                !link.value.contains('mediasfu.com'),
+          ),
+        );
 
-      if (kDebugMode) {
-        print('Room success and name: ${data.success} $roomName');
+        data = await createResponseJoinRoom(
+          CreateResponseJoinRoomOptions(localRoom: localData),
+        );
+      }
+
+      Future<void> updateAndComplete(ResponseJoinRoom data) async {
+        // Update room parameters
+        try {
+          // Check if roomRecvIPs is not empty
+          if (data.roomRecvIPs == null ||
+              (data.roomRecvIPs != null && data.roomRecvIPs!.isEmpty)) {
+            data.roomRecvIPs = ['none'];
+            if (link.value.isNotEmpty &&
+                link.value.contains('mediasfu.com') &&
+                !isLocal) {
+              // Community Edition Only
+              ReceiveAllPipedTransportsType receiveAllPipedTransports =
+                  mediasfuParameters.receiveAllPipedTransports;
+
+              // Initialize piped transports
+              final optionsReceive = ReceiveAllPipedTransportsOptions(
+                community: true,
+                nsock: mediasfuParameters.socket!,
+                parameters: mediasfuParameters,
+              );
+              await receiveAllPipedTransports(optionsReceive);
+            }
+          }
+
+          updateRoomData(data);
+
+          try {
+            updateRoomParametersClient(
+              options: UpdateRoomParametersClientOptions(
+                parameters: mediasfuParameters,
+              ),
+            );
+          } catch (error) {
+            if (kDebugMode) {
+              // print('Error updating room parameters: $error');
+            }
+          }
+
+          if (data.isHost == true) {
+            updateIslevel('2');
+          } else {
+            // Issue with isHost for local room
+            if (islevel != '2') {
+              updateIslevel('1');
+            }
+          }
+
+          if (data.secureCode != null && data.secureCode != '') {
+            updateAdminPasscode(data.secureCode!);
+          }
+
+          // Create device client
+          if (data.rtpCapabilities != null) {
+            try {
+              Device? device_ = await createDeviceClient(
+                options: CreateDeviceClientOptions(
+                  rtpCapabilities: data.rtpCapabilities,
+                ),
+              );
+
+              if (device_ != null) {
+                updateDevice(device_);
+              }
+            } catch (error) {}
+          }
+        } catch (error) {
+          if (kDebugMode) {
+            print('Error in updateAndComplete: $error');
+          }
+        }
       }
 
       if (data.success == true) {
-        // Update roomData
-        updateRoomData(data);
-
-        // Update room parameters
-        try {
-          updateRoomData(data);
-          updateRoomParametersClient(
-            options: UpdateRoomParametersClientOptions(
-              parameters: mediasfuParameters,
-            ),
-          );
-        } catch (error) {
-          if (kDebugMode) {
-            // print('Error updating room parameters: $error');
+        if (link.value.isNotEmpty &&
+            link.value.contains('mediasfu.com') &&
+            isLocal) {
+          roomData.value = data;
+          return;
+        } else if (link.value.isNotEmpty &&
+            link.value.contains('mediasfu.com') &&
+            !isLocal) {
+          // Update roomData
+          if (roomData.value != null) {
+            // Updating only the recording and meeting room parameters
+            roomData.value!.recordingParams = data.recordingParams;
+            roomData.value!.meetingRoomParams = data.meetingRoomParams;
+          } else {
+            roomData.value = data;
+          }
+        } else {
+          // Update roomData
+          roomData.value = data;
+          if (!link.value.contains('mediasfu.com')) {
+            roomData.value!.meetingRoomParams = data.meetingRoomParams;
           }
         }
 
-        // Update islevel
-        updateIslevel(data.isHost == true ? '2' : '1');
-
-        // Update admin passcode
-        if (data.secureCode != null && data.secureCode != '') {
-          updateAdminPasscode(data.secureCode!);
-        }
-
-        // Create device client
-        if (data.rtpCapabilities != null) {
-          try {
-            Device? device_ = await createDeviceClient(
-              options: CreateDeviceClientOptions(
-                rtpCapabilities: data.rtpCapabilities,
-              ),
-            );
-
-            updateDevice(device_);
-          } catch (error) {}
-        }
+        updateRoomData(roomData.value!);
+        await updateAndComplete(roomData.value!);
       } else {
-        // Handle error cases
-        updateValidated(false);
-        if (data.reason != null) {
-          showAlert(
-            message: data.reason!,
-            type: 'danger',
-            duration: 3000,
-          );
+        if (link.value.isNotEmpty &&
+            link.value.contains('mediasfu.com') &&
+            !isLocal) {
+          // Join local room
+          if (roomData.value != null) {
+            await updateAndComplete(roomData.value!);
+          }
+          return;
+        }
+
+        // Might be a wrong room name or room is full or other error; check reason in data object if available
+        try {
+          if (data.reason != null) {
+            showAlert(
+              message: data.reason!,
+              type: 'danger',
+              duration: 3000,
+            );
+          }
+        } catch (error) {
+          // Handle error if needed
         }
       }
     } catch (error) {
       if (kDebugMode) {
-        print('Error joining producing room: $error');
+        print('Error joining room: $error');
       }
     }
   }
@@ -3342,148 +3509,531 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
       updateValidated(false);
     }
 
-    Future<io.Socket> connectsocket(
-      String apiUserName,
-      String apiKey,
-      String apiToken,
-      String link,
-    ) async {
-      if (socket.value!.id != null && socket.value!.id!.isNotEmpty) {
-        socket.value!.on('disconnect', (_) async {
-          // Handle disconnect event
-          try {
-            await closeAndReset();
-          } catch (e) {}
+    Future<io.Socket?> connectsocket(String apiUserName, String token,
+        {bool skipSockets = false}) async {
+      // Define socketDefault and socketAlt
+      io.Socket? socketDefault = socket.value;
+      io.Socket? socketAlt = (widget.options.connectMediaSFU! &&
+              localSocket.value != null &&
+              localSocket.value!.id != null)
+          ? localSocket.value
+          : socketDefault;
 
-          disconnect(
-            DisconnectOptions(
-              onWeb: kIsWeb,
-              showAlert: showAlert,
-              updateValidated: updateValidated,
-              redirectURL: redirectURL.value,
-            ),
-          );
-        });
+      if (socketDefault != null &&
+          socketDefault.id != null &&
+          socketDefault.id!.isNotEmpty) {
+        if (!skipSockets) {
+          socketDefault.on('disconnect', (_) async {
+            // Handle disconnect event
+            try {
+              await closeAndReset();
+            } catch (e) {}
 
-        socket.value!.on('allMembers', (membersData) async {
-          try {
-            // Handle 'allMembers' event
-            AllMembersData response = AllMembersData.fromJson(membersData);
-            if (membersData != null) {
-              await allMembers(
-                AllMembersOptions(
+            disconnect(
+              DisconnectOptions(
+                onWeb: kIsWeb,
+                showAlert: showAlert,
+                updateValidated: updateValidated,
+                redirectURL: redirectURL.value,
+              ),
+            );
+          });
+
+          socketDefault.on('allMembers', (membersData) async {
+            try {
+              // Handle 'allMembers' event
+              AllMembersData response = AllMembersData.fromJson(membersData);
+              if (membersData != null) {
+                await allMembers(
+                  AllMembersOptions(
+                    apiUserName: apiUserName,
+                    apiKey:
+                        "null", //not recommended - use apiToken instead. Use for testing/development only
+                    apiToken: token,
+                    members: response.members,
+                    requests: response.requests,
+                    coHost: response.coHost ?? coHost.value,
+                    coHostRes: response.coHostResponsibilities,
+                    parameters: mediasfuParameters,
+                    consumeSockets: consumeSockets.value,
+                  ),
+                );
+              }
+            } catch (error) {
+              if (kDebugMode) {
+                // print('Error handling allMembers event: $error');
+              }
+            }
+          });
+
+          socketDefault.on('allMembersRest', (membersData) async {
+            // Handle 'allMembersRest' event
+            try {
+              AllMembersRestData response =
+                  AllMembersRestData.fromJson(membersData);
+              if (membersData != null) {
+                await allMembersRest(AllMembersRestOptions(
                   apiUserName: apiUserName,
                   apiKey:
-                      "null", //not recommended - use apiToken instead. Use for testing/development only
-                  apiToken: apiToken,
+                      'null', //not recommended - use apiToken instead. Use for testing/development only
                   members: response.members,
-                  requests: response.requests,
+                  apiToken: token,
+                  settings: response.settings,
                   coHost: response.coHost ?? coHost.value,
                   coHostRes: response.coHostResponsibilities,
                   parameters: mediasfuParameters,
                   consumeSockets: consumeSockets.value,
+                ));
+              }
+            } catch (error) {
+              if (kDebugMode) {
+                // print('Error handling allMembersRest event: $error');
+              }
+            }
+          });
+
+          socketDefault.on('userWaiting', (data) async {
+            try {
+              // Handle 'userWaiting' event
+              userWaiting(
+                UserWaitingOptions(
+                  name: data['name'],
+                  showAlert: showAlert,
+                  totalReqWait: totalReqWait.value,
+                  updateTotalReqWait: updateTotalReqWait,
                 ),
               );
+            } catch (error) {
+              if (kDebugMode) {
+                // print('Error handling userWaiting event: $error');
+              }
             }
-          } catch (error) {
-            if (kDebugMode) {
-              // print('Error handling allMembers event: $error');
-            }
-          }
-        });
+          });
 
-        socket.value!.on('allMembersRest', (membersData) async {
-          // Handle 'allMembersRest' event
-          try {
-            AllMembersRestData response =
-                AllMembersRestData.fromJson(membersData);
-            if (membersData != null) {
-              await allMembersRest(AllMembersRestOptions(
-                apiUserName: apiUserName,
-                apiKey:
-                    'null', //not recommended - use apiToken instead. Use for testing/development only
-                members: response.members,
-                apiToken: apiToken,
-                settings: response.settings,
-                coHost: response.coHost ?? coHost.value,
-                coHostRes: response.coHostResponsibilities,
-                parameters: mediasfuParameters,
-                consumeSockets: consumeSockets.value,
+          socketDefault.on('personJoined', (data) async {
+            try {
+              // Handle 'personJoined' event
+              personJoined(
+                PersonJoinedOptions(
+                  name: data['name'],
+                  showAlert: showAlert,
+                ),
+              );
+            } catch (error) {
+              if (kDebugMode) {
+                // print('Error handling personJoined event: $error');
+              }
+            }
+          });
+
+          socketDefault.on('allWaitingRoomMembers', (waitingData) async {
+            try {
+              List<WaitingRoomParticipant> waitingParticipants = [];
+              if (waitingData['waitingParticipants'] != null ||
+                  waitingData['waitingParticipantss'] != null) {
+                dynamic waitingList = waitingData['waitingParticipants'] ??
+                    waitingData['waitingParticipantss'] ??
+                    waitingData['waitingParticipants'];
+                // Convert waitingParticipants to a List of WaitingRoomParticipant objects
+                waitingParticipants = (waitingList as List)
+                    .map((item) => WaitingRoomParticipant.fromMap(item))
+                    .toList();
+              } else {
+                waitingParticipants = waitingRoomList.value;
+              }
+
+              // Handle 'allWaitingRoomMembers' event
+              allWaitingRoomMembers(
+                AllWaitingRoomMembersOptions(
+                  waitingParticipants: waitingParticipants,
+                  updateWaitingRoomList: updateWaitingRoomList,
+                  updateTotalReqWait: updateTotalReqWait,
+                ),
+              );
+            } catch (error) {
+              if (kDebugMode) {
+                // print('Error handling allWaitingRoomMembers event: $error');
+              }
+            }
+          });
+
+          socketDefault.on('ban', (data) async {
+            // Handle 'ban' event
+            try {
+              banParticipant(
+                BanParticipantOptions(
+                  name: data['name'],
+                  parameters: mediasfuParameters,
+                ),
+              );
+            } catch (error) {
+              if (kDebugMode) {
+                // print('Error handling ban event: $error');
+              }
+            }
+          });
+
+          socketDefault.on('updatedCoHost', (data) async {
+            // Handle 'updatedCoHost' event
+            try {
+              List<CoHostResponsibility>? coHostResponsibilities = [];
+              // Parse coHost responsibilities from incoming data
+              if (data['coHostResponsibilities'] != null) {
+                coHostResponsibilities =
+                    (data['coHostResponsibilities'] as List<dynamic>)
+                        .map((item) => CoHostResponsibility.fromMap(
+                            item as Map<String, dynamic>))
+                        .toList();
+              } else {
+                coHostResponsibilities = coHostResponsibility.value;
+              }
+
+              updatedCoHost(
+                UpdatedCoHostOptions(
+                  eventType: eventType.value,
+                  islevel: islevel.value,
+                  member: member.value,
+                  youAreCoHost: youAreCoHost.value,
+                  updateCoHost: updateCoHost,
+                  updateCoHostResponsibility: updateCoHostResponsibility,
+                  updateYouAreCoHost: updateYouAreCoHost,
+                  coHost: data['coHost'] ?? coHost.value,
+                  coHostResponsibility: coHostResponsibilities,
+                  showAlert: showAlert,
+                ),
+              );
+            } catch (error) {
+              if (kDebugMode) {
+                // print('Error handling updatedCoHost event: $error');
+              }
+            }
+          });
+
+          socketDefault.on('participantRequested', (data) async {
+            try {
+              Request request = Request.fromMap(data['userRequest']);
+              // Handle 'participantRequested' event
+              participantRequested(
+                ParticipantRequestedOptions(
+                  userRequest: request,
+                  requestList: requestList.value,
+                  waitingRoomList: waitingRoomList.value,
+                  updateRequestList: updateRequestList,
+                  updateTotalReqWait: updateTotalReqWait,
+                ),
+              );
+            } catch (error) {
+              if (kDebugMode) {
+                // print('Error handling participantRequested event: $error');
+              }
+            }
+          });
+
+          socketDefault.on('screenProducerId', (data) async {
+            // Handle 'screenProducerId' event
+            try {
+              screenProducerId(ScreenProducerIdOptions(
+                producerId: data['producerId'],
+                screenId: screenId.value,
+                membersReceived: membersReceived.value,
+                shareScreenStarted: shareScreenStarted.value,
+                deferScreenReceived: deferScreenReceived.value,
+                participants: participants.value,
+                updateScreenId: updateScreenId,
+                updateShareScreenStarted: updateShareScreenStarted,
+                updateDeferScreenReceived: updateDeferScreenReceived,
               ));
+            } catch (error) {
+              if (kDebugMode) {
+                // print('Error handling screenProducerId event: $error');
+              }
             }
-          } catch (error) {
-            if (kDebugMode) {
-              // print('Error handling allMembersRest event: $error');
-            }
-          }
-        });
+          });
 
-        socket.value!.on('userWaiting', (data) async {
-          try {
-            // Handle 'userWaiting' event
-            userWaiting(
-              UserWaitingOptions(
-                name: data['name'],
+          socketDefault.on('updateMediaSettings', (data) async {
+            // Handle 'updateMediaSettings' event
+            try {
+              Settings settings = Settings.fromList(data['settings']);
+              updateMediaSettings(
+                UpdateMediaSettingsOptions(
+                  settings: settings,
+                  updateAudioSetting: updateAudioSetting,
+                  updateVideoSetting: updateVideoSetting,
+                  updateScreenshareSetting: updateScreenshareSetting,
+                  updateChatSetting: updateChatSetting,
+                ),
+              );
+            } catch (error) {
+              if (kDebugMode) {
+                // print('Error handling updateMediaSettings event: $error');
+              }
+            }
+          });
+
+          socketDefault.on('producer-media-paused', (data) async {
+            // Handle 'producer-media-paused' event
+            try {
+              await producerMediaPaused(
+                ProducerMediaPausedOptions(
+                  producerId: data['producerId'],
+                  kind: data['kind'],
+                  name: data['name'],
+                  parameters: mediasfuParameters,
+                ),
+              );
+            } catch (error) {
+              if (kDebugMode) {
+                // print('Error handling producer-media-paused event: $error');
+              }
+            }
+          });
+
+          socketDefault.on('producer-media-resumed', (data) async {
+            // Handle 'producer-media-resumed' event
+            try {
+              await producerMediaResumed(
+                ProducerMediaResumedOptions(
+                    kind: data['kind'],
+                    name: data['name'],
+                    parameters: mediasfuParameters),
+              );
+            } catch (error) {
+              if (kDebugMode) {
+                // print('Error handling producer-media-resumed event: $error');
+              }
+            }
+          });
+
+          socketDefault.on('producer-media-closed', (data) async {
+            // Handle 'producer-media-closed' event
+            try {
+              await producerMediaClosed(
+                ProducerMediaClosedOptions(
+                  producerId: data['producerId'],
+                  kind: data['kind'],
+                  parameters: mediasfuParameters,
+                ),
+              );
+            } catch (error) {
+              if (kDebugMode) {
+                // print('Error handling producer-media-closed event: $error');
+              }
+            }
+          });
+
+          socketDefault.on('controlMediaHost', (data) async {
+            // Handle 'controlMediaHost' event
+            try {
+              controlMediaHost(ControlMediaHostOptions(
+                type: data['type'],
+                parameters: mediasfuParameters,
+              ));
+            } catch (error) {
+              if (kDebugMode) {
+                // print('Error handling controlMediaHost event: $error');
+              }
+            }
+          });
+
+          socketDefault.on('meetingEnded', (_) async {
+            // Handle 'meetingEnded' event
+            try {
+              await closeAndReset();
+            } catch (e) {}
+
+            await meetingEnded(
+                options: MeetingEndedOptions(
+              showAlert: showAlert,
+              redirectURL: redirectURL.value,
+              updateValidated: updateValidated,
+              onWeb: kIsWeb,
+              eventType: eventType.value,
+            ));
+          });
+
+          socketDefault.on('disconnectUserSelf', (_) async {
+            // Handle 'disconnectUserSelf' event
+            try {
+              await disconnectUserSelf(
+                DisconnectUserSelfOptions(
+                  socket: socketDefault,
+                  member: member.value,
+                  roomName: roomName.value,
+                ),
+              );
+            } catch (error) {
+              if (kDebugMode) {
+                // print('Error handling disconnectUserSelf event: $error');
+              }
+            }
+          });
+
+          socketDefault.on('receiveMessage', (data) async {
+            // Handle 'receiveMessage' event
+            try {
+              Message message = Message.fromMap(data['message']);
+              await receiveMessage(
+                ReceiveMessageOptions(
+                  message: message,
+                  messages: messages.value,
+                  participantsAll: participants.value,
+                  member: member.value,
+                  eventType: eventType.value,
+                  islevel: islevel.value,
+                  coHost: coHost.value,
+                  updateMessages: updateMessages,
+                  updateShowMessagesBadge: updateShowMessagesBadge,
+                ),
+              );
+            } catch (error) {
+              if (kDebugMode) {
+                // print('Error handling receiveMessage event: $error');
+              }
+            }
+          });
+
+          socketDefault.on('meetingTimeRemaining', (data) async {
+            // Handle 'meetingTimeRemaining' event
+            try {
+              await meetingTimeRemaining(
+                options: MeetingTimeRemainingOptions(
+                    timeRemaining: data['timeRemaining'],
+                    eventType: eventType.value,
+                    showAlert: showAlert),
+              );
+            } catch (error) {
+              if (kDebugMode) {
+                // print('Error handling meetingTimeRemaining event: $error');
+              }
+            }
+          });
+
+          socketDefault.on('meetingStillThere', (data) async {
+            // Handle 'meetingStillThere' event
+            try {
+              await meetingStillThere(
+                  options: MeetingStillThereOptions(
+                updateIsConfirmHereModalVisible:
+                    updateIsConfirmHereModalVisible,
+              ));
+            } catch (error) {
+              if (kDebugMode) {
+                // print('Error handling meetingStillThere event: $error');
+              }
+            }
+          });
+
+          socketDefault.on('updateConsumingDomains', (data) async {
+            // Handle 'updateConsumingDomains' event
+            try {
+              UpdateConsumingDomainsData updateConsumingDomainsData =
+                  UpdateConsumingDomainsData.fromJson(data);
+
+              updateConsumingDomains(UpdateConsumingDomainsOptions(
+                domains: updateConsumingDomainsData.domains,
+                altDomains: updateConsumingDomainsData.altDomains,
+                apiUserName: apiUserName,
+                apiToken: token,
+                apiKey: "",
+                parameters: mediasfuParameters,
+              ));
+            } catch (error) {
+              if (kDebugMode) {
+                // print('Error handling updateConsumingDomains event: $error');
+              }
+            }
+          });
+
+          socketDefault.on('hostRequestResponse', (data) async {
+            // Handle 'hostRequestResponse' event
+            try {
+              RequestResponse requestResponse =
+                  RequestResponse.fromMap(data['requestResponse']);
+              hostRequestResponse(
+                HostRequestResponseOptions(
+                  requestResponse: requestResponse,
+                  showAlert: showAlert,
+                  requestList: requestList.value,
+                  updateRequestList: updateRequestList,
+                  updateMicAction: updateMicAction,
+                  updateVideoAction: updateVideoAction,
+                  updateScreenAction: updateScreenAction,
+                  updateChatAction: updateChatAction,
+                  updateAudioRequestState: updateAudioRequestState,
+                  updateVideoRequestState: updateVideoRequestState,
+                  updateScreenRequestState: updateScreenRequestState,
+                  updateChatRequestState: updateChatRequestState,
+                  updateAudioRequestTime: updateAudioRequestTime,
+                  updateVideoRequestTime: updateVideoRequestTime,
+                  updateScreenRequestTime: updateScreenRequestTime,
+                  updateChatRequestTime: updateChatRequestTime,
+                  updateRequestIntervalSeconds:
+                      updateRequestIntervalSeconds.value,
+                ),
+              );
+            } catch (error) {
+              if (kDebugMode) {
+                // print('Error handling hostRequestResponse event: $error');
+              }
+            }
+          });
+
+          socketDefault.on('pollUpdated', (data) async {
+            try {
+              PollUpdatedData pollUpdatedData = PollUpdatedData.fromMap(data);
+
+              await pollUpdated(PollUpdatedOptions(
+                data: pollUpdatedData,
+                polls: polls.value,
+                poll: poll.value,
+                member: member.value,
+                islevel: islevel.value,
                 showAlert: showAlert,
-                totalReqWait: totalReqWait.value,
-                updateTotalReqWait: updateTotalReqWait,
-              ),
-            );
-          } catch (error) {
-            if (kDebugMode) {
-              // print('Error handling userWaiting event: $error');
+                updatePolls: updatePolls,
+                updatePoll: updatePoll,
+                updateIsPollModalVisible: updateIsPollModalVisible,
+              ));
+            } catch (error) {
+              if (kDebugMode) {
+                // print('Error handling pollUpdated event: $error');
+              }
             }
+          });
+
+          socketDefault.on('breakoutRoomUpdated', (data) async {
+            try {
+              BreakoutRoomUpdatedData breakoutRoomUpdatedData =
+                  BreakoutRoomUpdatedData.fromMap(data);
+
+              await breakoutRoomUpdated(BreakoutRoomUpdatedOptions(
+                data: breakoutRoomUpdatedData,
+                parameters: mediasfuParameters,
+              ));
+            } catch (error) {
+              if (kDebugMode) {
+                // print('Error handling breakoutRoomUpdated event: $error');
+              }
+            }
+          });
+        }
+
+        if (skipSockets) {
+          // Remove specific event listeners from socketDefault and socketAlt
+          List<String> events = [
+            'roomRecordParams',
+            'startRecords',
+            'reInitiateRecording',
+            'RecordingNotice',
+            'timeLeftRecording',
+            'stoppedRecording',
+          ];
+          for (var event in events) {
+            socketDefault.off(event);
+            socketAlt?.off(event);
           }
-        });
+        }
 
-        socket.value!.on('personJoined', (data) async {
-          try {
-            // Handle 'personJoined' event
-            personJoined(
-              PersonJoinedOptions(
-                name: data['name'],
-                showAlert: showAlert,
-              ),
-            );
-          } catch (error) {
-            if (kDebugMode) {
-              // print('Error handling personJoined event: $error');
-            }
-          }
-        });
-
-        socket.value!.on('allWaitingRoomMembers', (waitingData) async {
-          try {
-            List<WaitingRoomParticipant> waitingParticipants = [];
-            if (waitingData['waitingParticipants'] != null ||
-                waitingData['waitingParticipantss'] != null) {
-              dynamic waitingList = waitingData['waitingParticipants'] ??
-                  waitingData['waitingParticipantss'] ??
-                  waitingData['waitingParticipants'];
-              // Convert waitingParticipants to a List of WaitingRoomParticipant objects
-              waitingParticipants = (waitingList as List)
-                  .map((item) => WaitingRoomParticipant.fromMap(item))
-                  .toList();
-            } else {
-              waitingParticipants = waitingRoomList.value;
-            }
-
-            // Handle 'allWaitingRoomMembers' event
-            allWaitingRoomMembers(
-              AllWaitingRoomMembersOptions(
-                waitingParticipants: waitingParticipants,
-                updateWaitingRoomList: updateWaitingRoomList,
-                updateTotalReqWait: updateTotalReqWait,
-              ),
-            );
-          } catch (error) {
-            if (kDebugMode) {
-              // print('Error handling allWaitingRoomMembers event: $error');
-            }
-          }
-        });
-
-        socket.value!.on('roomRecordParams', (data) async {
+        socketAlt!.on('roomRecordParams', (data) async {
           try {
             RecordParameters roomRecordParameters =
                 RecordParameters.fromMap(data);
@@ -3500,279 +4050,14 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
           }
         });
 
-        socket.value!.on('ban', (data) async {
-          // Handle 'ban' event
-          try {
-            banParticipant(
-              BanParticipantOptions(
-                name: data['name'],
-                parameters: mediasfuParameters,
-              ),
-            );
-          } catch (error) {
-            if (kDebugMode) {
-              // print('Error handling ban event: $error');
-            }
-          }
-        });
-
-        socket.value!.on('updatedCoHost', (data) async {
-          // Handle 'updatedCoHost' event
-          try {
-            List<CoHostResponsibility>? coHostResponsibilities = [];
-            // Parse coHost responsibilities from incoming data
-            if (data['coHostResponsibilities'] != null) {
-              coHostResponsibilities =
-                  (data['coHostResponsibilities'] as List<dynamic>)
-                      .map((item) => CoHostResponsibility.fromMap(
-                          item as Map<String, dynamic>))
-                      .toList();
-            } else {
-              coHostResponsibilities = coHostResponsibility.value;
-            }
-
-            updatedCoHost(
-              UpdatedCoHostOptions(
-                eventType: eventType.value,
-                islevel: islevel.value,
-                member: member.value,
-                youAreCoHost: youAreCoHost.value,
-                updateCoHost: updateCoHost,
-                updateCoHostResponsibility: updateCoHostResponsibility,
-                updateYouAreCoHost: updateYouAreCoHost,
-                coHost: data['coHost'] ?? coHost.value,
-                coHostResponsibility: coHostResponsibilities,
-                showAlert: showAlert,
-              ),
-            );
-          } catch (error) {
-            if (kDebugMode) {
-              // print('Error handling updatedCoHost event: $error');
-            }
-          }
-        });
-
-        socket.value!.on('participantRequested', (data) async {
-          try {
-            Request request = Request.fromMap(data['userRequest']);
-            // Handle 'participantRequested' event
-            participantRequested(
-              ParticipantRequestedOptions(
-                userRequest: request,
-                requestList: requestList.value,
-                waitingRoomList: waitingRoomList.value,
-                updateRequestList: updateRequestList,
-                updateTotalReqWait: updateTotalReqWait,
-              ),
-            );
-          } catch (error) {
-            if (kDebugMode) {
-              // print('Error handling participantRequested event: $error');
-            }
-          }
-        });
-
-        socket.value!.on('screenProducerId', (data) async {
-          // Handle 'screenProducerId' event
-          try {
-            screenProducerId(ScreenProducerIdOptions(
-              producerId: data['producerId'],
-              screenId: screenId.value,
-              membersReceived: membersReceived.value,
-              shareScreenStarted: shareScreenStarted.value,
-              deferScreenReceived: deferScreenReceived.value,
-              participants: participants.value,
-              updateScreenId: updateScreenId,
-              updateShareScreenStarted: updateShareScreenStarted,
-              updateDeferScreenReceived: updateDeferScreenReceived,
-            ));
-          } catch (error) {
-            if (kDebugMode) {
-              // print('Error handling screenProducerId event: $error');
-            }
-          }
-        });
-
-        socket.value!.on('updateMediaSettings', (data) async {
-          // Handle 'updateMediaSettings' event
-          try {
-            Settings settings = Settings.fromList(data['settings']);
-            updateMediaSettings(
-              UpdateMediaSettingsOptions(
-                settings: settings,
-                updateAudioSetting: updateAudioSetting,
-                updateVideoSetting: updateVideoSetting,
-                updateScreenshareSetting: updateScreenshareSetting,
-                updateChatSetting: updateChatSetting,
-              ),
-            );
-          } catch (error) {
-            if (kDebugMode) {
-              // print('Error handling updateMediaSettings event: $error');
-            }
-          }
-        });
-
-        socket.value!.on('producer-media-paused', (data) async {
-          // Handle 'producer-media-paused' event
-          try {
-            await producerMediaPaused(
-              ProducerMediaPausedOptions(
-                producerId: data['producerId'],
-                kind: data['kind'],
-                name: data['name'],
-                parameters: mediasfuParameters,
-              ),
-            );
-          } catch (error) {
-            if (kDebugMode) {
-              // print('Error handling producer-media-paused event: $error');
-            }
-          }
-        });
-
-        socket.value!.on('producer-media-resumed', (data) async {
-          // Handle 'producer-media-resumed' event
-          try {
-            await producerMediaResumed(
-              ProducerMediaResumedOptions(
-                  kind: data['kind'],
-                  name: data['name'],
-                  parameters: mediasfuParameters),
-            );
-          } catch (error) {
-            if (kDebugMode) {
-              // print('Error handling producer-media-resumed event: $error');
-            }
-          }
-        });
-
-        socket.value!.on('producer-media-closed', (data) async {
-          // Handle 'producer-media-closed' event
-          try {
-            await producerMediaClosed(
-              ProducerMediaClosedOptions(
-                producerId: data['producerId'],
-                kind: data['kind'],
-                parameters: mediasfuParameters,
-              ),
-            );
-          } catch (error) {
-            if (kDebugMode) {
-              // print('Error handling producer-media-closed event: $error');
-            }
-          }
-        });
-
-        socket.value!.on('controlMediaHost', (data) async {
-          // Handle 'controlMediaHost' event
-          try {
-            controlMediaHost(ControlMediaHostOptions(
-              type: data['type'],
-              parameters: mediasfuParameters,
-            ));
-          } catch (error) {
-            if (kDebugMode) {
-              // print('Error handling controlMediaHost event: $error');
-            }
-          }
-        });
-
-        socket.value!.on('meetingEnded', (_) async {
-          // Handle 'meetingEnded' event
-          try {
-            await closeAndReset();
-          } catch (e) {}
-
-          await meetingEnded(
-              options: MeetingEndedOptions(
-            showAlert: showAlert,
-            redirectURL: redirectURL.value,
-            updateValidated: updateValidated,
-            onWeb: kIsWeb,
-            eventType: eventType.value,
-          ));
-        });
-
-        socket.value!.on('disconnectUserSelf', (_) async {
-          // Handle 'disconnectUserSelf' event
-          try {
-            await disconnectUserSelf(
-              DisconnectUserSelfOptions(
-                socket: socket.value,
-                member: member.value,
-                roomName: roomName.value,
-              ),
-            );
-          } catch (error) {
-            if (kDebugMode) {
-              // print('Error handling disconnectUserSelf event: $error');
-            }
-          }
-        });
-
-        socket.value!.on('receiveMessage', (data) async {
-          // Handle 'receiveMessage' event
-          try {
-            Message message = Message.fromMap(data['message']);
-            await receiveMessage(
-              ReceiveMessageOptions(
-                message: message,
-                messages: messages.value,
-                participantsAll: participants.value,
-                member: member.value,
-                eventType: eventType.value,
-                islevel: islevel.value,
-                coHost: coHost.value,
-                updateMessages: updateMessages,
-                updateShowMessagesBadge: updateShowMessagesBadge,
-              ),
-            );
-          } catch (error) {
-            if (kDebugMode) {
-              // print('Error handling receiveMessage event: $error');
-            }
-          }
-        });
-
-        socket.value!.on('meetingTimeRemaining', (data) async {
-          // Handle 'meetingTimeRemaining' event
-          try {
-            await meetingTimeRemaining(
-              options: MeetingTimeRemainingOptions(
-                  timeRemaining: data['timeRemaining'],
-                  eventType: eventType.value,
-                  showAlert: showAlert),
-            );
-          } catch (error) {
-            if (kDebugMode) {
-              // print('Error handling meetingTimeRemaining event: $error');
-            }
-          }
-        });
-
-        socket.value!.on('meetingStillThere', (data) async {
-          // Handle 'meetingStillThere' event
-          try {
-            await meetingStillThere(
-                options: MeetingStillThereOptions(
-              updateIsConfirmHereModalVisible: updateIsConfirmHereModalVisible,
-            ));
-          } catch (error) {
-            if (kDebugMode) {
-              // print('Error handling meetingStillThere event: $error');
-            }
-          }
-        });
-
-        socket.value!.on('startRecords', (_) async {
+        socketAlt.on('startRecords', (_) async {
           // Handle 'startRecords' event
           try {
             startRecords(
               StartRecordsOptions(
                 roomName: roomName.value,
                 member: member.value,
-                socket: socket.value,
+                socket: socketAlt,
               ),
             );
           } catch (error) {
@@ -3782,14 +4067,14 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
           }
         });
 
-        socket.value!.on('reInitiateRecording', (_) async {
+        socketAlt.on('reInitiateRecording', (_) async {
           // Handle 'reInitiateRecording' event
           try {
             reInitiateRecording(
               ReInitiateRecordingOptions(
                 roomName: roomName.value,
                 member: member.value,
-                socket: socket.value,
+                socket: socketAlt,
                 adminRestrictSetting: adminRestrictSetting.value,
               ),
             );
@@ -3800,28 +4085,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
           }
         });
 
-        socket.value!.on('updateConsumingDomains', (data) async {
-          // Handle 'updateConsumingDomains' event
-          try {
-            UpdateConsumingDomainsData updateConsumingDomainsData =
-                UpdateConsumingDomainsData.fromJson(data);
-
-            updateConsumingDomains(UpdateConsumingDomainsOptions(
-              domains: updateConsumingDomainsData.domains,
-              altDomains: updateConsumingDomainsData.altDomains,
-              apiUserName: apiUserName,
-              apiToken: apiToken,
-              apiKey: "",
-              parameters: mediasfuParameters,
-            ));
-          } catch (error) {
-            if (kDebugMode) {
-              // print('Error handling updateConsumingDomains event: $error');
-            }
-          }
-        });
-
-        socket.value!.on('RecordingNotice', (data) async {
+        socketAlt.on('RecordingNotice', (data) async {
           // Handle 'RecordingNotice' event
           try {
             UserRecordingParams? userRecording;
@@ -3848,7 +4112,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
           }
         });
 
-        socket.value!.on('timeLeftRecording', (data) async {
+        socketAlt.on('timeLeftRecording', (data) async {
           // Handle 'timeLeftRecording' event
           try {
             timeLeftRecording(TimeLeftRecordingOptions(
@@ -3862,7 +4126,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
           }
         });
 
-        socket.value!.on('stoppedRecording', (data) async {
+        socketAlt.on('stoppedRecording', (data) async {
           // Handle 'stoppedRecording' event
           try {
             stoppedRecording(StoppedRecordingOptions(
@@ -3876,101 +4140,61 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
           }
         });
 
-        socket.value!.on('hostRequestResponse', (data) async {
-          // Handle 'hostRequestResponse' event
-          try {
-            RequestResponse requestResponse =
-                RequestResponse.fromMap(data['requestResponse']);
-            hostRequestResponse(
-              HostRequestResponseOptions(
-                requestResponse: requestResponse,
-                showAlert: showAlert,
-                requestList: requestList.value,
-                updateRequestList: updateRequestList,
-                updateMicAction: updateMicAction,
-                updateVideoAction: updateVideoAction,
-                updateScreenAction: updateScreenAction,
-                updateChatAction: updateChatAction,
-                updateAudioRequestState: updateAudioRequestState,
-                updateVideoRequestState: updateVideoRequestState,
-                updateScreenRequestState: updateScreenRequestState,
-                updateChatRequestState: updateChatRequestState,
-                updateAudioRequestTime: updateAudioRequestTime,
-                updateVideoRequestTime: updateVideoRequestTime,
-                updateScreenRequestTime: updateScreenRequestTime,
-                updateChatRequestTime: updateChatRequestTime,
-                updateRequestIntervalSeconds:
-                    updateRequestIntervalSeconds.value,
+        if (widget.options.localLink!.isNotEmpty && !skipSockets) {
+          await joinroom(
+            socket: socketDefault,
+            roomName: roomName.value,
+            islevel: islevel.value,
+            member: member.value,
+            sec: token,
+            apiUserName: apiUserName,
+            isLocal: true,
+          );
+        }
+
+        // Check if localSocket has changed
+        bool localChanged = false;
+        localChanged =
+            localSocket.value != null && localSocket.value!.id != socketAlt.id;
+
+        if (!skipSockets && localChanged) {
+          // Re-call connectsocket with skipSockets = true
+          await connectsocket(apiUserName, token, skipSockets: true);
+          await Future.delayed(const Duration(milliseconds: 1000));
+          updateIsLoadingModalVisible(false);
+          return socketDefault;
+        } else {
+          if (link.value.isNotEmpty && link.value.contains('mediasfu.com')) {
+            // Token might be different for local room
+            String token = apiToken.value;
+            await joinroom(
+              socket: (widget.options.connectMediaSFU! && socketAlt.id != null)
+                  ? socketAlt
+                  : socketDefault,
+              roomName: roomName.value,
+              islevel: islevel.value,
+              member: member.value,
+              sec: token,
+              apiUserName: apiUserName,
+            );
+          }
+
+          await receiveRoomMessages(ReceiveRoomMessagesOptions(
+            socket: socketDefault,
+            roomName: roomName.value,
+            updateMessages: updateMessages,
+          ));
+
+          if (!skipSockets) {
+            prepopulateUserMedia(
+              PrepopulateUserMediaOptions(
+                name: hostLabel.value,
+                parameters: mediasfuParameters,
               ),
             );
-          } catch (error) {
-            if (kDebugMode) {
-              // print('Error handling hostRequestResponse event: $error');
-            }
           }
-        });
-
-        socket.value!.on('pollUpdated', (data) async {
-          try {
-            PollUpdatedData pollUpdatedData = PollUpdatedData.fromMap(data);
-
-            await pollUpdated(PollUpdatedOptions(
-              data: pollUpdatedData,
-              polls: polls.value,
-              poll: poll.value,
-              member: member.value,
-              islevel: islevel.value,
-              showAlert: showAlert,
-              updatePolls: updatePolls,
-              updatePoll: updatePoll,
-              updateIsPollModalVisible: updateIsPollModalVisible,
-            ));
-          } catch (error) {
-            if (kDebugMode) {
-              // print('Error handling pollUpdated event: $error');
-            }
-          }
-        });
-
-        socket.value!.on('breakoutRoomUpdated', (data) async {
-          try {
-            BreakoutRoomUpdatedData breakoutRoomUpdatedData =
-                BreakoutRoomUpdatedData.fromMap(data);
-
-            await breakoutRoomUpdated(BreakoutRoomUpdatedOptions(
-              data: breakoutRoomUpdatedData,
-              parameters: mediasfuParameters,
-            ));
-          } catch (error) {
-            if (kDebugMode) {
-              // print('Error handling breakoutRoomUpdated event: $error');
-            }
-          }
-        });
-
-        await joinroom(
-          socket: socket.value,
-          roomName: roomName.value,
-          islevel: islevel.value,
-          member: member.value,
-          sec: apiToken,
-          apiUserName: apiUserName,
-        );
-
-        await receiveRoomMessages(ReceiveRoomMessagesOptions(
-          socket: socket.value,
-          roomName: roomName.value,
-          updateMessages: updateMessages,
-        ));
-
-        prepopulateUserMedia(
-          PrepopulateUserMediaOptions(
-            name: hostLabel.value,
-            parameters: mediasfuParameters,
-          ),
-        );
-
-        return socket.value!;
+          return socketDefault;
+        }
       } else {
         return socket.value!;
       }
@@ -3991,9 +4215,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
       Future<void> connectAndAddSocketMethods() async {
         socket.value = await connectsocket(
           apiUserName.value,
-          '',
           apiToken.value,
-          link.value,
         );
       }
 
@@ -4083,6 +4305,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
         getDomains: getDomains,
         formatNumber: formatNumber,
         connectIps: connectIps,
+        connectLocalIps: connectLocalIps,
         createDeviceClient: createDeviceClient,
         handleCreatePoll: handleCreatePoll,
         handleVotePoll: handleVotePoll,
@@ -4289,6 +4512,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
         deferReceive: deferReceive.value,
         allAudioStreams: allAudioStreams.value,
         screenProducer: screenProducer.value,
+        localScreenProducer: localScreenProducer!.value,
         remoteScreenStream: remoteScreenStream.value,
         gotAllVids: gotAllVids.value,
         paginationHeightWidth: paginationHeightWidth.value,
@@ -4376,15 +4600,19 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
         hasCameraPermission: hasCameraPermission.value,
         hasAudioPermission: hasAudioPermission.value,
         transportCreated: transportCreated.value,
+        localTransportCreated: localTransportCreated!.value,
         transportCreatedVideo: transportCreatedVideo.value,
         transportCreatedAudio: transportCreatedAudio.value,
         transportCreatedScreen: transportCreatedScreen.value,
         producerTransport: producerTransport.value,
+        localProducerTransport: localProducerTransport!.value,
         videoProducer: videoProducer.value,
+        localVideoProducer: localVideoProducer!.value,
         params: params.value,
         videoParams: videoParams.value,
         audioParams: audioParams.value,
         audioProducer: audioProducer.value,
+        localAudioProducer: localAudioProducer!.value,
         consumerTransports: consumerTransports.value,
         consumingTransports: consumingTransports.value,
         // Polls
@@ -4406,6 +4634,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
         validated: validated,
         device: device.value,
         socket: socket.value,
+        localSocket: localSocket.value,
         checkMediaPermission: !kIsWeb,
         onWeb: kIsWeb,
 
@@ -4602,6 +4831,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
         updateAllAudioStreams: updateAllAudioStreams,
         updateRemoteScreenStream: updateRemoteScreenStream,
         updateScreenProducer: updateScreenProducer,
+        updateLocalScreenProducer: updateLocalScreenProducer,
         updateGotAllVids: updateGotAllVids,
         updatePaginationHeightWidth: updatePaginationHeightWidth,
         updatePaginationDirection: updatePaginationDirection,
@@ -4699,15 +4929,19 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
 
         // Transports
         updateTransportCreated: updateTransportCreated,
+        updateLocalTransportCreated: updateLocalTransportCreated,
         updateTransportCreatedVideo: updateTransportCreatedVideo,
         updateTransportCreatedAudio: updateTransportCreatedAudio,
         updateTransportCreatedScreen: updateTransportCreatedScreen,
         updateProducerTransport: updateProducerTransport,
+        updateLocalProducerTransport: updateLocalProducerTransport,
         updateVideoProducer: updateVideoProducer,
+        updateLocalVideoProducer: updateLocalVideoProducer,
         updateParams: updateParams,
         updateVideoParams: updateVideoParams,
         updateAudioParams: updateAudioParams,
         updateAudioProducer: updateAudioProducer,
+        updateLocalAudioProducer: updateLocalAudioProducer,
         updateConsumerTransports: updateConsumerTransports,
         updateConsumingTransports: updateConsumingTransports,
 
@@ -5230,24 +5464,30 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
 
   Widget? renderpreJoinPageWidget() {
     return PreJoinPage(
-        // return widget.options.preJoinPageWidget!(
-        options: PreJoinPageOptions(
-          imgSrc: widget.options.imgSrc ??
-              'https://mediasfu.com/images/logo192.png',
-          updateIsLoadingModalVisible: updateIsLoadingModalVisible,
-          updateValidated: updateValidated,
-          updateApiUserName: updateApiUserName,
-          updateApiToken: updateApiToken,
-          updateLink: updateLink,
-          updateRoomName: updateRoomName,
-          updateMember: updateMember,
-          showAlert: showAlert,
-          connectSocket: connectSocket,
-          updateSocket: updateSocket,
-        ),
-        credentials: widget.options.credentials ??
-            Credentials(apiUserName: '', apiKey: ''),
-        customBuilder: widget.options.preJoinPageWidget);
+      // return widget.options.preJoinPageWidget!(
+      options: PreJoinPageOptions(
+          parameters: PreJoinPageParameters(
+            imgSrc: widget.options.imgSrc ??
+                'https://mediasfu.com/images/logo192.png',
+            updateIsLoadingModalVisible: updateIsLoadingModalVisible,
+            updateValidated: updateValidated,
+            updateApiUserName: updateApiUserName,
+            updateApiToken: updateApiToken,
+            updateLink: updateLink,
+            updateRoomName: updateRoomName,
+            updateMember: updateMember,
+            showAlert: showAlert,
+            connectSocket: connectSocket,
+            connectLocalSocket: connectLocalSocket,
+            updateSocket: updateSocket,
+            updateLocalSocket: updateLocalSocket,
+          ),
+          localLink: widget.options.localLink,
+          connectMediaSFU: widget.options.connectMediaSFU!,
+          credentials: widget.options.credentials ??
+              Credentials(apiUserName: '', apiKey: ''),
+          customBuilder: widget.options.preJoinPageWidget),
+    );
   }
 
   Widget _buildRoomInterface() {
@@ -5296,6 +5536,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
           adminPasscode: adminPasscode.value,
           islevel: islevel.value,
           eventType: eventType.value,
+          localLink: widget.options.localLink,
         ));
       },
     );
@@ -5591,6 +5832,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
             roomName: roomName.value,
             islevel: islevel.value,
             adminPasscode: adminPasscode.value,
+            localLink: widget.options.localLink,
           ),
         );
       },

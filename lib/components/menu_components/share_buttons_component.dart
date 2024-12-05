@@ -26,11 +26,13 @@ class ShareButtonsComponentOptions {
   final String meetingID;
   final EventType eventType;
   final List<ShareButtonOptions>? customButtons;
+  final String? localLink;
 
   ShareButtonsComponentOptions({
     required this.meetingID,
     required this.eventType,
     this.customButtons,
+    this.localLink,
   });
 }
 
@@ -47,7 +49,8 @@ class ShareButtonsComponentOptions {
 /// ShareButtonsComponent(
 ///   options: ShareButtonsComponentOptions(
 ///     meetingID: "123456",
-///     eventType: "meeting",
+///     eventType: EventType.webinar,
+///     localLink: "https://example.com",
 ///     customButtons: [
 ///       ShareButtonOptions(
 ///         icon: FontAwesomeIcons.twitter,
@@ -64,27 +67,34 @@ class ShareButtonsComponent extends StatelessWidget {
 
   const ShareButtonsComponent({super.key, required this.options});
 
-  @override
-  Widget build(BuildContext context) {
+  String getShareUrl() {
+    if (options.localLink != null &&
+        options.localLink!.isNotEmpty &&
+        !options.localLink!.contains('mediasfu.com')) {
+      return '${options.localLink}/meeting/${options.meetingID}';
+    }
     final shareName = options.eventType == EventType.chat
         ? 'chat'
         : options.eventType == EventType.broadcast
             ? 'broadcast'
             : 'meeting';
+    return 'https://$shareName.mediasfu.com/$shareName/${options.meetingID}';
+  }
 
+  @override
+  Widget build(BuildContext context) {
     final defaultButtons = [
       ShareButtonOptions(
         icon: Icons.copy,
         action: () async {
-          await FlutterClipboard.copy(
-              'https://$shareName.mediasfu.com/$shareName/${options.meetingID}');
+          await FlutterClipboard.copy(getShareUrl());
         },
       ),
       ShareButtonOptions(
         icon: Icons.email,
         action: () {
           final emailUrl =
-              'mailto:?subject=Join my meeting&body=Here\'s the link: https://$shareName.mediasfu.com/$shareName/${options.meetingID}';
+              'mailto:?subject=Join my meeting&body=Here\'s the link: ${getShareUrl()}';
           launchUrl(Uri.parse(emailUrl));
         },
       ),
@@ -92,7 +102,7 @@ class ShareButtonsComponent extends StatelessWidget {
         icon: Icons.facebook,
         action: () {
           final facebookUrl =
-              'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent('https://$shareName.mediasfu.com/$shareName/${options.meetingID}')}';
+              'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(getShareUrl())}';
           launchUrl(Uri.parse(facebookUrl));
         },
       ),
@@ -100,15 +110,15 @@ class ShareButtonsComponent extends StatelessWidget {
         icon: FontAwesomeIcons.whatsapp,
         action: () {
           final whatsappUrl =
-              'https://wa.me/?text=${Uri.encodeComponent('https://$shareName.mediasfu.com/$shareName/${options.meetingID}')}';
+              'https://wa.me/?text=${Uri.encodeComponent(getShareUrl())}';
           launchUrl(Uri.parse(whatsappUrl));
         },
       ),
       ShareButtonOptions(
-        icon: Icons.send,
+        icon: FontAwesomeIcons.telegram,
         action: () {
           final telegramUrl =
-              'https://t.me/share/url?url=${Uri.encodeComponent('https://$shareName.mediasfu.com/$shareName/${options.meetingID}')}';
+              'https://t.me/share/url?url=${Uri.encodeComponent(getShareUrl())}';
           launchUrl(Uri.parse(telegramUrl));
         },
       ),

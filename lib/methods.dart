@@ -46,6 +46,8 @@ export 'package:mediasfu_sdk/methods/stream_methods/click_screen_share.dart'
 export 'package:mediasfu_sdk/methods/utils/format_number.dart'
     show formatNumber;
 export 'package:mediasfu_sdk/consumers/connect_ips.dart' show connectIps;
+export 'package:mediasfu_sdk/consumers/connect_local_ips.dart'
+    show connectLocalIps;
 export 'package:mediasfu_sdk/methods/polls_methods/poll_updated.dart'
     show pollUpdated;
 export 'package:mediasfu_sdk/methods/polls_methods/handle_create_poll.dart'
@@ -75,3 +77,12 @@ export 'package:mediasfu_sdk/methods/utils/generate_random_waiting_room_list.dar
     show generateRandomWaitingRoomList;
 export 'package:mediasfu_sdk/methods/utils/generate_random_polls.dart'
     show generateRandomPolls;
+
+//new utils
+//export 'package:mediasfu_sdk/methods/utils/create_join_room.dart' show createJoinRoom;
+export 'package:mediasfu_sdk/methods/utils/check_limits_and_make_request.dart'
+    show checkLimitsAndMakeRequest;
+export 'package:mediasfu_sdk/methods/utils/join_room_on_media_sfu.dart'
+    show joinRoomOnMediaSFU;
+export 'package:mediasfu_sdk/methods/utils/create_room_on_media_sfu.dart'
+    show createRoomOnMediaSFU;

@@ -4,34 +4,95 @@ import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
 import '../types/types.dart' show ProducerOptionsType;
 
 abstract class ConnectSendTransportScreenParameters {
+  // Remote Transport and Producer
   Producer? get screenProducer;
+  Transport? get producerTransport;
+
+  // Local Transport and Producer
+  Producer? get localScreenProducer;
+  Transport? get localProducerTransport;
+
+  // Device and Parameters
   Device? get device;
   ProducerOptionsType? get screenParams;
-  Transport? get producerTransport;
   ProducerOptionsType? get params;
 
+  // Update Functions
   void Function(Producer screenProducer) get updateScreenProducer;
+  void Function(Producer? localScreenProducer)? get updateLocalScreenProducer;
   void Function(Transport producerTransport) get updateProducerTransport;
+  void Function(Transport? localProducerTransport)?
+      get updateLocalProducerTransport;
 
   ConnectSendTransportScreenParameters Function() get getUpdatedAllParams;
-  // dynamic operator [](String key);
 }
 
 class ConnectSendTransportScreenOptions {
   final MediaStream stream;
   final ConnectSendTransportScreenParameters parameters;
+  final String targetOption; // 'all', 'local', 'remote'
 
-  ConnectSendTransportScreenOptions(
-      {required this.stream, required this.parameters});
+  ConnectSendTransportScreenOptions({
+    required this.stream,
+    required this.parameters,
+    this.targetOption = 'all',
+  });
 }
 
 typedef ConnectSendTransportScreenType = Future<void> Function(
     ConnectSendTransportScreenOptions options);
 
+Future<void> connectLocalSendTransportScreen({
+  required MediaStream stream,
+  required ConnectSendTransportScreenParameters parameters,
+}) async {
+  try {
+    Producer? localScreenProducer = parameters.localScreenProducer;
+    Transport? localProducerTransport = parameters.localProducerTransport;
+    Device? device = parameters.device;
+    final updateLocalScreenProducer = parameters.updateLocalScreenProducer;
+    final updateLocalProducerTransport =
+        parameters.updateLocalProducerTransport;
+
+    // Find VP9 codec in device capabilities
+    RtpCodecCapability? codec = device?.rtpCapabilities.codecs
+        .firstWhere((codec) => codec.mimeType.toLowerCase() == 'video/vp9');
+
+    // If no VP9 codec is found, get the first video codec
+    codec ??= device?.rtpCapabilities.codecs.firstWhere(
+        (codec) => codec.kind == RTCRtpMediaType.RTCRtpMediaTypeVideo);
+
+    // Produce local screen share data
+    if (localProducerTransport != null) {
+      localProducerTransport.produce(
+        track: stream.getVideoTracks()[0],
+        stream: stream,
+        codec: codec,
+        appData: {'mediaTag': 'screen-video'},
+        source: 'screen',
+      );
+
+      // Update the local producer and transport objects
+      if (updateLocalScreenProducer != null) {
+        updateLocalScreenProducer(localScreenProducer);
+      }
+      if (updateLocalProducerTransport != null) {
+        updateLocalProducerTransport(localProducerTransport);
+      }
+    }
+  } catch (error) {
+    if (kDebugMode) {
+      print('Error connecting local screen transport: $error');
+    }
+    rethrow; // Re-throw to propagate the error
+  }
+}
+
 /// Sets up and initiates the screen-sharing transport connection, configuring codec options and producing a video track for screen sharing.
 ///
 /// ### Parameters:
 /// - `options` (`ConnectSendTransportScreenOptions`): Contains:
+///   - `targetOption` (`String`): Specifies the target option for connection ('all' by default).
 ///   - `stream` (`MediaStream`): The media stream that includes the screen video track for sharing.
 ///   - `parameters` (`ConnectSendTransportScreenParameters`): Contains necessary configurations, such as codec options, transport, and update functions.
 ///
@@ -50,6 +111,7 @@ typedef ConnectSendTransportScreenType = Future<void> Function(
 /// ### Example Usage:
 /// ```dart
 /// final screenOptions = ConnectSendTransportScreenOptions(
+///   targetOption: 'all',
 ///   stream: screenStream,
 ///   parameters: myConnectSendTransportScreenParameters,
 /// );
@@ -68,7 +130,7 @@ Future<void> connectSendTransportScreen(
     ConnectSendTransportScreenOptions options) async {
   final MediaStream stream = options.stream;
   final ConnectSendTransportScreenParameters parameters = options.parameters;
-
+  final String targetOption = options.targetOption;
   try {
     // Retrieve and update latest parameters
     Device? device = parameters.getUpdatedAllParams().device;
@@ -87,20 +149,35 @@ Future<void> connectSendTransportScreen(
         (codec) => codec.kind == RTCRtpMediaType.RTCRtpMediaTypeVideo);
 
     // Produce screen share video using the transport and codec
-    producerTransport!.produce(
-      track: stream.getVideoTracks()[0],
-      stream: stream,
-      codecOptions: ProducerCodecOptions(
-        videoGoogleStartBitrate:
-            producerParams.codecOptions!.videoGoogleStartBitrate,
-      ),
-      codec: codec,
-      appData: {'mediaTag': 'screen-video'},
-      source: 'screen',
-    );
+    if (targetOption == 'remote' || targetOption == 'all') {
+      producerTransport!.produce(
+        track: stream.getVideoTracks()[0],
+        stream: stream,
+        codecOptions: ProducerCodecOptions(
+          videoGoogleStartBitrate:
+              producerParams.codecOptions!.videoGoogleStartBitrate,
+        ),
+        codec: codec,
+        appData: {'mediaTag': 'screen-video'},
+        source: 'screen',
+      );
 
-    // Update screenProducer and producerTransport in parameters
-    parameters.updateProducerTransport(producerTransport);
+      // Update screenProducer and producerTransport in parameters
+      parameters.updateProducerTransport(producerTransport);
+    }
+
+    if (targetOption == 'local' || targetOption == 'all') {
+      try {
+        await connectLocalSendTransportScreen(
+          stream: stream,
+          parameters: parameters,
+        );
+      } catch (localError) {
+        if (kDebugMode) {
+          print('Error connecting local screen transport: $localError');
+        }
+      }
+    }
   } catch (error) {
     if (kDebugMode) {
       print('connectSendTransportScreen error: $error');

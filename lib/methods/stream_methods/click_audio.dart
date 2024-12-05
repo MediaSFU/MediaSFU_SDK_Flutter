@@ -44,6 +44,7 @@ abstract class ClickAudioParameters
   int? get audioRequestTime;
   String get member;
   io.Socket? get socket;
+  io.Socket? get localSocket;
   String get roomName;
   String get userDefaultAudioInputDevice;
   bool get micAction;
@@ -148,6 +149,7 @@ Future<void> clickAudio(ClickAudioOptions options) async {
     final int? audioRequestTime = parameters.audioRequestTime;
     final String member = parameters.member;
     final io.Socket? socket = parameters.socket;
+    final io.Socket? localSocket = parameters.localSocket;
     final String roomName = parameters.roomName;
     final String userDefaultAudioInputDevice =
         parameters.userDefaultAudioInputDevice;
@@ -298,6 +300,18 @@ Future<void> clickAudio(ClickAudioOptions options) async {
             await resumeSendTransportAudio(options: optionsResume);
             socket!.emit("resumeProducerAudio",
                 {"mediaTag": "audio", "roomName": roomName});
+
+            try {
+              if (localSocket != null && localSocket.id != null) {
+                localSocket.emit("resumeProducerAudio",
+                    {"mediaTag": "audio", "roomName": roomName});
+              }
+            } catch (e) {
+              if (kDebugMode) {
+                print(e);
+              }
+            }
+
             updateLocalStream(localStream);
             updateAudioAlreadyOn(audioAlreadyOn);
             if (micAction == true) {

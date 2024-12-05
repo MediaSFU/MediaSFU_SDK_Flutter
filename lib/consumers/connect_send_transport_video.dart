@@ -6,12 +6,18 @@ import '../../types/types.dart' show ProducerOptionsType;
 abstract class ConnectSendTransportVideoParameters {
   Producer? get videoProducer;
   Transport? get producerTransport;
+  // Local Transport and Producer
+  Producer? get localVideoProducer;
+  Transport? get localProducerTransport;
   String get islevel;
   bool get updateMainWindow;
   MediaStream? get localStream;
   MediaStream? get localStreamVideo;
-  void Function(Transport? producerTransport) get updateProducerTransport;
   void Function(Producer? videoProducer) get updateVideoProducer;
+  void Function(Producer? localVideoProducer)? get updateLocalVideoProducer;
+  void Function(Transport? producerTransport) get updateProducerTransport;
+  void Function(Transport? localProducerTransport)?
+      get updateLocalProducerTransport;
   void Function(bool updateMainWindow) get updateUpdateMainWindow;
   void Function(MediaStream? localStreamVideo) get updateLocalStreamVideo;
   void Function(MediaStream? localStream) get updateLocalStream;
@@ -24,15 +30,60 @@ class ConnectSendTransportVideoOptions {
   final ProducerOptionsType videoParams;
   final Map<String, dynamic>? videoConstraints;
   final ConnectSendTransportVideoParameters parameters;
+  final String targetOption; // 'all', 'local', 'remote'
 
-  ConnectSendTransportVideoOptions(
-      {required this.videoParams,
-      required this.parameters,
-      this.videoConstraints});
+  ConnectSendTransportVideoOptions({
+    required this.videoParams,
+    required this.parameters,
+    this.videoConstraints,
+    this.targetOption = 'all',
+  });
 }
 
 typedef ConnectSendTransportVideoType = Future<void> Function(
     ConnectSendTransportVideoOptions options);
+
+Future<void> connectLocalSendTransportVideo({
+  required MediaStream stream,
+  required MediaStreamTrack track,
+  required List<RtpEncodingParameters> encodings,
+  required ProducerCodecOptions codecOptions,
+  RtpCodecCapability? codec,
+  required ConnectSendTransportVideoParameters parameters,
+}) async {
+  try {
+    Producer? localVideoProducer = parameters.localVideoProducer;
+    Transport? localProducerTransport = parameters.localProducerTransport;
+    final updateLocalVideoProducer = parameters.updateLocalVideoProducer;
+    final updateLocalProducerTransport =
+        parameters.updateLocalProducerTransport;
+
+    // Produce local video data if transport exists
+    if (localProducerTransport != null) {
+      localProducerTransport.produce(
+        track: track,
+        stream: stream,
+        encodings: encodings,
+        codecOptions: codecOptions,
+        codec: codec,
+        source: 'webcam',
+      );
+
+      // Update local producer and transport
+      if (updateLocalVideoProducer != null) {
+        updateLocalVideoProducer(localVideoProducer);
+      }
+      if (updateLocalProducerTransport != null) {
+        updateLocalProducerTransport(localProducerTransport);
+      }
+    }
+  } catch (error) {
+    if (kDebugMode) {
+      print('Error connecting local video transport: $error');
+    }
+    rethrow; // Re-throw to propagate the error
+  }
+}
 
 /// Establishes a video transport connection, configuring video encoding and codec options for video transmission.
 ///
@@ -86,6 +137,7 @@ Future<void> connectSendTransportVideo(
   final ProducerOptionsType videoParams = options.videoParams;
   final ConnectSendTransportVideoParameters parameters = options.parameters;
   final Map<String, dynamic>? videoConstraints = options.videoConstraints;
+  final String targetOption = options.targetOption;
 
   try {
     // Destructure parameters
@@ -169,27 +221,47 @@ Future<void> connectSendTransportVideo(
     } catch (e) {}
 
     //get the first codec from the first video track
+    if (targetOption == 'all' || targetOption == 'remote') {
+      producerTransport?.produce(
+        track: stream.getVideoTracks().first,
+        stream: stream,
+        encodings: encodingsList.length > 1 ? encodingsList : [],
+        codecOptions: ProducerCodecOptions(
+            videoGoogleStartBitrate:
+                videoParams.codecOptions?.videoGoogleStartBitrate?.round()),
+        codec: videoParams.codec,
+        source: 'webcam',
+      );
 
-    producerTransport?.produce(
-      track: stream.getVideoTracks().first,
-      stream: stream,
-      encodings: encodingsList.length > 1 ? encodingsList : [],
-      codecOptions: ProducerCodecOptions(
-          videoGoogleStartBitrate:
-              videoParams.codecOptions?.videoGoogleStartBitrate?.round()),
-      codec: videoParams.codec,
-      source: 'webcam',
-    );
+      // Update main window state based on video connection level
+      if (islevel == '2') {
+        updateMainWindow = true;
+      }
 
-    // Update main window state based on video connection level
-    if (islevel == '2') {
-      updateMainWindow = true;
+      // Update video producer and transport state
+      updateVideoProducer(videoProducer);
+      updateProducerTransport(producerTransport);
+      updateUpdateMainWindow(updateMainWindow);
     }
 
-    // Update video producer and transport state
-    updateVideoProducer(videoProducer);
-    updateProducerTransport(producerTransport);
-    updateUpdateMainWindow(updateMainWindow);
+    if (targetOption == 'all' || targetOption == 'local') {
+      try {
+        await connectLocalSendTransportVideo(
+          track: stream.getVideoTracks().first,
+          stream: stream,
+          encodings: encodingsList.length > 1 ? encodingsList : [],
+          codecOptions: ProducerCodecOptions(
+              videoGoogleStartBitrate:
+                  videoParams.codecOptions?.videoGoogleStartBitrate?.round()),
+          codec: videoParams.codec,
+          parameters: parameters,
+        );
+      } catch (localError) {
+        if (kDebugMode) {
+          print('Error connecting local video transport: $localError');
+        }
+      }
+    }
   } catch (error) {
     if (kDebugMode) {
       print('connectSendTransportVideo error: $error');

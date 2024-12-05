@@ -21,15 +21,24 @@ abstract class CreateSendTransportParameters
   String get islevel;
   String get member;
   io.Socket? get socket;
+  io.Socket? get localSocket;
   Device? get device;
   bool get transportCreated;
+  bool? get localTransportCreated;
   Transport? get producerTransport;
+  Transport? get localProducerTransport;
 
   UpdateProducerTransport get updateProducerTransport;
+  UpdateProducerTransport? get updateLocalProducerTransport;
   UpdateTransportCreated get updateTransportCreated;
+  UpdateTransportCreated? get updateLocalTransportCreated;
   UpdateScreenProducer get updateScreenProducer;
   UpdateAudioProducer get updateAudioProducer;
   UpdateVideoProducer get updateVideoProducer;
+
+  void Function(Producer? producer)? get updateLocalScreenProducer;
+  void Function(Producer? producer)? get updateLocalAudioProducer;
+  void Function(Producer? producer)? get updateLocalVideoProducer;
 
   // mediasfu functions
   ConnectSendTransportType get connectSendTransport;
@@ -60,6 +69,147 @@ class CreateSendTransportOptions {
 // Type definition for CreateSendTransportType function
 typedef CreateSendTransportType = Future<void> Function(
     CreateSendTransportOptions options);
+
+Future<void> createLocalSendTransport(
+  CreateSendTransportOptions options,
+) async {
+  try {
+    // Destructure parameters from the options
+    final parameters = options.parameters;
+    String islevel = parameters.islevel;
+    String member = parameters.member;
+    io.Socket? localSocket = parameters.localSocket;
+    Device? device = parameters.device;
+    bool? localTransportCreated = parameters.localTransportCreated;
+    Transport? localProducerTransport = parameters.localProducerTransport;
+
+    // Callback functions from parameters
+    final updateLocalProducerTransport =
+        parameters.updateLocalProducerTransport;
+    final updateLocalTransportCreated = parameters.updateLocalTransportCreated;
+    final updateLocalScreenProducer = parameters.updateLocalScreenProducer;
+    final updateLocalAudioProducer = parameters.updateLocalAudioProducer;
+    final updateLocalVideoProducer = parameters.updateLocalVideoProducer;
+    final connectSendTransport = parameters.connectSendTransport;
+
+    // Get updated device and socket parameters if necessary
+    final updatedParams = parameters.getUpdatedAllParams();
+    device = updatedParams.device;
+    localSocket = updatedParams.localSocket;
+
+    if (localSocket == null || localSocket.id == null) {
+      return;
+    }
+
+    // Emit 'createWebRtcTransport' event to the server for local transport
+    Completer<Map<String, dynamic>> producerCompleter = Completer();
+    localSocket.emitWithAck(
+      'createWebRtcTransport',
+      {'consumer': false, 'islevel': islevel},
+      ack: (response) async {
+        if (response['error'] != null) {
+          producerCompleter.completeError(response['error']);
+        } else {
+          producerCompleter.complete(response['params']);
+        }
+
+        Map<String, dynamic> webrtcTransportMap =
+            await producerCompleter.future;
+
+        //producer callback function for local transport
+        void producerCallbackFunction(Producer producer) {
+          producer.kind == 'video' && producer.source == 'screen'
+              ? updateLocalScreenProducer!(producer)
+              : producer.kind == 'audio'
+                  ? updateLocalAudioProducer!(producer)
+                  : updateLocalVideoProducer!(producer);
+        }
+
+        try {
+          // Create a WebRTC send transport for local transport
+          localProducerTransport = device?.createSendTransportFromMap(
+            webrtcTransportMap,
+            producerCallback: producerCallbackFunction,
+          );
+        } catch (error) {
+          if (kDebugMode) {
+            print('MediaSFU - Error creating local send transport: $error');
+          }
+        }
+        if (updateLocalProducerTransport != null) {
+          updateLocalProducerTransport(localProducerTransport);
+        }
+
+        // Handle 'connect' event for DTLS connection
+        localProducerTransport?.on('connect', (data) async {
+          try {
+            localSocket!.emit('transport-connect',
+                {'dtlsParameters': data['dtlsParameters'].toMap()});
+            data['callback']();
+          } catch (error) {
+            data['errback'](error);
+          }
+        });
+
+        // Handle 'produce' event to initiate media transmission
+        localProducerTransport?.on('produce', (data) async {
+          try {
+            localSocket!.emitWithAck('transport-produce', {
+              'kind': data['kind'],
+              'rtpParameters': data['rtpParameters'].toMap(),
+              if (data['appData'] != null)
+                'appData': Map<String, dynamic>.from(data['appData']),
+              'islevel': islevel,
+              'name': member,
+            }, ack: (response) async {
+              data['callback'](response['id']);
+            });
+          } catch (error) {
+            data['errback'](error);
+          }
+        });
+
+        // Monitor the connection state and handle any failures
+        localProducerTransport?.on('connectionstatechange', (state) async {
+          if (state == 'failed') {
+            if (kDebugMode) {
+              print("Local transport connection failed.");
+            }
+            await localProducerTransport?.close();
+          }
+        });
+
+        // Set local transport as created and invoke connectSendTransport
+        localTransportCreated = true;
+        if (updateLocalTransportCreated != null) {
+          updateLocalTransportCreated(localTransportCreated!);
+        }
+
+        try {
+          parameters.updateLocalProducerTransport!(localProducerTransport);
+          final optionsConnect = ConnectSendTransportOptions(
+            targetOption: 'local',
+            option: options.option,
+            parameters: parameters,
+            audioConstraints: options.audioConstraints,
+            videoConstraints: options.videoConstraints,
+          );
+          await connectSendTransport(
+            optionsConnect,
+          );
+        } catch (error) {
+          if (kDebugMode) {
+            print("Error in local transport creation: $error");
+          }
+        }
+      },
+    );
+  } catch (error) {
+    if (kDebugMode) {
+      print('MediaSFU - Error creating local send transport: $error');
+    }
+  }
+}
 
 /// Creates a WebRTC send transport for media transmission (audio, video, or screen).
 ///
@@ -101,6 +251,7 @@ typedef CreateSendTransportType = Future<void> Function(
 ///     islevel: '2',
 ///     member: 'user123',
 ///     socket: mySocket,
+///     localSocket: myLocalSocket,
 ///     device: myDevice,
 ///     transportCreated: false,
 ///     updateProducerTransport: (transport) => print('Producer Transport updated'),
@@ -148,6 +299,15 @@ Future<void> createSendTransport(
     final updatedParams = parameters.getUpdatedAllParams();
     device = updatedParams.device;
     socket = updatedParams.socket;
+
+    // Create local send transport first
+    try {
+      await createLocalSendTransport(options);
+    } catch (error) {
+      if (kDebugMode) {
+        print("Error creating local send transport: $error");
+      }
+    }
 
     // Emit 'createWebRtcTransport' event to the server
     Completer<Map<String, dynamic>> producerCompleter = Completer();
@@ -237,6 +397,7 @@ Future<void> createSendTransport(
         try {
           parameters.updateProducerTransport(producerTransport);
           final optionsConnect = ConnectSendTransportOptions(
+            targetOption: 'remote',
             option: options.option,
             parameters: parameters,
             audioConstraints: options.audioConstraints,

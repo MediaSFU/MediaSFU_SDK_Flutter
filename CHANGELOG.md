@@ -1,27 +1,35 @@
+### 2.0.0
+
+* Major refactor of the SDK to support the latest version of the MediaSFU server.
+* Support provided for MediaSFU Community Edition.
+
 ### 1.0.0
+
 * Major refactor of the SDK to support the latest version of the MediaSFU server.
 * Explicit options declaration/requirement for classes.
 * Added support for FHD and QHD video resolutions.
 
 ### 0.0.7
-* Bug fix for interval updates of loudness. 
+
+* Bug fix for interval updates of loudness.
 
 ### 0.0.6
-* Mini audio player bug fix.   
+
+* Mini audio player bug fix.
 
 ### 0.0.5
+
 1. **Updated flutter_webrtc support**:
-   - Enhanced compatibility and performance with the latest version of `flutter_webrtc`.
+   * Enhanced compatibility and performance with the latest version of `flutter_webrtc`.
 
 2. **General bug fixes**:
-   - Resolved various issues to improve overall stability and reliability.
+   * Resolved various issues to improve overall stability and reliability.
 
 3. **Added Polls support**:
-   - Introduced functionality to conduct real-time polls during sessions, allowing for instant feedback and interaction.
+   * Introduced functionality to conduct real-time polls during sessions, allowing for instant feedback and interaction.
 
 4. **Added Breakout rooms support**:
-   - Enabled the creation of multiple sub-meetings within a single session to facilitate focused group discussions and collaboration.
-
+   * Enabled the creation of multiple sub-meetings within a single session to facilitate focused group discussions and collaboration.
 
 ### 0.0.4
 
@@ -35,10 +43,10 @@
 
 #### Changes
 
-- Removed dependence on `permission_handler` to broaden platform support.
-- Updated QR code scanning functionality to utilize `mobile_scanner`.
-- Moved QR code scanner implementation to `welcome_page_qrcode.dart`.
-- Removed the QR code scanner from the default 'welcome page'.
+* Removed dependence on `permission_handler` to broaden platform support.
+* Updated QR code scanning functionality to utilize `mobile_scanner`.
+* Moved QR code scanner implementation to `welcome_page_qrcode.dart`.
+* Removed the QR code scanner from the default 'welcome page'.
 
 #### Notes
 

@@ -5,274 +5,587 @@ import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
 import '../producers/socket_receive_methods/room_record_params.dart';
 import 'package:socket_io_client/socket_io_client.dart';
 
-export '../consumers/socket_receive_methods/join_consume_room.dart';
-export '../consumers/socket_receive_methods/producer_closed.dart';
-export '../consumers/socket_receive_methods/new_pipe_producer.dart';
+// //consumers/socket_receive_methods
+export '../consumers/socket_receive_methods/join_consume_room.dart'
+    show JoinConsumeRoomOptions, JoinConsumeRoomType, JoinConsumeRoomParameters;
+export '../consumers/socket_receive_methods/producer_closed.dart'
+    show ProducerClosedOptions, ProducerClosedType, ProducerClosedParameters;
+export '../consumers/socket_receive_methods/new_pipe_producer.dart'
+    show NewPipeProducerOptions, NewPipeProducerType, NewPipeProducerParameters;
 
 // //consumers
-export '../consumers/add_videos_grid.dart';
-export '../consumers/auto_adjust.dart';
-export '../consumers/calculate_rows_and_columns.dart';
-export '../consumers/change_vids.dart';
-export '../consumers/check_grid.dart';
-export '../consumers/check_permission.dart';
-export '../consumers/check_screen_share.dart';
-export '../consumers/close_and_resize.dart';
-export '../consumers/compare_active_names.dart';
-export '../consumers/compare_screen_states.dart';
-export '../consumers/connect_ips.dart';
-export '../consumers/connect_local_ips.dart';
-export '../consumers/connect_recv_transport.dart';
-export '../consumers/connect_send_transport.dart';
-export '../consumers/connect_send_transport_audio.dart';
-export '../consumers/connect_send_transport_screen.dart';
-export '../consumers/connect_send_transport_video.dart';
-export '../consumers/consumer_resume.dart';
-export '../consumers/control_media.dart';
-export '../consumers/create_send_transport.dart';
-export '../consumers/disconnect_send_transport_audio.dart';
-export '../consumers/disconnect_send_transport_video.dart';
-export '../consumers/disconnect_send_transport_screen.dart';
-export '../consumers/disp_streams.dart';
-export '../consumers/generate_page_content.dart';
-export '../consumers/get_estimate.dart';
-export '../consumers/get_piped_producers_alt.dart';
-export '../consumers/get_producers_piped.dart';
-export '../consumers/get_videos.dart';
-export '../consumers/mix_streams.dart';
-export '../consumers/on_screen_changes.dart';
-export '../consumers/prepopulate_user_media.dart';
-export '../consumers/process_consumer_transports.dart';
-export '../consumers/process_consumer_transports_audio.dart';
-export '../consumers/readjust.dart';
-export '../consumers/receive_all_piped_transports.dart';
-export '../consumers/reorder_streams.dart';
-export '../consumers/re_port.dart';
-export '../consumers/request_screen_share.dart';
-export '../consumers/resume_pause_audio_streams.dart';
-export '../consumers/resume_pause_streams.dart';
-export '../consumers/resume_send_transport_audio.dart';
-export '../consumers/re_update_inter.dart';
-export '../consumers/signal_new_consumer_transport.dart';
-export '../consumers/start_share_screen.dart';
-export '../consumers/stop_share_screen.dart';
-export '../consumers/stream_success_audio.dart';
-export '../consumers/stream_success_audio_switch.dart';
-export '../consumers/stream_success_screen.dart';
-export '../consumers/stream_success_video.dart';
-export '../consumers/switch_user_audio.dart';
-export '../consumers/switch_user_video.dart';
-export '../consumers/switch_user_video_alt.dart';
-export '../consumers/trigger.dart';
-export '../consumers/update_mini_cards_grid.dart';
-export '../consumers/update_participant_audio_decibels.dart';
+export '../consumers/add_videos_grid.dart'
+    show AddVideosGridOptions, AddVideosGridType, AddVideosGridParameters;
+export '../consumers/auto_adjust.dart' show AutoAdjustOptions, AutoAdjustType;
+export '../consumers/calculate_rows_and_columns.dart'
+    show CalculateRowsAndColumnsOptions, CalculateRowsAndColumnsType;
+export '../consumers/change_vids.dart'
+    show ChangeVidsOptions, ChangeVidsType, ChangeVidsParameters;
+export '../consumers/check_grid.dart' show CheckGridOptions, CheckGridType;
+export '../consumers/check_permission.dart'
+    show CheckPermissionOptions, CheckPermissionType;
+export '../consumers/check_screen_share.dart'
+    show
+        CheckScreenShareOptions,
+        CheckScreenShareType,
+        CheckScreenShareParameters;
+export '../consumers/close_and_resize.dart'
+    show CloseAndResizeOptions, CloseAndResizeType, CloseAndResizeParameters;
+export '../consumers/compare_active_names.dart'
+    show
+        CompareActiveNamesOptions,
+        CompareActiveNamesType,
+        CompareActiveNamesParameters;
+export '../consumers/compare_screen_states.dart'
+    show
+        CompareScreenStatesOptions,
+        CompareScreenStatesType,
+        CompareScreenStatesParameters;
+export '../consumers/connect_ips.dart'
+    show ConnectIpsOptions, ConnectIpsType, ConnectIpsParameters;
+export '../consumers/connect_recv_transport.dart'
+    show
+        ConnectRecvTransportOptions,
+        ConnectRecvTransportType,
+        ConnectRecvTransportParameters;
+export '../consumers/connect_send_transport.dart'
+    show
+        ConnectSendTransportOptions,
+        ConnectSendTransportType,
+        ConnectSendTransportParameters;
+export '../consumers/connect_send_transport_audio.dart'
+    show
+        ConnectSendTransportAudioOptions,
+        ConnectSendTransportAudioType,
+        ConnectSendTransportAudioParameters;
+export '../consumers/connect_send_transport_screen.dart'
+    show
+        ConnectSendTransportScreenOptions,
+        ConnectSendTransportScreenType,
+        ConnectSendTransportScreenParameters;
+export '../consumers/connect_send_transport_video.dart'
+    show
+        ConnectSendTransportVideoOptions,
+        ConnectSendTransportVideoType,
+        ConnectSendTransportVideoParameters;
+export '../consumers/consumer_resume.dart'
+    show ConsumerResumeOptions, ConsumerResumeType, ConsumerResumeParameters;
+export '../consumers/control_media.dart'
+    show ControlMediaOptions, ControlMediaType;
+export '../consumers/create_send_transport.dart'
+    show
+        CreateSendTransportOptions,
+        CreateSendTransportType,
+        CreateSendTransportParameters;
+export '../consumers/disconnect_send_transport_audio.dart'
+    show
+        DisconnectSendTransportAudioOptions,
+        DisconnectSendTransportAudioType,
+        DisconnectSendTransportAudioParameters;
+export '../consumers/disconnect_send_transport_video.dart'
+    show
+        DisconnectSendTransportVideoOptions,
+        DisconnectSendTransportVideoType,
+        DisconnectSendTransportVideoParameters;
+export '../consumers/disconnect_send_transport_screen.dart'
+    show
+        DisconnectSendTransportScreenOptions,
+        DisconnectSendTransportScreenType,
+        DisconnectSendTransportScreenParameters;
+export '../consumers/disp_streams.dart'
+    show DispStreamsOptions, DispStreamsType, DispStreamsParameters;
+export '../consumers/generate_page_content.dart'
+    show GeneratePageContentOptions, GeneratePageContentType;
+export '../consumers/get_estimate.dart'
+    show GetEstimateOptions, GetEstimateType, GetEstimateParameters;
+export '../consumers/get_piped_producers_alt.dart'
+    show
+        GetPipedProducersAltOptions,
+        GetPipedProducersAltType,
+        GetPipedProducersAltParameters;
+export '../consumers/get_producers_piped.dart'
+    show
+        GetProducersPipedOptions,
+        GetProducersPipedType,
+        GetProducersPipedParameters;
+export '../consumers/get_videos.dart' show GetVideosOptions, GetVideosType;
+export '../consumers/mix_streams.dart' show MixStreamsOptions, MixStreamsType;
+export '../consumers/on_screen_changes.dart'
+    show OnScreenChangesOptions, OnScreenChangesType, OnScreenChangesParameters;
+export '../consumers/prepopulate_user_media.dart'
+    show
+        PrepopulateUserMediaOptions,
+        PrepopulateUserMediaType,
+        PrepopulateUserMediaParameters;
+export '../consumers/process_consumer_transports.dart'
+    show
+        ProcessConsumerTransportsOptions,
+        ProcessConsumerTransportsType,
+        ProcessConsumerTransportsParameters;
+export '../consumers/process_consumer_transports_audio.dart'
+    show
+        ProcessConsumerTransportsAudioOptions,
+        ProcessConsumerTransportsAudioType,
+        ProcessConsumerTransportsAudioParameters;
+export '../consumers/readjust.dart'
+    show ReadjustOptions, ReadjustType, ReadjustParameters;
+export '../consumers/receive_all_piped_transports.dart'
+    show
+        ReceiveAllPipedTransportsOptions,
+        ReceiveAllPipedTransportsType,
+        ReceiveAllPipedTransportsParameters;
+export '../consumers/reorder_streams.dart'
+    show ReorderStreamsOptions, ReorderStreamsType, ReorderStreamsParameters;
+export '../consumers/re_port.dart'
+    show RePortOptions, RePortType, RePortParameters;
+export '../consumers/request_screen_share.dart'
+    show
+        RequestScreenShareOptions,
+        RequestScreenShareType,
+        RequestScreenShareParameters;
+export '../consumers/resume_pause_audio_streams.dart'
+    show
+        ResumePauseAudioStreamsOptions,
+        ResumePauseAudioStreamsType,
+        ResumePauseAudioStreamsParameters;
+export '../consumers/resume_pause_streams.dart'
+    show
+        ResumePauseStreamsOptions,
+        ResumePauseStreamsType,
+        ResumePauseStreamsParameters;
+export '../consumers/resume_send_transport_audio.dart'
+    show
+        ResumeSendTransportAudioOptions,
+        ResumeSendTransportAudioType,
+        ResumeSendTransportAudioParameters;
+export '../consumers/re_update_inter.dart'
+    show ReUpdateInterOptions, ReUpdateInterType, ReUpdateInterParameters;
+export '../consumers/signal_new_consumer_transport.dart'
+    show
+        SignalNewConsumerTransportOptions,
+        SignalNewConsumerTransportType,
+        SignalNewConsumerTransportParameters;
+export '../consumers/start_share_screen.dart'
+    show
+        StartShareScreenOptions,
+        StartShareScreenType,
+        StartShareScreenParameters;
+export '../consumers/stop_share_screen.dart'
+    show StopShareScreenOptions, StopShareScreenType, StopShareScreenParameters;
+export '../consumers/stream_success_audio.dart'
+    show
+        StreamSuccessAudioOptions,
+        StreamSuccessAudioType,
+        StreamSuccessAudioParameters;
+export '../consumers/stream_success_audio_switch.dart'
+    show
+        StreamSuccessAudioSwitchOptions,
+        StreamSuccessAudioSwitchType,
+        StreamSuccessAudioSwitchParameters;
+export '../consumers/stream_success_screen.dart'
+    show
+        StreamSuccessScreenOptions,
+        StreamSuccessScreenType,
+        StreamSuccessScreenParameters;
+export '../consumers/stream_success_video.dart'
+    show
+        StreamSuccessVideoOptions,
+        StreamSuccessVideoType,
+        StreamSuccessVideoParameters;
+export '../consumers/switch_user_audio.dart'
+    show SwitchUserAudioOptions, SwitchUserAudioType, SwitchUserAudioParameters;
+export '../consumers/switch_user_video.dart'
+    show SwitchUserVideoOptions, SwitchUserVideoType, SwitchUserVideoParameters;
+export '../consumers/switch_user_video_alt.dart'
+    show
+        SwitchUserVideoAltOptions,
+        SwitchUserVideoAltType,
+        SwitchUserVideoAltParameters;
+export '../consumers/trigger.dart'
+    show TriggerOptions, TriggerType, TriggerParameters;
+export '../consumers/update_mini_cards_grid.dart'
+    show
+        UpdateMiniCardsGridOptions,
+        UpdateMiniCardsGridType,
+        UpdateMiniCardsGridParameters;
+export '../consumers/update_participant_audio_decibels.dart'
+    show
+        UpdateParticipantAudioDecibelsOptions,
+        UpdateParticipantAudioDecibelsType;
 
 // Methods Utils
 
 // Breakout Rooms Methods
-export '../methods/breakout_rooms_methods/launch_breakout_rooms.dart';
-export '../methods/breakout_rooms_methods/breakout_room_updated.dart';
+export '../methods/breakout_rooms_methods/launch_breakout_rooms.dart'
+    show LaunchBreakoutRoomsOptions, LaunchBreakoutRoomsType;
+export '../methods/breakout_rooms_methods/breakout_room_updated.dart'
+    show
+        BreakoutRoomUpdatedOptions,
+        BreakoutRoomUpdatedType,
+        BreakoutRoomUpdatedParameters;
 
 // Co-Host Methods
-export '../methods/co_host_methods/launch_co_host.dart';
-export '../methods/co_host_methods/modify_co_host_settings.dart';
+export '../methods/co_host_methods/launch_co_host.dart'
+    show LaunchCoHostOptions, LaunchCoHostType;
+export '../methods/co_host_methods/modify_co_host_settings.dart'
+    show ModifyCoHostSettingsOptions, ModifyCoHostSettingsType;
 
 // Display Settings Methods
-export '../methods/display_settings_methods/launch_display_settings.dart';
-export '../methods/display_settings_methods/modify_display_settings.dart';
+export '../methods/display_settings_methods/launch_display_settings.dart'
+    show LaunchDisplaySettingsOptions, LaunchDisplaySettingsType;
+export '../methods/display_settings_methods/modify_display_settings.dart'
+    show
+        ModifyDisplaySettingsOptions,
+        ModifyDisplaySettingsType,
+        ModifyDisplaySettingsParameters;
 
 // Exit Methods
-export '../methods/exit_methods/launch_confirm_exit.dart';
-export '../methods/exit_methods/confirm_exit.dart';
+export '../methods/exit_methods/launch_confirm_exit.dart'
+    show LaunchConfirmExitOptions, LaunchConfirmExitType;
+export '../methods/exit_methods/confirm_exit.dart'
+    show ConfirmExitOptions, ConfirmExitType;
 
 // Media Settings Methods
-export '../methods/media_settings_methods/launch_media_settings.dart';
+export '../methods/media_settings_methods/launch_media_settings.dart'
+    show LaunchMediaSettingsOptions, LaunchMediaSettingsType;
 
 // Menu Methods
-export '../methods/menu_methods/launch_menu_modal.dart';
+export '../methods/menu_methods/launch_menu_modal.dart'
+    show LaunchMenuModalOptions, LaunchMenuModalType;
 
 // Message Methods
-export '../methods/message_methods/launch_messages.dart';
-export '../methods/message_methods/send_message.dart';
+export '../methods/message_methods/launch_messages.dart'
+    show LaunchMessagesOptions, LaunchMessagesType;
+export '../methods/message_methods/send_message.dart'
+    show SendMessageOptions, SendMessageType;
 
 // Participants Methods
-export '../methods/participants_methods/launch_participants.dart';
-export '../methods/participants_methods/message_participants.dart';
-export '../methods/participants_methods/mute_participants.dart';
-export '../methods/participants_methods/remove_participants.dart';
+export '../methods/participants_methods/launch_participants.dart'
+    show LaunchParticipantsOptions, LaunchParticipantsType;
+export '../methods/participants_methods/message_participants.dart'
+    show MessageParticipantsOptions, MessageParticipantsType;
+export '../methods/participants_methods/mute_participants.dart'
+    show MuteParticipantsOptions, MuteParticipantsType;
+export '../methods/participants_methods/remove_participants.dart'
+    show RemoveParticipantsOptions, RemoveParticipantsType;
 
 // Polls Methods
-export '../methods/polls_methods/handle_create_poll.dart';
-export '../methods/polls_methods/handle_end_poll.dart';
-export '../methods/polls_methods/handle_vote_poll.dart';
-export '../methods/polls_methods/launch_poll.dart';
-export '../methods/polls_methods/poll_updated.dart';
+export '../methods/polls_methods/handle_create_poll.dart'
+    show HandleCreatePollOptions, HandleCreatePollType;
+export '../methods/polls_methods/handle_end_poll.dart'
+    show HandleEndPollOptions, HandleEndPollType;
+export '../methods/polls_methods/handle_vote_poll.dart'
+    show HandleVotePollOptions, HandleVotePollType;
+export '../methods/polls_methods/launch_poll.dart'
+    show LaunchPollOptions, LaunchPollType;
+export '../methods/polls_methods/poll_updated.dart'
+    show PollUpdatedOptions, PollUpdatedType;
 
 // Recording Methods
-export '../methods/recording_methods/check_pause_state.dart';
-export '../methods/recording_methods/check_resume_state.dart';
-export '../methods/recording_methods/confirm_recording.dart';
-export '../methods/recording_methods/launch_recording.dart';
-export '../methods/recording_methods/record_pause_timer.dart';
-export '../methods/recording_methods/record_resume_timer.dart';
-export '../methods/recording_methods/record_start_timer.dart';
-export '../methods/recording_methods/record_update_timer.dart';
-export '../methods/recording_methods/start_recording.dart';
+export '../methods/recording_methods/check_pause_state.dart'
+    show CheckPauseStateOptions, CheckPauseStateType;
+export '../methods/recording_methods/check_resume_state.dart'
+    show CheckResumeStateOptions, CheckResumeStateType;
+export '../methods/recording_methods/confirm_recording.dart'
+    show
+        ConfirmRecordingOptions,
+        ConfirmRecordingType,
+        ConfirmRecordingParameters;
+export '../methods/recording_methods/launch_recording.dart'
+    show LaunchRecordingOptions, LaunchRecordingType;
+export '../methods/recording_methods/record_pause_timer.dart'
+    show RecordPauseTimerOptions, RecordPauseTimerType;
+export '../methods/recording_methods/record_resume_timer.dart'
+    show RecordResumeTimerOptions, RecordResumeTimerType;
+export '../methods/recording_methods/record_start_timer.dart'
+    show RecordStartTimerOptions, RecordStartTimerType;
+export '../methods/recording_methods/record_update_timer.dart'
+    show RecordUpdateTimerOptions, RecordUpdateTimerType;
+export '../methods/recording_methods/start_recording.dart'
+    show StartRecordingOptions, StartRecordingType, StartRecordingParameters;
 export '../methods/recording_methods/stop_recording.dart'
-    hide UpdateBooleanState;
+    show StopRecordingOptions, StopRecordingType, StopRecordingParameters;
 export '../methods/recording_methods/update_recording.dart'
-    hide UpdateBooleanState;
+    show UpdateRecordingOptions, UpdateRecordingType, UpdateRecordingParameters;
 
 // Requests Methods
-export '../methods/requests_methods/launch_requests.dart';
-export '../methods/requests_methods/respond_to_requests.dart';
+export '../methods/requests_methods/launch_requests.dart'
+    show LaunchRequestsOptions, LaunchRequestsType;
+export '../methods/requests_methods/respond_to_requests.dart'
+    show RespondToRequestsOptions, RespondToRequestsType;
 
 // Settings Methods
-export '../methods/settings_methods/launch_settings.dart';
+export '../methods/settings_methods/launch_settings.dart'
+    show LaunchSettingsOptions, LaunchSettingsType;
 export '../methods/settings_methods/modify_settings.dart'
-    hide UpdateIsSettingsModalVisible;
+    show ModifySettingsOptions, ModifySettingsType;
 
 // Stream Methods
-export '../methods/stream_methods/click_audio.dart';
-export '../methods/stream_methods/click_chat.dart';
-export '../methods/stream_methods/click_screen_share.dart';
-export '../methods/stream_methods/click_video.dart';
-export '../methods/stream_methods/switch_audio.dart';
-export '../methods/stream_methods/switch_video.dart';
-export '../methods/stream_methods/switch_video_alt.dart';
+export '../methods/stream_methods/click_audio.dart'
+    show ClickAudioOptions, ClickAudioType, ClickAudioParameters;
+export '../methods/stream_methods/click_chat.dart'
+    show ClickChatOptions, ClickChatType;
+export '../methods/stream_methods/click_screen_share.dart'
+    show
+        ClickScreenShareOptions,
+        ClickScreenShareType,
+        ClickScreenShareParameters;
+export '../methods/stream_methods/click_video.dart'
+    show ClickVideoOptions, ClickVideoType, ClickVideoParameters;
+export '../methods/stream_methods/switch_audio.dart'
+    show SwitchAudioOptions, SwitchAudioType, SwitchAudioParameters;
+export '../methods/stream_methods/switch_video.dart'
+    show SwitchVideoOptions, SwitchVideoType, SwitchVideoParameters;
+export '../methods/stream_methods/switch_video_alt.dart'
+    show SwitchVideoAltOptions, SwitchVideoAltType, SwitchVideoAltParameters;
 
 // Meeting Timer Utils
-export '../methods/utils/meeting_timer/start_meeting_progress_timer.dart';
+export '../methods/utils/meeting_timer/start_meeting_progress_timer.dart'
+    show
+        StartMeetingProgressTimerOptions,
+        StartMeetingProgressTimerType,
+        StartMeetingProgressTimerParameters;
 
 // Mini Audio Player Utils
-export '../methods/utils/mini_audio_player/mini_audio_player.dart';
+export '../methods/utils/mini_audio_player/mini_audio_player.dart'
+    show MiniAudioPlayerOptions, MiniAudioPlayerType, MiniAudioPlayerParameters;
 
 // Other Utils
-export '../methods/utils/format_number.dart';
-export '../methods/utils/generate_random_messages.dart';
-export '../methods/utils/generate_random_participants.dart';
-export '../methods/utils/generate_random_polls.dart';
-export '../methods/utils/generate_random_request_list.dart';
-export '../methods/utils/generate_random_waiting_room_list.dart';
-export '../methods/utils/get_modal_position.dart';
-export '../methods/utils/get_overlay_position.dart';
-export '../methods/utils/sleep.dart';
-export '../methods/utils/validate_alphanumeric.dart';
+export '../methods/utils/format_number.dart'
+    show FormatNumberOptions, FormatNumberType;
+export '../methods/utils/generate_random_messages.dart'
+    show GenerateRandomMessagesOptions, GenerateRandomMessagesType;
+export '../methods/utils/generate_random_participants.dart'
+    show GenerateRandomParticipantsOptions, GenerateRandomParticipantsType;
+export '../methods/utils/generate_random_polls.dart'
+    show GenerateRandomPollsOptions, GenerateRandomPollsType;
+export '../methods/utils/generate_random_request_list.dart'
+    show GenerateRandomRequestListOptions, GenerateRandomRequestListType;
+export '../methods/utils/generate_random_waiting_room_list.dart'
+    show GenerateRandomWaitingRoomListType;
+export '../methods/utils/get_modal_position.dart'
+    show GetModalPositionOptions, GetModalPositionType;
+export '../methods/utils/get_overlay_position.dart'
+    show GetOverlayPositionOptions, GetOverlayPositionType;
+export '../methods/utils/sleep.dart' show SleepOptions, SleepType;
+export '../methods/utils/validate_alphanumeric.dart'
+    show ValidateAlphanumericOptions, ValidateAlphanumericType;
 
 // Waiting Methods
-export '../methods/waiting_methods/launch_waiting.dart';
-export '../methods/waiting_methods/respond_to_waiting.dart';
+export '../methods/waiting_methods/launch_waiting.dart'
+    show LaunchWaitingOptions, LaunchWaitingType;
+export '../methods/waiting_methods/respond_to_waiting.dart'
+    show RespondToWaitingOptions, RespondToWaitingType;
 
 // Producer Client Emits
-export '../producer_client/producer_client_emits/create_device_client.dart';
-export '../producer_client/producer_client_emits/join_room_client.dart';
+export '../producer_client/producer_client_emits/create_device_client.dart'
+    show CreateDeviceClientOptions, CreateDeviceClientType;
+export '../producer_client/producer_client_emits/join_room_client.dart'
+    show JoinRoomClientOptions, JoinRoomClientType;
 export '../producer_client/producer_client_emits/update_room_parameters_client.dart'
-    hide
-        UpdateItemPageLimit,
-        UpdateAddForBasic,
-        UpdateMeetingDisplayType,
-        UpdateMainHeightWidth;
+    show
+        UpdateRoomParametersClientOptions,
+        UpdateRoomParametersClientType,
+        UpdateRoomParametersClientParameters;
 
 // Producers Emits
 export '../producers/producer_emits/join_con_room.dart'
-    hide validateAlphanumeric;
-export '../producers/producer_emits/join_room.dart';
+    show JoinConRoomOptions, JoinConRoomType;
+export '../producers/producer_emits/join_room.dart'
+    show JoinRoomOptions, JoinRoomType;
 
 // Producers Socket Receive Methods
 export '../producers/socket_receive_methods/all_members.dart'
-    hide UpdateParticipants, UpdateParticipantsAll;
+    show AllMembersOptions, AllMembersType, AllMembersParameters;
 export '../producers/socket_receive_methods/all_members_rest.dart'
-    hide
-        UpdateParticipants,
-        UpdateParticipantsAll,
-        UpdateBoolean,
-        UpdateCoHost,
-        UpdateRequestList,
-        UpdateIPs,
-        UpdateCoHostResponsibility,
-        UpdateSetting,
-        UpdateSockets;
-export '../producers/socket_receive_methods/all_waiting_room_members.dart';
-export '../producers/socket_receive_methods/ban_participant.dart';
-export '../producers/socket_receive_methods/control_media_host.dart';
-export '../producers/socket_receive_methods/disconnect.dart';
-export '../producers/socket_receive_methods/disconnect_user_self.dart';
-export '../producers/socket_receive_methods/get_domains.dart';
-export '../producers/socket_receive_methods/host_request_response.dart';
-export '../producers/socket_receive_methods/meeting_ended.dart';
-export '../producers/socket_receive_methods/meeting_still_there.dart';
-export '../producers/socket_receive_methods/meeting_time_remaining.dart';
-export '../producers/socket_receive_methods/participant_requested.dart';
-export '../producers/socket_receive_methods/person_joined.dart';
-export '../producers/socket_receive_methods/producer_media_closed.dart';
-export '../producers/socket_receive_methods/producer_media_paused.dart';
-export '../producers/socket_receive_methods/producer_media_resumed.dart';
-export '../producers/socket_receive_methods/re_initiate_recording.dart';
-export '../producers/socket_receive_methods/receive_message.dart';
-export '../producers/socket_receive_methods/recording_notice.dart';
-export '../producers/socket_receive_methods/room_record_params.dart';
-export '../producers/socket_receive_methods/screen_producer_id.dart';
-export '../producers/socket_receive_methods/start_records.dart';
-export '../producers/socket_receive_methods/stopped_recording.dart';
-export '../producers/socket_receive_methods/time_left_recording.dart';
-export '../producers/socket_receive_methods/update_consuming_domains.dart';
-export '../producers/socket_receive_methods/update_media_settings.dart';
-export '../producers/socket_receive_methods/updated_co_host.dart';
-export '../producers/socket_receive_methods/user_waiting.dart';
-export '../sockets/socket_manager.dart';
+    show AllMembersRestOptions, AllMembersRestType, AllMembersRestParameters;
+export '../producers/socket_receive_methods/all_waiting_room_members.dart'
+    show AllWaitingRoomMembersOptions, AllWaitingRoomMembersType;
+export '../producers/socket_receive_methods/ban_participant.dart'
+    show BanParticipantOptions, BanParticipantType, BanParticipantParameters;
+export '../producers/socket_receive_methods/control_media_host.dart'
+    show
+        ControlMediaHostOptions,
+        ControlMediaHostType,
+        ControlMediaHostParameters;
+export '../producers/socket_receive_methods/disconnect.dart'
+    show DisconnectOptions, DisconnectType;
+export '../producers/socket_receive_methods/disconnect_user_self.dart'
+    show DisconnectUserSelfOptions, DisconnectUserSelfType;
+export '../producers/socket_receive_methods/get_domains.dart'
+    show GetDomainsOptions, GetDomainsType, GetDomainsParameters;
+export '../producers/socket_receive_methods/host_request_response.dart'
+    show HostRequestResponseOptions, HostRequestResponseType;
+export '../producers/socket_receive_methods/meeting_ended.dart'
+    show MeetingEndedOptions, MeetingEndedType;
+export '../producers/socket_receive_methods/meeting_still_there.dart'
+    show MeetingStillThereOptions, MeetingStillThereType;
+export '../producers/socket_receive_methods/meeting_time_remaining.dart'
+    show MeetingTimeRemainingOptions, MeetingTimeRemainingType;
+export '../producers/socket_receive_methods/participant_requested.dart'
+    show ParticipantRequestedOptions, ParticipantRequestedType;
+export '../producers/socket_receive_methods/person_joined.dart'
+    show PersonJoinedOptions, PersonJoinedType;
+export '../producers/socket_receive_methods/producer_media_closed.dart'
+    show
+        ProducerMediaClosedOptions,
+        ProducerMediaClosedType,
+        ProducerMediaClosedParameters;
+export '../producers/socket_receive_methods/producer_media_paused.dart'
+    show
+        ProducerMediaPausedOptions,
+        ProducerMediaPausedType,
+        ProducerMediaPausedParameters;
+export '../producers/socket_receive_methods/producer_media_resumed.dart'
+    show
+        ProducerMediaResumedOptions,
+        ProducerMediaResumedType,
+        ProducerMediaResumedParameters;
+export '../producers/socket_receive_methods/re_initiate_recording.dart'
+    show ReInitiateRecordingOptions, ReInitiateRecordingType;
+export '../producers/socket_receive_methods/receive_message.dart'
+    show ReceiveMessageOptions, ReceiveMessageType;
+export '../producers/socket_receive_methods/recording_notice.dart'
+    show RecordingNoticeOptions, RecordingNoticeType, RecordingNoticeParameters;
+export '../producers/socket_receive_methods/room_record_params.dart'
+    show
+        RoomRecordParamsOptions,
+        RoomRecordParamsType,
+        RoomRecordParamsParameters,
+        RecordParams;
+export '../producers/socket_receive_methods/screen_producer_id.dart'
+    show ScreenProducerIdOptions, ScreenProducerIdType;
+export '../producers/socket_receive_methods/start_records.dart'
+    show StartRecordsOptions, StartRecordsType;
+export '../producers/socket_receive_methods/stopped_recording.dart'
+    show StoppedRecordingOptions, StoppedRecordingType;
+export '../producers/socket_receive_methods/time_left_recording.dart'
+    show TimeLeftRecordingOptions, TimeLeftRecordingType;
+export '../producers/socket_receive_methods/update_consuming_domains.dart'
+    show
+        UpdateConsumingDomainsOptions,
+        UpdateConsumingDomainsType,
+        UpdateConsumingDomainsParameters;
+export '../producers/socket_receive_methods/update_media_settings.dart'
+    show UpdateMediaSettingsOptions, UpdateMediaSettingsType;
+export '../producers/socket_receive_methods/updated_co_host.dart'
+    show UpdatedCoHostOptions, UpdatedCoHostType;
+export '../producers/socket_receive_methods/user_waiting.dart'
+    show UserWaitingOptions, UserWaitingType;
+export '../sockets/socket_manager.dart'
+    show
+        ConnectSocketOptions,
+        ConnectSocketType,
+        DisconnectSocketType,
+        DisconnectSocketOptions;
 
-// Components
-export '../components/breakout_components/breakout_rooms_modal.dart';
-export '../components/co_host_components/co_host_modal.dart';
-export '../components/display_components/alert_component.dart';
-export '../components/display_components/audio_card.dart';
-export '../components/display_components/audio_grid.dart';
-export '../components/display_components/card_video_display.dart';
-export '../components/display_components/control_buttons_component.dart';
-export '../components/display_components/control_buttons_alt_component.dart';
-export '../components/display_components/control_buttons_component_touch.dart';
-export '../components/display_components/flexible_grid.dart';
-export '../components/display_components/flexible_video.dart';
-export '../components/display_components/loading_modal.dart';
-export '../components/display_components/main_aspect_component.dart';
-export '../components/display_components/main_container_component.dart';
-export '../components/display_components/main_grid_component.dart';
-export '../components/display_components/main_screen_component.dart';
-export '../components/display_components/meeting_progress_timer.dart';
-export '../components/display_components/mini_audio.dart';
-export '../components/display_components/mini_card.dart';
-export '../components/display_components/other_grid_component.dart';
-export '../components/display_components/pagination.dart';
-export '../components/display_components/sub_aspect_component.dart';
-export '../components/display_components/video_card.dart';
-export '../components/display_settings_components/display_settings_modal.dart';
-export '../components/event_settings_components/event_settings_modal.dart';
-export '../components/exit_components/confirm_exit_modal.dart';
-export '../components/media_settings_components/media_settings_modal.dart';
-export '../components/menu_components/menu_modal.dart';
-export '../components/message_components/messages_modal.dart';
-export '../components/misc_components/confirm_here_modal.dart';
-export '../components/misc_components/prejoin_page.dart';
-export '../components/misc_components/share_event_modal.dart';
-export '../components/misc_components/welcome_page.dart';
-export '../components/participants_components/participants_modal.dart';
-export '../components/polls_components/poll_modal.dart';
-export '../components/recording_components/recording_modal.dart';
-export '../components/requests_components/requests_modal.dart';
-export '../components/waiting_components/waiting_modal.dart';
-export '../components/menu_components/custom_buttons.dart';
+// Components (Excluded commented exports)
+// export '../components/background_components/background_modal.dart' show BackgroundModalOptions, BackgroundModalType, BackgroundModalParameters;
+export '../components/breakout_components/breakout_rooms_modal.dart'
+    show
+        BreakoutRoomsModalOptions,
+        BreakoutRoomsModalType,
+        BreakoutRoomsModalParameters;
 
-//mediasfu components
-export '../components/mediasfu_components/mediasfu_conference.dart';
-export '../components/mediasfu_components/mediasfu_broadcast.dart';
-export '../components/mediasfu_components/mediasfu_chat.dart';
-export '../components/mediasfu_components/mediasfu_generic.dart';
-export '../components/mediasfu_components/mediasfu_webinar.dart';
+export '../components/co_host_components/co_host_modal.dart'
+    show CoHostModalOptions, CoHostModalType;
+export '../components/display_components/alert_component.dart'
+    show AlertComponentOptions, AlertComponentType;
+export '../components/display_components/audio_card.dart'
+    show AudioCardOptions, AudioCardType, AudioCardParameters;
+export '../components/display_components/audio_grid.dart'
+    show AudioGridOptions, AudioGridType;
+export '../components/display_components/card_video_display.dart'
+    show CardVideoDisplayOptions, CardVideoDisplayType;
+export '../components/display_components/control_buttons_component.dart'
+    show
+        ControlButtonsComponentOptions,
+        ControlButtonsComponentType,
+        ControlButton;
+export '../components/display_components/control_buttons_alt_component.dart'
+    show
+        ControlButtonsAltComponentOptions,
+        ControlButtonsAltComponentType,
+        AltButton;
+export '../components/display_components/control_buttons_component_touch.dart'
+    show
+        ControlButtonsComponentTouchOptions,
+        ControlButtonsComponentTouchType,
+        ButtonTouch;
+export '../components/display_components/flexible_grid.dart'
+    show FlexibleGridOptions, FlexibleGridType;
+export '../components/display_components/flexible_video.dart'
+    show FlexibleVideoOptions, FlexibleVideoType;
+export '../components/display_components/loading_modal.dart'
+    show LoadingModalOptions, LoadingModalType;
+export '../components/display_components/main_aspect_component.dart'
+    show MainAspectComponentOptions, MainAspectComponentType;
+export '../components/display_components/main_container_component.dart'
+    show MainContainerComponentOptions, MainContainerComponentType;
+export '../components/display_components/main_grid_component.dart'
+    show MainGridComponentOptions, MainGridComponentType;
+export '../components/display_components/main_screen_component.dart'
+    show MainScreenComponentOptions, MainScreenComponentType;
+export '../components/display_components/meeting_progress_timer.dart'
+    show MeetingProgressTimerOptions, MeetingProgressTimerType;
+export '../components/display_components/mini_audio.dart'
+    show MiniAudioOptions, MiniAudioType;
+export '../components/display_components/mini_card.dart'
+    show MiniCardOptions, MiniCardType;
+export '../components/display_components/other_grid_component.dart'
+    show OtherGridComponentOptions, OtherGridComponentType;
+export '../components/display_components/pagination.dart'
+    show PaginationOptions, PaginationType, PaginationParameters;
+export '../components/display_components/sub_aspect_component.dart'
+    show SubAspectComponentOptions, SubAspectComponentType;
+export '../components/display_components/video_card.dart'
+    show VideoCardOptions, VideoCardType, VideoCardParameters;
+export '../components/display_settings_components/display_settings_modal.dart'
+    show
+        DisplaySettingsModalOptions,
+        DisplaySettingsModalType,
+        DisplaySettingsModalParameters;
+export '../components/event_settings_components/event_settings_modal.dart'
+    show EventSettingsModalOptions, EventSettingsModalType;
+export '../components/exit_components/confirm_exit_modal.dart'
+    show ConfirmExitModalOptions, ConfirmExitModalType;
+export '../components/media_settings_components/media_settings_modal.dart'
+    show
+        MediaSettingsModalOptions,
+        MediaSettingsModalType,
+        MediaSettingsModalParameters;
+export '../components/menu_components/menu_modal.dart'
+    show MenuModalOptions, MenuModalType;
+export '../components/message_components/messages_modal.dart'
+    show MessagesModalOptions, MessagesModalType;
+export '../components/misc_components/confirm_here_modal.dart'
+    show ConfirmHereModalOptions, ConfirmHereModalType;
+export '../components/misc_components/prejoin_page.dart'
+    show PreJoinPageOptions, PreJoinPageType;
+export '../components/misc_components/share_event_modal.dart'
+    show ShareEventModalOptions, ShareEventModalType;
+export '../components/misc_components/welcome_page.dart'
+    show WelcomePageOptions, WelcomePageType;
+export '../components/participants_components/participants_modal.dart'
+    show
+        ParticipantsModalOptions,
+        ParticipantsModalType,
+        ParticipantsModalParameters;
+export '../components/polls_components/poll_modal.dart'
+    show PollModalOptions, PollModalType;
+export '../components/recording_components/recording_modal.dart'
+    show RecordingModalOptions, RecordingModalType, RecordingModalParameters;
+export '../components/requests_components/requests_modal.dart'
+    show RequestsModalOptions, RequestsModalType, RequestsModalParameters;
+export '../components/waiting_components/waiting_modal.dart'
+    show
+        WaitingRoomModalOptions,
+        WaitingRoomModalType,
+        WaitingRoomModalParameters;
 
-export '../methods/utils/create_join_room.dart';
-export '../methods/utils/check_limits_and_make_request.dart';
-export '../methods/utils/join_room_on_media_sfu.dart';
-export '../methods/utils/create_room_on_media_sfu.dart';
+// Custom Buttons
+export '../components/menu_components/custom_buttons.dart'
+    show CustomButtonsOptions, CustomButtonsType, CustomButton;
 
 typedef ShowAlert = void Function({
   required String message,
@@ -288,7 +601,6 @@ class Participant {
   bool? ScreenOn;
   String? islevel;
   bool? isAdmin;
-  bool? isHost; // support for Community Edition
   String name;
   bool? muted;
   bool? isBanned;
@@ -308,7 +620,6 @@ class Participant {
     this.ScreenOn,
     this.islevel,
     this.isAdmin,
-    this.isHost,
     required this.name,
     this.muted,
     this.isBanned,
@@ -332,13 +643,11 @@ class Participant {
       ScreenID: map['ScreenID'] as String?,
       ScreenOn: map['ScreenOn'] as bool?,
       islevel: map['islevel'] as String?,
-      isAdmin: map['isAdmin'] != null ? map['isAdmin'] as bool? : false,
-      isHost: map['isHost'] as bool?,
+      isAdmin: map['isAdmin'] as bool?,
       name: map['name'] as String,
       muted: map['muted'] as bool?,
       isBanned: map['isBanned'] as bool?,
-      isSuspended:
-          map['isSuspended'] != null ? map['isSuspended'] as bool? : false,
+      isSuspended: map['isSuspended'] as bool?,
       useBoard: map['useBoard'] as bool?,
       breakRoom: map['breakRoom'] as int?,
       videoOn: map['videoOn'] as bool?,
@@ -353,7 +662,6 @@ class Participant {
                 'ScreenOn',
                 'islevel',
                 'isAdmin',
-                'isHost',
                 'name',
                 'muted',
                 'isBanned',
@@ -376,7 +684,6 @@ class Participant {
       'ScreenOn': ScreenOn,
       'islevel': islevel,
       'isAdmin': isAdmin,
-      'isHost': isHost,
       'name': name,
       'muted': muted,
       'isBanned': isBanned,
@@ -1968,9 +2275,9 @@ class CreateRoomOptions {
 class ResponseJoinRoom {
   final RtpCapabilities? rtpCapabilities;
   final bool? success;
-  List<String>? roomRecvIPs;
-  MeetingRoomParams? meetingRoomParams;
-  RecordingParams? recordingParams;
+  final List<String>? roomRecvIPs;
+  final MeetingRoomParams? meetingRoomParams;
+  final RecordingParams? recordingParams;
   final String? secureCode;
   final bool? recordOnly;
   final bool? isHost;
@@ -2050,85 +2357,6 @@ class ResponseJoinRoom {
       'suspended': suspended,
       'noAdmin': noAdmin,
     };
-  }
-}
-
-class ResponseJoinLocalRoom {
-  final RtpCapabilities?
-      rtpCapabilities; // Object containing the RTP capabilities
-  final bool? isHost; // Indicates whether the user joining the room is the host
-  final bool? eventStarted; // Indicates whether the event has started
-  final bool? isBanned; // Indicates whether the user is banned from the room
-  final bool?
-      hostNotJoined; // Indicates whether the host has not joined the room
-  final MeetingRoomParams?
-      eventRoomParams; // Parameters related to the meeting room
-  final RecordingParams? recordingParams; // Parameters related to recording
-  final String?
-      secureCode; // Secure code (host password) associated with the host of the room
-  final String? mediasfuURL; // Media SFU URL
-  final String? apiKey; // API key
-  final String? apiUserName; // API username
-  final bool? allowRecord; // Indicates whether recording is allowed
-
-  /// Constructor for initializing the ResponseJoinLocalRoom object.
-  ResponseJoinLocalRoom({
-    this.rtpCapabilities,
-    this.isHost,
-    this.eventStarted,
-    this.isBanned,
-    this.hostNotJoined,
-    this.eventRoomParams,
-    this.recordingParams,
-    this.secureCode,
-    this.mediasfuURL,
-    this.apiKey,
-    this.apiUserName,
-    this.allowRecord,
-  });
-
-  /// Converts the object to a Map.
-  Map<String, dynamic> toMap() {
-    return {
-      'rtpCapabilities': rtpCapabilities?.toMap(),
-      'isHost': isHost,
-      'eventStarted': eventStarted,
-      'isBanned': isBanned,
-      'hostNotJoined': hostNotJoined,
-      'eventRoomParams': eventRoomParams?.toMap(),
-      'recordingParams': recordingParams?.toMap(),
-      'secureCode': secureCode,
-      'mediasfuURL': mediasfuURL,
-      'apiKey': apiKey,
-      'apiUserName': apiUserName,
-      'allowRecord': allowRecord,
-    };
-  }
-
-  /// Creates a ResponseJoinLocalRoom object from a Map.
-  factory ResponseJoinLocalRoom.fromJson(Map<String, dynamic> map) {
-    return ResponseJoinLocalRoom(
-      rtpCapabilities: map['rtpCapabilities'] != null
-          ? RtpCapabilities.fromMap(map['rtpCapabilities'])
-          : null,
-      isHost: map['isHost'] as bool?,
-      eventStarted: map['eventStarted'] as bool?,
-      isBanned: map['isBanned'] as bool?,
-      hostNotJoined: map['hostNotJoined'] as bool?,
-      eventRoomParams: map['eventRoomParams'] != null
-          ? MeetingRoomParams.fromJson(map['eventRoomParams'])
-          : null,
-      recordingParams: map['recordingParams'] != null
-          ? RecordingParams.fromJson(map['recordingParams'])
-          : null,
-      secureCode: map['secureCode'] as String?,
-      mediasfuURL: map['mediasfuURL'] as String?,
-      apiKey: map['apiKey'] as String?,
-      apiUserName: map['apiUserName'] as String?,
-      allowRecord: map['allowRecord'] is String
-          ? map['allowRecord'] == 'true'
-          : map['allowRecord'] as bool?,
-    );
   }
 }
 

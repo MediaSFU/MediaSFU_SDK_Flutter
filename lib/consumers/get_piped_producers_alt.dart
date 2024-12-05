@@ -19,11 +19,13 @@ abstract class GetPipedProducersAltParameters
 
 /// Options for retrieving piped producers.
 class GetPipedProducersAltOptions {
+  bool? community;
   final io.Socket nsock;
   final String islevel;
   final GetPipedProducersAltParameters parameters;
 
   GetPipedProducersAltOptions({
+    this.community = false,
     required this.nsock,
     required this.islevel,
     required this.parameters,
@@ -53,6 +55,7 @@ typedef GetPipedProducersAltType = Future<void> Function(
 ///
 /// await getPipedProducersAlt(
 ///   GetPipedProducersAltOptions(
+///     community: true,
 ///     nsock: socketInstance,
 ///     islevel: '1',
 ///     parameters: parameters,
@@ -71,10 +74,16 @@ Future<void> getPipedProducersAlt(
     final parameters = options.parameters;
     final member = parameters.member;
     final signalNewConsumerTransport = parameters.signalNewConsumerTransport;
+    bool? community = options.community;
+
+    String emitEvent = 'getProducersPipedAlt';
+    if (community == true) {
+      emitEvent = 'getProducersAlt';
+    }
 
     // Emit request to get piped producers
     nsock.emitWithAck(
-      'getProducersPipedAlt',
+      emitEvent,
       {'islevel': islevel, 'member': member},
       ack: (dynamic producerIds) async {
         // Callback to handle the server response with producer IDs

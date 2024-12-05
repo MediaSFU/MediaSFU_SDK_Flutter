@@ -29,6 +29,7 @@ abstract class UpdateRecordingParameters
   String get roomName;
   UserRecordingParams get userRecordingParams;
   io.Socket? get socket;
+  io.Socket? get localSocket;
   UpdateBooleanState get updateIsRecordingModalVisible;
   bool get confirmedToRecord;
   ShowAlert? get showAlert;
@@ -107,6 +108,7 @@ Future<void> updateRecording(UpdateRecordingOptions options) async {
   String roomName = parameters.roomName;
   UserRecordingParams userRecordingParams = parameters.userRecordingParams;
   io.Socket? socket = parameters.socket;
+  io.Socket? localSocket = parameters.localSocket;
   void Function(bool) updateIsRecordingModalVisible =
       parameters.updateIsRecordingModalVisible;
   bool confirmedToRecord = parameters.confirmedToRecord;
@@ -161,6 +163,11 @@ Future<void> updateRecording(UpdateRecordingOptions options) async {
     return;
   }
 
+  io.Socket socketRef = socket!;
+  if (localSocket != null && localSocket.id != null) {
+    socketRef = localSocket;
+  }
+
   // Handle Pause Action
   if (recordStarted && !recordPaused && !recordStopped) {
     final optionsCheckPause = CheckPauseStateOptions(
@@ -184,7 +191,8 @@ Future<void> updateRecording(UpdateRecordingOptions options) async {
       String action = 'pauseRecord';
 
       await Future(() async {
-        socket!.emitWithAck(action, {'roomName': roomName}, ack: (data) async {
+        socketRef.emitWithAck(action, {'roomName': roomName},
+            ack: (data) async {
           bool success = data['success'] ?? false;
           String reason = data['reason'] ?? '';
           String recordState = data['recordState'] ?? '';
@@ -256,7 +264,7 @@ Future<void> updateRecording(UpdateRecordingOptions options) async {
 
       String action = 'resumeRecord';
       await Future(() async {
-        socket!.emitWithAck(action, {
+        socketRef.emitWithAck(action, {
           'roomName': roomName,
           'userRecordingParams': userRecordingParams.toMap(),
         }, ack: (data) async {

@@ -32,6 +32,7 @@ abstract class StartRecordingParameters
   String get roomName;
   UserRecordingParams get userRecordingParams;
   io.Socket? get socket;
+  io.Socket? get localSocket;
   UpdateBooleanState get updateIsRecordingModalVisible;
   bool get confirmedToRecord;
   ShowAlert? get showAlert;
@@ -99,6 +100,7 @@ typedef StartRecordingType = Future<bool?> Function(
 ///   roomName: 'Room_123',
 ///   userRecordingParams: {'resolution': '1080p'},
 ///   socket: io.Socket(),
+///   localSocket: io.Socket(),
 ///   updateIsRecordingModalVisible: (visible) => print('Recording Modal Visibility: $visible'),
 ///   confirmedToRecord: true,
 ///   showAlert: (message, type, duration) => print('Alert: $message'),
@@ -180,8 +182,12 @@ Future<bool?> startRecording(StartRecordingOptions options) async {
         : 'startRecord';
 
     bool recAttempt = false;
+    io.Socket socketRef = parameters.socket!;
+    if (parameters.localSocket != null && parameters.localSocket!.id != null) {
+      socketRef = parameters.localSocket!;
+    }
 
-    parameters.socket!.emitWithAck(action, {
+    socketRef.emitWithAck(action, {
       'roomName': parameters.roomName,
       'userRecordingParams': parameters.userRecordingParams.toMap(),
     }, ack: (data) async {

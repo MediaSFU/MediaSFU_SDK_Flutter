@@ -1,20 +1,27 @@
 import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
-import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
+import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart'
+    show Producer;
 
-/// Function typedefs for update and parameter retrieval
-typedef UpdateScreenProducer = void Function(Producer? screenProducer);
-typedef GetUpdatedAllParams = DisconnectSendTransportScreenParameters
-    Function();
-
-/// Represents the parameters required to disconnect the screen send transport.
+/// Dart equivalent of DisconnectSendTransportScreenParameters interface
 abstract class DisconnectSendTransportScreenParameters {
+  // Remote Screen Transport and Producer
   Producer? get screenProducer;
   io.Socket? get socket;
+
+  // Local Screen Transport and Producer
+  Producer? get localScreenProducer;
+  io.Socket? get localSocket;
+
+  // Other Parameters
   String get roomName;
 
-  UpdateScreenProducer get updateScreenProducer;
-  GetUpdatedAllParams get getUpdatedAllParams;
+  // Update Functions
+  void Function(Producer? screenProducer) get updateScreenProducer;
+  void Function(Producer? localScreenProducer)? get updateLocalScreenProducer;
+
+  // Method to retrieve updated parameters
+  DisconnectSendTransportScreenParameters Function() get getUpdatedAllParams;
 
   // Dynamic access to additional properties if needed
   // dynamic operator [](String key);
@@ -32,6 +39,70 @@ class DisconnectSendTransportScreenOptions {
 /// Type definition for disconnectSendTransportScreen function
 typedef DisconnectSendTransportScreenType = Future<void> Function(
     DisconnectSendTransportScreenOptions options);
+
+/// Disconnects the local send transport for screen sharing by closing the local screen producer and notifying the server.
+///
+/// ### Parameters:
+/// - `options` (`DisconnectSendTransportScreenOptions`): Contains the parameters required for disconnecting the local screen transport.
+///
+/// ### Workflow:
+/// 1. **Close Local Screen Producer**:
+///    - If an active local screen producer exists, it is closed.
+///    - The local state is updated to reflect the closed producer.
+/// 2. **Notify Server**:
+///    - Emits `closeScreenProducer` and `pauseProducerMedia` events to the server to notify about the paused local screen producer.
+///
+/// ### Returns:
+/// - A `Future<void>` that completes when the local screen transport is successfully disconnected.
+///
+/// ### Error Handling:
+/// - Logs errors to the console in debug mode and rethrows them for higher-level handling.
+///
+/// ### Example Usage:
+/// ```dart
+/// final options = DisconnectSendTransportScreenOptions(
+///   parameters: myDisconnectSendTransportScreenParameters,
+/// );
+///
+/// disconnectLocalSendTransportScreen(options)
+///   .then(() => print('Local screen send transport disconnected successfully'))
+///   .catchError((error) => print('Error disconnecting local screen send transport: $error'));
+/// ```
+Future<void> disconnectLocalSendTransportScreen(
+    DisconnectSendTransportScreenOptions options) async {
+  try {
+    final parameters = options.parameters;
+
+    final Producer? localScreenProducer = parameters.localScreenProducer;
+    final io.Socket? localSocket = parameters.localSocket;
+    final String roomName = parameters.roomName;
+    final void Function(Producer? localScreenProducer)?
+        updateLocalScreenProducer = parameters.updateLocalScreenProducer;
+
+    if (localSocket == null || localSocket.id == null) {
+      // Local socket is not connected; nothing to disconnect
+      return;
+    }
+
+    // Close the local screen producer and update the state
+    if (localScreenProducer != null) {
+      localScreenProducer.close();
+      updateLocalScreenProducer?.call(null); // Set to null after closing
+    }
+
+    // Notify the server about closing the local screen producer and pausing screen sharing
+    localSocket.emit('closeScreenProducer');
+    localSocket.emit('pauseProducerMedia', {
+      'mediaTag': 'screen',
+      'roomName': roomName,
+    });
+  } catch (error) {
+    if (kDebugMode) {
+      print('Error disconnecting local send transport for screen: $error');
+    }
+    rethrow; // Re-throw to propagate the error
+  }
+}
 
 /// Disconnects the send transport for screen sharing by closing the screen producer and notifying the server.
 ///
@@ -56,9 +127,12 @@ typedef DisconnectSendTransportScreenType = Future<void> Function(
 /// final options = DisconnectSendTransportScreenOptions(
 ///   parameters: MyDisconnectSendTransportScreenParameters(
 ///     screenProducer: myScreenProducer,
+///     localScreenProducer: myLocalScreenProducer,
 ///     socket: mySocket,
+///     localSocket: myLocalSocket,
 ///     roomName: 'myRoom',
 ///     updateScreenProducer: (producer) => print('Screen producer updated: $producer'),
+///     updateLocalScreenProducer: (producer) => print('Local screen producer updated: $producer'),
 ///     getUpdatedAllParams: () => myUpdatedParameters,
 ///   ),
 /// );
@@ -86,7 +160,7 @@ Future<void> disconnectSendTransportScreen(
     final Producer? screenProducer = parameters.screenProducer;
     final io.Socket? socket = parameters.socket;
     final String roomName = parameters.roomName;
-    final UpdateScreenProducer updateScreenProducer =
+    final void Function(Producer? screenProducer) updateScreenProducer =
         parameters.updateScreenProducer;
 
     // Close the screen producer and update the state
@@ -104,5 +178,15 @@ Future<void> disconnectSendTransportScreen(
     if (kDebugMode) {
       print('Error disconnecting send transport for screen: $error');
     }
+  }
+
+  // Handle local screen transport disconnection
+  try {
+    await disconnectLocalSendTransportScreen(options);
+  } catch (localError) {
+    if (kDebugMode) {
+      print('Error disconnecting local send transport for screen: $localError');
+    }
+    // Optionally, handle the local error (e.g., show a notification)
   }
 }

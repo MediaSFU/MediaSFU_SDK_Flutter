@@ -32,6 +32,7 @@ class ShareEventModalOptions {
   final String adminPasscode;
   final String islevel;
   final EventType eventType;
+  String? localLink;
 
   ShareEventModalOptions({
     this.backgroundColor = const Color.fromRGBO(131, 192, 233, 0.25),
@@ -43,6 +44,7 @@ class ShareEventModalOptions {
     required this.adminPasscode,
     required this.islevel,
     this.eventType = EventType.webinar,
+    this.localLink = '',
   });
 }
 
@@ -62,6 +64,7 @@ typedef ShareEventModalType = Widget Function(
 ///     adminPasscode: "123456",
 ///     islevel: "2",
 ///     eventType: "webinar",
+///     localLink: "https://example.com",
 ///   ),
 /// );
 /// ```
@@ -144,6 +147,7 @@ class ShareEventModal extends StatelessWidget {
                                 options: ShareButtonsComponentOptions(
                               meetingID: options.roomName,
                               eventType: options.eventType,
+                              localLink: options.localLink,
                             )),
                         ],
                       ),

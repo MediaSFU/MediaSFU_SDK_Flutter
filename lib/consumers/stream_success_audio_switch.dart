@@ -17,15 +17,6 @@ import '../types/types.dart'
         SleepOptions,
         SleepType;
 
-/// Callback typedefs for updating states and functions
-typedef UpdateAudioProducer = void Function(Producer? audioProducer);
-typedef UpdateLocalStream = void Function(MediaStream? localStream);
-typedef UpdateAudioParams = void Function(ProducerOptionsType audioParams);
-typedef UpdateDefAudioID = void Function(String defAudioID);
-typedef UpdateUserDefaultAudioInputDevice = void Function(
-    String userDefaultAudioInputDevice);
-typedef UpdateUpdateMainWindow = void Function(bool updateMainWindow);
-
 /// Represents the parameters required for StreamSuccessAudioSwitch.
 abstract class StreamSuccessAudioSwitchParameters
     implements
@@ -34,6 +25,9 @@ abstract class StreamSuccessAudioSwitchParameters
         ConnectSendTransportAudioParameters {
   Producer? get audioProducer;
   io.Socket? get socket;
+  // Local Audio Transport and Producer
+  Producer? get localAudioProducer;
+  io.Socket? get localSocket;
   String get roomName;
   MediaStream? get localStream;
   MediaStream? get localStreamAudio;
@@ -41,6 +35,7 @@ abstract class StreamSuccessAudioSwitchParameters
   bool get audioPaused;
   bool get audioAlreadyOn;
   bool get transportCreated;
+  bool? get localTransportCreated;
   String get defAudioID;
   String get userDefaultAudioInputDevice;
   String get hostLabel;
@@ -50,12 +45,14 @@ abstract class StreamSuccessAudioSwitchParameters
   bool get lockScreen;
   bool get shared;
 
-  UpdateAudioProducer get updateAudioProducer;
-  UpdateLocalStream get updateLocalStream;
-  UpdateAudioParams get updateAudioParams;
-  UpdateDefAudioID get updateDefAudioID;
-  UpdateUserDefaultAudioInputDevice get updateUserDefaultAudioInputDevice;
-  UpdateUpdateMainWindow get updateUpdateMainWindow;
+  void Function(Producer? audioProducer) get updateAudioProducer;
+  void Function(Producer? localAudioProducer)? get updateLocalAudioProducer;
+  void Function(MediaStream? localStream) get updateLocalStream;
+  void Function(ProducerOptionsType audioParams) get updateAudioParams;
+  void Function(String defAudioID) get updateDefAudioID;
+  void Function(String userDefaultAudioInputDevice)
+      get updateUserDefaultAudioInputDevice;
+  void Function(bool updateMainWindow) get updateUpdateMainWindow;
 
   SleepType get sleep;
   PrepopulateUserMediaType get prepopulateUserMedia;
@@ -106,18 +103,22 @@ typedef StreamSuccessAudioSwitchType = Future<void> Function(
 ///   - `parameters` (`StreamSuccessAudioSwitchParameters`): Parameters including:
 ///     - `audioProducer` (`Producer?`): The current audio producer.
 ///     - `socket` (`io.Socket`): Socket connection to emit control events.
+///     - `localAudioProducer` and `localSocket` (`Producer?` and `io.Socket?`): Local audio producer and socket.
 ///     - `roomName` (`String`): The room name for socket events.
 ///     - `localStream` and `localStreamAudio` (`MediaStream?`): Current local streams for audio and combined audio-video.
 ///     - `audioParams` (`ProducerOptionsType`): Audio parameters for the producer.
 ///     - `audioPaused` (`bool`): Whether the audio stream is currently paused.
 ///     - `audioAlreadyOn` (`bool`): Whether the audio stream is already active.
 ///     - `transportCreated` (`bool`): Indicates if the send transport is already created.
+///     - `localTransportCreated` (`bool?`): Indicates if the local send transport is already created.
 ///     - `defAudioID`, `userDefaultAudioInputDevice` (`String`): Default audio device IDs.
 ///     - `hostLabel` (`String`): Label for the host.
 ///     - `updateMainWindow`, `videoAlreadyOn`, `islevel`, `lockScreen`, `shared` (`bool`): UI control flags.
 ///
 /// - **Callback Functions**:
-///   - `updateAudioProducer`, `updateLocalStream`, `updateAudioParams`, `updateDefAudioID`,
+///   - `updateAudioProducer`, `updateLocalStream`, `updateAudioParams`, `updateDefAudioID`, `updateUserDefaultAudioInputDevice`:
+///   `updateUserDefaultAudioInputDevice`, `updateUpdateMainWindow`: Functions to update the state with new values.
+///   - `sleep`: Function to pause the process for a specified duration.
 ///     `updateUserDefaultAudioInputDevice`, `updateUpdateMainWindow`:
 ///     Callbacks to update specific parameters as the audio transition occurs.
 ///
@@ -130,7 +131,9 @@ typedef StreamSuccessAudioSwitchType = Future<void> Function(
 /// ```dart
 /// final parameters = StreamSuccessAudioSwitchParameters(
 ///   audioProducer: null,
+///   localAudioProducer: null,
 ///   socket: io.Socket(),
+///   localSocket: io.Socket(),
 ///   roomName: 'myRoom',
 ///   localStream: localStream,
 ///   localStreamAudio: audioStream,
@@ -138,6 +141,7 @@ typedef StreamSuccessAudioSwitchType = Future<void> Function(
 ///   audioPaused: false,
 ///   audioAlreadyOn: true,
 ///   transportCreated: false,
+///   localTransportCreated: false,
 ///   defAudioID: 'default-device-id',
 ///   userDefaultAudioInputDevice: 'default-device-id',
 ///   hostLabel: 'HostUser',
@@ -175,7 +179,9 @@ Future<void> streamSuccessAudioSwitch(
 
     // Destructure parameters using getters
     Producer? audioProducer = parameters.audioProducer;
+    Producer? localAudioProducer = parameters.localAudioProducer;
     io.Socket? socket = parameters.socket;
+    io.Socket? localSocket = parameters.localSocket;
     String roomName = parameters.roomName;
     MediaStream? localStream = parameters.localStream;
     MediaStream? localStreamAudio = parameters.localStreamAudio;
@@ -193,14 +199,20 @@ Future<void> streamSuccessAudioSwitch(
     bool shared = parameters.shared;
 
     // Callback functions
-    final UpdateAudioProducer updateAudioProducer =
+    final Function(Producer? audioProducer) updateAudioProducer =
         parameters.updateAudioProducer;
-    final UpdateLocalStream updateLocalStream = parameters.updateLocalStream;
-    final UpdateAudioParams updateAudioParams = parameters.updateAudioParams;
-    final UpdateDefAudioID updateDefAudioID = parameters.updateDefAudioID;
-    final UpdateUserDefaultAudioInputDevice updateUserDefaultAudioInputDevice =
+    final Function(Producer? localAudioProducer)? updateLocalAudioProducer =
+        parameters.updateLocalAudioProducer;
+    final Function(MediaStream? localStream) updateLocalStream =
+        parameters.updateLocalStream;
+    final Function(ProducerOptionsType audioParams) updateAudioParams =
+        parameters.updateAudioParams;
+    final Function(String defAudioID) updateDefAudioID =
+        parameters.updateDefAudioID;
+    final Function(String userDefaultAudioInputDevice)
+        updateUserDefaultAudioInputDevice =
         parameters.updateUserDefaultAudioInputDevice;
-    final UpdateUpdateMainWindow updateUpdateMainWindow =
+    final Function(bool updateMainWindow) updateUpdateMainWindow =
         parameters.updateUpdateMainWindow;
 
     // mediasfu functions
@@ -232,6 +244,26 @@ Future<void> streamSuccessAudioSwitch(
         'roomName': roomName,
         'force': true,
       });
+
+      try {
+        if (localSocket != null && localSocket.id != null) {
+          if (localAudioProducer != null) {
+            localAudioProducer.close();
+            if (updateLocalAudioProducer != null) {
+              updateLocalAudioProducer(localAudioProducer);
+            }
+          }
+          localSocket.emit('pauseProducerMedia', {
+            'mediaTag': 'audio',
+            'roomName': roomName,
+          });
+        }
+      } catch (error) {
+        if (kDebugMode) {
+          print(
+              'Error in streamSuccessAudioSwitch localSocket pauseProducerMedia:');
+        }
+      }
 
       // Update the localStreamAudio with the new audio tracks
       localStreamAudio = stream;
@@ -317,6 +349,26 @@ Future<void> streamSuccessAudioSwitch(
           'mediaTag': 'audio',
           'roomName': roomName,
         });
+
+        try {
+          if (localSocket != null && localSocket.id != null) {
+            if (localAudioProducer != null) {
+              localAudioProducer.pause();
+              if (updateLocalAudioProducer != null) {
+                updateLocalAudioProducer(localAudioProducer);
+              }
+            }
+            localSocket.emit('pauseProducerMedia', {
+              'mediaTag': 'audio',
+              'roomName': roomName,
+            });
+          }
+        } catch (error) {
+          if (kDebugMode) {
+            print(
+                'Error in streamSuccessAudioSwitch localSocket pauseProducerMedia:');
+          }
+        }
       }
     }
 
