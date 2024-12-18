@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart'
-    show Transport;
+    show Producer, Transport;
 import '../types/types.dart'
     show
         Participant,
@@ -58,6 +58,7 @@ abstract class ConnectSendTransportAudioParameters
   void Function(Transport producerTransport) get updateProducerTransport;
   void Function(Transport? localProducerTransport)?
       get updateLocalProducerTransport;
+  void Function(double audioLevel) get updateAudioLevel;
 
   // MediaSFU functions
   ResumeSendTransportAudioType get resumeSendTransportAudio;
@@ -82,6 +83,51 @@ class ConnectSendTransportAudioOptions {
 
 typedef ConnectSendTransportAudioType = Future<void> Function(
     ConnectSendTransportAudioOptions options);
+
+/// Updates the microphone audio level periodically.
+///
+/// This function retrieves stats from the audio producer's RTP sender every 1 second,
+/// calculates the audio level, and calls the provided `updateAudioLevel` callback.
+///
+/// Parameters:
+/// - `audioSender`: The [RTCRtpSender] instance for the audio producer.
+/// - `updateAudioLevel`: A callback function to handle the updated audio level.
+///
+/// Example usage:
+/// ```dart
+/// updateMicLevel(audioSender, (level) {
+///   print('Current audio level: $level');
+/// });
+/// ```
+void updateMicLevel(
+    Producer? audioProducer, void Function(double level) updateAudioLevel) {
+  if (audioProducer == null) {
+    return;
+  }
+
+  final audioSender = audioProducer.rtpSender;
+
+  Timer.periodic(const Duration(seconds: 1), (timer) async {
+    try {
+      final stats = await audioSender?.getStats();
+
+      if (stats == null) {
+        return;
+      }
+
+      for (var report in stats) {
+        if (report.type == 'media-source' &&
+            report.values['audioLevel'] != null) {
+          final double audioLevel = report.values['audioLevel'] as double;
+          final double newLevel = 127.5 + (audioLevel * 127.5);
+          updateAudioLevel(newLevel);
+        }
+      }
+    } catch (_) {
+      // Handle error if showAlert is available
+    }
+  });
+}
 
 /// Connects the local send transport for audio by producing audio data and updating the local audio producer and transport.
 Future<void> connectLocalSendTransportAudio({
@@ -216,6 +262,16 @@ Future<void> connectSendTransportAudio(
       );
     }
 
+    //Update the audio level
+    if (parameters.audioProducer == null) {
+      Future.delayed(const Duration(seconds: 1), () {
+        updateMicLevel(parameters.getUpdatedAllParams().audioProducer,
+            parameters.updateAudioLevel);
+      });
+    } else {
+      updateMicLevel(parameters.audioProducer, parameters.updateAudioLevel);
+    }
+
     // Update the audio producer and producer transport objects
     parameters.updateProducerTransport(parameters.producerTransport!);
 
@@ -229,6 +285,19 @@ Future<void> connectSendTransportAudio(
         await connectLocalSendTransportAudio(
           options: optionsLocal,
         );
+
+        if (targetOption == 'local') {
+          if (parameters.localAudioProducer == null) {
+            Future.delayed(const Duration(seconds: 1), () {
+              updateMicLevel(
+                  parameters.getUpdatedAllParams().localAudioProducer,
+                  parameters.updateAudioLevel);
+            });
+          } else {
+            updateMicLevel(
+                parameters.localAudioProducer, parameters.updateAudioLevel);
+          }
+        }
       } catch (error) {
         if (kDebugMode) {
           print('Error connecting local audio transport: $error');

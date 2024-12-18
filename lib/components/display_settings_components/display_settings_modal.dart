@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../types/types.dart';
+import '../../types/types.dart' show ModifyDisplaySettingsOptions;
 import '../../methods/utils/get_modal_position.dart'
     show getModalPosition, GetModalPositionOptions;
 import '../../methods/display_settings_methods/modify_display_settings.dart'

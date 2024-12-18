@@ -1,3 +1,8 @@
+### 2.1.0
+
+* Added support for the latest version of the MediaSFU server.
+* Added no-UI option for the SDK to enable developers to use the SDK without the default UI components.
+
 ### 2.0.1
 
 * Minor fix for initial values.

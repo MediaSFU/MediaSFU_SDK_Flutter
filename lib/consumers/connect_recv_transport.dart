@@ -125,6 +125,7 @@ Future<void> connectRecvTransport(ConnectRecvTransportOptions options) async {
         try {
           await consumerResume(ConsumerResumeOptions(
             stream: stream,
+            consumer: consumer,
             kind: consumer.kind ?? '',
             remoteProducerId: remoteProducerId,
             parameters: parameters,

@@ -140,10 +140,22 @@ class _MainAspectComponentState extends State<MainAspectComponent>
 
     final double parentWidth =
         size.width * widget.options.containerWidthFraction;
+    final double parentHeight = widget.options.showControls == true
+        ? size.height *
+            widget.options.containerHeightFraction *
+            widget.options.defaultFraction
+        : size.height * widget.options.containerHeightFraction -
+            safeAreaInsets.top;
 
-    final bool isWideScreen = parentWidth > 768;
-    final bool isMediumScreen = parentWidth > 576 && parentWidth <= 768;
-    final bool isSmallScreen = parentWidth <= 576;
+    bool isWideScreen = parentWidth > 768;
+    bool isMediumScreen = parentWidth > 576 && parentWidth <= 768;
+    bool isSmallScreen = parentWidth <= 576;
+
+    if (!isWideScreen && parentWidth > 1.5 * parentHeight) {
+      isWideScreen = true;
+      isMediumScreen = false;
+      isSmallScreen = false;
+    }
 
     // Update screen size states via callbacks
     widget.options.updateIsWideScreen(isWideScreen);

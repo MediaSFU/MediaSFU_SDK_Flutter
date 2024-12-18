@@ -145,11 +145,22 @@ Future<io.Socket> connectSocket(ConnectSocketOptions options) async {
     'query': query,
   });
 
+  // Determine the socket connection path
+  String conn = 'media';
+  try {
+    if (options.link.contains('mediasfu.com') &&
+        (RegExp('c').allMatches(options.link).length > 1)) {
+      conn = 'consume';
+    }
+  } catch (e) {
+    // Do nothing
+  }
+
   final completer = Completer<io.Socket>();
 
   // Handle connection success
   socket.onConnect((_) {
-    if (kDebugMode) print('Connected to media socket with ID: ${socket.id}');
+    if (kDebugMode) print('Connected to $conn socket with ID: ${socket.id}');
     completer.complete(socket);
   });
 

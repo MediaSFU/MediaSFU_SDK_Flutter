@@ -1,6 +1,15 @@
-// ignore_for_file: unused_shown_name, unused_import, unused_local_variable
+// ignore_for_file: unused_shown_name, unused_import, unused_local_variable, dead_code
 import 'package:flutter/material.dart';
-import 'types/types.dart' show SeedData, EventType;
+import 'methods/utils/create_room_on_media_sfu.dart' show createRoomOnMediaSFU;
+import 'methods/utils/join_room_on_media_sfu.dart' show joinRoomOnMediaSFU;
+import 'types/types.dart'
+    show
+        ClickVideoOptions,
+        CreateMediaSFURoomOptions,
+        EventType,
+        MediasfuParameters,
+        SeedData;
+
 import 'components/mediasfu_components/mediasfu_conference.dart'
     show MediasfuConference, MediasfuConferenceOptions;
 import 'components/misc_components/prejoin_page.dart'
@@ -21,21 +30,18 @@ void main() {
   runApp(const MyApp());
 }
 
-/// A custom pre-join page widget that can be used instead of the default Mediasfu pre-join page.
+/// A custom pre-join page widget that can be used instead of the default MediaSFU pre-join page.
 ///
-/// This widget displays a personalized welcome message and includes a button to proceed to the session.
+/// This widget displays a personalized welcome message and includes a button to proceed to the conference session.
 ///
-/// **Note:** Ensure this widget is passed to [MediasfuWebinarOptions] only when you intend to use a custom pre-join page.
-
-// Uncomment the following lines to use a custom pre-join page
-
+/// **Note:** Ensure this widget is passed to [MediasfuConferenceOptions] only when you intend to use a custom pre-join page.
 Widget myCustomPreJoinPage({
   PreJoinPageOptions? options,
   required Credentials credentials,
 }) {
   return Scaffold(
     appBar: AppBar(
-      title: const Text('Welcome to Mediasfu'),
+      title: const Text('Welcome to MediaSFU Conference'),
     ),
     body: Padding(
       padding: const EdgeInsets.all(16.0),
@@ -48,14 +54,16 @@ Widget myCustomPreJoinPage({
           ),
           const SizedBox(height: 20),
           const Text(
-            'Get ready to join your session.',
+            'Get ready to join your conference session.',
             style: TextStyle(fontSize: 18),
           ),
           const SizedBox(height: 40),
           ElevatedButton(
             onPressed: () {
               // Proceed to the session by updating the validation status
-              options!.parameters.updateValidated(true);
+              if (options != null) {
+                options.parameters.updateValidated(true);
+              }
             },
             child: const Text('Join Now'),
           ),
@@ -65,219 +73,176 @@ Widget myCustomPreJoinPage({
   );
 }
 
-/// The main application widget for MediaSFU.
+/// The main application widget for MediaSFU Conference.
 ///
-/// This widget initializes the necessary configuration and credentials for the MediaSFU application.
-/// Users can specify their own Community Edition (CE) server, utilize MediaSFU Cloud by default, or enable MediaSFU Cloud for egress features.
-///
-/// **Remarks:**
-/// - **Using Your Own Community Edition (CE) Server**: Set the `localLink` to point to your CE server.
-/// - **Using MediaSFU Cloud by Default**: If not using a custom server (`localLink` is empty), the application connects to MediaSFU Cloud.
-/// - **MediaSFU Cloud Egress Features**: To enable cloud recording, capturing, and returning real-time images and audio buffers,
-///   set `connectMediaSFU` to `true` in addition to specifying your `localLink`.
-/// - **Credentials Requirement**: If not using your own server, provide `apiUserName` and `apiKey`. The same applies when using MediaSFU Cloud for egress.
-/// - **Deprecated Feature**: `useLocalUIMode` is deprecated due to updates for strong typing and improved configuration options.
-class MyApp extends StatelessWidget {
+/// This widget initializes the necessary credentials and configuration for the MediaSFU Conference application,
+/// including options for creating and joining conference rooms.
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // ========================
-    // ====== CONFIGURATION ======
-    // ========================
+  _MyAppState createState() => _MyAppState();
+}
 
-    // Mediasfu account credentials
-    // Replace 'your_api_username' and 'your_api_key' with your actual credentials
-    // Not needed if using a custom server with no MediaSFU Cloud Egress (recording, ...)
-    final Credentials credentials = Credentials(
-      apiUserName: 'your_api_username',
-      apiKey: 'your_api_key',
-    );
+class _MyAppState extends State<MyApp> {
+  // Provides access to the source parameters if not using the default UI (returnUI = false in options). See more in the guide.
+  final ValueNotifier<MediasfuParameters?> sourceParameters =
+      ValueNotifier(null);
 
-    // Specify your Community Edition (CE) server link or leave as an empty string if not using a custom server
-    const String localLink =
-        'http://localhost:3000'; // Set to '' if not using your own server
+  // Update function to update source parameters if not using the default UI (returnUI = false in options). See more in the guide.
+  void updateSourceParameters(MediasfuParameters? parameters) {
+    sourceParameters.value = parameters;
+    // _onSourceParametersChanged(parameters);
+  }
 
-    /**
-     * Automatically set `connectMediaSFU` to `true` if `localLink` is provided,
-     * indicating the use of MediaSFU Cloud by default.
-     *
-     * - If `localLink` is not empty, MediaSFU Cloud will be used for additional features.
-     * - If `localLink` is empty, the application will connect to MediaSFU Cloud by default.
-     */
-    final bool connectMediaSFU = localLink.trim().isNotEmpty;
+  // =========================================================
+  //   CUSTOM USAGE OF SOURCE PARAMETERS FOR NON-DEFAULT UI
+  // =========================================================
 
-    // ========================
-    // ====== USE CASES ======
-    // ========================
+  // trigger click video after 5 seconds; this is just an example, best usage is building a custom UI
+  // to handle these functionalities with buttons clicks, etc.
+  //
+  void triggerClickVideo() {
+    Future.delayed(const Duration(seconds: 5), () {
+      sourceParameters.value
+          ?.clickVideo(ClickVideoOptions(parameters: sourceParameters.value!));
+    });
+  }
 
-    // Deprecated Feature: useLocalUIMode
-    // This feature is deprecated due to updates for strong typing.
-    // It is no longer required and should not be used in new implementations.
+  @override
+  void initState() {
+    super.initState();
 
-    /**
-     * Uncomment and configure the following section if you intend to use seed data
-     * for generating random participants and messages.
-     *
-     * Note: This is deprecated and maintained only for legacy purposes.
-     */
-    /*
-    const bool useSeed = false;
-    SeedData? seedData;
+    // Attach the listener
+    sourceParameters.addListener(() {
+      _onSourceParametersChanged(sourceParameters.value);
+    });
 
-    if (useSeed) {
-      const String memberName = 'Prince';
-      const String hostName = 'Fred';
+    // trigger click video after 5 seconds, uncomment to trigger
+    // triggerClickVideo();
+  }
 
-      final participants = generateRandomParticipants(
-        GenerateRandomParticipantsOptions(
-          member: memberName,
-          coHost: '',
-          host: hostName,
-          forChatBroadcast:
-              eventType == EventType.chat || eventType == EventType.broadcast,
-        ),
-      );
+  @override
+  void dispose() {
+    // Detach the listener; irrelevant if not 'returnUI = false'
+    // Comment out if not using sourceParameters
+    sourceParameters.removeListener(() {
+      _onSourceParametersChanged(sourceParameters.value);
+    });
+    sourceParameters.dispose();
+    super.dispose();
+  }
 
-      final messages = generateRandomMessages(
-        GenerateRandomMessagesOptions(
-          participants: participants,
-          member: memberName,
-          host: hostName,
-          forChatBroadcast:
-              eventType == EventType.chat || eventType == EventType.broadcast,
-        ),
-      );
+  // ==============================================================
+  //  SOURCE PARAMETERS LISTENER (REQUIRED ONLY IF USING CUSTOM UI)
+  // ==============================================================
 
-      final requests = generateRandomRequestList(
-        GenerateRandomRequestListOptions(
-          participants: participants,
-          hostName: memberName,
-          coHostName: '',
-          numberOfRequests: 3,
-        ),
-      );
-
-      final waitingList = generateRandomWaitingRoomList();
-
-      seedData = SeedData(
-        participants: participants,
-        messages: messages,
-        requests: requests,
-        waitingList: waitingList,
-        member: memberName,
-        host: hostName,
-        eventType: eventType,
-      );
+  /// Listener for changes in sourceParameters.
+  /// Prints the updated parameters to the console whenever they change.
+  void _onSourceParametersChanged(MediasfuParameters? parameters) {
+    if (parameters != null) {
+      // if (kDebugMode) {
+      //   print('Source Parameters Updated: ${parameters.roomName}');
+      // }
+      // Add custom logic here
     }
-    */
+  }
 
-    // ========================
-    // ====== COMPONENT SELECTION ======
-    // ========================
-
-    /**
-     * Choose the Mediasfu component based on the event type and use case.
-     * Uncomment the component corresponding to your specific use case.
-     */
-
-    // ------------------------
-    // ====== SIMPLE USE CASE ======
-    // ------------------------
+  @override
+  Widget build(BuildContext context) {
+    // =========================================================
+    //                API CREDENTIALS CONFIGURATION
+    // =========================================================
 
     /**
-     * **Simple Use Case (Welcome Page)**
-     *
-     * Renders the default welcome page.
-     * No additional inputs required.
-     */
-    // return MaterialApp(
-    //   title: 'Mediasfu Conference',
-    //   theme: ThemeData(
-    //     primarySwatch: Colors.blue,
-    //   ),
-    //   home: MediasfuConference(),
-    // );
-
-    // ------------------------
-    // ====== PRE-JOIN USE CASE ======
-    // ------------------------
-
-    /**
-     * **Use Case with Pre-Join Page (Credentials Required)**
-     *
-     * Uses a pre-join page that requires users to enter credentials.
-     */
-    // final MediasfuConferenceOptions options = MediasfuConferenceOptions(
-    //   preJoinPageWidget: PreJoinPage(),
-    //   credentials: credentials,
-    // );
-    // return MaterialApp(
-    //   title: 'Mediasfu Conference with Pre-Join',
-    //   theme: ThemeData(
-    //     primarySwatch: Colors.blue,
-    //   ),
-    //   home: MediasfuConference(options: options),
-    // );
-
-    // ------------------------
-    // ====== SEED DATA USE CASE ======
-    // ------------------------
-
-    /**
-     * **Use Case with Local UI Mode (Seed Data Required)**
-     *
-     * Runs the application in local UI mode using seed data.
-     *
-     * @deprecated Due to updates for strong typing, this feature is deprecated.
-     */
-    // final MediasfuConferenceOptions options = MediasfuConferenceOptions(
-    //   useLocalUIMode: true,
-    //   useSeed: true,
-    //   seedData: seedData!,
-    // );
-    // return MaterialApp(
-    //   title: 'Mediasfu Conference with Seed Data',
-    //   theme: ThemeData(
-    //     primarySwatch: Colors.blue,
-    //   ),
-    //   home: MediasfuConference(options: options),
-    // );
-
-    // ------------------------
-    // ====== Conference EVENT TYPE ======
-    // ------------------------
-
-    /**
-     * **MediasfuConference Component**
-     *
-     * Uncomment to use the Conference event type.
+     * Scenario A: Not using MediaSFU Cloud at all.
+     * - No credentials needed. Just set localLink to your CE server.
+     * Example:
      */
     /*
-    final MediasfuConferenceOptions options = MediasfuConferenceOptions(
-      credentials: credentials,
-      localLink: localLink,
-      connectMediaSFU: connectMediaSFU,
-      // seedData: useSeed ? seedData : null,
+    final credentials = Credentials(
+      apiUserName: '',
+      apiKey: '',
     );
-    return MaterialApp(
-      title: 'Mediasfu Conference',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: MediasfuConference(options: options),
+    final localLink = 'http://your-ce-server.com'; // e.g., http://localhost:3000
+    final connectMediaSFU = localLink.trim().isNotEmpty;
+    */
+
+    /**
+     * Scenario B: Using MediaSFU CE + MediaSFU Cloud for Egress only.
+     * - Use dummy credentials (8 chars for userName, 64 chars for apiKey).
+     * - Your CE backend will forward requests with your real credentials.
+     */
+    /*
+    final credentials = Credentials(
+      apiUserName: 'dummyUsr',
+      apiKey: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+    );
+    final localLink = 'http://your-ce-server.com'; // e.g., http://localhost:3000
+    final connectMediaSFU = localLink.trim().isNotEmpty; // Set to true if using MediaSFU CE
+    */
+
+    /**
+     * Scenario C: Using MediaSFU Cloud without your own server.
+     * - For development, use your actual or dummy credentials.
+     * - In production, securely handle credentials server-side and use custom room functions for joining and creating rooms.
+     */
+    final credentials = Credentials(
+      apiUserName: 'yourDevUser', // 8 chars recommended for dummy
+      apiKey:
+          'yourDevApiKey1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef', // 64 chars
+    );
+    const localLink = ''; // Leave empty if not using your own server
+    const connectMediaSFU =
+        true; // Set to true if using MediaSFU Cloud since localLink is empty
+
+    // =========================================================
+    //                CUSTOM ROOM FUNCTIONS (OPTIONAL)
+    // =========================================================
+
+    /**
+     * To securely forward requests to MediaSFU:
+     * - Implement custom `createMediaSFURoom` and `joinMediaSFURoom` functions.
+     * - These functions send requests to your server, which then communicates with MediaSFU Cloud.
+     *
+     * Already implemented `createRoomOnMediaSFU` and `joinRoomOnMediaSFU` are examples.
+     */
+
+    // =========================================================
+    //                    RENDER COMPONENT
+    // =========================================================
+
+    /**
+     * The MediasfuConference component is used to handle conference events.
+     * It allows you to create and join conference rooms with the provided options.
+     * 
+     * **Note:** Ensure that real credentials are not exposed in the frontend.
+     * Use HTTPS and secure backend endpoints for production.
+     */
+
+    // === Main Activated Example ===
+    // Configured for MediasfuConference with credentials and custom pre-join page
+    bool returnUI = true; // Set to false to use a custom UI
+
+    // Example noUIPreJoinOptions for creating a room
+    final CreateMediaSFURoomOptions noUIPreJoinOptionsCreate =
+        CreateMediaSFURoomOptions(
+      action: 'create',
+      capacity: 10,
+      duration: 15,
+      eventType: EventType.conference,
+      userName: 'Prince',
+    );
+
+    // Example noUIPreJoinOptions for joining a room
+    /*
+    final JoinMediaSFURoomOptions noUIPreJoinOptionsJoin = JoinMediaSFURoomOptions(
+      action: 'join',
+      userName: 'Prince',
+      meetingID: 'yourMeetingID',
     );
     */
 
-    // ========================
-    // ====== DEFAULT COMPONENT ======
-    // ========================
-
-    /**
-     * **Default to MediasfuConference with Updated Configuration**
-     *
-     * Renders the welcome page with specified server and cloud connection settings.
-     */
     final MediasfuConferenceOptions options = MediasfuConferenceOptions(
       // Uncomment the following lines to use a custom pre-join page
       /*
@@ -288,29 +253,38 @@ class MyApp extends StatelessWidget {
       },
       */
 
-      // Uncomment the following lines to enable local UI mode with seed data; deprecated
-      /*
-        useLocalUIMode: useLocalUIMode,
-        useSeed: useSeed,
-        seedData: seedData,
-      */
-
-      // Uncomment the following lines to use your own Mediasfu server
-      localLink: localLink,
-
-      // Uncomment the following lines to pass your Credentials if not using MediaSFU Cloud (primarily or secondarily)
-      // MediaSFU Cloud handles recording and other egress processes for MediaSFU Community Edition
-      // You need to pass your own Mediasfu server link if you are using MediaSFU Community Edition
-      // Pass your credentials if you will be using MediaSFU Cloud for recording and other egress processes or as your primary server
-
+      // Pass your Credentials if you will be using MediaSFU Cloud for recording and other egress processes or as your primary server
       credentials: credentials,
 
-      // Uncomment the following lines to use your own Mediasfu server with MediaSFU Cloud (for recording and other egress purposes)
-      // If you are using MediaSFU Cloud for recording and other egress processes, set connectMediaSFU to true
+      // Use your own MediaSFU server link if you are using MediaSFU Community Edition
+      // Pass your credentials if you will be using MediaSFU Cloud for recording and other egress processes or as your primary server
       connectMediaSFU: connectMediaSFU,
+
+      // Specify your own MediaSFU Community Edition server if applicable
+      localLink: localLink, // e.g., 'http://localhost:3000'
+
+      // Set to false to use a custom UI, true to use the default MediaSFU UI
+      returnUI: returnUI,
+
+      // Provide pre-join options if not using the default UI (if creating a room)
+      noUIPreJoinOptionsCreate: !returnUI ? noUIPreJoinOptionsCreate : null,
+
+      // Provide pre-join options if not using the default UI (if joining a room)
+      // noUIPreJoinOptionsJoin: !returnUI ? noUIPreJoinOptionsJoin : null,
+
+      // Manage source parameters if not using the default UI
+      sourceParameters: !returnUI ? sourceParameters.value : null,
+
+      // Update source parameters if not using the default UI
+      updateSourceParameters: !returnUI ? updateSourceParameters : null,
+
+      // Provide custom room functions if not using the default functions
+      createMediaSFURoom: createRoomOnMediaSFU,
+      joinMediaSFURoom: joinRoomOnMediaSFU,
     );
+
     return MaterialApp(
-      title: 'Mediasfu Conference',
+      title: 'MediaSFU Conference',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -318,3 +292,191 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+/**
+ * =======================
+ * ====== EXTRA NOTES ======
+ * =======================
+ *
+ * ### Handling Core Methods
+ * With `sourceParameters`, you can access core methods such as `clickVideo` and `clickAudio`:
+ *
+ * ```dart
+ * // Example of toggling video
+ * void toggleVideo(SourceParameters sourceParameters) {
+ *   sourceParameters.clickVideo({...sourceParameters});
+ * }
+ *
+ * // Example of toggling audio
+ * void toggleAudio(SourceParameters sourceParameters) {
+ *   sourceParameters.clickAudio({...sourceParameters});
+ * }
+ * ```
+ *
+ * This allows your custom UI to interact with MediaSFU's functionalities seamlessly.
+ *
+ * ### Seed Data (Deprecated)
+ * The seed data functionality is deprecated and maintained only for legacy purposes.
+ * It is recommended to avoid using it in new implementations.
+ *
+ * ### Security Considerations
+ * - **Protect API Credentials:** Ensure that API credentials are not exposed in the frontend. Use environment variables and secure backend services to handle sensitive information.
+ * - **Use HTTPS:** Always use HTTPS to secure data transmission between the client and server.
+ * - **Validate Inputs:** Implement proper validation and error handling on both client and server sides to prevent malicious inputs.
+ *
+ * ### Custom Backend Example for MediaSFU CE
+ * Below is an example of how to set up custom backend endpoints for creating and joining rooms using MediaSFU CE. Assume all unlisted imports are exported by the package:
+ *
+ * ```typescript
+ * import express from 'express';
+ * import fetch from 'node-fetch';
+ * 
+ * const app = express();
+ * app.use(express.json());
+ * 
+ * app.post("/createRoom", async (req, res) => {
+ *   try {
+ *     const { apiUserName, apiKey } = req.headers.authorization.replace("Bearer ", "").split(":");
+ *     if (!apiUserName || !apiKey || !verifyCredentials(apiUserName, apiKey)) {
+ *       return res.status(401).json({ error: "Invalid credentials" });
+ *     }
+ * 
+ *     const response = await fetch("https://mediasfu.com/v1/rooms/", {
+ *       method: "POST",
+ *       headers: {
+ *         "Content-Type": "application/json",
+ *         Authorization: `Bearer ${apiUserName}:${apiKey}`,
+ *       },
+ *       body: JSON.stringify(req.body),
+ *     });
+ * 
+ *     const result = await response.json();
+ *     res.status(response.status).json(result);
+ *   } catch (error) {
+ *     res.status(500).json({ error: "Internal server error" });
+ *   }
+ * });
+ * 
+ * app.post("/joinRoom", async (req, res) => {
+ *   try {
+ *     const { apiUserName, apiKey } = req.headers.authorization.replace("Bearer ", "").split(":");
+ *     if (!apiUserName || !apiKey || !verifyCredentials(apiUserName, apiKey)) {
+ *       return res.status(401).json({ error: "Invalid credentials" });
+ *     }
+ * 
+ *     const response = await fetch("https://mediasfu.com/v1/rooms/join", {
+ *       method: "POST",
+ *       headers: {
+ *         "Content-Type": "application/json",
+ *         Authorization: `Bearer ${apiUserName}:${apiKey}`,
+ *       },
+ *       body: JSON.stringify(req.body),
+ *     });
+ * 
+ *     const result = await response.json();
+ *     res.status(response.status).json(result);
+ *   } catch (error) {
+ *     res.status(500).json({ error: "Internal server error" });
+ *   }
+ * });
+ * ```
+ *
+ * ### Custom Room Function Implementation
+ * Below are examples of how to implement custom functions for creating and joining rooms securely in Dart. Assume all unlisted imports are exported by the package:
+ *
+ * ```dart
+ * Future<CreateJoinRoomResult> createRoomOnMediaSFU(
+ *   CreateMediaSFURoomOptions options,
+ * ) async {
+ *   try {
+ *     final payload = options.payload;
+ *     final apiUserName = options.apiUserName;
+ *     final apiKey = options.apiKey;
+ *     String endpoint = 'https://mediasfu.com/v1/rooms/';
+ * 
+ *     if (options.localLink.isNotEmpty) {
+ *       endpoint = '${options.localLink}/createRoom';
+ *     }
+ * 
+ *     final response = await http.post(
+ *       Uri.parse(endpoint),
+ *       headers: {
+ *         "Content-Type": "application/json",
+ *         "Authorization": "Bearer $apiUserName:$apiKey",
+ *       },
+ *       body: jsonEncode(payload.toMap()),
+ *     );
+ * 
+ *     if (response.statusCode == 200 || response.statusCode == 201) {
+ *       final data = jsonDecode(response.body);
+ *       return CreateJoinRoomResult(
+ *         data: CreateJoinRoomResponse.fromJson(data),
+ *         success: true,
+ *       );
+ *     } else {
+ *       final error = jsonDecode(response.body);
+ *       return CreateJoinRoomResult(
+ *         data: CreateJoinRoomError.fromJson(error),
+ *         success: false,
+ *       );
+ *     }
+ *   } catch (_) {
+ *     return CreateJoinRoomResult(
+ *       data: CreateJoinRoomError(error: 'Unknown error'),
+ *       success: false,
+ *     );
+ *   }
+ * }
+ * 
+ * Future<CreateJoinRoomResult> joinRoomOnMediaSFU(
+ *   JoinMediaSFURoomOptions options,
+ * ) async {
+ *   try {
+ *     final payload = options.payload;
+ *     final apiUserName = options.apiUserName;
+ *     final apiKey = options.apiKey;
+ *     String endpoint = 'https://mediasfu.com/v1/rooms/join';
+ * 
+ *     if (options.localLink.isNotEmpty) {
+ *       endpoint = '${options.localLink}/joinRoom';
+ *     }
+ * 
+ *     final response = await http.post(
+ *       Uri.parse(endpoint),
+ *       headers: {
+ *         "Content-Type": "application/json",
+ *         "Authorization": "Bearer $apiUserName:$apiKey",
+ *       },
+ *       body: jsonEncode(payload.toMap()),
+ *     );
+ * 
+ *     if (response.statusCode == 200 || response.statusCode == 201) {
+ *       final data = jsonDecode(response.body);
+ *       return CreateJoinRoomResult(
+ *         data: CreateJoinRoomResponse.fromJson(data),
+ *         success: true,
+ *       );
+ *     } else {
+ *       final error = jsonDecode(response.body);
+ *       return CreateJoinRoomResult(
+ *         data: CreateJoinRoomError.fromJson(error),
+ *         success: false,
+ *       );
+ *     }
+ *   } catch (_) {
+ *     return CreateJoinRoomResult(
+ *       data: CreateJoinRoomError(error: 'Unknown error'),
+ *       success: false,
+ *     );
+ *   }
+ * }
+ * ```
+ *
+ * #### Assumptions:
+ * - All unlisted imports such as `http`, `CreateMediaSFURoomOptions`, `JoinMediaSFURoomOptions`, `CreateJoinRoomResult`, `CreateJoinRoomResponse`, and `CreateJoinRoomError` are exported by the package.
+ * - This structure ensures type safety, clear error handling, and flexibility for customization.
+ *
+ * ========================
+ * ====== END OF GUIDE ======
+ * ========================
+ */

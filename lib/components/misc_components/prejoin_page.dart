@@ -1,3 +1,6 @@
+import 'dart:math';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../../methods/utils/create_room_on_media_sfu.dart'
@@ -8,11 +11,18 @@ import '../../methods/utils/join_room_on_media_sfu.dart'
     show joinRoomOnMediaSFU;
 import '../../types/types.dart'
     show
-        ConnectLocalSocketType,
         ConnectLocalSocketOptions,
+        ConnectLocalSocketType,
         ConnectSocketType,
         CreateJoinRoomError,
         CreateJoinRoomResponse,
+        CreateMediaSFUOptions,
+        CreateMediaSFURoomOptions,
+        CreateRoomOnMediaSFUType,
+        EventType,
+        JoinMediaSFUOptions,
+        JoinMediaSFURoomOptions,
+        JoinRoomOnMediaSFUType,
         MeetingRoomParams,
         RecordingParams,
         ResponseLocalConnection,
@@ -216,6 +226,11 @@ class PreJoinPageOptions {
   final PreJoinPageParameters parameters;
   final Credentials credentials;
   final PreJoinPageType? customBuilder;
+  bool? returnUI;
+  CreateMediaSFURoomOptions? noUIPreJoinOptionsCreate;
+  JoinMediaSFURoomOptions? noUIPreJoinOptionsJoin;
+  CreateRoomOnMediaSFUType? createMediaSFURoom;
+  JoinRoomOnMediaSFUType? joinMediaSFURoom;
 
   PreJoinPageOptions({
     this.localLink,
@@ -223,6 +238,11 @@ class PreJoinPageOptions {
     required this.parameters,
     required this.credentials,
     this.customBuilder,
+    this.returnUI = true,
+    this.noUIPreJoinOptionsCreate,
+    this.noUIPreJoinOptionsJoin,
+    this.createMediaSFURoom = createRoomOnMediaSFU,
+    this.joinMediaSFURoom = joinRoomOnMediaSFU,
   });
 }
 
@@ -268,6 +288,11 @@ typedef PreJoinPageType = Widget Function({
 ///   localLink: 'http://localhost:3000', // Optional local link for Community Edition
 ///   connectMediaSFU: true, // Connect to MediaSFU
 ///   customBuilder: null, // Use the default builder
+///   returnUI: true, // Return the UI
+///   noUIPreJoinOptionsCreate: null, // No UI PreJoin Options for Create
+///   noUIPreJoinOptionsJoin: null, // No UI PreJoin Options for Join
+///   createMediaSFURoom: createRoomOnMediaSFU, // Create MediaSFU Room
+///  joinMediaSFURoom: joinRoomOnMediaSFU, // Join MediaSFU Room
 ///  ),
 /// );
 /// ```
@@ -314,6 +339,11 @@ typedef PreJoinPageType = Widget Function({
 ///   localLink: 'http://localhost:3000', // Optional local link for Community Edition
 ///   connectMediaSFU: true, // Connect to MediaSFU
 ///   customBuilder: myCustomPreJoinPage, // Pass the custom builder
+///   returnUI: true, // Return the UI
+///   noUIPreJoinOptionsCreate: null, // No UI PreJoin Options for Create
+///   noUIPreJoinOptionsJoin: null, // No UI PreJoin Options for Join
+///   createMediaSFURoom: createRoomOnMediaSFU, // Create MediaSFU Room
+///  joinMediaSFURoom: joinRoomOnMediaSFU, // Join MediaSFU Room
 /// );
 /// );
 /// ```
@@ -355,6 +385,8 @@ class _PreJoinPageState extends State<PreJoinPage> {
   ResponseLocalConnectionData? localData;
   io.Socket? initSocket;
 
+  bool pending = false;
+
   @override
   void initState() {
     super.initState();
@@ -363,7 +395,47 @@ class _PreJoinPageState extends State<PreJoinPage> {
         widget.options.localLink!.isNotEmpty &&
         !localConnected &&
         initSocket == null) {
-      _connectToLocalSocket();
+      _connectToLocalSocket().then((_) {
+        if (widget.options.noUIPreJoinOptionsCreate != null ||
+            widget.options.noUIPreJoinOptionsJoin != null) {
+          checkProceed();
+        }
+      });
+    } else {
+      if (widget.options.noUIPreJoinOptionsCreate != null ||
+          widget.options.noUIPreJoinOptionsJoin != null) {
+        checkProceed();
+      }
+    }
+  }
+
+  /// Checks and proceeds with room creation or joining without a UI.
+  ///
+  /// Throws an exception if required parameters are missing or invalid.
+  Future<void> checkProceed() async {
+    try {
+      // If no UI is needed and options are provided, proceed
+      if (!widget.options.returnUI! &&
+          (widget.options.noUIPreJoinOptionsCreate != null ||
+              widget.options.noUIPreJoinOptionsJoin != null)) {
+        if (widget.options.noUIPreJoinOptionsCreate
+                is CreateMediaSFURoomOptions &&
+            widget.options.noUIPreJoinOptionsCreate?.action == 'create') {
+          await _handleCreateRoom();
+        } else if (widget.options.noUIPreJoinOptionsJoin
+                is JoinMediaSFURoomOptions &&
+            widget.options.noUIPreJoinOptionsJoin?.action == 'join') {
+          await _handleJoinRoom();
+        } else {
+          throw Exception(
+              'Invalid options provided for creating/joining a room without UI.');
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error: $e');
+      }
+      rethrow;
     }
   }
 
@@ -406,50 +478,65 @@ class _PreJoinPageState extends State<PreJoinPage> {
   /// Otherwise, it displays an error message.
 
   Future<void> _handleCreateRoom() async {
+    if (pending) return;
+    pending = true;
+
     setState(() {
       _error = ''; // Clear previous errors
     });
 
-    // Input Validation
-    if (_name.isEmpty ||
-        _duration.isEmpty ||
-        _eventType.isEmpty ||
-        _capacity.isEmpty) {
-      setState(() => _error = 'Please fill all the fields.');
-      return;
-    }
+    if (widget.options.returnUI!) {
+      // Input Validation
+      if (_name.isEmpty ||
+          _duration.isEmpty ||
+          _eventType.isEmpty ||
+          _capacity.isEmpty) {
+        setState(() => _error = 'Please fill all the fields.');
+        pending = false;
+        return;
+      }
 
-    if (!['chat', 'broadcast', 'webinar', 'conference']
-        .contains(_eventType.toLowerCase())) {
-      setState(() {
-        _error =
-            'Invalid event type. Please select from Chat, Broadcast, Webinar, or Conference.';
-      });
-      return;
-    }
+      if (!['chat', 'broadcast', 'webinar', 'conference']
+          .contains(_eventType.toLowerCase())) {
+        setState(() {
+          _error =
+              'Invalid event type. Please select from Chat, Broadcast, Webinar, or Conference.';
+        });
+        pending = false;
+        return;
+      }
 
-    final int? capacityInt = int.tryParse(_capacity);
-    final int? durationInt = int.tryParse(_duration);
+      final int? capacityInt = int.tryParse(_capacity);
+      final int? durationInt = int.tryParse(_duration);
 
-    if (capacityInt == null || capacityInt <= 0) {
-      setState(() {
-        _error = 'Room capacity must be a positive integer.';
-      });
-      return;
-    }
+      if (capacityInt == null || capacityInt <= 0) {
+        setState(() {
+          _error = 'Room capacity must be a positive integer.';
+        });
+        pending = false;
+        return;
+      }
 
-    if (durationInt == null || durationInt <= 0) {
-      setState(() {
-        _error = 'Duration must be a positive integer.';
-      });
-      return;
-    }
+      if (durationInt == null || durationInt <= 0) {
+        setState(() {
+          _error = 'Duration must be a positive integer.';
+        });
+        pending = false;
+        return;
+      }
 
-    if (_name.length < 2 || _name.length > 10) {
-      setState(() {
-        _error = 'Display Name must be between 2 and 10 characters.';
-      });
-      return;
+      if (_name.length < 2 || _name.length > 10) {
+        setState(() {
+          _error = 'Display Name must be between 2 and 10 characters.';
+        });
+        pending = false;
+        return;
+      }
+    } else {
+      pending = false;
+      if (widget.options.noUIPreJoinOptionsCreate == null) {
+        throw Exception('No UI PreJoin Options are missing.');
+      }
     }
 
     widget.options.parameters.updateIsLoadingModalVisible(true);
@@ -464,6 +551,31 @@ class _PreJoinPageState extends State<PreJoinPage> {
     }
   }
 
+  /// Generates a random alphanumeric string of the given length.
+  String _randomString(int length, Random random) {
+    const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    return List.generate(
+        length, (_) => characters[random.nextInt(characters.length)]).join();
+  }
+
+  /// Generates a secure code by concatenating two random alphanumeric strings.
+  String _generateSecureCode() {
+    final random = Random();
+    return _randomString(12, random) + _randomString(12, random);
+  }
+
+  /// Generates an event ID based on the current timestamp, UTC milliseconds, and random digits.
+  String _generateEventID() {
+    final now = DateTime.now();
+    final random = Random();
+
+    final timePart = now.millisecondsSinceEpoch.toRadixString(30);
+    final utcMilliseconds = now.microsecond.toString();
+    final randomDigits = (10 + random.nextInt(90)).toString();
+
+    return 'm$timePart$utcMilliseconds$randomDigits';
+  }
+
   /// **_createLocalRoom**
   ///
   /// Creates a new room on the local server using the provided inputs.
@@ -473,20 +585,41 @@ class _PreJoinPageState extends State<PreJoinPage> {
 
   Future<void> _createLocalRoom() async {
     // Generate secureCode and eventID
-    final secureCode = DateTime.now().millisecondsSinceEpoch.toString() +
-        (1000 + (10000 * (1 + DateTime.now().microsecondsSinceEpoch % 1000)))
-            .toString();
-    final eventID = 'm${DateTime.now().millisecondsSinceEpoch.toString()}';
+    final secureCode = _generateSecureCode();
+    final eventID = _generateEventID();
 
     // Prepare eventRoomParams and recordingParams if available
     MeetingRoomParams? eventRoomParams = localData?.eventRoomParams;
     eventRoomParams!.type = _eventType.toLowerCase();
 
+    int? durationInt = !widget.options.returnUI! &&
+            widget.options.noUIPreJoinOptionsCreate != null
+        ? widget.options.noUIPreJoinOptionsCreate!.duration
+        : int.tryParse(_duration);
+    int? capacityInt = !widget.options.returnUI! &&
+            widget.options.noUIPreJoinOptionsCreate != null
+        ? widget.options.noUIPreJoinOptionsCreate!.capacity
+        : int.tryParse(_capacity);
+    String? name = !widget.options.returnUI! &&
+            widget.options.noUIPreJoinOptionsCreate != null
+        ? widget.options.noUIPreJoinOptionsCreate!.userName
+        : _name;
+    EventType? eventType = !widget.options.returnUI! &&
+            widget.options.noUIPreJoinOptionsCreate != null
+        ? widget.options.noUIPreJoinOptionsCreate!.eventType
+        : _eventType == 'chat'
+            ? EventType.chat
+            : _eventType == 'broadcast'
+                ? EventType.broadcast
+                : _eventType == 'webinar'
+                    ? EventType.webinar
+                    : EventType.conference;
+
     final createData = CreateLocalRoomParameters(
       eventID: eventID,
-      duration: int.parse(_duration),
-      capacity: int.parse(_capacity),
-      userName: _name,
+      duration: durationInt ?? 0,
+      capacity: capacityInt ?? 0,
+      userName: name,
       scheduledDate: DateTime.now(),
       secureCode: secureCode,
       waitRoom: false,
@@ -506,20 +639,28 @@ class _PreJoinPageState extends State<PreJoinPage> {
         localData!.apiKey != null &&
         localData!.apiKey!.isNotEmpty) {
       // Prepare payload for MediaSFU
-      final payload = {
+
+      final payloadMap = {
         'action': 'create',
-        'duration': int.parse(_duration),
-        'capacity': int.parse(_capacity),
-        'eventType': _eventType.toLowerCase(),
-        'userName': _name,
+        'duration': durationInt,
+        'capacity': capacityInt,
+        'eventType': eventType.toString().split('.').last.toLowerCase(),
+        'userName': name,
         'recordOnly': true, // Allow production to mediasfu only; no consumption
       };
 
+      CreateMediaSFURoomOptions? payload = !widget.options.returnUI! &&
+              widget.options.noUIPreJoinOptionsCreate != null
+          ? widget.options.noUIPreJoinOptionsCreate!
+          : CreateMediaSFURoomOptions.fromMap(payloadMap);
       // Create room on MediaSFU
       final response = await createRoomOnMediaSFU(
-        payload: payload,
-        apiUserName: localData!.apiUserName!,
-        apiKey: localData!.apiKey!,
+        CreateMediaSFUOptions(
+          payload: payload,
+          apiUserName: localData!.apiUserName!,
+          apiKey: localData!.apiKey!,
+          localLink: widget.options.localLink ?? '',
+        ),
       );
 
       if (response.success && response.data is CreateJoinRoomResponse) {
@@ -527,7 +668,7 @@ class _PreJoinPageState extends State<PreJoinPage> {
           apiUserName: response.data.roomName,
           apiToken: response.data.secret,
           link: response.data.link,
-          userName: _name,
+          userName: createData.userName,
           parameters: widget.options.parameters,
           validate: false,
         );
@@ -543,6 +684,7 @@ class _PreJoinPageState extends State<PreJoinPage> {
           link: data.link,
         );
       } else {
+        pending = false;
         widget.options.parameters.updateIsLoadingModalVisible(false);
         setState(() {
           _error = 'Unable to create room on MediaSFU.';
@@ -551,6 +693,7 @@ class _PreJoinPageState extends State<PreJoinPage> {
     } else {
       // Create room locally without MediaSFU connection
       await _createRoomOnLocalServer(createData: createData);
+      pending = false;
     }
   }
 
@@ -607,19 +750,51 @@ class _PreJoinPageState extends State<PreJoinPage> {
 
   Future<void> _createRemoteRoom() async {
     // Prepare payload
-    final payload = {
+
+    int? durationInt = !widget.options.returnUI! &&
+            widget.options.noUIPreJoinOptionsCreate != null
+        ? widget.options.noUIPreJoinOptionsCreate!.duration
+        : int.tryParse(_duration);
+    int? capacityInt = !widget.options.returnUI! &&
+            widget.options.noUIPreJoinOptionsCreate != null
+        ? widget.options.noUIPreJoinOptionsCreate!.capacity
+        : int.tryParse(_capacity);
+    String? name = !widget.options.returnUI! &&
+            widget.options.noUIPreJoinOptionsCreate != null
+        ? widget.options.noUIPreJoinOptionsCreate!.userName
+        : _name;
+    EventType? eventType = !widget.options.returnUI! &&
+            widget.options.noUIPreJoinOptionsCreate != null
+        ? widget.options.noUIPreJoinOptionsCreate!.eventType
+        : _eventType == 'chat'
+            ? EventType.chat
+            : _eventType == 'broadcast'
+                ? EventType.broadcast
+                : _eventType == 'webinar'
+                    ? EventType.webinar
+                    : EventType.conference;
+
+    final payloadMap = {
       'action': 'create',
-      'duration': int.parse(_duration),
-      'capacity': int.parse(_capacity),
-      'eventType': _eventType.toLowerCase(),
-      'userName': _name
+      'duration': durationInt,
+      'capacity': capacityInt,
+      'eventType': eventType.toString().split('.').last.toLowerCase(),
+      'userName': name,
     };
+
+    final payload = !widget.options.returnUI! &&
+            widget.options.noUIPreJoinOptionsCreate != null
+        ? widget.options.noUIPreJoinOptionsCreate!
+        : CreateMediaSFURoomOptions.fromMap(payloadMap);
 
     try {
       final response = await createRoomOnMediaSFU(
-        payload: payload,
-        apiUserName: widget.options.credentials.apiUserName,
-        apiKey: widget.options.credentials.apiKey,
+        CreateMediaSFUOptions(
+          payload: payload,
+          apiUserName: widget.options.credentials.apiUserName,
+          apiKey: widget.options.credentials.apiKey,
+          localLink: widget.options.localLink ?? '',
+        ),
       );
 
       if (response.success && response.data is CreateJoinRoomResponse) {
@@ -630,27 +805,31 @@ class _PreJoinPageState extends State<PreJoinPage> {
           apiUserName: data.roomName,
           apiToken: data.secret,
           link: data.link,
-          userName: _name,
+          userName: name,
           parameters: widget.options.parameters,
         );
       } else if (response.success == false &&
           response.data is CreateJoinRoomError) {
         final errorData = response.data;
+        pending = false;
         setState(() {
           _error = 'Unable to create room. ${errorData.error}';
         });
       } else {
+        pending = false;
         setState(() {
           _error = 'Unexpected error occurred.';
         });
       }
     } catch (error) {
+      pending = false;
       widget.options.parameters.showAlert?.call(
         message: 'Unable to create room. ${error.toString()}',
         type: 'danger',
         duration: 3000,
       );
     } finally {
+      pending = false;
       widget.options.parameters.updateIsLoadingModalVisible(false);
     }
   }
@@ -667,6 +846,11 @@ class _PreJoinPageState extends State<PreJoinPage> {
 
   @override
   Widget build(BuildContext context) {
+    // If no UI is needed, return an empty container
+    if (!widget.options.returnUI!) {
+      return const SizedBox();
+    }
+
     // If a custom builder is provided, use it
     if (widget.options.customBuilder != null) {
       return widget.options.customBuilder!(
@@ -822,21 +1006,32 @@ class _PreJoinPageState extends State<PreJoinPage> {
   /// Otherwise, it displays an error message.
 
   Future<void> _handleJoinRoom() async {
+    if (pending) return;
+    pending = true;
     setState(() {
       _error = ''; // Clear previous errors
     });
 
-    // Input Validation
-    if (_name.isEmpty || _eventID.isEmpty) {
-      setState(() => _error = 'Please fill all the fields.');
-      return;
-    }
+    if (widget.options.returnUI!) {
+      // Input Validation
+      if (_name.isEmpty || _eventID.isEmpty) {
+        setState(() => _error = 'Please fill all the fields.');
+        pending = false;
+        return;
+      }
 
-    if (_name.length < 2 || _name.length > 10) {
-      setState(() {
-        _error = 'Display Name must be between 2 and 10 characters.';
-      });
-      return;
+      if (_name.length < 2 || _name.length > 10) {
+        setState(() {
+          _error = 'Display Name must be between 2 and 10 characters.';
+        });
+        pending = false;
+        return;
+      }
+    } else {
+      if (widget.options.noUIPreJoinOptionsJoin == null) {
+        pending = false;
+        throw Exception('No UI PreJoin Options are missing.');
+      }
     }
 
     widget.options.parameters.updateIsLoadingModalVisible(true);
@@ -846,9 +1041,11 @@ class _PreJoinPageState extends State<PreJoinPage> {
         !widget.options.localLink!.contains('mediasfu.com')) {
       // Handle local room joining
       await _joinLocalRoom();
+      pending = false;
     } else {
       // Handle remote (MediaSFU) room joining
       await _joinRemoteRoom();
+      pending = false;
     }
   }
 
@@ -861,9 +1058,19 @@ class _PreJoinPageState extends State<PreJoinPage> {
   /// Otherwise, it displays an error message.
 
   Future<void> _joinLocalRoom() async {
+    String? name = !widget.options.returnUI! &&
+            widget.options.noUIPreJoinOptionsJoin != null
+        ? widget.options.noUIPreJoinOptionsJoin!.userName
+        : _name;
+
+    String? eventID = !widget.options.returnUI! &&
+            widget.options.noUIPreJoinOptionsJoin != null
+        ? widget.options.noUIPreJoinOptionsJoin!.meetingID
+        : _eventID;
+
     final joinData = JoinLocalEventRoomParameters(
-      eventID: _eventID,
-      userName: _name,
+      eventID: eventID,
+      userName: name,
       secureCode: '',
       videoPreference: null,
       audioPreference: null,
@@ -887,8 +1094,8 @@ class _PreJoinPageState extends State<PreJoinPage> {
               .updateApiUserName(localData?.apiUserName ?? '');
           widget.options.parameters.updateApiToken(res.secret);
           widget.options.parameters.updateLink(widget.options.localLink!);
-          widget.options.parameters.updateRoomName(_eventID);
-          widget.options.parameters.updateMember(_name);
+          widget.options.parameters.updateRoomName(eventID);
+          widget.options.parameters.updateMember(name);
           widget.options.parameters.updateIsLoadingModalVisible(false);
           widget.options.parameters.updateValidated(true);
         } else {
@@ -911,17 +1118,31 @@ class _PreJoinPageState extends State<PreJoinPage> {
 
   Future<void> _joinRemoteRoom() async {
     // Prepare payload
-    final payload = {
+
+    String? name = !widget.options.returnUI! &&
+            widget.options.noUIPreJoinOptionsJoin != null
+        ? widget.options.noUIPreJoinOptionsJoin!.userName
+        : _name;
+
+    final payloadMap = {
       'action': 'join',
       'meetingID': _eventID,
       'userName': _name,
     };
 
+    final payload = !widget.options.returnUI! &&
+            widget.options.noUIPreJoinOptionsJoin != null
+        ? widget.options.noUIPreJoinOptionsJoin!
+        : JoinMediaSFURoomOptions.fromMap(payloadMap);
+
     try {
       final response = await joinRoomOnMediaSFU(
-        payload: payload,
-        apiUserName: widget.options.credentials.apiUserName,
-        apiKey: widget.options.credentials.apiKey,
+        JoinMediaSFUOptions(
+          payload: payload,
+          apiUserName: widget.options.credentials.apiUserName,
+          apiKey: widget.options.credentials.apiKey,
+          localLink: widget.options.localLink ?? '',
+        ),
       );
 
       if (response.success && response.data is CreateJoinRoomResponse) {
@@ -932,7 +1153,7 @@ class _PreJoinPageState extends State<PreJoinPage> {
           apiUserName: data.roomName,
           apiToken: data.secret,
           link: data.link,
-          userName: _name,
+          userName: name,
           parameters: widget.options.parameters,
         );
       } else if (response.success == false &&

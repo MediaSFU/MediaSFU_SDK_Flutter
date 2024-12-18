@@ -236,8 +236,14 @@ Future<void> allMembers(AllMembersOptions options) async {
     if (params.roomRecvIPs.isEmpty) {
       Timer.periodic(const Duration(milliseconds: 10), (timer) async {
         if (params.roomRecvIPs.isNotEmpty) {
+          if (params.roomRecvIPs.length == 1 &&
+              params.roomRecvIPs[0] == 'none') {
+            onLocal = true;
+          }
           timer.cancel();
-          await _handleConnections(options, params);
+          if (!onLocal) {
+            await _handleConnections(options, params);
+          }
         }
       });
     } else {

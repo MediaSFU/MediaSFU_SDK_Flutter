@@ -6,6 +6,8 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import '../methods/utils/mini_audio_player/mini_audio_player.dart'
     show MiniAudioPlayer;
+import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart'
+    show Consumer;
 import '../components/display_components/mini_audio.dart'
     show MiniAudio, MiniAudioOptions;
 import '../types/types.dart'
@@ -105,6 +107,7 @@ class ConsumerResumeOptions {
   final String remoteProducerId;
   final ConsumerResumeParameters parameters;
   final io.Socket nsock;
+  final Consumer consumer;
 
   ConsumerResumeOptions({
     required this.stream,
@@ -112,6 +115,7 @@ class ConsumerResumeOptions {
     required this.remoteProducerId,
     required this.parameters,
     required this.nsock,
+    required this.consumer,
   });
 }
 
@@ -136,6 +140,7 @@ typedef ConsumerResumeType = Future<void> Function(
 ///   - `remoteProducerId` (`String`): The producer ID of the remote media stream.
 ///   - `parameters` (`ConsumerResumeParameters`): Parameters for managing state updates and triggering functions.
 ///   - `nsock` (`io.Socket`): The socket connection for managing real-time events.
+///   - `consumer` (`Consumer`): The consumer object associated with the media stream.
 ///
 /// ### Example Usage:
 /// ```dart
@@ -145,6 +150,7 @@ typedef ConsumerResumeType = Future<void> Function(
 ///   remoteProducerId: 'producerId123',
 ///   parameters: consumerResumeParams,
 ///   nsock: socket,
+///   consumer: myConsumer,
 /// ));
 /// ```
 ///
@@ -159,6 +165,7 @@ Future<void> consumerResume(ConsumerResumeOptions options) async {
     final String remoteProducerId = options.remoteProducerId;
     final ConsumerResumeParameters parameters = options.parameters;
     final io.Socket nsock = options.nsock;
+    final Consumer consumer = options.consumer;
 
     // Refresh parameters using the latest state
     final ConsumerResumeParameters updatedParams =
@@ -278,6 +285,7 @@ Future<void> consumerResume(ConsumerResumeOptions options) async {
       // Create a MiniAudioPlayer widget
       final optionsMiniAudio = MiniAudioPlayerOptions(
         stream: nStream,
+        consumer: consumer,
         remoteProducerId: remoteProducerId,
         parameters: updatedParams,
         miniAudioComponent: (props) => MiniAudio(

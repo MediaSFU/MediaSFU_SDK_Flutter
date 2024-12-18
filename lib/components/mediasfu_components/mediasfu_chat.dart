@@ -58,6 +58,10 @@ import '../../methods/exit_methods/launch_confirm_exit.dart'
 // Mediasfu functions -- examples
 import '../../sockets/socket_manager.dart'
     show connectSocket, connectLocalSocket;
+import '../../methods/utils/join_room_on_media_sfu.dart'
+    show joinRoomOnMediaSFU;
+import '../../methods/utils/create_room_on_media_sfu.dart'
+    show createRoomOnMediaSFU;
 import '../../producer_client/producer_client_emits/join_room_client.dart'
     show joinRoomClient, JoinRoomClientOptions;
 import '../../producers/producer_emits/join_local_room.dart'
@@ -224,7 +228,11 @@ import '../../types/types.dart'
         UserRecordingParams,
         VidCons,
         WaitingRoomParticipant,
-        WhiteboardUser;
+        WhiteboardUser,
+        CreateMediaSFURoomOptions,
+        JoinMediaSFURoomOptions,
+        JoinRoomOnMediaSFUType,
+        CreateRoomOnMediaSFUType;
 import '../../methods/utils/create_response_join_room.dart'
     show createResponseJoinRoom, CreateResponseJoinRoomOptions;
 import '../../methods/utils/mediasfu_parameters.dart' show MediasfuParameters;
@@ -238,6 +246,13 @@ class MediasfuChatOptions {
   SeedData? seedData;
   bool? useSeed;
   String? imgSrc;
+  MediasfuParameters? sourceParameters;
+  Function(MediasfuParameters?)? updateSourceParameters;
+  bool? returnUI;
+  CreateMediaSFURoomOptions? noUIPreJoinOptionsCreate;
+  JoinMediaSFURoomOptions? noUIPreJoinOptionsJoin;
+  JoinRoomOnMediaSFUType? joinMediaSFURoom;
+  CreateRoomOnMediaSFUType? createMediaSFURoom;
 
   MediasfuChatOptions({
     this.preJoinPageWidget,
@@ -248,6 +263,13 @@ class MediasfuChatOptions {
     this.seedData,
     this.useSeed,
     this.imgSrc,
+    this.sourceParameters,
+    this.updateSourceParameters,
+    this.returnUI = true,
+    this.noUIPreJoinOptionsCreate,
+    this.noUIPreJoinOptionsJoin,
+    this.joinMediaSFURoom = joinRoomOnMediaSFU,
+    this.createMediaSFURoom = createRoomOnMediaSFU,
   });
 }
 
@@ -268,6 +290,13 @@ class MediasfuChatOptions {
 ///     seedData: mySeedData,
 ///     useSeed: false,
 ///     imgSrc: "https://example.com/image.png",
+///     sourceParameters: myMediasfuParameters,
+///    updateSourceParameters: myUpdateSourceParameters,
+///     returnUI: true,
+///     noUIPreJoinOptionsCreate: myCreateOptions,
+///     noUIPreJoinOptionsJoin: myJoinOptions,
+///     joinRoomOnMediaSFUType: JoinRoomOnMediaSFUType.join,
+///     createRoomOnMediaSFUType: CreateRoomOnMediaSFUType.create,
 ///   ),
 /// );
 /// ```
@@ -754,6 +783,7 @@ class _MediasfuChatState extends State<MediasfuChat> {
   final ValueNotifier<ProducerOptionsType?> videoParams = ValueNotifier(null);
   final ValueNotifier<ProducerOptionsType?> audioParams = ValueNotifier(null);
   final ValueNotifier<Producer?> audioProducer = ValueNotifier(null);
+  final ValueNotifier<double> audioLevel = ValueNotifier(0.0);
   final ValueNotifier<Producer?>? localAudioProducer = ValueNotifier(null);
   final ValueNotifier<List<TransportType>> consumerTransports =
       ValueNotifier([]);
@@ -900,29 +930,35 @@ class _MediasfuChatState extends State<MediasfuChat> {
   void updateSocket(io.Socket? value) {
     socket.value = value;
     mediasfuParameters.socket = value;
+    updateSpecificState(widget.options.sourceParameters, 'socket', value);
   }
 
   void updateLocalSocket(io.Socket? value) {
     setState(() {
       localSocket.value = value;
       mediasfuParameters.localSocket = value;
+      updateSpecificState(
+          widget.options.sourceParameters, 'localSocket', value);
     });
   }
 
   void updateDevice(Device? value) {
     device.value = value;
     mediasfuParameters.device = value;
+    updateSpecificState(widget.options.sourceParameters, 'device', value);
   }
 
   void updateRoomData(ResponseJoinRoom? value) {
     roomData.value = value;
     mediasfuParameters.roomData = value!;
+    updateSpecificState(widget.options.sourceParameters, 'roomData', value);
   }
 
   void updateValidated(bool value) {
     setState(() {
       validated = value;
       mediasfuParameters.validated = value;
+      updateSpecificState(widget.options.sourceParameters, 'validated', value);
     });
 
     if (validated) {
@@ -932,22 +968,18 @@ class _MediasfuChatState extends State<MediasfuChat> {
 
   void updateApiKey(String value) {
     apiKey.value = value;
-    // mediasfuParameters.apiKey = value;
   }
 
   void updateApiUserName(String value) {
     apiUserName.value = value;
-    // mediasfuParameters.apiUserName = value;
   }
 
   void updateApiToken(String value) {
     apiToken.value = value;
-    // mediasfuParameters.apiToken = value;
   }
 
   void updateLink(String value) {
     link.value = value;
-    // mediasfuParameters.link = value;
   }
 
   void updateMember(String value) {
@@ -958,29 +990,37 @@ class _MediasfuChatState extends State<MediasfuChat> {
 
     member.value = value;
     mediasfuParameters.member = value;
+    updateSpecificState(widget.options.sourceParameters, 'member', value);
   }
 
   void updateYouAreCoHost(bool value) {
     setState(() {
       youAreCoHost.value = value;
       mediasfuParameters.youAreCoHost = value;
+      updateSpecificState(
+          widget.options.sourceParameters, 'youAreCoHost', value);
     });
   }
 
   void updateYouAreHost(bool value) {
     youAreHost.value = value;
     mediasfuParameters.youAreHost = value;
+    updateSpecificState(widget.options.sourceParameters, 'youAreHost', value);
   }
 
   void updateConfirmedToRecord(bool value) {
     confirmedToRecord.value = value;
     mediasfuParameters.confirmedToRecord = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'confirmedToRecord', value);
   }
 
   void updateMeetingDisplayType(String value) {
     setState(() {
       meetingDisplayType.value = value;
       mediasfuParameters.meetingDisplayType = value;
+      updateSpecificState(
+          widget.options.sourceParameters, 'meetingDisplayType', value);
     });
   }
 
@@ -988,6 +1028,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
     setState(() {
       meetingVideoOptimized.value = value;
       mediasfuParameters.meetingVideoOptimized = value;
+      updateSpecificState(
+          widget.options.sourceParameters, 'meetingVideoOptimized', value);
     });
   }
 
@@ -995,6 +1037,7 @@ class _MediasfuChatState extends State<MediasfuChat> {
     setState(() {
       eventType.value = value;
       mediasfuParameters.eventType = value;
+      updateSpecificState(widget.options.sourceParameters, 'eventType', value);
     });
     if (value == EventType.chat) {
       updateMeetingDisplayType('all');
@@ -1004,396 +1047,533 @@ class _MediasfuChatState extends State<MediasfuChat> {
   void updateParticipants(List<Participant> value) {
     participants.value = value;
     mediasfuParameters.participants = value;
+    updateSpecificState(widget.options.sourceParameters, 'participants', value);
     filteredParticipants.value = List.from(value);
+    mediasfuParameters.filteredParticipants = List.from(value);
+    updateSpecificState(widget.options.sourceParameters, 'filteredParticipants',
+        List.from(value));
     participantsCounter.value = value.length;
+    mediasfuParameters.participantsCounter = value.length;
+    updateSpecificState(
+        widget.options.sourceParameters, 'participantsCounter', value.length);
   }
 
   void updateFilteredParticipants(List<Participant> value) {
     filteredParticipants.value = value;
     mediasfuParameters.filteredParticipants = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'filteredParticipants', value);
   }
 
   void updateParticipantsCounter(int value) {
     participantsCounter.value = value;
     mediasfuParameters.participantsCounter = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'participantsCounter', value);
   }
 
   void updateParticipantsFilter(String value) {
     participantsFilter.value = value;
     mediasfuParameters.participantsFilter = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'participantsFilter', value);
   }
 
   void updateRoomName(String value) {
     roomName.value = value;
     mediasfuParameters.roomName = value;
+    updateSpecificState(widget.options.sourceParameters, 'roomName', value);
   }
 
   void updateAdminPasscode(String value) {
     adminPasscode.value = value;
     mediasfuParameters.adminPasscode = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'adminPasscode', value);
   }
 
   void updateIslevel(String value) {
     setState(() {
       islevel.value = value;
       mediasfuParameters.islevel = value;
+      updateSpecificState(widget.options.sourceParameters, 'islevel', value);
     });
   }
 
   void updateCoHost(String value) {
     coHost.value = value;
     mediasfuParameters.coHost = value;
+    updateSpecificState(widget.options.sourceParameters, 'coHost', value);
   }
 
   void updateCoHostResponsibility(List<CoHostResponsibility> value) {
     coHostResponsibility.value = value;
     mediasfuParameters.coHostResponsibility = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'coHostResponsibility', value);
   }
 
   void updateRecordingAudioPausesLimit(int value) {
     recordingAudioPausesLimit.value = value;
     mediasfuParameters.recordingAudioPausesLimit = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordingAudioPausesLimit', value);
   }
 
   void updateRecordingAudioPausesCount(int value) {
     recordingAudioPausesCount.value = value;
     mediasfuParameters.recordingAudioPausesCount = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordingAudioPausesCount', value);
   }
 
   void updateRecordingAudioSupport(bool value) {
     recordingAudioSupport.value = value;
     mediasfuParameters.recordingAudioSupport = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordingAudioSupport', value);
   }
 
   void updateRecordingAudioPeopleLimit(int value) {
     recordingAudioPeopleLimit.value = value;
     mediasfuParameters.recordingAudioPeopleLimit = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordingAudioPeopleLimit', value);
   }
 
   void updateRecordingAudioParticipantsTimeLimit(int value) {
     recordingAudioParticipantsTimeLimit.value = value;
     mediasfuParameters.recordingAudioParticipantsTimeLimit = value;
+    updateSpecificState(widget.options.sourceParameters,
+        'recordingAudioParticipantsTimeLimit', value);
   }
 
   void updateRecordingVideoPausesCount(int value) {
     recordingVideoPausesCount.value = value;
     mediasfuParameters.recordingVideoPausesCount = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordingVideoPausesCount', value);
   }
 
   void updateRecordingVideoPausesLimit(int value) {
     recordingVideoPausesLimit.value = value;
     mediasfuParameters.recordingVideoPausesLimit = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordingVideoPausesLimit', value);
   }
 
   void updateRecordingVideoSupport(bool value) {
     recordingVideoSupport.value = value;
     mediasfuParameters.recordingVideoSupport = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordingVideoSupport', value);
   }
 
   void updateRecordingVideoPeopleLimit(int value) {
     recordingVideoPeopleLimit.value = value;
     mediasfuParameters.recordingVideoPeopleLimit = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordingVideoPeopleLimit', value);
   }
 
   void updateRecordingVideoParticipantsTimeLimit(int value) {
     recordingVideoParticipantsTimeLimit.value = value;
     mediasfuParameters.recordingVideoParticipantsTimeLimit = value;
+    updateSpecificState(widget.options.sourceParameters,
+        'recordingVideoParticipantsTimeLimit', value);
   }
 
   void updateRecordingAllParticipantsSupport(bool value) {
     recordingAllParticipantsSupport.value = value;
     mediasfuParameters.recordingAllParticipantsSupport = value;
+    updateSpecificState(widget.options.sourceParameters,
+        'recordingAllParticipantsSupport', value);
   }
 
   void updateRecordingVideoParticipantsSupport(bool value) {
     recordingVideoParticipantsSupport.value = value;
     mediasfuParameters.recordingVideoParticipantsSupport = value;
+    updateSpecificState(widget.options.sourceParameters,
+        'recordingVideoParticipantsSupport', value);
   }
 
   void updateRecordingAllParticipantsFullRoomSupport(bool value) {
     recordingAllParticipantsFullRoomSupport.value = value;
     mediasfuParameters.recordingAllParticipantsFullRoomSupport = value;
+    updateSpecificState(widget.options.sourceParameters,
+        'recordingAllParticipantsFullRoomSupport', value);
   }
 
   void updateRecordingVideoParticipantsFullRoomSupport(bool value) {
     recordingVideoParticipantsFullRoomSupport.value = value;
     mediasfuParameters.recordingVideoParticipantsFullRoomSupport = value;
+    updateSpecificState(widget.options.sourceParameters,
+        'recordingVideoParticipantsFullRoomSupport', value);
   }
 
   void updateRecordingPreferredOrientation(String value) {
     recordingPreferredOrientation.value = value;
     mediasfuParameters.recordingPreferredOrientation = value;
+    updateSpecificState(widget.options.sourceParameters,
+        'recordingPreferredOrientation', value);
   }
 
   void updateRecordingSupportForOtherOrientation(bool value) {
     recordingSupportForOtherOrientation.value = value;
     mediasfuParameters.recordingSupportForOtherOrientation = value;
+    updateSpecificState(widget.options.sourceParameters,
+        'recordingSupportForOtherOrientation', value);
   }
 
   void updateRecordingMultiFormatsSupport(bool value) {
     recordingMultiFormatsSupport.value = value;
     mediasfuParameters.recordingMultiFormatsSupport = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordingMultiFormatsSupport', value);
   }
 
   void updateUserRecordingParams(UserRecordingParams value) {
     userRecordingParams.value = value;
     mediasfuParameters.userRecordingParams = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'userRecordingParams', value);
   }
 
   void updateCanRecord(bool value) {
     canRecord.value = value;
     mediasfuParameters.canRecord = value;
+    updateSpecificState(widget.options.sourceParameters, 'canRecord', value);
   }
 
   void updateStartReport(bool value) {
     startReport.value = value;
     mediasfuParameters.startReport = value;
+    updateSpecificState(widget.options.sourceParameters, 'startReport', value);
   }
 
   void updateEndReport(bool value) {
     endReport.value = value;
     mediasfuParameters.endReport = value;
+    updateSpecificState(widget.options.sourceParameters, 'endReport', value);
   }
 
   void updateRecordTimerInterval(dynamic value) {
     recordTimerInterval.value = value;
     mediasfuParameters.recordTimerInterval = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordTimerInterval', value);
   }
 
   void updateRecordStartTime(int? value) {
     recordStartTime.value = value;
     mediasfuParameters.recordStartTime = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordStartTime', value);
   }
 
   void updateRecordElapsedTime(int value) {
     recordElapsedTime.value = value;
     mediasfuParameters.recordElapsedTime = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordElapsedTime', value);
   }
 
   void updateIsTimerRunning(bool value) {
     isTimerRunning.value = value;
     mediasfuParameters.isTimerRunning = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'isTimerRunning', value);
   }
 
   void updateCanPauseResume(bool value) {
     canPauseResume.value = value;
     mediasfuParameters.canPauseResume = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'canPauseResume', value);
   }
 
   void updateRecordChangeSeconds(int value) {
     recordChangeSeconds.value = value;
     mediasfuParameters.recordChangeSeconds = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordChangeSeconds', value);
   }
 
   void updatePauseLimit(int value) {
     pauseLimit.value = value;
     mediasfuParameters.pauseLimit = value;
+    updateSpecificState(widget.options.sourceParameters, 'pauseLimit', value);
   }
 
   void updatePauseRecordCount(int value) {
     pauseRecordCount.value = value;
     mediasfuParameters.pauseRecordCount = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'pauseRecordCount', value);
   }
 
   void updateCanLaunchRecord(bool value) {
     canLaunchRecord.value = value;
     mediasfuParameters.canLaunchRecord = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'canLaunchRecord', value);
   }
 
   void updateStopLaunchRecord(bool value) {
     stopLaunchRecord.value = value;
     mediasfuParameters.stopLaunchRecord = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'stopLaunchRecord', value);
   }
 
   void updateParticipantsAll(List<Participant> value) {
     participantsAll.value = value;
     mediasfuParameters.participantsAll = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'participantsAll', value);
   }
 
   void updateConsumeSockets(List<ConsumeSocket> value) {
     consumeSockets.value = value;
     mediasfuParameters.consumeSockets = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'consumeSockets', value);
   }
 
   void updateRtpCapabilities(RtpCapabilities? value) {
     rtpCapabilities.value = value;
     mediasfuParameters.rtpCapabilities = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'rtpCapabilities', value);
   }
 
   void updateRoomRecvIPs(List<String> value) {
     roomRecvIPs.value = value;
     mediasfuParameters.roomRecvIPs = value;
+    updateSpecificState(widget.options.sourceParameters, 'roomRecvIPs', value);
   }
 
   void updateMeetingRoomParams(MeetingRoomParams? value) {
     meetingRoomParams.value = value;
     mediasfuParameters.meetingRoomParams = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'meetingRoomParams', value);
   }
 
   void updateItemPageLimit(int value) {
     itemPageLimit.value = value;
     mediasfuParameters.itemPageLimit = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'itemPageLimit', value);
   }
 
   void updateAudioOnlyRoom(bool value) {
     audioOnlyRoom.value = value;
     mediasfuParameters.audioOnlyRoom = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'audioOnlyRoom', value);
   }
 
   void updateAddForBasic(bool value) {
     addForBasic.value = value;
     mediasfuParameters.addForBasic = value;
+    updateSpecificState(widget.options.sourceParameters, 'addForBasic', value);
   }
 
   void updateScreenPageLimit(int value) {
     screenPageLimit.value = value;
     mediasfuParameters.screenPageLimit = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'screenPageLimit', value);
   }
 
   void updateShareScreenStarted(bool value) {
     shareScreenStarted.value = value;
     mediasfuParameters.shareScreenStarted = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'shareScreenStarted', value);
   }
 
   void updateShared(bool value) {
     shared.value = value;
     mediasfuParameters.shared = value;
+    updateSpecificState(widget.options.sourceParameters, 'shared', value);
   }
 
   void updateTargetOrientation(String value) {
     targetOrientation.value = value;
     mediasfuParameters.targetOrientation = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'targetOrientation', value);
   }
 
   void updateTargetResolution(String value) {
     targetResolution.value = value;
     mediasfuParameters.targetResolution = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'targetResolution', value);
   }
 
   void updateTargetResolutionHost(String value) {
     targetResolutionHost.value = value;
     mediasfuParameters.targetResolutionHost = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'targetResolutionHost', value);
   }
 
   void updateVidCons(VidCons value) {
     vidCons.value = value;
     mediasfuParameters.vidCons = value;
+    updateSpecificState(widget.options.sourceParameters, 'vidCons', value);
   }
 
   void updateFrameRate(int value) {
     frameRate.value = value;
     mediasfuParameters.frameRate = value;
+    updateSpecificState(widget.options.sourceParameters, 'frameRate', value);
   }
 
   void updateHParams(ProducerOptionsType? value) {
     hParams.value = value;
     mediasfuParameters.hParams = value;
+    updateSpecificState(widget.options.sourceParameters, 'hParams', value);
   }
 
   void updateVParams(ProducerOptionsType? value) {
     vParams.value = value;
     mediasfuParameters.vParams = value;
+    updateSpecificState(widget.options.sourceParameters, 'vParams', value);
   }
 
   void updateScreenParams(ProducerOptionsType? value) {
     screenParams.value = value;
     mediasfuParameters.screenParams = value;
+    updateSpecificState(widget.options.sourceParameters, 'screenParams', value);
   }
 
   void updateAParams(ProducerOptionsType? value) {
     aParams.value = value;
     mediasfuParameters.aParams = value;
+    updateSpecificState(widget.options.sourceParameters, 'aParams', value);
   }
 
   void updateFirstAll(bool value) {
     firstAll.value = value;
     mediasfuParameters.firstAll = value;
+    updateSpecificState(widget.options.sourceParameters, 'firstAll', value);
   }
 
   void updateUpdateMainWindow(bool value) {
     updateMainWindow.value = value;
     mediasfuParameters.updateMainWindow = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'updateMainWindow', value);
   }
 
   void updateFirstRound(bool value) {
     firstRound.value = value;
     mediasfuParameters.firstRound = value;
+    updateSpecificState(widget.options.sourceParameters, 'firstRound', value);
   }
 
   void updateLandScaped(bool value) {
     landScaped.value = value;
     mediasfuParameters.landScaped = value;
+    updateSpecificState(widget.options.sourceParameters, 'landScaped', value);
   }
 
   void updateLockScreen(bool value) {
     lockScreen.value = value;
     mediasfuParameters.lockScreen = value;
+    updateSpecificState(widget.options.sourceParameters, 'lockScreen', value);
   }
 
   void updateScreenId(String value) {
     screenId.value = value;
     mediasfuParameters.screenId = value;
+    updateSpecificState(widget.options.sourceParameters, 'screenId', value);
   }
 
   void updateAllVideoStreams(List<Stream> value) {
     allVideoStreams.value = value;
     mediasfuParameters.allVideoStreams = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'allVideoStreams', value);
   }
 
   void updateNewLimitedStreams(List<Stream> value) {
     newLimitedStreams.value = value;
     mediasfuParameters.newLimitedStreams = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'newLimitedStreams', value);
   }
 
   void updateNewLimitedStreamsIDs(List<String> value) {
     newLimitedStreamsIDs.value = value;
     mediasfuParameters.newLimitedStreamsIDs = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'newLimitedStreamsIDs', value);
   }
 
   void updateActiveSounds(List<String> value) {
     activeSounds.value = value;
     mediasfuParameters.activeSounds = value;
+    updateSpecificState(widget.options.sourceParameters, 'activeSounds', value);
   }
 
   void updateScreenShareIDStream(String value) {
     screenShareIDStream.value = value;
     mediasfuParameters.screenShareIDStream = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'screenShareIDStream', value);
   }
 
   void updateScreenShareNameStream(String value) {
     screenShareNameStream.value = value;
     mediasfuParameters.screenShareNameStream = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'screenShareNameStream', value);
   }
 
   void updateAdminIDStream(String value) {
     adminIDStream.value = value;
     mediasfuParameters.adminIDStream = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'adminIDStream', value);
   }
 
   void updateAdminNameStream(String value) {
     adminNameStream.value = value;
     mediasfuParameters.adminNameStream = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'adminNameStream', value);
   }
 
   void updateYouYouStream(List<Stream> value) {
     youYouStream.value = value;
     mediasfuParameters.youYouStream = value;
+    updateSpecificState(widget.options.sourceParameters, 'youYouStream', value);
   }
 
   void updateYouYouStreamIDs(List<String> value) {
     youYouStreamIDs.value = value;
     mediasfuParameters.youYouStreamIDs = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'youYouStreamIDs', value);
   }
 
   void updateLocalStream(MediaStream? value) {
     localStream.value = value;
     mediasfuParameters.localStream = value;
+    updateSpecificState(widget.options.sourceParameters, 'localStream', value);
   }
 
   void updateRecordStarted(bool value) {
     setState(() {
       recordStarted.value = value;
       mediasfuParameters.recordStarted = value;
+      updateSpecificState(
+          widget.options.sourceParameters, 'recordStarted', value);
     });
     if (clearedToRecord.value == true &&
         clearedToResume.value == true &&
@@ -1406,6 +1586,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
     setState(() {
       recordResumed.value = value;
       mediasfuParameters.recordResumed = value;
+      updateSpecificState(
+          widget.options.sourceParameters, 'recordResumed', value);
     });
   }
 
@@ -1413,6 +1595,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
     setState(() {
       recordPaused.value = value;
       mediasfuParameters.recordPaused = value;
+      updateSpecificState(
+          widget.options.sourceParameters, 'recordPaused', value);
     });
   }
 
@@ -1420,167 +1604,223 @@ class _MediasfuChatState extends State<MediasfuChat> {
     setState(() {
       recordStopped.value = value;
       mediasfuParameters.recordStopped = value;
+      updateSpecificState(
+          widget.options.sourceParameters, 'recordStopped', value);
     });
   }
 
   void updateAdminRestrictSetting(bool value) {
     adminRestrictSetting.value = value;
     mediasfuParameters.adminRestrictSetting = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'adminRestrictSetting', value);
   }
 
   void updateVideoRequestState(String value) {
     videoRequestState.value = value;
     mediasfuParameters.videoRequestState = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'videoRequestState', value);
   }
 
   void updateVideoRequestTime(int? value) {
     videoRequestTime.value = value;
     mediasfuParameters.videoRequestTime = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'videoRequestTime', value);
   }
 
   void updateVideoAction(bool value) {
     videoAction.value = value;
     mediasfuParameters.videoAction = value;
+    updateSpecificState(widget.options.sourceParameters, 'videoAction', value);
   }
 
   void updateLocalStreamVideo(MediaStream? value) {
     localStreamVideo.value = value;
     mediasfuParameters.localStreamVideo = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'localStreamVideo', value);
   }
 
   void updateUserDefaultVideoInputDevice(String value) {
     userDefaultVideoInputDevice.value = value;
     mediasfuParameters.userDefaultVideoInputDevice = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'userDefaultVideoInputDevice', value);
   }
 
   void updateCurrentFacingMode(String value) {
     currentFacingMode.value = value;
     mediasfuParameters.currentFacingMode = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'currentFacingMode', value);
   }
 
   void updatePrevFacingMode(String value) {
     prevFacingMode.value = value;
     mediasfuParameters.prevFacingMode = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'prevFacingMode', value);
   }
 
   void updateDefVideoID(String value) {
     defVideoID.value = value;
     mediasfuParameters.defVideoID = value;
+    updateSpecificState(widget.options.sourceParameters, 'defVideoID', value);
   }
 
   void updateAllowed(bool value) {
     allowed.value = value;
     mediasfuParameters.allowed = value;
+    updateSpecificState(widget.options.sourceParameters, 'allowed', value);
   }
 
   void updateDispActiveNames(List<String> value) {
     dispActiveNames.value = value;
     mediasfuParameters.dispActiveNames = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'dispActiveNames', value);
   }
 
   void updatePDispActiveNames(List<String> value) {
     pDispActiveNames.value = value;
     mediasfuParameters.pDispActiveNames = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'pDispActiveNames', value);
   }
 
   void updateActiveNames(List<String> value) {
     activeNames.value = value;
     mediasfuParameters.activeNames = value;
+    updateSpecificState(widget.options.sourceParameters, 'activeNames', value);
   }
 
   void updatePrevActiveNames(List<String> value) {
     prevActiveNames.value = value;
     mediasfuParameters.prevActiveNames = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'prevActiveNames', value);
   }
 
   void updatePActiveNames(List<String> value) {
     pActiveNames.value = value;
     mediasfuParameters.pActiveNames = value;
+    updateSpecificState(widget.options.sourceParameters, 'pActiveNames', value);
   }
 
   void updateMembersReceived(bool value) {
     membersReceived.value = value;
     mediasfuParameters.membersReceived = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'membersReceived', value);
   }
 
   void updateDeferScreenReceived(bool value) {
     deferScreenReceived.value = value;
     mediasfuParameters.deferScreenReceived = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'deferScreenReceived', value);
   }
 
   void updateHostFirstSwitch(bool value) {
     hostFirstSwitch.value = value;
     mediasfuParameters.hostFirstSwitch = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'hostFirstSwitch', value);
   }
 
   void updateMicAction(bool value) {
     micAction.value = value;
     mediasfuParameters.micAction = value;
+    updateSpecificState(widget.options.sourceParameters, 'micAction', value);
   }
 
   void updateScreenAction(bool value) {
     screenAction.value = value;
     mediasfuParameters.screenAction = value;
+    updateSpecificState(widget.options.sourceParameters, 'screenAction', value);
   }
 
   void updateChatAction(bool value) {
     chatAction.value = value;
     mediasfuParameters.chatAction = value;
+    updateSpecificState(widget.options.sourceParameters, 'chatAction', value);
   }
 
   void updateAudioRequestState(String? value) {
     audioRequestState.value = value!;
     mediasfuParameters.audioRequestState = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'audioRequestState', value);
   }
 
   void updateScreenRequestState(String? value) {
     screenRequestState.value = value!;
     mediasfuParameters.screenRequestState = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'screenRequestState', value);
   }
 
   void updateChatRequestState(String? value) {
     chatRequestState.value = value!;
     mediasfuParameters.chatRequestState = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'chatRequestState', value);
   }
 
   void updateAudioRequestTime(int? value) {
     audioRequestTime.value = value;
     mediasfuParameters.audioRequestTime = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'audioRequestTime', value);
   }
 
   void updateScreenRequestTime(int? value) {
     screenRequestTime.value = value;
     mediasfuParameters.screenRequestTime = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'screenRequestTime', value);
   }
 
   void updateChatRequestTime(int? value) {
     chatRequestTime.value = value;
     mediasfuParameters.chatRequestTime = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'chatRequestTime', value);
   }
 
   void updateOldSoundIds(List<String> value) {
     oldSoundIds.value = value;
     mediasfuParameters.oldSoundIds = value;
+    updateSpecificState(widget.options.sourceParameters, 'oldSoundIds', value);
   }
 
   void updateHostLabel(String value) {
     hostLabel.value = value;
     mediasfuParameters.hostLabel = value;
+    updateSpecificState(widget.options.sourceParameters, 'hostLabel', value);
   }
 
   void updateMainScreenFilled(bool value) {
     mainScreenFilled.value = value;
     mediasfuParameters.mainScreenFilled = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'mainScreenFilled', value);
   }
 
-  void updateLocalStreamScreen(value) {
+  void updateLocalStreamScreen(dynamic value) {
     localStreamScreen.value = value;
     mediasfuParameters.localStreamScreen = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'localStreamScreen', value);
   }
 
   void updateScreenAlreadyOn(bool value) {
     screenAlreadyOn.value = value;
     mediasfuParameters.screenAlreadyOn = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'screenAlreadyOn', value);
     setState(() {
       screenShareActive = value;
     });
@@ -1589,163 +1829,219 @@ class _MediasfuChatState extends State<MediasfuChat> {
   void updateChatAlreadyOn(bool value) {
     chatAlreadyOn.value = value;
     mediasfuParameters.chatAlreadyOn = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'chatAlreadyOn', value);
   }
 
-  void updateRedirectURL(value) {
+  void updateRedirectURL(dynamic value) {
     redirectURL.value = value;
     mediasfuParameters.redirectURL = value;
+    updateSpecificState(widget.options.sourceParameters, 'redirectURL', value);
   }
 
-  void updateOldAllStreams(value) {
+  void updateOldAllStreams(dynamic value) {
     oldAllStreams.value = value;
     mediasfuParameters.oldAllStreams = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'oldAllStreams', value);
   }
 
   void updateAdminVidID(String value) {
     adminVidID.value = value;
     mediasfuParameters.adminVidID = value;
+    updateSpecificState(widget.options.sourceParameters, 'adminVidID', value);
   }
 
   void updateStreamNames(List<Stream> value) {
     streamNames.value = value;
     mediasfuParameters.streamNames = value;
+    updateSpecificState(widget.options.sourceParameters, 'streamNames', value);
   }
 
   void updateNonAlVideoStreams(List<Stream> value) {
     nonAlVideoStreams.value = value;
     mediasfuParameters.nonAlVideoStreams = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'nonAlVideoStreams', value);
   }
 
   void updateSortAudioLoudness(bool value) {
     sortAudioLoudness.value = value;
     mediasfuParameters.sortAudioLoudness = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'sortAudioLoudness', value);
   }
 
   void updateAudioDecibels(List<AudioDecibels> value) {
     audioDecibels.value = value;
     mediasfuParameters.audioDecibels = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'audioDecibels', value);
   }
 
   void updateMixedAlVideoStreams(List<Stream> value) {
     mixedAlVideoStreams.value = value;
     mediasfuParameters.mixedAlVideoStreams = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'mixedAlVideoStreams', value);
   }
 
   void updateNonAlVideoStreamsMuted(List<Stream> value) {
     nonAlVideoStreamsMuted.value = value;
     mediasfuParameters.nonAlVideoStreamsMuted = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'nonAlVideoStreamsMuted', value);
   }
 
   void updatePaginatedStreams(List<List<Stream>> value) {
     paginatedStreams.value = value;
     mediasfuParameters.paginatedStreams = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'paginatedStreams', value);
   }
 
   void updateLocalStreamAudio(MediaStream? value) {
     localStreamAudio.value = value;
     mediasfuParameters.localStreamAudio = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'localStreamAudio', value);
   }
 
   void updateDefAudioID(String value) {
     defAudioID.value = value;
     mediasfuParameters.defAudioID = value;
+    updateSpecificState(widget.options.sourceParameters, 'defAudioID', value);
   }
 
   void updateUserDefaultAudioInputDevice(String value) {
     userDefaultAudioInputDevice.value = value;
     mediasfuParameters.userDefaultAudioInputDevice = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'userDefaultAudioInputDevice', value);
   }
 
   void updateUserDefaultAudioOutputDevice(String value) {
     userDefaultAudioOutputDevice.value = value;
     mediasfuParameters.userDefaultAudioOutputDevice = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'userDefaultAudioOutputDevice', value);
   }
 
   void updatePrevAudioInputDevice(String value) {
     prevAudioInputDevice.value = value;
     mediasfuParameters.prevAudioInputDevice = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'prevAudioInputDevice', value);
   }
 
   void updatePrevVideoInputDevice(String value) {
     prevVideoInputDevice.value = value;
     mediasfuParameters.prevVideoInputDevice = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'prevVideoInputDevice', value);
   }
 
   void updateAudioPaused(bool value) {
     audioPaused.value = value;
     mediasfuParameters.audioPaused = value;
+    updateSpecificState(widget.options.sourceParameters, 'audioPaused', value);
   }
 
   void updateMainScreenPerson(String value) {
     mainScreenPerson.value = value;
     mediasfuParameters.mainScreenPerson = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'mainScreenPerson', value);
   }
 
   void updateAdminOnMainScreen(bool value) {
     adminOnMainScreen.value = value;
     mediasfuParameters.adminOnMainScreen = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'adminOnMainScreen', value);
   }
 
   void updateScreenStates(List<ScreenState> value) {
     screenStates.value = value;
     mediasfuParameters.screenStates = value;
+    updateSpecificState(widget.options.sourceParameters, 'screenStates', value);
   }
 
   void updatePrevScreenStates(List<ScreenState> value) {
     prevScreenStates.value = value;
     mediasfuParameters.prevScreenStates = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'prevScreenStates', value);
   }
 
   void updateUpdateDateState(dynamic value) {
     updateDateState.value = value;
     mediasfuParameters.updateDateState = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'updateDateState', value);
   }
 
   void updateLastUpdate(dynamic value) {
     lastUpdate.value = value;
     mediasfuParameters.lastUpdate = value;
+    updateSpecificState(widget.options.sourceParameters, 'lastUpdate', value);
   }
 
   void updateNForReadjustRecord(int value) {
     nForReadjustRecord.value = value;
     mediasfuParameters.nForReadjustRecord = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'nForReadjustRecord', value);
   }
 
   void updateFixedPageLimit(int value) {
     fixedPageLimit.value = value;
     mediasfuParameters.fixedPageLimit = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'fixedPageLimit', value);
   }
 
   void updateRemoveAltGrid(bool value) {
     removeAltGrid.value = value;
     mediasfuParameters.removeAltGrid = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'removeAltGrid', value);
   }
 
   void updateNForReadjust(int value) {
     nForReadjust.value = value;
     mediasfuParameters.nForReadjust = value;
+    updateSpecificState(widget.options.sourceParameters, 'nForReadjust', value);
   }
 
   void updateLastReorderTime(int value) {
     lastReorderTime.value = value;
     mediasfuParameters.lastReorderTime = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'lastReorderTime', value);
   }
 
   void updateAudStreamNames(List<Stream> value) {
     audStreamNames.value = value;
     mediasfuParameters.audStreamNames = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'audStreamNames', value);
   }
 
   void updateCurrentUserPage(int value) {
     currentUserPage.value = value;
     mediasfuParameters.currentUserPage = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'currentUserPage', value);
   }
 
-  void updateMainHeightWidth(value) {
+  void updateMainHeightWidth(dynamic value) {
     bool doUpdate = value.floor() != mainHeightWidth.floor();
     setState(() {
       mainHeightWidth = value.toDouble();
       mediasfuParameters.mainHeightWidth = value.toDouble();
+      updateSpecificState(
+          widget.options.sourceParameters, 'mainHeightWidth', value.toDouble());
     });
 
     if (doUpdate && validated) {
@@ -1769,24 +2065,29 @@ class _MediasfuChatState extends State<MediasfuChat> {
     }
   }
 
-  void updatePrevMainHeightWidth(value) {
+  void updatePrevMainHeightWidth(dynamic value) {
     prevMainHeightWidth.value = value;
     mediasfuParameters.prevMainHeightWidth = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'prevMainHeightWidth', value);
   }
 
   void updatePrevDoPaginate(bool value) {
     if (value != prevDoPaginate.value) {
       prevDoPaginate.value = value;
       mediasfuParameters.prevDoPaginate = value;
+      updateSpecificState(
+          widget.options.sourceParameters, 'prevDoPaginate', value);
     }
   }
 
   void updateDoPaginate(bool value) {
     if (value != doPaginate.value) {
-      // doPaginate.value = value;
       setState(() {
         doPaginate.value = value;
         mediasfuParameters.doPaginate = value;
+        updateSpecificState(
+            widget.options.sourceParameters, 'doPaginate', value);
       });
     }
   }
@@ -1794,328 +2095,437 @@ class _MediasfuChatState extends State<MediasfuChat> {
   void updateShareEnded(bool value) {
     shareEnded.value = value;
     mediasfuParameters.shareEnded = value;
+    updateSpecificState(widget.options.sourceParameters, 'shareEnded', value);
   }
 
-  void updateLStreams(value) {
+  void updateLStreams(dynamic value) {
     lStreams.value = value;
     mediasfuParameters.lStreams = value;
+    updateSpecificState(widget.options.sourceParameters, 'lStreams', value);
   }
 
-  void updateChatRefStreams(value) {
+  void updateChatRefStreams(dynamic value) {
     chatRefStreams.value = value;
     mediasfuParameters.chatRefStreams = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'chatRefStreams', value);
   }
 
-  void updateControlHeight(value) {
+  void updateControlHeight(dynamic value) {
     setState(() {
       controlHeight.value = value;
       mediasfuParameters.controlHeight = value;
+      updateSpecificState(
+          widget.options.sourceParameters, 'controlHeight', value);
     });
   }
 
   void updateIsWideScreen(bool value) {
     isWideScreen.value = value;
     mediasfuParameters.isWideScreen = value;
+    updateSpecificState(widget.options.sourceParameters, 'isWideScreen', value);
   }
 
   void updateIsMediumScreen(bool value) {
     isMediumScreen.value = value;
     mediasfuParameters.isMediumScreen = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'isMediumScreen', value);
   }
 
   void updateIsSmallScreen(bool value) {
     isSmallScreen.value = value;
     mediasfuParameters.isSmallScreen = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'isSmallScreen', value);
   }
 
   void updateAddGrid(bool value) {
     addGrid.value = value;
     mediasfuParameters.addGrid = value;
+    updateSpecificState(widget.options.sourceParameters, 'addGrid', value);
   }
 
   void updateAddAltGrid(bool value) {
     addAltGrid.value = value;
     mediasfuParameters.addAltGrid = value;
+    updateSpecificState(widget.options.sourceParameters, 'addAltGrid', value);
   }
 
   void updateGridRows(int value) {
     gridRows.value = value;
     mediasfuParameters.gridRows = value;
+    updateSpecificState(widget.options.sourceParameters, 'gridRows', value);
   }
 
   void updateGridCols(int value) {
     gridCols.value = value;
     mediasfuParameters.gridCols = value;
+    updateSpecificState(widget.options.sourceParameters, 'gridCols', value);
   }
 
   void updateAltGridRows(int value) {
     altGridRows.value = value;
     mediasfuParameters.altGridRows = value;
+    updateSpecificState(widget.options.sourceParameters, 'altGridRows', value);
   }
 
   void updateAltGridCols(int value) {
     altGridCols.value = value;
     mediasfuParameters.altGridCols = value;
+    updateSpecificState(widget.options.sourceParameters, 'altGridCols', value);
   }
 
   void updateNumberPages(int value) {
     numberPages.value = value;
     mediasfuParameters.numberPages = value;
+    updateSpecificState(widget.options.sourceParameters, 'numberPages', value);
   }
 
-  void updateCurrentStreams(value) {
+  void updateCurrentStreams(dynamic value) {
     currentStreams.value = value;
     mediasfuParameters.currentStreams = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'currentStreams', value);
   }
 
   void updateShowMiniView(bool value) {
     showMiniView.value = value;
     mediasfuParameters.showMiniView = value;
+    updateSpecificState(widget.options.sourceParameters, 'showMiniView', value);
   }
 
-  void updateNStream(value) {
+  void updateNStream(dynamic value) {
     nStream.value = value;
     mediasfuParameters.nStream = value;
+    updateSpecificState(widget.options.sourceParameters, 'nStream', value);
   }
 
   void updateDeferReceive(bool value) {
     deferReceive.value = value;
     mediasfuParameters.deferReceive = value;
+    updateSpecificState(widget.options.sourceParameters, 'deferReceive', value);
   }
 
-  void updateAllAudioStreams(value) {
+  void updateAllAudioStreams(dynamic value) {
     allAudioStreams.value = value;
     mediasfuParameters.allAudioStreams = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'allAudioStreams', value);
   }
 
-  void updateRemoteScreenStream(value) {
+  void updateRemoteScreenStream(dynamic value) {
     remoteScreenStream.value = value;
     mediasfuParameters.remoteScreenStream = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'remoteScreenStream', value);
   }
 
-  void updateScreenProducer(value) {
+  void updateScreenProducer(dynamic value) {
     screenProducer.value = value;
     mediasfuParameters.screenProducer = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'screenProducer', value);
   }
 
-  void updateLocalScreenProducer(value) {
+  void updateLocalScreenProducer(dynamic value) {
     localScreenProducer!.value = value;
     mediasfuParameters.localScreenProducer = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'localScreenProducer', value);
   }
 
   void updateGotAllVids(bool value) {
     gotAllVids.value = value;
     mediasfuParameters.gotAllVids = value;
+    updateSpecificState(widget.options.sourceParameters, 'gotAllVids', value);
   }
 
-  void updatePaginationHeightWidth(value) {
+  void updatePaginationHeightWidth(dynamic value) {
     setState(() {
       paginationHeightWidth.value = value;
       mediasfuParameters.paginationHeightWidth = value;
+      updateSpecificState(
+          widget.options.sourceParameters, 'paginationHeightWidth', value);
     });
   }
 
   void updatePaginationDirection(String value) {
     paginationDirection.value = value;
     mediasfuParameters.paginationDirection = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'paginationDirection', value);
   }
 
   void updateGridSizes(GridSizes value) {
     gridSizes.value = value;
     mediasfuParameters.gridSizes = value;
+    updateSpecificState(widget.options.sourceParameters, 'gridSizes', value);
   }
 
   void updateScreenForceFullDisplay(bool value) {
     screenForceFullDisplay.value = value;
     mediasfuParameters.screenForceFullDisplay = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'screenForceFullDisplay', value);
   }
 
-  void updateMainGridStream(value) {
+  void updateMainGridStream(dynamic value) {
     setState(() {
       mainGridStream = value;
       mediasfuParameters.mainGridStream = value;
+      updateSpecificState(
+          widget.options.sourceParameters, 'mainGridStream', value);
     });
   }
 
-  void updateOtherGridStreams(value) {
+  void updateOtherGridStreams(dynamic value) {
     setState(() {
       otherGridStreams = value;
       mediasfuParameters.otherGridStreams = value;
+      updateSpecificState(
+          widget.options.sourceParameters, 'otherGridStreams', value);
     });
   }
 
-  void updateAudioOnlyStreams(value) {
+  void updateAudioOnlyStreams(dynamic value) {
     audioOnlyStreams.value = value;
     mediasfuParameters.audioOnlyStreams = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'audioOnlyStreams', value);
   }
 
-  void updateVideoInputs(value) {
+  void updateVideoInputs(dynamic value) {
     videoInputs.value = value;
     mediasfuParameters.videoInputs = value;
+    updateSpecificState(widget.options.sourceParameters, 'videoInputs', value);
   }
 
-  void updateAudioInputs(value) {
+  void updateAudioInputs(dynamic value) {
     audioInputs.value = value;
     mediasfuParameters.audioInputs = value;
+    updateSpecificState(widget.options.sourceParameters, 'audioInputs', value);
   }
 
-  void updateMeetingProgressTime(value) {
+  void updateMeetingProgressTime(dynamic value) {
     meetingProgressTime.value = value;
     mediasfuParameters.meetingProgressTime = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'meetingProgressTime', value);
   }
 
-  void updateMeetingElapsedTime(value) {
+  void updateMeetingElapsedTime(dynamic value) {
     meetingElapsedTime.value = value;
     mediasfuParameters.meetingElapsedTime = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'meetingElapsedTime', value);
   }
 
   void updateRefParticipants(List<Participant> value) {
     refParticipants.value = value;
     mediasfuParameters.refParticipants = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'refParticipants', value);
   }
 
   void updateMessages(List<Message> value) {
     messages.value = value;
     mediasfuParameters.messages = value;
+    updateSpecificState(widget.options.sourceParameters, 'messages', value);
   }
 
   void updateStartDirectMessage(bool value) {
     startDirectMessage.value = value;
     mediasfuParameters.startDirectMessage = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'startDirectMessage', value);
   }
 
   void updateDirectMessageDetails(Participant? value) {
     directMessageDetails.value = value;
     mediasfuParameters.directMessageDetails = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'directMessageDetails', value);
   }
 
   void updateShowMessagesBadge(bool value) {
     setState(() {
       showMessagesBadge.value = value;
       mediasfuParameters.showMessagesBadge = value;
+      updateSpecificState(
+          widget.options.sourceParameters, 'showMessagesBadge', value);
     });
   }
 
   void updateAudioSetting(String value) {
     audioSetting.value = value;
     mediasfuParameters.audioSetting = value;
+    updateSpecificState(widget.options.sourceParameters, 'audioSetting', value);
   }
 
   void updateVideoSetting(String value) {
     videoSetting.value = value;
     mediasfuParameters.videoSetting = value;
+    updateSpecificState(widget.options.sourceParameters, 'videoSetting', value);
   }
 
   void updateScreenshareSetting(String value) {
     screenshareSetting.value = value;
     mediasfuParameters.screenshareSetting = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'screenshareSetting', value);
   }
 
   void updateChatSetting(String value) {
     chatSetting.value = value;
     mediasfuParameters.chatSetting = value;
+    updateSpecificState(widget.options.sourceParameters, 'chatSetting', value);
   }
 
   void updateAutoWave(bool value) {
     autoWave.value = value;
     mediasfuParameters.autoWave = value;
+    updateSpecificState(widget.options.sourceParameters, 'autoWave', value);
   }
 
   void updateForceFullDisplay(bool value) {
     forceFullDisplay.value = value;
     mediasfuParameters.forceFullDisplay = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'forceFullDisplay', value);
   }
 
   void updatePrevForceFullDisplay(bool value) {
     prevForceFullDisplay.value = value;
     mediasfuParameters.prevForceFullDisplay = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'prevForceFullDisplay', value);
   }
 
   void updatePrevMeetingDisplayType(String value) {
     prevMeetingDisplayType.value = value;
     mediasfuParameters.prevMeetingDisplayType = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'prevMeetingDisplayType', value);
   }
 
   void updateWaitingRoomFilter(String value) {
     waitingRoomFilter.value = value;
     mediasfuParameters.waitingRoomFilter = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'waitingRoomFilter', value);
   }
 
   void updateWaitingRoomList(List<WaitingRoomParticipant> value) {
     waitingRoomList.value = value;
+    mediasfuParameters.waitingRoomList = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'waitingRoomList', value);
     filteredWaitingRoomList.value = value;
+    mediasfuParameters.filteredWaitingRoomList = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'filteredWaitingRoomList', value);
     waitingRoomCounter.value = value.length;
+    mediasfuParameters.waitingRoomCounter = value.length;
+    updateSpecificState(
+        widget.options.sourceParameters, 'waitingRoomCounter', value.length);
   }
 
   void updateWaitingRoomCounter(int value) {
     waitingRoomCounter.value = value;
     mediasfuParameters.waitingRoomCounter = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'waitingRoomCounter', value);
   }
 
   void updateRequestFilter(String value) {
     requestFilter.value = value;
     mediasfuParameters.requestFilter = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'requestFilter', value);
   }
 
   void updateRequestList(List<Request> value) {
     requestList.value = value;
-    filteredRequestList.value = value;
-    requestCounter.value = value.length;
     mediasfuParameters.requestList = value;
+    updateSpecificState(widget.options.sourceParameters, 'requestList', value);
+    filteredRequestList.value = value;
     mediasfuParameters.filteredRequestList = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'filteredRequestList', value);
+    requestCounter.value = value.length;
     mediasfuParameters.requestCounter = value.length;
+    updateSpecificState(
+        widget.options.sourceParameters, 'requestCounter', value.length);
   }
 
   void updateRequestCounter(int value) {
     requestCounter.value = value;
     mediasfuParameters.requestCounter = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'requestCounter', value);
   }
 
   void updateAlertVisible(bool value) {
     alertVisible.value = value;
     mediasfuParameters.alertVisible = value;
+    updateSpecificState(widget.options.sourceParameters, 'alertVisible', value);
   }
 
   void updateAlertMessage(String value) {
     alertMessage.value = value;
     mediasfuParameters.alertMessage = value;
+    updateSpecificState(widget.options.sourceParameters, 'alertMessage', value);
   }
 
   void updateAlertType(String value) {
     alertType.value = value;
     mediasfuParameters.alertType = value;
+    updateSpecificState(widget.options.sourceParameters, 'alertType', value);
   }
 
   void updateAlertDuration(int value) {
     alertDuration.value = value;
     mediasfuParameters.alertDuration = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'alertDuration', value);
   }
 
   void updateProgressTimerVisible(bool value) {
     progressTimerVisible.value = value;
     mediasfuParameters.progressTimerVisible = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'progressTimerVisible', value);
   }
 
   void updateProgressTimerValue(int value) {
     progressTimerValue.value = value;
     mediasfuParameters.progressTimerValue = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'progressTimerValue', value);
   }
 
   void updateTotalReqWait(int value) {
     setState(() {
       totalReqWait.value = value;
       mediasfuParameters.totalReqWait = value;
+      updateSpecificState(
+          widget.options.sourceParameters, 'totalReqWait', value);
     });
   }
 
   void updateIsMenuModalVisible(bool value) {
     isMenuModalVisible.value = value;
     mediasfuParameters.isMenuModalVisible = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'isMenuModalVisible', value);
   }
 
   void updateIsRecordingModalVisible(bool value) {
     isRecordingModalVisible.value = value;
     mediasfuParameters.isRecordingModalVisible = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'isRecordingModalVisible', value);
     if (value) {
       updateConfirmedToRecord(false);
     } else {
@@ -2130,194 +2540,316 @@ class _MediasfuChatState extends State<MediasfuChat> {
   void updateIsSettingsModalVisible(bool value) {
     isSettingsModalVisible.value = value;
     mediasfuParameters.isSettingsModalVisible = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'isSettingsModalVisible', value);
   }
 
   void updateIsRequestsModalVisible(bool value) {
     isRequestsModalVisible.value = value;
     mediasfuParameters.isRequestsModalVisible = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'isRequestsModalVisible', value);
   }
 
   void updateIsWaitingModalVisible(bool value) {
     isWaitingModalVisible.value = value;
     mediasfuParameters.isWaitingModalVisible = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'isWaitingModalVisible', value);
   }
 
   void updateIsCoHostModalVisible(bool value) {
     isCoHostModalVisible.value = value;
     mediasfuParameters.isCoHostModalVisible = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'isCoHostModalVisible', value);
   }
 
   void updateIsMediaSettingsModalVisible(bool value) {
     isMediaSettingsModalVisible.value = value;
     mediasfuParameters.isMediaSettingsModalVisible = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'isMediaSettingsModalVisible', value);
   }
 
   void updateIsDisplaySettingsModalVisible(bool value) {
     isDisplaySettingsModalVisible.value = value;
     mediasfuParameters.isDisplaySettingsModalVisible = value;
+    updateSpecificState(widget.options.sourceParameters,
+        'isDisplaySettingsModalVisible', value);
   }
 
   void updateIsParticipantsModalVisible(bool value) {
     isParticipantsModalVisible.value = value;
     mediasfuParameters.isParticipantsModalVisible = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'isParticipantsModalVisible', value);
   }
 
   void updateIsMessagesModalVisible(bool value) {
     isMessagesModalVisible.value = value;
     mediasfuParameters.isMessagesModalVisible = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'isMessagesModalVisible', value);
   }
 
   void updateIsConfirmExitModalVisible(bool value) {
     isConfirmExitModalVisible.value = value;
     mediasfuParameters.isConfirmExitModalVisible = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'isConfirmExitModalVisible', value);
   }
 
   void updateIsConfirmHereModalVisible(bool value) {
     isConfirmHereModalVisible.value = value;
     mediasfuParameters.isConfirmHereModalVisible = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'isConfirmHereModalVisible', value);
   }
 
   void updateIsShareEventModalVisible(bool value) {
     isShareEventModalVisible.value = value;
     mediasfuParameters.isShareEventModalVisible = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'isShareEventModalVisible', value);
   }
 
   void updateIsLoadingModalVisible(bool value) {
     isLoadingModalVisible.value = value;
     mediasfuParameters.isLoadingModalVisible = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'isLoadingModalVisible', value);
   }
 
   void updateRecordingMediaOptions(String value) {
     recordingMediaOptions.value = value;
     mediasfuParameters.recordingMediaOptions = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordingMediaOptions', value);
+
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
+    updateSpecificState(
+        widget.options.sourceParameters, 'clearedToRecord', false);
+
     recordUIChanged.value = !recordUIChanged.value;
+    // Assuming 'recordUIChanged' is not part of mediasfuParameters
   }
 
   void updateRecordingAudioOptions(String value) {
     recordingAudioOptions.value = value;
     mediasfuParameters.recordingAudioOptions = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordingAudioOptions', value);
+
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
+    updateSpecificState(
+        widget.options.sourceParameters, 'clearedToRecord', false);
+
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingVideoOptions(String value) {
     recordingVideoOptions.value = value;
     mediasfuParameters.recordingVideoOptions = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordingVideoOptions', value);
+
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
+    updateSpecificState(
+        widget.options.sourceParameters, 'clearedToRecord', false);
+
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingVideoType(String value) {
     recordingVideoType.value = value;
     mediasfuParameters.recordingVideoType = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordingVideoType', value);
+
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
+    updateSpecificState(
+        widget.options.sourceParameters, 'clearedToRecord', false);
+
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingVideoOptimized(bool value) {
     recordingVideoOptimized.value = value;
     mediasfuParameters.recordingVideoOptimized = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordingVideoOptimized', value);
+
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
+    updateSpecificState(
+        widget.options.sourceParameters, 'clearedToRecord', false);
+
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingDisplayType(String value) {
     recordingDisplayType.value = value;
     mediasfuParameters.recordingDisplayType = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordingDisplayType', value);
+
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
+    updateSpecificState(
+        widget.options.sourceParameters, 'clearedToRecord', false);
+
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingAddHLS(bool value) {
     recordingAddHLS.value = value;
     mediasfuParameters.recordingAddHLS = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordingAddHLS', value);
+
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
+    updateSpecificState(
+        widget.options.sourceParameters, 'clearedToRecord', false);
+
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingNameTags(bool value) {
     recordingNameTags.value = value;
     mediasfuParameters.recordingNameTags = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordingNameTags', value);
+
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
+    updateSpecificState(
+        widget.options.sourceParameters, 'clearedToRecord', false);
+
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingBackgroundColor(String value) {
     recordingBackgroundColor.value = value;
     mediasfuParameters.recordingBackgroundColor = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordingBackgroundColor', value);
+
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
+    updateSpecificState(
+        widget.options.sourceParameters, 'clearedToRecord', false);
+
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingNameTagsColor(String value) {
     recordingNameTagsColor.value = value;
     mediasfuParameters.recordingNameTagsColor = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordingNameTagsColor', value);
+
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
+    updateSpecificState(
+        widget.options.sourceParameters, 'clearedToRecord', false);
+
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingAddText(bool value) {
     recordingAddText.value = value;
     mediasfuParameters.recordingAddText = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordingAddText', value);
+
     clearedToRecord.value = false;
+    mediasfuParameters.clearedToRecord = false;
+    updateSpecificState(
+        widget.options.sourceParameters, 'clearedToRecord', false);
+
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingCustomText(String value) {
     recordingCustomText.value = value;
     mediasfuParameters.recordingCustomText = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordingCustomText', value);
+
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
+    updateSpecificState(
+        widget.options.sourceParameters, 'clearedToRecord', false);
+
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingCustomTextPosition(String value) {
     recordingCustomTextPosition.value = value;
     mediasfuParameters.recordingCustomTextPosition = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordingCustomTextPosition', value);
+
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
+    updateSpecificState(
+        widget.options.sourceParameters, 'clearedToRecord', false);
+
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingCustomTextColor(String value) {
     recordingCustomTextColor.value = value;
     mediasfuParameters.recordingCustomTextColor = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordingCustomTextColor', value);
+
     clearedToRecord.value = false;
+    mediasfuParameters.clearedToRecord = false;
+    updateSpecificState(
+        widget.options.sourceParameters, 'clearedToRecord', false);
+
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateRecordingOrientationVideo(String value) {
     recordingOrientationVideo.value = value;
     mediasfuParameters.recordingOrientationVideo = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'recordingOrientationVideo', value);
+
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
+    updateSpecificState(
+        widget.options.sourceParameters, 'clearedToRecord', false);
+
     recordUIChanged.value = !recordUIChanged.value;
   }
 
   void updateClearedToResume(bool value) {
     clearedToResume.value = value;
     mediasfuParameters.clearedToResume = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'clearedToResume', value);
   }
 
   void updateClearedToRecord(bool value) {
     clearedToRecord.value = value;
     mediasfuParameters.clearedToRecord = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'clearedToRecord', value);
   }
 
   void updateRecordState(String value) {
     recordState = value;
     mediasfuParameters.recordState = value;
+    updateSpecificState(widget.options.sourceParameters, 'recordState', value);
     _updateRecordState();
   }
 
@@ -2325,6 +2857,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
     setState(() {
       showRecordButtons.value = value;
       mediasfuParameters.showRecordButtons = value;
+      updateSpecificState(
+          widget.options.sourceParameters, 'showRecordButtons', value);
     });
   }
 
@@ -2332,22 +2866,30 @@ class _MediasfuChatState extends State<MediasfuChat> {
     setState(() {
       recordingProgressTime.value = value;
       mediasfuParameters.recordingProgressTime = value;
+      updateSpecificState(
+          widget.options.sourceParameters, 'recordingProgressTime', value);
     });
   }
 
   void updateAudioSwitching(bool value) {
     audioSwitching.value = value;
     mediasfuParameters.audioSwitching = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'audioSwitching', value);
   }
 
   void updateVideoSwitching(bool value) {
     videoSwitching.value = value;
     mediasfuParameters.videoSwitching = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'videoSwitching', value);
   }
 
   void updateVideoAlreadyOn(bool value) {
     videoAlreadyOn.value = value;
     mediasfuParameters.videoAlreadyOn = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'videoAlreadyOn', value);
 
     setState(() {
       videoActive = value;
@@ -2357,6 +2899,9 @@ class _MediasfuChatState extends State<MediasfuChat> {
   void updateAudioAlreadyOn(bool value) {
     audioAlreadyOn.value = value;
     mediasfuParameters.audioAlreadyOn = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'audioAlreadyOn', value);
+
     setState(() {
       micActive = value;
     });
@@ -2371,18 +2916,25 @@ class _MediasfuChatState extends State<MediasfuChat> {
     if (doUpdate && validated) {
       componentSizes.value = sizes;
       mediasfuParameters.componentSizes = sizes;
+      updateSpecificState(
+          widget.options.sourceParameters, 'componentSizes', sizes);
+
       try {
         _updateControlHeight();
       } catch (error) {}
 
       try {
         onScreenChanges(OnScreenChangesOptions(
-            changed: true, parameters: mediasfuParameters));
+          changed: true,
+          parameters: mediasfuParameters,
+        ));
       } catch (error) {}
 
       try {
         prepopulateUserMedia(PrepopulateUserMediaOptions(
-            name: hostLabel.value, parameters: mediasfuParameters));
+          name: hostLabel.value,
+          parameters: mediasfuParameters,
+        ));
       } catch (error) {}
     }
   }
@@ -2390,322 +2942,443 @@ class _MediasfuChatState extends State<MediasfuChat> {
   void updateHasCameraPermission(bool value) {
     hasCameraPermission.value = value;
     mediasfuParameters.hasCameraPermission = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'hasCameraPermission', value);
   }
 
   void updateHasAudioPermission(bool value) {
     hasAudioPermission.value = value;
     mediasfuParameters.hasAudioPermission = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'hasAudioPermission', value);
   }
 
   void updateTransportCreated(bool value) {
     transportCreated.value = value;
     mediasfuParameters.transportCreated = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'transportCreated', value);
   }
 
   void updateLocalTransportCreated(bool value) {
     localTransportCreated!.value = value;
     mediasfuParameters.localTransportCreated = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'localTransportCreated', value);
   }
 
   void updateTransportCreatedVideo(bool value) {
     transportCreatedVideo.value = value;
     mediasfuParameters.transportCreatedVideo = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'transportCreatedVideo', value);
   }
 
   void updateTransportCreatedAudio(bool value) {
     transportCreatedAudio.value = value;
     mediasfuParameters.transportCreatedAudio = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'transportCreatedAudio', value);
   }
 
   void updateTransportCreatedScreen(bool value) {
     transportCreatedScreen.value = value;
     mediasfuParameters.transportCreatedScreen = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'transportCreatedScreen', value);
   }
 
   void updateProducerTransport(Transport? value) {
     producerTransport.value = value;
     mediasfuParameters.producerTransport = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'producerTransport', value);
   }
 
   void updateLocalProducerTransport(Transport? value) {
     localProducerTransport!.value = value;
     mediasfuParameters.localProducerTransport = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'localProducerTransport', value);
   }
 
   void updateVideoProducer(Producer? value) {
     videoProducer.value = value;
     mediasfuParameters.videoProducer = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'videoProducer', value);
   }
 
   void updateLocalVideoProducer(Producer? value) {
     localVideoProducer!.value = value;
     mediasfuParameters.localVideoProducer = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'localVideoProducer', value);
   }
 
   void updateParams(ProducerOptionsType? value) {
     params.value = value;
     mediasfuParameters.params = value;
+    updateSpecificState(widget.options.sourceParameters, 'params', value);
   }
 
   void updateVideoParams(ProducerOptionsType? value) {
     videoParams.value = value;
     mediasfuParameters.videoParams = value;
+    updateSpecificState(widget.options.sourceParameters, 'videoParams', value);
   }
 
   void updateAudioParams(ProducerOptionsType? value) {
     audioParams.value = value;
     mediasfuParameters.audioParams = value;
+    updateSpecificState(widget.options.sourceParameters, 'audioParams', value);
   }
 
   void updateAudioProducer(Producer? value) {
     audioProducer.value = value;
     mediasfuParameters.audioProducer = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'audioProducer', value);
+  }
+
+  void updateAudioLevel(double? value) {
+    audioLevel.value = value ?? 0.0;
+    mediasfuParameters.audioLevel = value ?? 0.0;
+    updateSpecificState(
+        widget.options.sourceParameters, 'audioLevel', value ?? 0.0);
   }
 
   void updateLocalAudioProducer(Producer? value) {
     localAudioProducer!.value = value;
     mediasfuParameters.localAudioProducer = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'localAudioProducer', value);
   }
 
   void updateConsumerTransports(List<TransportType> value) {
     consumerTransports.value = value;
     mediasfuParameters.consumerTransports = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'consumerTransports', value);
   }
 
   void updateConsumingTransports(List<String> value) {
     consumingTransports.value = value;
     mediasfuParameters.consumingTransports = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'consumingTransports', value);
   }
 
   void updatePolls(List<Poll> value) {
     polls.value = value;
     mediasfuParameters.polls = value;
+    updateSpecificState(widget.options.sourceParameters, 'polls', value);
   }
 
   void updatePoll(Poll? value) {
     poll.value = value;
     mediasfuParameters.poll = value;
+    updateSpecificState(widget.options.sourceParameters, 'poll', value);
   }
 
   void updateIsPollModalVisible(bool value) {
     isPollModalVisible.value = value;
     mediasfuParameters.isPollModalVisible = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'isPollModalVisible', value);
   }
 
   void updateBreakoutRooms(List<List<BreakoutParticipant>> value) {
     breakoutRooms.value = value;
     mediasfuParameters.breakoutRooms = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'breakoutRooms', value);
   }
 
   void updateCurrentRoomIndex(int value) {
     currentRoomIndex.value = value;
     mediasfuParameters.currentRoomIndex = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'currentRoomIndex', value);
   }
 
   void updateCanStartBreakout(bool value) {
     canStartBreakout.value = value;
     mediasfuParameters.canStartBreakout = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'canStartBreakout', value);
   }
 
   void updateBreakOutRoomStarted(bool value) {
     breakOutRoomStarted.value = value;
     mediasfuParameters.breakOutRoomStarted = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'breakOutRoomStarted', value);
   }
 
   void updateBreakOutRoomEnded(bool value) {
     breakOutRoomEnded.value = value;
     mediasfuParameters.breakOutRoomEnded = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'breakOutRoomEnded', value);
   }
 
   void updateHostNewRoom(int value) {
     hostNewRoom.value = value;
     mediasfuParameters.hostNewRoom = value;
+    updateSpecificState(widget.options.sourceParameters, 'hostNewRoom', value);
   }
 
   void updateLimitedBreakRoom(List<BreakoutParticipant> value) {
     limitedBreakRoom.value = value;
     mediasfuParameters.limitedBreakRoom = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'limitedBreakRoom', value);
   }
 
   void updateMainRoomsLength(int value) {
     mainRoomsLength.value = value;
     mediasfuParameters.mainRoomsLength = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'mainRoomsLength', value);
   }
 
   void updateMemberRoom(int value) {
     memberRoom.value = value;
     mediasfuParameters.memberRoom = value;
+    updateSpecificState(widget.options.sourceParameters, 'memberRoom', value);
   }
 
   void updateIsBreakoutRoomsModalVisible(bool value) {
     isBreakoutRoomsModalVisible.value = value;
     mediasfuParameters.isBreakoutRoomsModalVisible = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'isBreakoutRoomsModalVisible', value);
   }
 
 // Update functions
   void updateCustomImage(String? value) {
     customImage.value = value;
     mediasfuParameters.customImage = value;
+    updateSpecificState(widget.options.sourceParameters, 'customImage', value);
   }
 
   void updateSelectedImage(String? value) {
     selectedImage.value = value;
     mediasfuParameters.selectedImage = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'selectedImage', value);
   }
 
   void updateSegmentVideo(MediaStream? value) {
     segmentVideo.value = value;
     mediasfuParameters.segmentVideo = value;
+    updateSpecificState(widget.options.sourceParameters, 'segmentVideo', value);
   }
 
   void updateSelfieSegmentation(dynamic value) {
     selfieSegmentation.value = value;
     mediasfuParameters.selfieSegmentation = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'selfieSegmentation', value);
   }
 
   void updatePauseSegmentation(bool value) {
     pauseSegmentation.value = value;
     mediasfuParameters.pauseSegmentation = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'pauseSegmentation', value);
   }
 
   void updateProcessedStream(MediaStream? value) {
     processedStream.value = value;
     mediasfuParameters.processedStream = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'processedStream', value);
   }
 
   void updateKeepBackground(bool value) {
     keepBackground.value = value;
     mediasfuParameters.keepBackground = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'keepBackground', value);
   }
 
   void updateBackgroundHasChanged(bool value) {
     backgroundHasChanged.value = value;
     mediasfuParameters.backgroundHasChanged = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'backgroundHasChanged', value);
   }
 
   void updateVirtualStream(MediaStream? value) {
     virtualStream.value = value;
     mediasfuParameters.virtualStream = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'virtualStream', value);
   }
 
   void updateMainCanvas(dynamic value) {
     mainCanvas.value = value;
     mediasfuParameters.mainCanvas = value;
+    updateSpecificState(widget.options.sourceParameters, 'mainCanvas', value);
   }
 
   void updatePrevKeepBackground(bool value) {
     prevKeepBackground.value = value;
     mediasfuParameters.prevKeepBackground = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'prevKeepBackground', value);
   }
 
   void updateAppliedBackground(bool value) {
     appliedBackground.value = value;
     mediasfuParameters.appliedBackground = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'appliedBackground', value);
   }
 
   void updateIsBackgroundModalVisible(bool value) {
     isBackgroundModalVisible.value = value;
     mediasfuParameters.isBackgroundModalVisible = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'isBackgroundModalVisible', value);
   }
 
   void updateAutoClickBackground(bool value) {
     autoClickBackground.value = value;
     mediasfuParameters.autoClickBackground = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'autoClickBackground', value);
   }
 
   void updateWhiteboardUsers(List<WhiteboardUser> value) {
     whiteboardUsers.value = value;
     mediasfuParameters.whiteboardUsers = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'whiteboardUsers', value);
   }
 
   void updateCurrentWhiteboardIndex(int? value) {
     currentWhiteboardIndex.value = value;
     mediasfuParameters.currentWhiteboardIndex = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'currentWhiteboardIndex', value);
   }
 
   void updateCanStartWhiteboard(bool value) {
     canStartWhiteboard.value = value;
     mediasfuParameters.canStartWhiteboard = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'canStartWhiteboard', value);
   }
 
   void updateWhiteboardStarted(bool value) {
     whiteboardStarted.value = value;
     mediasfuParameters.whiteboardStarted = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'whiteboardStarted', value);
   }
 
   void updateWhiteboardEnded(bool value) {
     whiteboardEnded.value = value;
     mediasfuParameters.whiteboardEnded = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'whiteboardEnded', value);
   }
 
   void updateWhiteboardLimit(int value) {
     whiteboardLimit.value = value;
     mediasfuParameters.whiteboardLimit = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'whiteboardLimit', value);
   }
 
   void updateIsWhiteboardModalVisible(bool value) {
     isWhiteboardModalVisible.value = value;
     mediasfuParameters.isWhiteboardModalVisible = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'isWhiteboardModalVisible', value);
   }
 
   void updateIsConfigureWhiteboardModalVisible(bool value) {
     isConfigureWhiteboardModalVisible.value = value;
     mediasfuParameters.isConfigureWhiteboardModalVisible = value;
+    updateSpecificState(widget.options.sourceParameters,
+        'isConfigureWhiteboardModalVisible', value);
   }
 
   void updateShapes(List<dynamic> value) {
     shapes.value = value;
     mediasfuParameters.shapes = value;
+    updateSpecificState(widget.options.sourceParameters, 'shapes', value);
   }
 
   void updateUseImageBackground(bool value) {
     useImageBackground.value = value;
     mediasfuParameters.useImageBackground = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'useImageBackground', value);
   }
 
   void updateRedoStack(List<dynamic> value) {
     redoStack.value = value;
     mediasfuParameters.redoStack = value;
+    updateSpecificState(widget.options.sourceParameters, 'redoStack', value);
   }
 
   void updateUndoStack(List<String> value) {
     undoStack.value = value;
     mediasfuParameters.undoStack = value;
+    updateSpecificState(widget.options.sourceParameters, 'undoStack', value);
   }
 
   void updateCanvasStream(MediaStream? value) {
     canvasStream.value = value;
     mediasfuParameters.canvasStream = value;
+    updateSpecificState(widget.options.sourceParameters, 'canvasStream', value);
   }
 
   void updateCanvasWhiteboard(dynamic value) {
     canvasWhiteboard.value = value;
     mediasfuParameters.canvasWhiteboard = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'canvasWhiteboard', value);
   }
 
   void updateCanvasScreenboard(dynamic value) {
     canvasScreenboard.value = value;
     mediasfuParameters.canvasScreenboard = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'canvasScreenboard', value);
   }
 
   void updateProcessedScreenStream(MediaStream? value) {
     processedScreenStream.value = value;
     mediasfuParameters.processedScreenStream = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'processedScreenStream', value);
   }
 
   void updateAnnotateScreenStream(bool value) {
     annotateScreenStream.value = value;
     mediasfuParameters.annotateScreenStream = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'annotateScreenStream', value);
   }
 
   void updateMainScreenCanvas(dynamic value) {
     mainScreenCanvas.value = value;
     mediasfuParameters.mainScreenCanvas = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'mainScreenCanvas', value);
   }
 
   void updateIsScreenboardModalVisible(bool value) {
     isScreenboardModalVisible.value = value;
     mediasfuParameters.isScreenboardModalVisible = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'isScreenboardModalVisible', value);
   }
 
   /// Show an alert message.
@@ -2849,7 +3522,54 @@ class _MediasfuChatState extends State<MediasfuChat> {
   }
 
   void _handleOrientationChange() {
-    _updateControlHeight();
+    try {
+      final mediaQuery = MediaQuery.of(context);
+      final safeAreaInsets =
+          mediaQuery.padding + mediaQuery.systemGestureInsets;
+
+      final parentWidth = mediaQuery.size.width * mainHeightWidth;
+      final showControls = (eventType.value == EventType.webinar) ||
+          eventType.value == EventType.conference;
+      final parentHeight = showControls
+          ? mediaQuery.size.height * 1.0 - controlHeight.value
+          : mediaQuery.size.height * safeAreaInsets.top;
+      const doStack = true;
+
+      bool isWideScreen = parentWidth > 768;
+
+      if (!isWideScreen && parentWidth > 1.5 * parentHeight) {
+        isWideScreen = true;
+      }
+
+      ComponentSizes computeDimensions() {
+        if (doStack) {
+          return isWideScreen
+              ? ComponentSizes(
+                  mainHeight: parentHeight,
+                  otherHeight: parentHeight,
+                  mainWidth: (mainHeightWidth / 100) * parentWidth,
+                  otherWidth: ((100 - mainHeightWidth) / 100) * parentWidth,
+                )
+              : ComponentSizes(
+                  mainHeight: (mainHeightWidth / 100) * parentHeight,
+                  otherHeight: ((100 - mainHeightWidth) / 100) * parentHeight,
+                  mainWidth: parentWidth,
+                  otherWidth: parentWidth,
+                );
+        }
+      }
+
+      final dimensions = computeDimensions();
+
+      // Update component sizes when parent dimensions, main size, or stacking mode changes
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        updateComponentSizes(dimensions);
+      });
+
+      _updateControlHeight();
+    } catch (_) {
+      // do nothing
+    }
   }
 
   Future<void> joinroom({
@@ -2902,6 +3622,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
             checkConnect: widget.options.localLink!.isNotEmpty &&
                 widget.options.connectMediaSFU == true &&
                 !link.value.contains('mediasfu.com'),
+            localLink: widget.options.localLink,
+            joinMediaSFURoom: widget.options.joinMediaSFURoom!,
           ),
         );
 
@@ -2920,6 +3642,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
             if (link.value.isNotEmpty &&
                 link.value.contains('mediasfu.com') &&
                 !isLocal) {
+              updateMembersReceived(false);
+
               // Community Edition Only
               ReceiveAllPipedTransportsType receiveAllPipedTransports =
                   mediasfuParameters.receiveAllPipedTransports;
@@ -2992,7 +3716,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
             link.value.contains('mediasfu.com') &&
             !isLocal) {
           // Update roomData
-          if (roomData.value != null) {
+          if (roomData.value != null &&
+              roomData.value!.rtpCapabilities != null) {
             // Updating only the recording and meeting room parameters
             roomData.value!.recordingParams = data.recordingParams;
             roomData.value!.meetingRoomParams = data.meetingRoomParams;
@@ -3838,6 +4563,7 @@ class _MediasfuChatState extends State<MediasfuChat> {
         videoParams: videoParams.value,
         audioParams: audioParams.value,
         audioProducer: audioProducer.value,
+        audioLevel: audioLevel.value,
         localAudioProducer: localAudioProducer!.value,
         consumerTransports: consumerTransports.value,
         consumingTransports: consumingTransports.value,
@@ -4167,6 +4893,7 @@ class _MediasfuChatState extends State<MediasfuChat> {
         updateVideoParams: updateVideoParams,
         updateAudioParams: updateAudioParams,
         updateAudioProducer: updateAudioProducer,
+        updateAudioLevel: updateAudioLevel,
         updateLocalAudioProducer: updateLocalAudioProducer,
         updateConsumerTransports: updateConsumerTransports,
         updateConsumingTransports: updateConsumingTransports,
@@ -4271,6 +4998,16 @@ class _MediasfuChatState extends State<MediasfuChat> {
         updateIsScreenboardModalVisible: updateIsScreenboardModalVisible,
         getUpdatedAllParams: () => mediasfuParameters);
 
+    if (widget.options.returnUI != null && widget.options.returnUI == false) {
+      try {
+        widget.options.sourceParameters = mediasfuParameters;
+      } catch (error) {
+        if (kDebugMode) {
+          print('Error setting source parameters: $error');
+        }
+      }
+    }
+
     // If using seed data, generate random participants and message
     if (widget.options.useSeed == true && widget.options.seedData != null) {
       try {
@@ -4314,6 +5051,23 @@ class _MediasfuChatState extends State<MediasfuChat> {
     }
   }
 
+  void updateSpecificState(
+      MediasfuParameters? sourceParameters, String key, dynamic value) {
+    // providing a blanket update function for all states
+    // will modify later to provide specific update functions
+    try {
+      if (widget.options.sourceParameters != null &&
+          widget.options.updateSourceParameters != null) {
+        widget.options.sourceParameters = mediasfuParameters;
+        widget.options.updateSourceParameters!(mediasfuParameters);
+      }
+    } catch (error) {
+      // if (kDebugMode) {
+      //   print('Error updating $key: $error');
+      // }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -4342,7 +5096,9 @@ class _MediasfuChatState extends State<MediasfuChat> {
   Widget buildEventRoom(BuildContext context) {
     initializeControlChatButtons();
 
-    return validated
+    return validated &&
+            widget.options.returnUI != null &&
+            widget.options.returnUI == true
         ? MainContainerComponent(
             options: MainContainerComponentOptions(
               backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
@@ -4493,11 +5249,12 @@ class _MediasfuChatState extends State<MediasfuChat> {
               ],
             ),
           )
-        : widget.options.credentials != null &&
-                widget.options.credentials!.apiKey.isNotEmpty &&
-                widget.options.credentials!.apiKey != 'your_api_key'
-            ? renderpreJoinPageWidget() ?? renderWelcomePage()
-            : renderWelcomePage();
+        : !validated
+            ? (widget.options.credentials != null &&
+                    widget.options.credentials!.apiKey.isNotEmpty
+                ? renderpreJoinPageWidget() ?? renderWelcomePage()
+                : renderWelcomePage())
+            : const SizedBox();
   }
 
   Widget renderWelcomePage() {
@@ -4548,20 +5305,26 @@ class _MediasfuChatState extends State<MediasfuChat> {
   }
 
   Widget _buildRoomInterface() {
-    return Stack(
-      children: [
-        buildEventRoom(context),
+    return widget.options.returnUI != null && widget.options.returnUI == false
+        ? Stack(
+            children: [
+              buildEventRoom(context),
+            ],
+          )
+        : Stack(
+            children: [
+              buildEventRoom(context),
 
-        _buildShareEventModal(), // Add Share Event Modal
-        _buildMessagesModal(), // Add Messages Modal
+              _buildShareEventModal(), // Add Share Event Modal
+              _buildMessagesModal(), // Add Messages Modal
 
-        _buildConfirmExitModal(), // Add Confirm Exit Modal
+              _buildConfirmExitModal(), // Add Confirm Exit Modal
 
-        _buildAlertModal(), // Add Alert Modal
-        _buildConfirmHereModal(), // Add Confirm Here Modal
-        _buildLoadingModal(), // Add Loading Modal
-      ],
-    );
+              _buildAlertModal(), // Add Alert Modal
+              _buildConfirmHereModal(), // Add Confirm Here Modal
+              _buildLoadingModal(), // Add Loading Modal
+            ],
+          );
   }
 
   Widget _buildMessagesModal() {

@@ -390,6 +390,7 @@ class MediasfuParameters
   ProducerOptionsType? videoParams;
   ProducerOptionsType? audioParams;
   Producer? audioProducer;
+  double? audioLevel;
   Producer? localAudioProducer;
   List<TransportType> consumerTransports;
   List<String> consumingTransports;
@@ -687,6 +688,7 @@ class MediasfuParameters
   void Function(ProducerOptionsType?) updateVideoParams;
   void Function(ProducerOptionsType?) updateAudioParams;
   void Function(Producer?) updateAudioProducer;
+  void Function(double?) updateAudioLevel;
   void Function(Producer?)? updateLocalAudioProducer;
   void Function(List<TransportType>) updateConsumerTransports;
   void Function(List<String>) updateConsumingTransports;
@@ -1211,6 +1213,7 @@ class MediasfuParameters
     this.videoParams,
     this.audioParams,
     this.audioProducer,
+    this.audioLevel,
     this.localAudioProducer,
     required this.consumerTransports,
     required this.consumingTransports,
@@ -1509,6 +1512,7 @@ class MediasfuParameters
     required this.updateVideoParams,
     required this.updateAudioParams,
     required this.updateAudioProducer,
+    required this.updateAudioLevel,
     this.updateLocalAudioProducer,
     required this.updateConsumerTransports,
     required this.updateConsumingTransports,
@@ -1960,6 +1964,7 @@ class MediasfuParameters
         'updateVideoParams': updateVideoParams,
         'updateAudioParams': updateAudioParams,
         'updateAudioProducer': updateAudioProducer,
+        'updateAudioLevel': updateAudioLevel,
         'updateLocalAudioProducer': updateLocalAudioProducer,
         'updateConsumerTransports': updateConsumerTransports,
         'updateConsumingTransports': updateConsumingTransports,

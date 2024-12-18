@@ -274,6 +274,8 @@ export '../methods/utils/check_limits_and_make_request.dart';
 export '../methods/utils/join_room_on_media_sfu.dart';
 export '../methods/utils/create_room_on_media_sfu.dart';
 
+export '../methods/utils/mediasfu_parameters.dart';
+
 typedef ShowAlert = void Function({
   required String message,
   required String type,
@@ -1961,6 +1963,128 @@ class CreateRoomOptions {
       safeRoomAction: map['safeRoomAction'] as String,
       dataBuffer: map['dataBuffer'] as bool,
       bufferType: map['bufferType'] as String,
+    );
+  }
+}
+
+class CreateMediaSFURoomOptions {
+  final String action; // 'create' action
+  final int duration; // Duration of the meeting in minutes
+  final int capacity; // Max number of participants allowed
+  final String userName; // Username of the room host
+  final int?
+      scheduledDate; // Unix timestamp (in milliseconds) for the scheduled date
+  final String? secureCode; // Secure code for the room host
+  final EventType? eventType; // Type of event
+  final MeetingRoomParams?
+      meetingRoomParams; // Object containing parameters related to the meeting room
+  final RecordingParams?
+      recordingParams; // Object containing parameters related to recording
+  bool? recordOnly; // Whether the room is for media production only (egress)
+  bool? safeRoom; // Whether the room is a safe room
+  bool? autoStartSafeRoom; // Automatically start the safe room feature
+  String? safeRoomAction; // Action for the safe room
+  bool? dataBuffer; // Whether to return data buffer
+  String? bufferType; // Type of buffer data
+
+  CreateMediaSFURoomOptions({
+    required this.action,
+    required this.duration,
+    required this.capacity,
+    required this.userName,
+    this.scheduledDate,
+    this.secureCode,
+    this.eventType,
+    this.meetingRoomParams,
+    this.recordingParams,
+    this.recordOnly = false,
+    this.safeRoom = false,
+    this.autoStartSafeRoom = false,
+    this.safeRoomAction = "kick",
+    this.dataBuffer = false,
+    this.bufferType = "all",
+  });
+
+  // Convert CreateMediaSFURoomOptions to a Map
+  Map<String, dynamic> toMap() {
+    return {
+      'action': action,
+      'duration': duration,
+      'capacity': capacity,
+      'userName': userName,
+      'scheduledDate': scheduledDate,
+      'secureCode': secureCode,
+      'eventType': eventType?.toString().split('.').last,
+      'meetingRoomParams': meetingRoomParams?.toMap(),
+      'recordingParams': recordingParams?.toMap(),
+      'recordOnly': recordOnly,
+      'safeRoom': safeRoom,
+      'autoStartSafeRoom': autoStartSafeRoom,
+      'safeRoomAction': safeRoomAction,
+      'dataBuffer': dataBuffer,
+      'bufferType': bufferType,
+    };
+  }
+
+  // Factory constructor to create an instance from a Map
+  factory CreateMediaSFURoomOptions.fromMap(Map<String, dynamic> map) {
+    return CreateMediaSFURoomOptions(
+      action: map['action'] != null ? map['action'] as String : "",
+      duration: map['duration'] != null ? map['duration'] as int : 0,
+      capacity: map['capacity'] != null ? map['capacity'] as int : 0,
+      userName: map['userName'] != null ? map['userName'] as String : "",
+      scheduledDate:
+          map['scheduledDate'] != null ? map['scheduledDate'] as int : null,
+      secureCode: map['secureCode'] != null ? map['secureCode'] as String : "",
+      eventType: map['eventType'] != null
+          ? EventType.values.firstWhere(
+              (e) => e.toString().split('.').last == map['eventType'])
+          : null,
+      meetingRoomParams: map['meetingRoomParams'] != null
+          ? MeetingRoomParams.fromJson(map['meetingRoomParams'])
+          : null,
+      recordingParams: map['recordingParams'] != null
+          ? RecordingParams.fromJson(map['recordingParams'])
+          : null,
+      recordOnly: map['recordOnly'] != null ? map['recordOnly'] as bool : false,
+      safeRoom: map['safeRoom'] != null ? map['safeRoom'] as bool : false,
+      autoStartSafeRoom: map['autoStartSafeRoom'] != null
+          ? map['autoStartSafeRoom'] as bool
+          : false,
+      safeRoomAction:
+          map['safeRoomAction'] != null ? map['safeRoomAction'] as String : "",
+      dataBuffer: map['dataBuffer'] != null ? map['dataBuffer'] as bool : false,
+      bufferType: map['bufferType'] != null ? map['bufferType'] as String : "",
+    );
+  }
+}
+
+class JoinMediaSFURoomOptions {
+  final String action; // 'join' action
+  final String meetingID; // The meeting ID
+  final String userName; // Username of the room host
+
+  JoinMediaSFURoomOptions({
+    required this.action,
+    required this.meetingID,
+    required this.userName,
+  });
+
+  // Convert JoinMediaSFURoomOptions to a Map
+  Map<String, dynamic> toMap() {
+    return {
+      'action': action,
+      'meetingID': meetingID,
+      'userName': userName,
+    };
+  }
+
+  // Factory constructor to create an instance from a Map
+  factory JoinMediaSFURoomOptions.fromMap(Map<String, dynamic> map) {
+    return JoinMediaSFURoomOptions(
+      action: map['action'] as String,
+      meetingID: map['meetingID'] as String,
+      userName: map['userName'] as String,
     );
   }
 }

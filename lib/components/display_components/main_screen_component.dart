@@ -103,7 +103,11 @@ class MainScreenComponent extends StatelessWidget {
         : mediaQuery.size.height * options.containerHeightFraction -
             safeAreaInsets.top;
 
-    final isWideScreen = parentWidth > 768;
+    bool isWideScreen = parentWidth > 768;
+
+    if (!isWideScreen && parentWidth > 1.5 * parentHeight) {
+      isWideScreen = true;
+    }
 
     ComponentSizes computeDimensions() {
       if (options.doStack) {

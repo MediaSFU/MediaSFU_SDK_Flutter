@@ -256,26 +256,30 @@ Future<void> allMembersRest(
     if (roomRecvIPs.length == 1 && roomRecvIPs[0] == 'none') {
       onLocal = true;
     }
-
     // Checking roomRecvIPs and connecting to the server if not yet received
     if (!onLocal) {
       if (!membersReceived) {
         if (roomRecvIPs.isEmpty) {
           Timer.periodic(const Duration(milliseconds: 10), (timer) async {
             if (roomRecvIPs.isNotEmpty) {
+              if (roomRecvIPs.length == 1 && roomRecvIPs[0] == 'none') {
+                onLocal = true;
+              }
               timer.cancel();
-              await _handleServerConnection(
-                deferScreenReceived: deferScreenReceived,
-                screenId: screenId,
-                consumeSockets: consumeSockets,
-                roomRecvIPs: roomRecvIPs,
-                apiUserName: apiUserName,
-                apiKey: apiKey,
-                apiToken: apiToken,
-                parameters: parameters,
-                connectIps: parameters.connectIps,
-              );
-              parameters.updateIsLoadingModalVisible(false);
+              if (!onLocal) {
+                await _handleServerConnection(
+                  deferScreenReceived: deferScreenReceived,
+                  screenId: screenId,
+                  consumeSockets: consumeSockets,
+                  roomRecvIPs: roomRecvIPs,
+                  apiUserName: apiUserName,
+                  apiKey: apiKey,
+                  apiToken: apiToken,
+                  parameters: parameters,
+                  connectIps: parameters.connectIps,
+                );
+                parameters.updateIsLoadingModalVisible(false);
+              }
             }
           });
         } else {

@@ -4,6 +4,8 @@ import 'dart:async';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart'
+    show Consumer;
 import '../../../types/types.dart'
     show
         AudioDecibels,
@@ -38,6 +40,7 @@ abstract class MiniAudioPlayerParameters implements ReUpdateInterParameters {
 /// Options for `MiniAudioPlayer`.
 class MiniAudioPlayerOptions {
   final MediaStream? stream;
+  final Consumer consumer;
   final String remoteProducerId;
   final MiniAudioPlayerParameters parameters;
   final Widget Function(Map<String, dynamic>)? miniAudioComponent;
@@ -45,6 +48,7 @@ class MiniAudioPlayerOptions {
 
   MiniAudioPlayerOptions({
     required this.stream,
+    required this.consumer,
     required this.remoteProducerId,
     required this.parameters,
     this.miniAudioComponent,
@@ -67,6 +71,7 @@ typedef MiniAudioPlayerType = Widget Function(MiniAudioPlayerOptions options);
 /// ## Parameters:
 /// - `options`: An instance of `MiniAudioPlayerOptions` containing:
 ///   - `stream`: A `MediaStream` object representing the audio stream.
+///   - `consumer`: A `Consumer` object for managing audio consumers.
 ///   - `remoteProducerId`: The ID of the audio producer.
 ///   - `parameters`: An instance of `MiniAudioPlayerParameters` with participant and room data.
 ///   - `miniAudioComponent`: A function that returns a widget for audio visualization (e.g., a waveform).
@@ -78,6 +83,7 @@ typedef MiniAudioPlayerType = Widget Function(MiniAudioPlayerOptions options);
 /// // Define options for MiniAudioPlayer
 /// final miniAudioPlayerOptions = MiniAudioPlayerOptions(
 ///   stream: myMediaStream,
+///   consumer: myConsumer,
 ///   remoteProducerId: 'audio123',
 ///   parameters: myAudioPlayerParameters,
 ///   miniAudioComponent: (props) => MyWaveformWidget(props),
@@ -140,8 +146,24 @@ class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
 
   void _startAudioAnalysis() {
     if (widget.options.stream != null) {
+      double averageLoudness = 127.75;
       _timer = Timer.periodic(const Duration(seconds: 2), (timer) async {
-        const averageLoudness = 127.75;
+        try {
+          // Get stats for the RTP Receiver
+          final receiver = widget.options.consumer.rtpReceiver;
+          final stats = await receiver?.getStats();
+
+          stats?.forEach((report) {
+            if (report.type == 'inbound-rtp' &&
+                report.values['audioLevel'] != null) {
+              // Calculate the average loudness
+              averageLoudness =
+                  127.5 + (report.values['audioLevel'] as double) * 127.5;
+            }
+          });
+        } catch (_) {
+          // Do nothing
+        }
 
         // Retrieve updated parameters
         final parameters = widget.options.parameters.getUpdatedAllParams();

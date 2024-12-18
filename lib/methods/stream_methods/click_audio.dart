@@ -313,7 +313,6 @@ Future<void> clickAudio(ClickAudioOptions options) async {
             }
 
             updateLocalStream(localStream);
-            updateAudioAlreadyOn(audioAlreadyOn);
             if (micAction == true) {
               micAction = false;
               updateMicAction(micAction);

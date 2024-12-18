@@ -1,6 +1,10 @@
 import 'package:flutter/foundation.dart';
 import '../../../types/types.dart'
-    show PreJoinPageParameters, ResponseJoinLocalRoom;
+    show
+        PreJoinPageParameters,
+        ResponseJoinLocalRoom,
+        JoinMediaSFURoomOptions,
+        JoinRoomOnMediaSFUType;
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'dart:async';
 import '../../methods/utils/check_limits_and_make_request.dart';
@@ -22,6 +26,8 @@ class JoinLocalRoomOptions {
   final String apiUserName;
   final PreJoinPageParameters parameters;
   final bool checkConnect;
+  JoinRoomOnMediaSFUType joinMediaSFURoom;
+  final String? localLink;
 
   JoinLocalRoomOptions({
     this.socket,
@@ -32,6 +38,8 @@ class JoinLocalRoomOptions {
     required this.apiUserName,
     required this.parameters,
     this.checkConnect = false,
+    this.joinMediaSFURoom = joinRoomOnMediaSFU,
+    this.localLink = '',
   });
 }
 
@@ -46,6 +54,8 @@ class CheckMediasfuURLOptions {
   final String islevel;
   final io.Socket? socket;
   final PreJoinPageParameters parameters;
+  JoinRoomOnMediaSFUType? joinMediaSFURoom;
+  String? localLink;
 
   CheckMediasfuURLOptions({
     required this.data,
@@ -54,6 +64,8 @@ class CheckMediasfuURLOptions {
     required this.islevel,
     this.socket,
     required this.parameters,
+    this.joinMediaSFURoom = joinRoomOnMediaSFU,
+    this.localLink = '',
   });
 }
 
@@ -86,6 +98,10 @@ typedef CheckMediasfuURLType = Future<void> Function(
 ///   member: 'User123',
 ///   sec: 'your-secure-key-here-32-characters-long',
 ///   apiUserName: 'apiUser',
+///   parameters: PreJoinPageParameters(),
+///   checkConnect: true,
+///   joinMediaSFURoom: joinRoomOnMediaSFU,
+///   localLink: 'https://custom.localserver.com',
 /// );
 ///
 /// try {
@@ -116,6 +132,8 @@ Future<ResponseJoinLocalRoom> joinLocalRoom(
     options.apiUserName,
     options.parameters,
     options.checkConnect,
+    options.joinMediaSFURoom,
+    options.localLink,
   );
 }
 
@@ -207,14 +225,20 @@ Future<void> checkMediasfuURL(CheckMediasfuURLOptions options) async {
       data.apiUserName != null &&
       data.apiUserName!.length > 5 &&
       (options.roomName.startsWith('s') || options.roomName.startsWith('p'))) {
-    final response = await joinRoomOnMediaSFU(
-      payload: {
-        'action': 'join',
-        'meetingID': options.roomName,
-        'userName': options.member,
-      },
-      apiKey: data.apiKey!,
+    final payload = JoinMediaSFURoomOptions(
+      action: 'join',
+      meetingID: options.roomName,
+      userName: options.member,
+    );
+    final finalOptions = JoinMediaSFUOptions(
+      payload: payload,
       apiUserName: data.apiUserName!,
+      apiKey: data.apiKey!,
+      localLink: options.localLink!,
+    );
+
+    final response = await joinRoomOnMediaSFU(
+      finalOptions,
     );
 
     if (response.success &&
@@ -268,6 +292,8 @@ Future<ResponseJoinLocalRoom> _emitJoinLocalRoom(
   String apiUserName,
   PreJoinPageParameters parameters,
   bool checkConnect,
+  JoinRoomOnMediaSFUType? joinMediaSFURoom,
+  String? localLink,
 ) async {
   final completer = Completer<ResponseJoinLocalRoom>();
 
@@ -299,6 +325,8 @@ Future<ResponseJoinLocalRoom> _emitJoinLocalRoom(
             islevel: islevel,
             socket: socket,
             parameters: parameters,
+            joinMediaSFURoom: joinMediaSFURoom,
+            localLink: localLink,
           ),
         );
       } else {
