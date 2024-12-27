@@ -5834,8 +5834,7 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
     // providing a blanket update function for all states
     // will modify later to provide specific update functions
     try {
-      if (widget.options.sourceParameters != null &&
-          widget.options.updateSourceParameters != null) {
+      if (widget.options.updateSourceParameters != null) {
         widget.options.sourceParameters = mediasfuParameters;
         widget.options.updateSourceParameters!(mediasfuParameters);
       }

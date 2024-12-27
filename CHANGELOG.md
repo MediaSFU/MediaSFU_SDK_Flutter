@@ -1,3 +1,8 @@
+### 2.1.2
+
+* Bug fix for 'MediasfuGeneric' handling of updateSourceParameters.
+* Allowed null source parameters for all default views.
+
 ### 2.1.1
 
 * README.md update and types_alt.dart file removal.
