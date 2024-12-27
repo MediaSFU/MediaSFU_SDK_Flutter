@@ -98,6 +98,11 @@ Future<void> connectLocalIps(ConnectLocalIpsOptions options) async {
       throw 'Socket connection is null';
     }
 
+    //check if listener is already set
+    if (socket.hasListeners('new-producer')) {
+      return;
+    }
+
     // Handle 'new-producer' event
     socket.on('new-producer', (data) async {
       final optionsNewPipeProducer = NewPipeProducerOptions(

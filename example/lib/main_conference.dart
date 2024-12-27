@@ -57,6 +57,7 @@ class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _MyAppState createState() => _MyAppState();
 }
 
@@ -132,16 +133,16 @@ class _MyAppState extends State<MyApp> {
 
     /**
      * Scenario A: Not using MediaSFU Cloud at all.
-     * - No credentials needed. Just set localLink to your CE server.
+     * - Dummy credentials are needed to render PreJoinPage. 
      * Example:
      */
     /*
     final credentials = Credentials(
-      apiUserName: '',
-      apiKey: '',
+      apiUserName: 'dummyUsr',
+      apiKey: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
     );
     final localLink = 'http://your-ce-server.com'; // e.g., http://localhost:3000
-    final connectMediaSFU = localLink.trim().isNotEmpty;
+    final connectMediaSFU = false; // Set to false if not using MediaSFU Cloud
     */
 
     /**
@@ -155,7 +156,7 @@ class _MyAppState extends State<MyApp> {
       apiKey: '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
     );
     final localLink = 'http://your-ce-server.com'; // e.g., http://localhost:3000
-    final connectMediaSFU = localLink.trim().isNotEmpty; // Set to true if using MediaSFU CE
+    final connectMediaSFU = true; // Set to true if using MediaSFU Cloud for egress
     */
 
     /**

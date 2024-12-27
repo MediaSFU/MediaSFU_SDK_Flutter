@@ -1,3 +1,7 @@
+### 2.1.1
+
+* README.md update and types_alt.dart file removal.
+
 ### 2.1.0
 
 * Added support for the latest version of the MediaSFU server.
