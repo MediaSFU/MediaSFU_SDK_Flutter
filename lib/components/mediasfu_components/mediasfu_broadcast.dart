@@ -464,15 +464,18 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
   void _updateRecordState() {
     if (recordStarted.value && !recordStopped.value) {
       if (!recordPaused.value) {
+        if (!mounted) return;
         setState(() {
           recordState = 'red';
         });
       } else {
+        if (!mounted) return;
         setState(() {
           recordState = 'yellow';
         });
       }
     } else {
+      if (!mounted) return;
       setState(() {
         recordState = 'green';
       });
@@ -965,6 +968,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
 
   void updateLocalSocket(io.Socket? value) {
     setState(() {
+      if (!mounted) return;
       localSocket.value = value;
       mediasfuParameters.localSocket = value;
       updateSpecificState(
@@ -985,7 +989,9 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
   }
 
   void updateValidated(bool value) {
+    if (!mounted) return;
     setState(() {
+      if (!mounted) return;
       validated = value;
       mediasfuParameters.validated = value;
       updateSpecificState(widget.options.sourceParameters, 'validated', value);
@@ -1025,6 +1031,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
 
   void updateYouAreCoHost(bool value) {
     setState(() {
+      if (!mounted) return;
       youAreCoHost.value = value;
       mediasfuParameters.youAreCoHost = value;
       updateSpecificState(
@@ -1047,6 +1054,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
 
   void updateMeetingDisplayType(String value) {
     setState(() {
+      if (!mounted) return;
       meetingDisplayType.value = value;
       mediasfuParameters.meetingDisplayType = value;
       updateSpecificState(
@@ -1056,6 +1064,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
 
   void updateMeetingVideoOptimized(bool value) {
     setState(() {
+      if (!mounted) return;
       meetingVideoOptimized.value = value;
       mediasfuParameters.meetingVideoOptimized = value;
       updateSpecificState(
@@ -1065,6 +1074,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
 
   void updateEventType(EventType value) {
     setState(() {
+      if (!mounted) return;
       eventType.value = value;
       mediasfuParameters.eventType = value;
       updateSpecificState(widget.options.sourceParameters, 'eventType', value);
@@ -1124,6 +1134,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
 
   void updateIslevel(String value) {
     setState(() {
+      if (!mounted) return;
       islevel.value = value;
       mediasfuParameters.islevel = value;
       updateSpecificState(widget.options.sourceParameters, 'islevel', value);
@@ -1600,6 +1611,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
 
   void updateRecordStarted(bool value) {
     setState(() {
+      if (!mounted) return;
       recordStarted.value = value;
       mediasfuParameters.recordStarted = value;
       updateSpecificState(
@@ -1614,6 +1626,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
 
   void updateRecordResumed(bool value) {
     setState(() {
+      if (!mounted) return;
       recordResumed.value = value;
       mediasfuParameters.recordResumed = value;
       updateSpecificState(
@@ -1623,6 +1636,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
 
   void updateRecordPaused(bool value) {
     setState(() {
+      if (!mounted) return;
       recordPaused.value = value;
       mediasfuParameters.recordPaused = value;
       updateSpecificState(
@@ -1632,6 +1646,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
 
   void updateRecordStopped(bool value) {
     setState(() {
+      if (!mounted) return;
       recordStopped.value = value;
       mediasfuParameters.recordStopped = value;
       updateSpecificState(
@@ -1852,6 +1867,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
     updateSpecificState(
         widget.options.sourceParameters, 'screenAlreadyOn', value);
     setState(() {
+      if (!mounted) return;
       screenShareActive = value;
     });
   }
@@ -2068,6 +2084,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
   void updateMainHeightWidth(dynamic value) {
     bool doUpdate = value.floor() != mainHeightWidth.floor();
     setState(() {
+      if (!mounted) return;
       mainHeightWidth = value.toDouble();
       mediasfuParameters.mainHeightWidth = value.toDouble();
       updateSpecificState(
@@ -2114,6 +2131,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
   void updateDoPaginate(bool value) {
     if (value != doPaginate.value) {
       setState(() {
+        if (!mounted) return;
         doPaginate.value = value;
         mediasfuParameters.doPaginate = value;
         updateSpecificState(
@@ -2143,6 +2161,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
 
   void updateControlHeight(dynamic value) {
     setState(() {
+      if (!mounted) return;
       controlHeight.value = value;
       mediasfuParameters.controlHeight = value;
       updateSpecificState(
@@ -2273,6 +2292,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
 
   void updatePaginationHeightWidth(dynamic value) {
     setState(() {
+      if (!mounted) return;
       paginationHeightWidth.value = value;
       mediasfuParameters.paginationHeightWidth = value;
       updateSpecificState(
@@ -2302,6 +2322,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
 
   void updateMainGridStream(dynamic value) {
     setState(() {
+      if (!mounted) return;
       mainGridStream = value;
       mediasfuParameters.mainGridStream = value;
       updateSpecificState(
@@ -2311,6 +2332,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
 
   void updateOtherGridStreams(dynamic value) {
     setState(() {
+      if (!mounted) return;
       otherGridStreams = value;
       mediasfuParameters.otherGridStreams = value;
       updateSpecificState(
@@ -2380,6 +2402,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
 
   void updateShowMessagesBadge(bool value) {
     setState(() {
+      if (!mounted) return;
       showMessagesBadge.value = value;
       mediasfuParameters.showMessagesBadge = value;
       updateSpecificState(
@@ -2537,6 +2560,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
 
   void updateTotalReqWait(int value) {
     setState(() {
+      if (!mounted) return;
       totalReqWait.value = value;
       mediasfuParameters.totalReqWait = value;
       updateSpecificState(
@@ -2885,6 +2909,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
 
   void updateShowRecordButtons(bool value) {
     setState(() {
+      if (!mounted) return;
       showRecordButtons.value = value;
       mediasfuParameters.showRecordButtons = value;
       updateSpecificState(
@@ -2894,6 +2919,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
 
   void updateRecordingProgressTime(String value) {
     setState(() {
+      if (!mounted) return;
       recordingProgressTime.value = value;
       mediasfuParameters.recordingProgressTime = value;
       updateSpecificState(
@@ -2922,6 +2948,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
         widget.options.sourceParameters, 'videoAlreadyOn', value);
 
     setState(() {
+      if (!mounted) return;
       videoActive = value;
     });
   }
@@ -2933,6 +2960,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
         widget.options.sourceParameters, 'audioAlreadyOn', value);
 
     setState(() {
+      if (!mounted) return;
       micActive = value;
     });
   }
