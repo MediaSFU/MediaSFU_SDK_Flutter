@@ -342,7 +342,9 @@ void updateRoomParametersClient({
             ? EventType.webinar
             : meetingParams?.type == 'broadcast'
                 ? EventType.broadcast
-                : EventType.chat;
+                : meetingParams?.type == 'chat'
+                    ? EventType.chat
+                    : EventType.conference;
     meetingParams?.type = eventType_;
     params.updateEventType(eventType_);
     if (meetingParams?.type == EventType.chat && params.islevel != '2') {

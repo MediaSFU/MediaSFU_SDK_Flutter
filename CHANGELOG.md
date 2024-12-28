@@ -1,3 +1,7 @@
+### 2.1.4
+
+* Bug fix for event types defaulting to 'chat' for no-UI mode.
+
 ### 2.1.3
 
 * Bug fix for 'setState' called after dispose for no-UI mode.

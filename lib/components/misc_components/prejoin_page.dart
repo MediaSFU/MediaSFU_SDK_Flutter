@@ -590,7 +590,6 @@ class _PreJoinPageState extends State<PreJoinPage> {
 
     // Prepare eventRoomParams and recordingParams if available
     MeetingRoomParams? eventRoomParams = localData?.eventRoomParams;
-    eventRoomParams!.type = _eventType.toLowerCase();
 
     int? durationInt = !widget.options.returnUI! &&
             widget.options.noUIPreJoinOptionsCreate != null
@@ -614,6 +613,8 @@ class _PreJoinPageState extends State<PreJoinPage> {
                 : _eventType == 'webinar'
                     ? EventType.webinar
                     : EventType.conference;
+
+    eventRoomParams!.type = eventType.toString().split('.').last.toLowerCase();
 
     final createData = CreateLocalRoomParameters(
       eventID: eventID,
