@@ -237,7 +237,7 @@ Future<void> checkMediasfuURL(CheckMediasfuURLOptions options) async {
       localLink: options.localLink!,
     );
 
-    final response = await joinRoomOnMediaSFU(
+    final response = await options.joinMediaSFURoom!(
       finalOptions,
     );
 

@@ -1,3 +1,7 @@
+### 2.1.5
+
+* Bug fix for using custom join/create functions for room.
+
 ### 2.1.4
 
 * Bug fix for event types defaulting to 'chat' for no-UI mode.

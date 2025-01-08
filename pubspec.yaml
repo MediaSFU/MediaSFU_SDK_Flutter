@@ -1,6 +1,6 @@
 name: mediasfu_sdk
 description: "MediaSFU SDK for Flutter provides powerful streaming capabilities for creating high-performance cross-platform applications."
-version: 2.1.4
+version: 2.1.5
 homepage: https://www.mediasfu.com
 repository: https://github.com/MediaSFU/MediaSFU_SDK_Flutter
 

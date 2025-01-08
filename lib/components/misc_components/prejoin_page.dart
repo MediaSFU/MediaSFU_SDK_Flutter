@@ -655,7 +655,7 @@ class _PreJoinPageState extends State<PreJoinPage> {
           ? widget.options.noUIPreJoinOptionsCreate!
           : CreateMediaSFURoomOptions.fromMap(payloadMap);
       // Create room on MediaSFU
-      final response = await createRoomOnMediaSFU(
+      final response = await widget.options.createMediaSFURoom!(
         CreateMediaSFUOptions(
           payload: payload,
           apiUserName: localData!.apiUserName!,
@@ -789,7 +789,7 @@ class _PreJoinPageState extends State<PreJoinPage> {
         : CreateMediaSFURoomOptions.fromMap(payloadMap);
 
     try {
-      final response = await createRoomOnMediaSFU(
+      final response = await widget.options.createMediaSFURoom!(
         CreateMediaSFUOptions(
           payload: payload,
           apiUserName: widget.options.credentials.apiUserName,
@@ -1137,7 +1137,7 @@ class _PreJoinPageState extends State<PreJoinPage> {
         : JoinMediaSFURoomOptions.fromMap(payloadMap);
 
     try {
-      final response = await joinRoomOnMediaSFU(
+      final response = await widget.options.joinMediaSFURoom!(
         JoinMediaSFUOptions(
           payload: payload,
           apiUserName: widget.options.credentials.apiUserName,
