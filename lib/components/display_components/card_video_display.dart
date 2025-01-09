@@ -76,6 +76,7 @@ class _CardVideoDisplayState extends State<CardVideoDisplay> {
   void checkStreamReady() {
     Future.delayed(const Duration(milliseconds: 100), () {
       if (widget.options.videoStream.getVideoTracks().isNotEmpty) {
+        if (!mounted) return;
         setState(() {
           _renderer.srcObject = widget.options.videoStream;
         });

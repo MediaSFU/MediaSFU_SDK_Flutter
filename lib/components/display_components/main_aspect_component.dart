@@ -163,6 +163,7 @@ class _MainAspectComponentState extends State<MainAspectComponent>
     widget.options.updateIsSmallScreen(isSmallScreen);
 
     // Trigger a rebuild to adjust dimensions
+    if (!mounted) return;
     setState(() {});
   }
 

@@ -135,6 +135,7 @@ class _MiniAudioState extends State<MiniAudio> with TickerProviderStateMixin {
       top: position.dy,
       child: GestureDetector(
         onPanUpdate: (details) {
+          if (!mounted) return;
           setState(() {
             position += details.delta;
             overlayEntry.markNeedsBuild();

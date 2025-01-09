@@ -483,6 +483,7 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
 
   /// Handles editing a specific room.
   void handleEditRoom(int roomIndex) {
+    if (!mounted) return;
     setState(() {
       currentRoomIndex = roomIndex;
       currentRoom = breakoutRooms[roomIndex];
@@ -493,6 +494,7 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
 
   /// Handles deleting a specific room.
   void handleDeleteRoom(int roomIndex) {
+    if (!mounted) return;
     setState(() {
       // Remove room and reset breakRoom assignments.
       breakoutRooms.removeAt(roomIndex);
@@ -513,6 +515,7 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
 
   /// Handles adding a participant to a specific room.
   void handleAddParticipant(int roomIndex, BreakoutParticipant participant) {
+    if (!mounted) return;
     setState(() {
       if (breakoutRooms[roomIndex].length >=
           widget.options.parameters.itemPageLimit) {
@@ -539,6 +542,7 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
 
   /// Handles removing a participant from a specific room.
   void handleRemoveParticipant(int roomIndex, BreakoutParticipant participant) {
+    if (!mounted) return;
     setState(() {
       breakoutRooms[roomIndex].remove(participant);
       participants.firstWhere((p) => p.name == participant.name).breakRoom =
@@ -566,6 +570,7 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
       return;
     }
 
+    if (!mounted) return;
     setState(() {
       List<List<BreakoutParticipant>> newBreakoutRooms =
           List.generate(numRooms, (_) => []);
@@ -602,6 +607,7 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
       return;
     }
 
+    if (!mounted) return;
     setState(() {
       breakoutRooms = List.generate(numRooms, (_) => []);
       _checkCanStartBreakout();
@@ -617,6 +623,7 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
 
   /// Handles adding a new room.
   void handleAddRoom() {
+    if (!mounted) return;
     setState(() {
       breakoutRooms.add([]);
       _checkCanStartBreakout();
@@ -677,10 +684,12 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
   /// Checks if breakout rooms can be started based on current assignments.
   void _checkCanStartBreakout() {
     if (validateRooms()) {
+      if (!mounted) return;
       setState(() {
         canStartBreakout = true;
       });
     } else {
+      if (!mounted) return;
       setState(() {
         canStartBreakout = false;
       });
@@ -691,6 +700,7 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
   void handleSaveRooms() {
     if (validateRooms()) {
       widget.options.parameters.updateBreakoutRooms(breakoutRooms);
+      if (!mounted) return;
       setState(() {
         canStartBreakout = true;
         widget.options.parameters.updateCanStartBreakout(true);
@@ -983,6 +993,7 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
                                     DropdownButton<String>(
                                       value: newParticipantAction,
                                       onChanged: (String? newValue) {
+                                        if (!mounted) return;
                                         setState(() {
                                           newParticipantAction = newValue!;
                                         });

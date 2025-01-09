@@ -480,10 +480,11 @@ class _PreJoinPageState extends State<PreJoinPage> {
   Future<void> _handleCreateRoom() async {
     if (pending) return;
     pending = true;
-
-    setState(() {
-      _error = ''; // Clear previous errors
-    });
+    if (mounted) {
+      setState(() {
+        _error = ''; // Clear previous errors
+      });
+    }
 
     if (widget.options.returnUI!) {
       // Input Validation
@@ -491,17 +492,21 @@ class _PreJoinPageState extends State<PreJoinPage> {
           _duration.isEmpty ||
           _eventType.isEmpty ||
           _capacity.isEmpty) {
-        setState(() => _error = 'Please fill all the fields.');
+        if (mounted) {
+          setState(() => _error = 'Please fill all the fields.');
+        }
         pending = false;
         return;
       }
 
       if (!['chat', 'broadcast', 'webinar', 'conference']
           .contains(_eventType.toLowerCase())) {
-        setState(() {
-          _error =
-              'Invalid event type. Please select from Chat, Broadcast, Webinar, or Conference.';
-        });
+        if (mounted) {
+          setState(() {
+            _error =
+                'Invalid event type. Please select from Chat, Broadcast, Webinar, or Conference.';
+          });
+        }
         pending = false;
         return;
       }
@@ -510,25 +515,31 @@ class _PreJoinPageState extends State<PreJoinPage> {
       final int? durationInt = int.tryParse(_duration);
 
       if (capacityInt == null || capacityInt <= 0) {
-        setState(() {
-          _error = 'Room capacity must be a positive integer.';
-        });
+        if (mounted) {
+          setState(() {
+            _error = 'Room capacity must be a positive integer.';
+          });
+        }
         pending = false;
         return;
       }
 
       if (durationInt == null || durationInt <= 0) {
-        setState(() {
-          _error = 'Duration must be a positive integer.';
-        });
+        if (mounted) {
+          setState(() {
+            _error = 'Duration must be a positive integer.';
+          });
+        }
         pending = false;
         return;
       }
 
       if (_name.length < 2 || _name.length > 10) {
-        setState(() {
-          _error = 'Display Name must be between 2 and 10 characters.';
-        });
+        if (mounted) {
+          setState(() {
+            _error = 'Display Name must be between 2 and 10 characters.';
+          });
+        }
         pending = false;
         return;
       }
@@ -687,9 +698,11 @@ class _PreJoinPageState extends State<PreJoinPage> {
       } else {
         pending = false;
         widget.options.parameters.updateIsLoadingModalVisible(false);
-        setState(() {
-          _error = 'Unable to create room on MediaSFU.';
-        });
+        if (mounted) {
+          setState(() {
+            _error = 'Unable to create room on MediaSFU.';
+          });
+        }
       }
     } else {
       // Create room locally without MediaSFU connection
@@ -734,9 +747,11 @@ class _PreJoinPageState extends State<PreJoinPage> {
           widget.options.parameters.updateValidated(true);
         } else {
           widget.options.parameters.updateIsLoadingModalVisible(false);
-          setState(() {
-            _error = 'Unable to create room. ${res.reason}';
-          });
+          if (mounted) {
+            setState(() {
+              _error = 'Unable to create room. ${res.reason}';
+            });
+          }
         }
       },
     );
@@ -813,14 +828,18 @@ class _PreJoinPageState extends State<PreJoinPage> {
           response.data is CreateJoinRoomError) {
         final errorData = response.data;
         pending = false;
-        setState(() {
-          _error = 'Unable to create room. ${errorData.error}';
-        });
+        if (mounted) {
+          setState(() {
+            _error = 'Unable to create room. ${errorData.error}';
+          });
+        }
       } else {
         pending = false;
-        setState(() {
-          _error = 'Unexpected error occurred.';
-        });
+        if (mounted) {
+          setState(() {
+            _error = 'Unexpected error occurred.';
+          });
+        }
       }
     } catch (error) {
       pending = false;
@@ -839,10 +858,12 @@ class _PreJoinPageState extends State<PreJoinPage> {
   /// Toggles between Create and Join modes.
 
   void _toggleMode() {
-    setState(() {
-      _isCreateMode = !_isCreateMode;
-      _error = '';
-    });
+    if (mounted) {
+      setState(() {
+        _isCreateMode = !_isCreateMode;
+        _error = '';
+      });
+    }
   }
 
   @override
@@ -969,9 +990,11 @@ class _PreJoinPageState extends State<PreJoinPage> {
           DropdownMenuItem(value: 'conference', child: Text('Conference')),
         ],
         onChanged: (value) {
-          setState(() {
-            _eventType = value ?? '';
-          });
+          if (mounted) {
+            setState(() {
+              _eventType = value ?? '';
+            });
+          }
         },
       ),
     );
@@ -1009,22 +1032,28 @@ class _PreJoinPageState extends State<PreJoinPage> {
   Future<void> _handleJoinRoom() async {
     if (pending) return;
     pending = true;
-    setState(() {
-      _error = ''; // Clear previous errors
-    });
+    if (mounted) {
+      setState(() {
+        _error = ''; // Clear previous errors
+      });
+    }
 
     if (widget.options.returnUI!) {
       // Input Validation
       if (_name.isEmpty || _eventID.isEmpty) {
-        setState(() => _error = 'Please fill all the fields.');
+        if (mounted) {
+          setState(() => _error = 'Please fill all the fields.');
+        }
         pending = false;
         return;
       }
 
       if (_name.length < 2 || _name.length > 10) {
-        setState(() {
-          _error = 'Display Name must be between 2 and 10 characters.';
-        });
+        if (mounted) {
+          setState(() {
+            _error = 'Display Name must be between 2 and 10 characters.';
+          });
+        }
         pending = false;
         return;
       }
@@ -1101,9 +1130,11 @@ class _PreJoinPageState extends State<PreJoinPage> {
           widget.options.parameters.updateValidated(true);
         } else {
           widget.options.parameters.updateIsLoadingModalVisible(false);
-          setState(() {
-            _error = 'Unable to join room. ${res.reason}';
-          });
+          if (mounted) {
+            setState(() {
+              _error = 'Unable to join room. ${res.reason}';
+            });
+          }
         }
       },
     );
@@ -1160,13 +1191,17 @@ class _PreJoinPageState extends State<PreJoinPage> {
       } else if (response.success == false &&
           response.data is CreateJoinRoomError) {
         final errorData = response.data;
-        setState(() {
-          _error = 'Unable to join room. ${errorData.error}';
-        });
+        if (mounted) {
+          setState(() {
+            _error = 'Unable to join room. ${errorData.error}';
+          });
+        }
       } else {
-        setState(() {
-          _error = 'Unexpected error occurred.';
-        });
+        if (mounted) {
+          setState(() {
+            _error = 'Unexpected error occurred.';
+          });
+        }
       }
     } catch (error) {
       widget.options.parameters.showAlert?.call(

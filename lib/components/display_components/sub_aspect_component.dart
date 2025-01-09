@@ -77,6 +77,7 @@ class _SubAspectComponentState extends State<SubAspectComponent> {
         ? 40
         : subAspectFraction;
 
+    if (!mounted) return;
     setState(() {
       _height = widget.options.showControls ? subAspectFraction : 0;
       _width = (widget.options.containerWidthFraction ?? 1.0) * windowWidth;

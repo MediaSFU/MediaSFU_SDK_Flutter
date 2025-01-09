@@ -168,10 +168,12 @@ class _PollModalState extends State<PollModal> {
         options = [];
         break;
     }
-    setState(() {
-      newPoll['type'] = type;
-      newPoll['options'] = options;
-    });
+    if (mounted) {
+      setState(() {
+        newPoll['type'] = type;
+        newPoll['options'] = options;
+      });
+    }
   }
 
   List<Widget> renderPollOptions() {
@@ -199,9 +201,11 @@ class _PollModalState extends State<PollModal> {
                 decoration: InputDecoration(labelText: 'Option ${index + 1}'),
                 maxLength: 50,
                 onChanged: (text) {
-                  setState(() {
-                    newPoll['options'][index] = text;
-                  });
+                  if (mounted) {
+                    setState(() {
+                      newPoll['options'][index] = text;
+                    });
+                  }
                 },
               ),
             );
@@ -215,9 +219,11 @@ class _PollModalState extends State<PollModal> {
                         'Option ${newPoll['options'].length + index + 1}'),
                 maxLength: 50,
                 onChanged: (text) {
-                  setState(() {
-                    newPoll['options'].add(text);
-                  });
+                  if (mounted) {
+                    setState(() {
+                      newPoll['options'].add(text);
+                    });
+                  }
                 },
               ),
             );
@@ -410,9 +416,11 @@ class _PollModalState extends State<PollModal> {
                                       maxLength: 300,
                                       maxLines: 3,
                                       onChanged: (text) {
-                                        setState(() {
-                                          newPoll['question'] = text;
-                                        });
+                                        if (mounted) {
+                                          setState(() {
+                                            newPoll['question'] = text;
+                                          });
+                                        }
                                       },
                                     ),
                                   ),

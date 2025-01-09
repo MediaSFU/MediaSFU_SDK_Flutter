@@ -102,9 +102,11 @@ class _ConfirmHereModalState extends State<ConfirmHereModal> {
 
   void startCountdown() {
     countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      setState(() {
-        counter--;
-      });
+      if (mounted) {
+        setState(() {
+          counter--;
+        });
+      }
       if (counter <= 0) {
         stopCountdown();
         widget.options.onConfirmHereClose();

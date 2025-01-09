@@ -937,8 +937,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
   }
 
   void updateLocalSocket(io.Socket? value) {
+    if (!mounted) return;
     setState(() {
-      if (!mounted) return;
       localSocket.value = value;
       mediasfuParameters.localSocket = value;
       updateSpecificState(
@@ -961,7 +961,6 @@ class _MediasfuChatState extends State<MediasfuChat> {
   void updateValidated(bool value) {
     if (!mounted) return;
     setState(() {
-      if (!mounted) return;
       validated = value;
       mediasfuParameters.validated = value;
       updateSpecificState(widget.options.sourceParameters, 'validated', value);
@@ -1000,8 +999,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
   }
 
   void updateYouAreCoHost(bool value) {
+    if (!mounted) return;
     setState(() {
-      if (!mounted) return;
       youAreCoHost.value = value;
       mediasfuParameters.youAreCoHost = value;
       updateSpecificState(
@@ -1023,8 +1022,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
   }
 
   void updateMeetingDisplayType(String value) {
+    if (!mounted) return;
     setState(() {
-      if (!mounted) return;
       meetingDisplayType.value = value;
       mediasfuParameters.meetingDisplayType = value;
       updateSpecificState(
@@ -1033,8 +1032,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
   }
 
   void updateMeetingVideoOptimized(bool value) {
+    if (!mounted) return;
     setState(() {
-      if (!mounted) return;
       meetingVideoOptimized.value = value;
       mediasfuParameters.meetingVideoOptimized = value;
       updateSpecificState(
@@ -1043,8 +1042,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
   }
 
   void updateEventType(EventType value) {
+    if (!mounted) return;
     setState(() {
-      if (!mounted) return;
       eventType.value = value;
       mediasfuParameters.eventType = value;
       updateSpecificState(widget.options.sourceParameters, 'eventType', value);
@@ -1103,8 +1102,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
   }
 
   void updateIslevel(String value) {
+    if (!mounted) return;
     setState(() {
-      if (!mounted) return;
       islevel.value = value;
       mediasfuParameters.islevel = value;
       updateSpecificState(widget.options.sourceParameters, 'islevel', value);
@@ -1580,8 +1579,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
   }
 
   void updateRecordStarted(bool value) {
+    if (!mounted) return;
     setState(() {
-      if (!mounted) return;
       recordStarted.value = value;
       mediasfuParameters.recordStarted = value;
       updateSpecificState(
@@ -1595,8 +1594,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
   }
 
   void updateRecordResumed(bool value) {
+    if (!mounted) return;
     setState(() {
-      if (!mounted) return;
       recordResumed.value = value;
       mediasfuParameters.recordResumed = value;
       updateSpecificState(
@@ -1605,8 +1604,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
   }
 
   void updateRecordPaused(bool value) {
+    if (!mounted) return;
     setState(() {
-      if (!mounted) return;
       recordPaused.value = value;
       mediasfuParameters.recordPaused = value;
       updateSpecificState(
@@ -1615,8 +1614,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
   }
 
   void updateRecordStopped(bool value) {
+    if (!mounted) return;
     setState(() {
-      if (!mounted) return;
       recordStopped.value = value;
       mediasfuParameters.recordStopped = value;
       updateSpecificState(
@@ -1836,8 +1835,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
     mediasfuParameters.screenAlreadyOn = value;
     updateSpecificState(
         widget.options.sourceParameters, 'screenAlreadyOn', value);
+    if (!mounted) return;
     setState(() {
-      if (!mounted) return;
       screenShareActive = value;
     });
   }
@@ -2291,6 +2290,7 @@ class _MediasfuChatState extends State<MediasfuChat> {
   }
 
   void updateMainGridStream(dynamic value) {
+    if (!mounted) return;
     setState(() {
       if (!mounted) return;
       mainGridStream = value;

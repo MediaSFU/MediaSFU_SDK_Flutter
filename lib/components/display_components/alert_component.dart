@@ -82,6 +82,7 @@ class _AlertComponentState extends State<AlertComponent> {
   }
 
   void _updateAlertType() {
+    if (!mounted) return;
     setState(() {
       _alertType = widget.options.type;
     });

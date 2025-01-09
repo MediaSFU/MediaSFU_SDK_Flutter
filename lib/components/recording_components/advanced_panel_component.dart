@@ -157,9 +157,11 @@ class _AdvancedPanelComponentState extends State<AdvancedPanelComponent> {
             TextButton(
               onPressed: () {
                 onSelectColor(tempColor);
-                setState(() {
-                  parsedColors[selectedColorType] = tempColor;
-                });
+                if (mounted) {
+                  setState(() {
+                    parsedColors[selectedColorType] = tempColor;
+                  });
+                }
                 Navigator.of(context).pop();
               },
               child: const Text('OK'),
@@ -171,12 +173,14 @@ class _AdvancedPanelComponentState extends State<AdvancedPanelComponent> {
   }
 
   void toggleColorPicker(String colorType) {
-    setState(() {
-      selectedColorType = colorType;
-      showBackgroundColorModal = colorType == 'backgroundColor';
-      showCustomTextColorModal = colorType == 'customTextColor';
-      showNameTagsColorModal = colorType == 'nameTagsColor';
-    });
+    if (mounted) {
+      setState(() {
+        selectedColorType = colorType;
+        showBackgroundColorModal = colorType == 'backgroundColor';
+        showCustomTextColorModal = colorType == 'customTextColor';
+        showNameTagsColorModal = colorType == 'nameTagsColor';
+      });
+    }
   }
 
   void onSelectColor(Color color) {
@@ -314,9 +318,11 @@ class _AdvancedPanelComponentState extends State<AdvancedPanelComponent> {
           value: selectedOrientationVideo,
           onValueChanged: (value) {
             parameters.updateRecordingOrientationVideo(value);
-            setState(() {
-              selectedOrientationVideo = value;
-            });
+            if (mounted) {
+              setState(() {
+                selectedOrientationVideo = value;
+              });
+            }
           },
           items: [
             {'label': 'Landscape', 'value': 'landscape'},

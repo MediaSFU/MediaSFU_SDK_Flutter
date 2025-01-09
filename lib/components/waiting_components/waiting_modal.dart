@@ -120,10 +120,12 @@ class _WaitingRoomModalState extends State<WaitingRoomModal> {
   void didUpdateWidget(covariant WaitingRoomModal oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.options.waitingRoomList != widget.options.waitingRoomList) {
-      setState(() {
-        waitingRoomList = widget.options.waitingRoomList;
-        waitingRoomCounter = waitingRoomList.length;
-      });
+      if (mounted) {
+        setState(() {
+          waitingRoomList = widget.options.waitingRoomList;
+          waitingRoomCounter = waitingRoomList.length;
+        });
+      }
     }
   }
 

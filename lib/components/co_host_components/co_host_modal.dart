@@ -158,6 +158,7 @@ class _CoHostModalState extends State<CoHostModal> {
 
   /// Handles toggling of switches for responsibilities.
   void handleToggleSwitch(String key) {
+    if (!mounted) return;
     setState(() {
       responsibilities[key] = !responsibilities[key]!;
       _updateResponsibilityList(key);
@@ -312,6 +313,7 @@ class _CoHostModalState extends State<CoHostModal> {
                               child: DropdownButton<String>(
                                 value: selectedCohost,
                                 onChanged: (String? newValue) {
+                                  if (!mounted) return;
                                   setState(() {
                                     selectedCohost = newValue!;
                                   });

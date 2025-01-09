@@ -1,3 +1,7 @@
+### 2.1.6
+
+* Bug fix for no-UI mode setState called after dispose.
+
 ### 2.1.5
 
 * Bug fix for using custom join/create functions for room.

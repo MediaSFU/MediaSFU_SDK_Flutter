@@ -141,7 +141,9 @@ class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
     if (widget.options.stream != null) {
       _rtcVideoRenderer.srcObject = widget.options.stream!;
     }
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   void _startAudioAnalysis() {
@@ -209,9 +211,11 @@ class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
         }
 
         if (participant != null) {
-          setState(() {
-            isMuted = participant.muted ?? false;
-          });
+          if (mounted) {
+            setState(() {
+              isMuted = participant.muted ?? false;
+            });
+          }
 
           // Update participant audio decibels
           if (parameters.eventType != EventType.chat &&
@@ -254,16 +258,20 @@ class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
               (breakOutRoomStarted &&
                   !breakOutRoomEnded &&
                   audioActiveInRoom)) {
-            setState(() {
-              showWaveModal = false;
-            });
+            if (mounted) {
+              setState(() {
+                showWaveModal = false;
+              });
+            }
 
             if (averageLoudness > 127.5) {
               if (participant.name.isNotEmpty &&
                   !activeSounds.contains(participant.name)) {
-                setState(() {
-                  activeSounds.add(participant.name);
-                });
+                if (mounted) {
+                  setState(() {
+                    activeSounds.add(participant.name);
+                  });
+                }
                 consLow = false;
 
                 if (!(shared || shareScreenStarted) ||
@@ -287,9 +295,11 @@ class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
               if (participant.name.isNotEmpty &&
                   activeSounds.contains(participant.name) &&
                   consLow) {
-                setState(() {
-                  activeSounds.remove(participant.name);
-                });
+                if (mounted) {
+                  setState(() {
+                    activeSounds.remove(participant.name);
+                  });
+                }
                 if (parameters.eventType != EventType.chat &&
                     parameters.eventType != EventType.broadcast &&
                     participant.name.isNotEmpty) {
@@ -308,9 +318,11 @@ class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
             }
           } else {
             if (averageLoudness > 127.5) {
-              setState(() {
-                showWaveModal = autoWave;
-              });
+              if (mounted) {
+                setState(() {
+                  showWaveModal = autoWave;
+                });
+              }
 
               if (!activeSounds.contains(participant.name)) {
                 activeSounds.add(participant.name);
@@ -335,9 +347,11 @@ class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
                 }
               }
             } else {
-              setState(() {
-                showWaveModal = false;
-              });
+              if (mounted) {
+                setState(() {
+                  showWaveModal = false;
+                });
+              }
               if (participant.name.isNotEmpty &&
                   activeSounds.contains(participant.name)) {
                 activeSounds.remove(participant.name);
@@ -366,10 +380,12 @@ class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
           // Update active sounds
           updateActiveSounds(activeSounds);
         } else {
-          setState(() {
-            showWaveModal = false;
-            isMuted = true;
-          });
+          if (mounted) {
+            setState(() {
+              showWaveModal = false;
+              isMuted = true;
+            });
+          }
         }
       });
     }
