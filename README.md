@@ -38,6 +38,10 @@ MediaSFU offers a cutting-edge streaming experience that empowers users to custo
 
 **[Get started now on GitHub!](https://github.com/MediaSFU/MediaSFUOpen)** 
 
+### ✅ Flutter SDK Setup Guide
+[![Watch the Flutter SDK Setup Guide](http://i.ytimg.com/vi/IzwVEMBQ3p0/hqdefault.jpg)](https://www.youtube.com/watch?v=IzwVEMBQ3p0)  
+🎥 [**Watch the Flutter SDK Setup Guide**](https://youtu.be/IzwVEMBQ3p0)
+
 ## Table of Contents
 
 - [Features](#features)

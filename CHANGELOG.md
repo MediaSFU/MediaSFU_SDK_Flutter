@@ -1,3 +1,7 @@
+### 2.1.7
+
+* Support for current version of WebRTC.
+
 ### 2.1.6
 
 * Bug fix for no-UI mode setState called after dispose.
