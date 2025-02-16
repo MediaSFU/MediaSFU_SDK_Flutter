@@ -731,7 +731,7 @@ class _MediasfuChatState extends State<MediasfuChat> {
     ),
   );
   final ValueNotifier<bool> screenForceFullDisplay = ValueNotifier(false);
-  List<Widget> mainGridStream = [];
+  final ValueNotifier<List<Widget>> mainGridStream = ValueNotifier([]);
   List<List<Widget>> otherGridStreams = [[], []];
   final ValueNotifier<List<Widget>> audioOnlyStreams = ValueNotifier([]);
   final ValueNotifier<List<MediaDeviceInfo>> videoInputs = ValueNotifier([]);
@@ -1405,8 +1405,11 @@ class _MediasfuChatState extends State<MediasfuChat> {
   }
 
   void updateShared(bool value) {
-    shared.value = value;
-    mediasfuParameters.shared = value;
+    if (!mounted) return;
+    setState(() {
+      shared.value = value;
+      mediasfuParameters.shared = value;
+    });
     updateSpecificState(widget.options.sourceParameters, 'shared', value);
   }
 
@@ -1824,8 +1827,11 @@ class _MediasfuChatState extends State<MediasfuChat> {
   }
 
   void updateLocalStreamScreen(dynamic value) {
-    localStreamScreen.value = value;
-    mediasfuParameters.localStreamScreen = value;
+    if (!mounted) return;
+    setState(() {
+      localStreamScreen.value = value;
+      mediasfuParameters.localStreamScreen = value;
+    });
     updateSpecificState(
         widget.options.sourceParameters, 'localStreamScreen', value);
   }
@@ -2052,8 +2058,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
 
   void updateMainHeightWidth(dynamic value) {
     bool doUpdate = value.floor() != mainHeightWidth.floor();
+    if (!mounted) return;
     setState(() {
-      if (!mounted) return;
       mainHeightWidth = value.toDouble();
       mediasfuParameters.mainHeightWidth = value.toDouble();
       updateSpecificState(
@@ -2099,8 +2105,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
 
   void updateDoPaginate(bool value) {
     if (value != doPaginate.value) {
+      if (!mounted) return;
       setState(() {
-        if (!mounted) return;
         doPaginate.value = value;
         mediasfuParameters.doPaginate = value;
         updateSpecificState(
@@ -2129,8 +2135,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
   }
 
   void updateControlHeight(dynamic value) {
+    if (!mounted) return;
     setState(() {
-      if (!mounted) return;
       controlHeight.value = value;
       mediasfuParameters.controlHeight = value;
       updateSpecificState(
@@ -2260,8 +2266,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
   }
 
   void updatePaginationHeightWidth(dynamic value) {
+    if (!mounted) return;
     setState(() {
-      if (!mounted) return;
       paginationHeightWidth.value = value;
       mediasfuParameters.paginationHeightWidth = value;
       updateSpecificState(
@@ -2293,7 +2299,7 @@ class _MediasfuChatState extends State<MediasfuChat> {
     if (!mounted) return;
     setState(() {
       if (!mounted) return;
-      mainGridStream = value;
+      mainGridStream.value = value;
       mediasfuParameters.mainGridStream = value;
       updateSpecificState(
           widget.options.sourceParameters, 'mainGridStream', value);
@@ -2301,8 +2307,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
   }
 
   void updateOtherGridStreams(dynamic value) {
+    if (!mounted) return;
     setState(() {
-      if (!mounted) return;
       otherGridStreams = value;
       mediasfuParameters.otherGridStreams = value;
       updateSpecificState(
@@ -2371,8 +2377,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
   }
 
   void updateShowMessagesBadge(bool value) {
+    if (!mounted) return;
     setState(() {
-      if (!mounted) return;
       showMessagesBadge.value = value;
       mediasfuParameters.showMessagesBadge = value;
       updateSpecificState(
@@ -2529,8 +2535,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
   }
 
   void updateTotalReqWait(int value) {
+    if (!mounted) return;
     setState(() {
-      if (!mounted) return;
       totalReqWait.value = value;
       mediasfuParameters.totalReqWait = value;
       updateSpecificState(
@@ -2878,8 +2884,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
   }
 
   void updateShowRecordButtons(bool value) {
+    if (!mounted) return;
     setState(() {
-      if (!mounted) return;
       showRecordButtons.value = value;
       mediasfuParameters.showRecordButtons = value;
       updateSpecificState(
@@ -2888,8 +2894,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
   }
 
   void updateRecordingProgressTime(String value) {
+    if (!mounted) return;
     setState(() {
-      if (!mounted) return;
       recordingProgressTime.value = value;
       mediasfuParameters.recordingProgressTime = value;
       updateSpecificState(
@@ -2917,8 +2923,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
     updateSpecificState(
         widget.options.sourceParameters, 'videoAlreadyOn', value);
 
+    if (!mounted) return;
     setState(() {
-      if (!mounted) return;
       videoActive = value;
     });
   }
@@ -2929,8 +2935,8 @@ class _MediasfuChatState extends State<MediasfuChat> {
     updateSpecificState(
         widget.options.sourceParameters, 'audioAlreadyOn', value);
 
+    if (!mounted) return;
     setState(() {
-      if (!mounted) return;
       micActive = value;
     });
   }
@@ -4498,7 +4504,7 @@ class _MediasfuChatState extends State<MediasfuChat> {
         paginationDirection: paginationDirection.value,
         gridSizes: gridSizes.value,
         screenForceFullDisplay: screenForceFullDisplay.value,
-        mainGridStream: mainGridStream,
+        mainGridStream: mainGridStream.value,
         otherGridStreams: otherGridStreams,
         audioOnlyStreams: audioOnlyStreams.value,
         videoInputs: videoInputs.value,

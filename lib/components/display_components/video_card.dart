@@ -191,7 +191,7 @@ class _VideoCardState extends State<VideoCard> with TickerProviderStateMixin {
               child: Container(
                 padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.25),
+                  color: Colors.white.withAlpha((0.25 * 255).toInt()),
                   borderRadius: BorderRadius.circular(0),
                 ),
                 child: Icon(
@@ -211,7 +211,7 @@ class _VideoCardState extends State<VideoCard> with TickerProviderStateMixin {
               child: Container(
                 padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.25),
+                  color: Colors.white.withAlpha((0.25 * 255).toInt()),
                   borderRadius: BorderRadius.circular(0),
                 ),
                 child: Icon(
@@ -320,7 +320,8 @@ class _VideoCardState extends State<VideoCard> with TickerProviderStateMixin {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 2, vertical: 3),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.25),
+                                color: Colors.white
+                                    .withAlpha((0.25 * 255).toInt()),
                                 borderRadius: BorderRadius.circular(0),
                               ),
                               child: Text(

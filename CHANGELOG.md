@@ -1,3 +1,8 @@
+### 2.1.8
+
+* Bug fix for screen sharing not displaying in the correct video for the sharer.
+* Update in order of simulcast layers for video quality.
+
 ### 2.1.7
 
 * Support for current version of WebRTC.

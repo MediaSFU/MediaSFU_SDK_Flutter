@@ -89,6 +89,7 @@ class FlexibleVideo extends StatelessWidget {
     return Visibility(
       visible: componentsToRender.isNotEmpty && showAspect,
       child: Container(
+        key: ValueKey(componentsToRender),
         width: customWidth,
         height: customHeight,
         color: const Color.fromARGB(255, 134, 150, 179), // backgroundColor,

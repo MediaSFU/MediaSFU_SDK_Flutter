@@ -832,7 +832,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
     ),
   );
   final ValueNotifier<bool> screenForceFullDisplay = ValueNotifier(false);
-  List<Widget> mainGridStream = [];
+  final ValueNotifier<List<Widget>> mainGridStream = ValueNotifier([]);
   List<List<Widget>> otherGridStreams = [[], []];
   final ValueNotifier<List<Widget>> audioOnlyStreams = ValueNotifier([]);
   final ValueNotifier<List<MediaDeviceInfo>> videoInputs = ValueNotifier([]);
@@ -1506,8 +1506,11 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
   }
 
   void updateShared(bool value) {
-    shared.value = value;
-    mediasfuParameters.shared = value;
+    if (!mounted) return;
+    setState(() {
+      shared.value = value;
+      mediasfuParameters.shared = value;
+    });
     updateSpecificState(widget.options.sourceParameters, 'shared', value);
   }
 
@@ -1925,8 +1928,11 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
   }
 
   void updateLocalStreamScreen(dynamic value) {
-    localStreamScreen.value = value;
-    mediasfuParameters.localStreamScreen = value;
+    if (!mounted) return;
+    setState(() {
+      localStreamScreen.value = value;
+      mediasfuParameters.localStreamScreen = value;
+    });
     updateSpecificState(
         widget.options.sourceParameters, 'localStreamScreen', value);
   }
@@ -2393,7 +2399,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
   void updateMainGridStream(dynamic value) {
     if (!mounted) return;
     setState(() {
-      mainGridStream = value;
+      mainGridStream.value = value;
       mediasfuParameters.mainGridStream = value;
       updateSpecificState(
           widget.options.sourceParameters, 'mainGridStream', value);
@@ -5271,7 +5277,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
         paginationDirection: paginationDirection.value,
         gridSizes: gridSizes.value,
         screenForceFullDisplay: screenForceFullDisplay.value,
-        mainGridStream: mainGridStream,
+        mainGridStream: mainGridStream.value,
         otherGridStreams: otherGridStreams,
         audioOnlyStreams: audioOnlyStreams.value,
         videoInputs: videoInputs.value,
@@ -5963,9 +5969,9 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
                                               rows: 1,
                                               columns: 1,
                                               componentsToRender:
-                                                  mainGridStream,
-                                              showAspect:
-                                                  mainGridStream.isNotEmpty,
+                                                  mainGridStream.value,
+                                              showAspect: mainGridStream
+                                                  .value.isNotEmpty,
                                             )),
                                             ValueListenableBuilder<String>(
                                                 valueListenable:

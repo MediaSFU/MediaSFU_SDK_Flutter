@@ -488,15 +488,6 @@ void updateRoomParametersClient({
         break;
     }
 
-    if (recordingParams?.recordingVideoSupport == true) {
-      if (vParams.encodings.length > 1) {
-        vParams.encodings = vParams.encodings.sublist(0, 1);
-      }
-      if (hParams.encodings.length > 1) {
-        hParams.encodings = hParams.encodings.sublist(0, 1);
-      }
-    }
-
     params.updateVidCons(vdCons);
     params.updateFrameRate(frameRate);
     params.updateHParams(hParams);

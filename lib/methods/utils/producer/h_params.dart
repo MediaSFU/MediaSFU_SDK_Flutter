@@ -7,10 +7,11 @@ import '../../../types/types.dart' show ProducerOptionsType;
 final ProducerOptionsType hParams = ProducerOptionsType(
   encodings: [
     RtpEncodingParameters(
-      rid: 'r0',
-      maxBitrate: 960000,
+      rid: 'r2',
+      maxBitrate: 240000,
       scalabilityMode: 'L1T3',
-      minBitrate: 192000,
+      scaleResolutionDownBy: 4.0,
+      minBitrate: 48000,
     ),
     RtpEncodingParameters(
       rid: 'r1',
@@ -20,11 +21,10 @@ final ProducerOptionsType hParams = ProducerOptionsType(
       minBitrate: 96000,
     ),
     RtpEncodingParameters(
-      rid: 'r2',
-      maxBitrate: 240000,
+      rid: 'r0',
+      maxBitrate: 960000,
       scalabilityMode: 'L1T3',
-      scaleResolutionDownBy: 4.0,
-      minBitrate: 48000,
+      minBitrate: 192000,
     ),
   ],
   codecOptions: ProducerCodecOptions(
