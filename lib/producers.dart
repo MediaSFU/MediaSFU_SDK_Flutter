@@ -1,5 +1,5 @@
 // lib/producers.dart
-library producers;
+library;
 
 export 'package:mediasfu_sdk/producers/socket_receive_methods/user_waiting.dart'
     show userWaiting;

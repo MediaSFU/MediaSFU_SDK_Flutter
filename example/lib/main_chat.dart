@@ -1,4 +1,4 @@
-// ignore_for_file: unused_shown_name, unused_import
+// ignore_for_file: unused_shown_name, unused_import, dead_code
 import 'package:flutter/material.dart';
 import 'package:mediasfu_sdk/mediasfu_sdk.dart';
 

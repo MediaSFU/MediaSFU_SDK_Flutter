@@ -76,7 +76,7 @@ class LoadingModal extends StatelessWidget {
             child: GestureDetector(
               onTap: () {}, // Prevent interactions outside the modal
               child: Container(
-                color: options.backgroundColor.withOpacity(0.99),
+                color: options.backgroundColor.withAlpha((0.5 * 255).toInt()),
               ),
             ),
           ),

@@ -80,9 +80,9 @@ typedef RecordingNoticeType = Future<void> Function(
 /// and initiate specific behavior.
 ///
 /// Parameters:
-/// - [parameters] (Map<String, dynamic>): A dictionary of recording-related properties, containing:
+/// - [parameters] (`Map<String, dynamic>`): A dictionary of recording-related properties, containing:
 ///   - `islevel` (String): The recording level.
-///   - `userRecordingParams` (Map<String, dynamic>): Parameters for the user recording settings.
+///   - `userRecordingParams` (`Map<String, dynamic>`): Parameters for the user recording settings.
 ///   - `recordElapsedTime` (int): Total time elapsed during recording.
 ///   - `recordStartTime` (int): Start time of the recording.
 ///   - `recordStarted` (bool): Whether recording has started.
@@ -94,7 +94,7 @@ typedef RecordingNoticeType = Future<void> Function(
 /// - [state] (String): The current state of the recording (e.g., "pause", "stop").
 /// - [pauseCount] (int): Number of pauses made during the recording.
 /// - [timeDone] (int): Total recording time that has been completed.
-/// - [userRecordingParam] (Map<String, dynamic>?): Optional parameter for user-specific recording configuration.
+/// - [userRecordingParam] (`Map<String, dynamic`>?): Optional parameter for user-specific recording configuration.
 ///
 /// Example usage:
 /// ```dart

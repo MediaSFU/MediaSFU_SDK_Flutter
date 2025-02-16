@@ -1,5 +1,5 @@
 // lib/misc
-library misc;
+library;
 
 //mediasfu functions -- examples
 export 'package:mediasfu_sdk/sockets/socket_manager.dart'

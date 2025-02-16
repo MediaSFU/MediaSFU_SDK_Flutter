@@ -249,7 +249,7 @@ class Pagination extends StatelessWidget {
                       color: options.activePageColor,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.5),
+                          color: Colors.grey.withAlpha((0.5 * 255).toInt()),
                           spreadRadius: 1,
                           blurRadius: 2,
                           offset: const Offset(0, 1),
@@ -264,7 +264,7 @@ class Pagination extends StatelessWidget {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.5),
+                          color: Colors.grey.withAlpha((0.5 * 255).toInt()),
                           spreadRadius: 1,
                           blurRadius: 2,
                           offset: const Offset(0, 1),

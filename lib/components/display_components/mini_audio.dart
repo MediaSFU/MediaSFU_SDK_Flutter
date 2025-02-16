@@ -204,7 +204,7 @@ class _MiniAudioState extends State<MiniAudio> with TickerProviderStateMixin {
                     top: 0,
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 3),
-                      color: Colors.black.withOpacity(0.5),
+                      color: Colors.black.withAlpha((0.5 * 255).toInt()),
                       child: Text(
                         widget.options.name,
                         textAlign: TextAlign.center,

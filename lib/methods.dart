@@ -1,5 +1,5 @@
 // lib/methods.dart
-library methods;
+library;
 
 export 'package:mediasfu_sdk/methods/utils/initial_values.dart'
     show initialValuesState;

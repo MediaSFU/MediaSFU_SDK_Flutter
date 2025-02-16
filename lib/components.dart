@@ -1,5 +1,5 @@
 // lib/components.dart
-library components;
+library;
 
 export 'package:mediasfu_sdk/components/display_components/loading_modal.dart'
     show LoadingModal;

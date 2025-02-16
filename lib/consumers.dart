@@ -1,5 +1,5 @@
 // lib/consumers.dart
-library consumers;
+library;
 
 export 'package:mediasfu_sdk/consumers/stream_success_video.dart'
     show streamSuccessVideo;

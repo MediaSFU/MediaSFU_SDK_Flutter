@@ -70,7 +70,7 @@ typedef RequestsModalType = Widget Function({RequestsModalOptions options});
 ///   - `onRequestClose` (VoidCallback): Closes the modal.
 ///   - `requestCounter` (int): Count of active requests, displayed in the header.
 ///   - `onRequestFilterChange` (Function): Updates the filter query for the request list.
-///   - `requestList` (List<Request>): List of current requests to display.
+///   - `requestList` (List&lt;Request&gt;): List of current requests to display.
 ///   - `onRequestItemPress` (RespondToRequestsType): Callback for handling request item actions.
 ///   - `updateRequestList` (Function): Updates the list of requests.
 ///   - `roomName` (String): Name of the room associated with the requests.

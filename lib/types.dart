@@ -1,4 +1,4 @@
 // lib/types.dart
-library types;
+library;
 
 export 'package:mediasfu_sdk/types/types.dart';

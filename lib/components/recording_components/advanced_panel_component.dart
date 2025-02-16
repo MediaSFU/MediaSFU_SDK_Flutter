@@ -185,6 +185,7 @@ class _AdvancedPanelComponentState extends State<AdvancedPanelComponent> {
 
   void onSelectColor(Color color) {
     String colorHex =
+        // ignore: deprecated_member_use
         color.value.toRadixString(16).padLeft(8, '0').substring(2);
     String colorString = '#$colorHex';
 
@@ -372,6 +373,7 @@ class _AdvancedPanelComponentState extends State<AdvancedPanelComponent> {
     required VoidCallback onColorSelected,
   }) {
     String colorHex =
+        // ignore: deprecated_member_use
         color.value.toRadixString(16).padLeft(8, '0').substring(2);
     String colorString = '#$colorHex';
 
