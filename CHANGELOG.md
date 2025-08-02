@@ -1,3 +1,7 @@
+### 2.1.9
+
+* Support for the latest version of WebRTC.
+
 ### 2.1.8
 
 * Bug fix for screen sharing not displaying in the correct video for the sharer.
