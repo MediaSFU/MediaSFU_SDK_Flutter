@@ -2,7 +2,7 @@
 This is an example Flutter project demonstrating the usage of the Mediasfu Flutter SDK.
 
 ## Overview
-This example project showcases different usage scenarios of the Mediasfu Flutter SDK, including broadcasting and chatting functionalities.
+This example project showcases different usage scenarios of the Mediasfu Flutter SDK, including broadcasting, chatting, webinar, conference, and generic functionalities.
 
 ### Usage
 To run the example project, you can use specific usage scenarios provided in the following files:
@@ -12,7 +12,8 @@ To run the example project, you can use specific usage scenarios provided in the
 - `lib/main_webinar.dart`: Demonstrates webinar functionality.
 - `lib/main_conference.dart`: Demonstrates conference functionality.
 - `lib/main_generic.dart`: Demonstrates generic usage scenarios.
-- Add more specific usage scenarios as needed.
+- `lib/custom_builders_example.dart`: Demonstrates custom UI builders for VideoCard, AudioCard, and MiniCard components.
+- `lib/complete_custom_component_example.dart`: Demonstrates complete custom interface replacement using CustomComponentType.
 
 Open the desired file and run the project using the Flutter CLI:
 
@@ -21,6 +22,51 @@ flutter run lib/main_broadcast.dart
 ```
 
 Replace `main_broadcast.dart` with the file name corresponding to the scenario you want to test.
+
+## Custom Components
+The MediaSFU SDK provides powerful customization options:
+
+### 1. Custom Builders
+Use custom builders to replace individual UI components like VideoCard, AudioCard, and MiniCard:
+
+```dart
+MediasfuGeneric(
+  options: MediasfuGenericOptions(
+    customVideoCard: myCustomVideoCard,
+    customAudioCard: myCustomAudioCard,
+    customMiniCard: myCustomMiniCard,
+  ),
+)
+```
+
+### 2. Complete Custom Interface
+Use `CustomComponentType` to replace the entire MediaSFU interface with your own widget while still accessing all MediaSFU functionality:
+
+```dart
+MediasfuGeneric(
+  options: MediasfuGenericOptions(
+    customComponent: myCustomInterface,
+  ),
+)
+
+Widget myCustomInterface({required MediasfuParameters parameters}) {
+  return Scaffold(
+    // Your completely custom UI
+    // Access all MediaSFU functionality through parameters
+    body: Column(
+      children: [
+        // Custom header, controls, participants list, etc.
+        ElevatedButton(
+          onPressed: () => parameters.clickVideo(
+            ClickVideoOptions(parameters: parameters),
+          ),
+          child: Text('Toggle Video'),
+        ),
+      ],
+    ),
+  );
+}
+```
 
 ## Chat MediaSFU 
 ```dart 

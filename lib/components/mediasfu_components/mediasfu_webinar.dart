@@ -337,6 +337,7 @@ import '../../types/types.dart'
 import '../../methods/utils/create_response_join_room.dart'
     show createResponseJoinRoom, CreateResponseJoinRoomOptions;
 import '../../methods/utils/mediasfu_parameters.dart' show MediasfuParameters;
+import '../../types/custom_builders.dart' show VideoCardType, AudioCardType, MiniCardType, CustomComponentType;
 
 class MediasfuWebinarOptions {
   PreJoinPageType? preJoinPageWidget;
@@ -355,6 +356,14 @@ class MediasfuWebinarOptions {
   JoinRoomOnMediaSFUType? joinMediaSFURoom;
   CreateRoomOnMediaSFUType? createMediaSFURoom;
 
+  // Custom builders for VideoCard, AudioCard, and MiniCard components
+  VideoCardType? customVideoCard;
+  AudioCardType? customAudioCard;
+  MiniCardType? customMiniCard;
+  
+  // Custom component widget - allows complete replacement of the MediaSFU interface
+  CustomComponentType? customComponent;
+
   MediasfuWebinarOptions({
     this.preJoinPageWidget,
     this.localLink = '',
@@ -371,7 +380,23 @@ class MediasfuWebinarOptions {
     this.noUIPreJoinOptionsJoin,
     this.joinMediaSFURoom = joinRoomOnMediaSFU,
     this.createMediaSFURoom = createRoomOnMediaSFU,
+    this.customVideoCard,
+    this.customAudioCard,
+    this.customMiniCard,
+    this.customComponent,
   });
+
+  void updateCustomVideoCard(VideoCardType? value) {
+    customVideoCard = value;
+  }
+
+  void updateCustomAudioCard(AudioCardType? value) {
+    customAudioCard = value;
+  }
+
+  void updateCustomMiniCard(MiniCardType? value) {
+    customMiniCard = value;
+  }
 }
 
 /// `MediasfuWebinar` - A generic widget for initializing and managing Mediasfu functionalities.
@@ -5803,6 +5828,12 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
         updateAnnotateScreenStream: updateAnnotateScreenStream,
         updateMainScreenCanvas: updateMainScreenCanvas,
         updateIsScreenboardModalVisible: updateIsScreenboardModalVisible,
+        
+        // Custom builder update functions
+        updateCustomVideoCard: widget.options.updateCustomVideoCard,
+        updateCustomAudioCard: widget.options.updateCustomAudioCard,
+        updateCustomMiniCard: widget.options.updateCustomMiniCard,
+        
         getUpdatedAllParams: () => mediasfuParameters);
 
     if (widget.options.returnUI != null && widget.options.returnUI == false) {
@@ -6286,6 +6317,11 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
   }
 
   Widget _buildRoomInterface() {
+    // If a custom component is provided, use it instead of the default interface
+    if (widget.options.customComponent != null) {
+      return widget.options.customComponent!(parameters: mediasfuParameters);
+    }
+    
     return widget.options.returnUI != null && widget.options.returnUI == false
         ? Stack(
             children: [

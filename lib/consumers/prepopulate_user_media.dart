@@ -3,10 +3,12 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import '../components/display_components/audio_card.dart';
-import '../components/display_components/mini_card.dart';
-import '../components/display_components/video_card.dart';
+import '../components/display_components/audio_card.dart' hide AudioCardType;
+import '../components/display_components/mini_card.dart' hide MiniCardType;
+import '../components/display_components/video_card.dart' hide VideoCardType;
 import '../types/types.dart' show Participant, Stream, EventType, MediaStream;
+import '../types/custom_builders.dart'
+    show VideoCardType, AudioCardType, MiniCardType;
 
 /// Parameters for the prepopulateUserMedia function, implementing multiple interfaces
 /// to support flexible and detailed media grid configurations for participants.
@@ -42,6 +44,11 @@ abstract class PrepopulateUserMediaParameters
   MediaStream? get virtualStream;
   bool get keepBackground;
   bool get annotateScreenStream;
+
+  // Custom builder functions
+  VideoCardType? get customVideoCard;
+  AudioCardType? get customAudioCard;
+  MiniCardType? get customMiniCard;
 
   // Update functions as abstract getters
   void Function(String) get updateMainScreenPerson;
@@ -318,21 +325,35 @@ Future<List<Widget>?> prepopulateUserMedia(
           // Whiteboard is active (additional logic if needed)
         } else {
           newComponent.add(
-            VideoCard(
-              options: VideoCardOptions(
-                videoStream: hostStream.stream,
-                remoteProducerId: host.ScreenID ?? host.name,
-                eventType: eventType,
-                forceFullDisplay: forceFullDisplay,
-                participant: host,
-                backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
-                showControls: false,
-                showInfo: true,
-                name: host.name,
-                doMirror: false,
-                parameters: parameters,
-              ),
-            ),
+            parameters.customVideoCard != null
+                ? parameters.customVideoCard!(
+                    participant: host,
+                    stream: hostStream,
+                    width: double.infinity,
+                    height: double.infinity,
+                    showControls: false,
+                    showInfo: true,
+                    name: host.name,
+                    doMirror: "false",
+                    backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
+                    parameters: parameters,
+                  )
+                : VideoCard(
+                    options: VideoCardOptions(
+                      videoStream: hostStream.stream,
+                      remoteProducerId: host.ScreenID ?? host.name,
+                      eventType: eventType,
+                      forceFullDisplay: forceFullDisplay,
+                      participant: host,
+                      backgroundColor:
+                          const Color.fromRGBO(217, 227, 234, 0.99),
+                      showControls: false,
+                      showInfo: true,
+                      name: host.name,
+                      doMirror: false,
+                      parameters: parameters,
+                    ),
+                  ),
           );
         }
 
@@ -355,20 +376,34 @@ Future<List<Widget>?> prepopulateUserMedia(
         if (islevel == '2' && videoAlreadyOn) {
           // Admin's video is on
           newComponent.add(
-            VideoCard(
-                options: VideoCardOptions(
-              videoStream: localStreamVideo,
-              remoteProducerId: host.videoID,
-              eventType: eventType,
-              forceFullDisplay: forceFullDisplay,
-              participant: host,
-              backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
-              showControls: false,
-              showInfo: true,
-              name: host.name,
-              doMirror: true,
-              parameters: parameters,
-            )),
+            parameters.customVideoCard != null
+                ? parameters.customVideoCard!(
+                    participant: host,
+                    stream: Stream(
+                        stream: localStreamVideo, producerId: host.videoID),
+                    width: double.infinity,
+                    height: double.infinity,
+                    showControls: false,
+                    showInfo: true,
+                    name: host.name,
+                    doMirror: "true",
+                    backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
+                    parameters: parameters,
+                  )
+                : VideoCard(
+                    options: VideoCardOptions(
+                    videoStream: localStreamVideo,
+                    remoteProducerId: host.videoID,
+                    eventType: eventType,
+                    forceFullDisplay: forceFullDisplay,
+                    participant: host,
+                    backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
+                    showControls: false,
+                    showInfo: true,
+                    name: host.name,
+                    doMirror: true,
+                    parameters: parameters,
+                  )),
           );
 
           updateMainGridStream(newComponent);
@@ -395,22 +430,32 @@ Future<List<Widget>?> prepopulateUserMedia(
             // Audio is on
             try {
               newComponent.add(
-                AudioCard(
-                    options: AudioCardOptions(
-                  name: host.name,
-                  barColor: const Color.fromARGB(255, 229, 20, 20),
-                  textColor: const Color.fromARGB(255, 17, 16, 16),
-                  customStyle: const BoxDecoration(
-                    color: Colors.transparent,
-                  ),
-                  controlsPosition: 'topLeft',
-                  infoPosition: 'topRight',
-                  roundedImage: true,
-                  parameters: parameters,
-                  participant: host,
-                  showControls: islevel != '2',
-                  backgroundColor: Colors.transparent,
-                )),
+                parameters.customAudioCard != null
+                    ? parameters.customAudioCard!(
+                        name: host.name,
+                        barColor: false, // Assuming red color means active
+                        textColor: const Color.fromARGB(255, 17, 16, 16),
+                        imageSource: '', // No image property in Participant
+                        roundedImage: 50.0,
+                        imageStyle: Colors.transparent,
+                        parameters: parameters,
+                      )
+                    : AudioCard(
+                        options: AudioCardOptions(
+                        name: host.name,
+                        barColor: const Color.fromARGB(255, 229, 20, 20),
+                        textColor: const Color.fromARGB(255, 17, 16, 16),
+                        customStyle: const BoxDecoration(
+                          color: Colors.transparent,
+                        ),
+                        controlsPosition: 'topLeft',
+                        infoPosition: 'topRight',
+                        roundedImage: true,
+                        parameters: parameters,
+                        participant: host,
+                        showControls: islevel != '2',
+                        backgroundColor: Colors.transparent,
+                      )),
               );
 
               updateMainGridStream(newComponent);
@@ -431,14 +476,26 @@ Future<List<Widget>?> prepopulateUserMedia(
             // Audio is off
             try {
               newComponent.add(
-                MiniCard(
-                  options: MiniCardOptions(
-                      initials: name,
-                      fontSize: 20,
-                      customStyle: const BoxDecoration(
-                        color: Colors.transparent,
-                      )),
-                ),
+                parameters.customMiniCard != null
+                    ? parameters.customMiniCard!(
+                        initials: name,
+                        fontSize: "20",
+                        name: host.name,
+                        showVideoIcon: false,
+                        showAudioIcon: false,
+                        imageSource: '',
+                        roundedImage: 50.0,
+                        imageStyle: Colors.transparent,
+                        parameters: parameters,
+                      )
+                    : MiniCard(
+                        options: MiniCardOptions(
+                            initials: name,
+                            fontSize: 20,
+                            customStyle: const BoxDecoration(
+                              color: Colors.transparent,
+                            )),
+                      ),
               );
 
               updateMainGridStream(newComponent);
@@ -463,20 +520,35 @@ Future<List<Widget>?> prepopulateUserMedia(
           // Screen share is on
           try {
             newComponent.add(
-              VideoCard(
-                  options: VideoCardOptions(
-                videoStream: hostStream!.stream,
-                remoteProducerId: host.ScreenID ?? host.name,
-                eventType: eventType,
-                forceFullDisplay: forceFullDisplay,
-                participant: host,
-                backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
-                showControls: false,
-                showInfo: true,
-                name: host.name,
-                doMirror: false,
-                parameters: parameters,
-              )),
+              parameters.customVideoCard != null
+                  ? parameters.customVideoCard!(
+                      participant: host,
+                      stream: hostStream!,
+                      width: double.infinity,
+                      height: double.infinity,
+                      showControls: false,
+                      showInfo: true,
+                      name: host.name,
+                      doMirror: "false",
+                      backgroundColor:
+                          const Color.fromRGBO(217, 227, 234, 0.99),
+                      parameters: parameters,
+                    )
+                  : VideoCard(
+                      options: VideoCardOptions(
+                      videoStream: hostStream!.stream,
+                      remoteProducerId: host.ScreenID ?? host.name,
+                      eventType: eventType,
+                      forceFullDisplay: forceFullDisplay,
+                      participant: host,
+                      backgroundColor:
+                          const Color.fromRGBO(217, 227, 234, 0.99),
+                      showControls: false,
+                      showInfo: true,
+                      name: host.name,
+                      doMirror: false,
+                      parameters: parameters,
+                    )),
             );
 
             updateMainGridStream(newComponent);
@@ -519,20 +591,35 @@ Future<List<Widget>?> prepopulateUserMedia(
           try {
             if (hostStream.stream != null) {
               newComponent.add(
-                VideoCard(
-                    options: VideoCardOptions(
-                  videoStream: hostStream.stream,
-                  remoteProducerId: host.videoID,
-                  eventType: eventType,
-                  forceFullDisplay: forceFullDisplay,
-                  participant: host,
-                  backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
-                  showControls: false,
-                  showInfo: true,
-                  name: host.name,
-                  doMirror: member == host.name,
-                  parameters: parameters,
-                )),
+                parameters.customVideoCard != null
+                    ? parameters.customVideoCard!(
+                        participant: host,
+                        stream: hostStream,
+                        width: double.infinity,
+                        height: double.infinity,
+                        showControls: false,
+                        showInfo: true,
+                        name: host.name,
+                        doMirror: member == host.name ? "true" : "false",
+                        backgroundColor:
+                            const Color.fromRGBO(217, 227, 234, 0.99),
+                        parameters: parameters,
+                      )
+                    : VideoCard(
+                        options: VideoCardOptions(
+                        videoStream: hostStream.stream,
+                        remoteProducerId: host.videoID,
+                        eventType: eventType,
+                        forceFullDisplay: forceFullDisplay,
+                        participant: host,
+                        backgroundColor:
+                            const Color.fromRGBO(217, 227, 234, 0.99),
+                        showControls: false,
+                        showInfo: true,
+                        name: host.name,
+                        doMirror: member == host.name,
+                        parameters: parameters,
+                      )),
               );
 
               updateMainGridStream(newComponent);
@@ -541,14 +628,26 @@ Future<List<Widget>?> prepopulateUserMedia(
               mainScreenPerson = host.name;
             } else {
               newComponent.add(
-                MiniCard(
-                  options: MiniCardOptions(
-                      initials: name,
-                      fontSize: 20,
-                      customStyle: const BoxDecoration(
-                        color: Colors.transparent,
-                      )),
-                ),
+                parameters.customMiniCard != null
+                    ? parameters.customMiniCard!(
+                        initials: name,
+                        fontSize: "20",
+                        name: host.name,
+                        showVideoIcon: false,
+                        showAudioIcon: false,
+                        imageSource: '',
+                        roundedImage: 50.0,
+                        imageStyle: Colors.transparent,
+                        parameters: parameters,
+                      )
+                    : MiniCard(
+                        options: MiniCardOptions(
+                            initials: name,
+                            fontSize: 20,
+                            customStyle: const BoxDecoration(
+                              color: Colors.transparent,
+                            )),
+                      ),
               );
 
               updateMainGridStream(newComponent);
@@ -572,14 +671,26 @@ Future<List<Widget>?> prepopulateUserMedia(
       // Host is null, add a mini card
       try {
         newComponent.add(
-          MiniCard(
-            options: MiniCardOptions(
-                initials: name,
-                fontSize: 20,
-                customStyle: const BoxDecoration(
-                  color: Colors.transparent,
-                )),
-          ),
+          parameters.customMiniCard != null
+              ? parameters.customMiniCard!(
+                  initials: name,
+                  fontSize: "20",
+                  name: name,
+                  showVideoIcon: false,
+                  showAudioIcon: false,
+                  imageSource: '',
+                  roundedImage: 50.0,
+                  imageStyle: Colors.transparent,
+                  parameters: parameters,
+                )
+              : MiniCard(
+                  options: MiniCardOptions(
+                      initials: name,
+                      fontSize: 20,
+                      customStyle: const BoxDecoration(
+                        color: Colors.transparent,
+                      )),
+                ),
         );
 
         updateMainGridStream(newComponent);

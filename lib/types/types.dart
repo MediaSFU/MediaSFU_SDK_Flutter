@@ -1432,6 +1432,9 @@ class ProducerOptionsType {
         return RtpEncodingParameters(
           rid: e['rid'] as String?,
           maxBitrate: e['maxBitrate'] as int?,
+          minBitrate: e['minBitrate'] as int?,
+          scalabilityMode: e['scalabilityMode'] as String?,
+          scaleResolutionDownBy: e['scaleResolutionDownBy'] as double?,
           // Add other fields if necessary based on RtpEncodingParameters definition
         );
       }).toList(),
@@ -1467,6 +1470,9 @@ class ProducerOptionsType {
         return {
           'rid': e.rid,
           'maxBitrate': e.maxBitrate,
+          'minBitrate': e.minBitrate,
+          'scalabilityMode': e.scalabilityMode,
+          'scaleResolutionDownBy': e.scaleResolutionDownBy,
           // Add other fields if necessary based on RtpEncodingParameters definition
         };
       }).toList(),
@@ -1898,6 +1904,9 @@ class CreateRoomOptions {
   final String safeRoomAction; // 'warn', 'kick', or 'ban'
   final bool dataBuffer;
   final String bufferType; // 'images', 'audio', or 'all'
+  final bool supportSIP; // Whether to support SIP
+  final String directionSIP; // 'inbound', 'outbound', or 'both'
+  final bool preferPCMA; // Whether to prefer PCMA codec for SIP
 
   CreateRoomOptions({
     required this.action,
@@ -1917,6 +1926,9 @@ class CreateRoomOptions {
     required this.safeRoomAction,
     required this.dataBuffer,
     required this.bufferType,
+    required this.supportSIP,
+    required this.directionSIP,
+    required this.preferPCMA,
   });
 
   // Convert CreateRoomOptions to a Map
@@ -1939,6 +1951,9 @@ class CreateRoomOptions {
       'safeRoomAction': safeRoomAction,
       'dataBuffer': dataBuffer,
       'bufferType': bufferType,
+      'supportSIP': supportSIP,
+      'directionSIP': directionSIP,
+      'preferPCMA': preferPCMA,
     };
   }
 
@@ -1963,6 +1978,9 @@ class CreateRoomOptions {
       safeRoomAction: map['safeRoomAction'] as String,
       dataBuffer: map['dataBuffer'] as bool,
       bufferType: map['bufferType'] as String,
+      supportSIP: map['supportSIP'] as bool,
+      directionSIP: map['directionSIP'] as String,
+      preferPCMA: map['preferPCMA'] as bool,
     );
   }
 }
@@ -1986,6 +2004,9 @@ class CreateMediaSFURoomOptions {
   String? safeRoomAction; // Action for the safe room
   bool? dataBuffer; // Whether to return data buffer
   String? bufferType; // Type of buffer data
+  bool? supportSIP; // Whether to support SIP
+  String? directionSIP; // Direction of SIP ('inbound', 'outbound', or 'both')
+  bool? preferPCMA; // Whether to prefer PCMA codec for SIP
 
   CreateMediaSFURoomOptions({
     required this.action,
@@ -2003,6 +2024,9 @@ class CreateMediaSFURoomOptions {
     this.safeRoomAction = "kick",
     this.dataBuffer = false,
     this.bufferType = "all",
+    this.supportSIP = false,
+    this.directionSIP = "both",
+    this.preferPCMA = false,
   });
 
   // Convert CreateMediaSFURoomOptions to a Map
@@ -2023,6 +2047,9 @@ class CreateMediaSFURoomOptions {
       'safeRoomAction': safeRoomAction,
       'dataBuffer': dataBuffer,
       'bufferType': bufferType,
+      'supportSIP': supportSIP,
+      'directionSIP': directionSIP,
+      'preferPCMA': preferPCMA,
     };
   }
 
@@ -2055,6 +2082,9 @@ class CreateMediaSFURoomOptions {
           map['safeRoomAction'] != null ? map['safeRoomAction'] as String : "",
       dataBuffer: map['dataBuffer'] != null ? map['dataBuffer'] as bool : false,
       bufferType: map['bufferType'] != null ? map['bufferType'] as String : "",
+      supportSIP: map['supportSIP'] != null ? map['supportSIP'] as bool : false,
+      directionSIP: map['directionSIP'] != null ? map['directionSIP'] as String : "both",
+      preferPCMA: map['preferPCMA'] != null ? map['preferPCMA'] as bool : false,
     );
   }
 }

@@ -463,28 +463,20 @@ void updateRoomParametersClient({
 
     switch (targetResolution) {
       case 'hd':
-        hParams.encodings = _updateEncodingBitrates(hParams.encodings, 4)
-            as List<RtpEncodingParameters>;
-        vParams.encodings = _updateEncodingBitrates(vParams.encodings, 4)
-            as List<RtpEncodingParameters>;
+        hParams.encodings = _updateEncodingBitrates(hParams.encodings, 4);
+        vParams.encodings = _updateEncodingBitrates(vParams.encodings, 4);
         break;
       case 'fhd':
-        hParams.encodings = _updateEncodingBitrates(hParams.encodings, 8)
-            as List<RtpEncodingParameters>;
-        vParams.encodings = _updateEncodingBitrates(vParams.encodings, 8)
-            as List<RtpEncodingParameters>;
+        hParams.encodings = _updateEncodingBitrates(hParams.encodings, 8);
+        vParams.encodings = _updateEncodingBitrates(vParams.encodings, 8);
         break;
       case 'qhd':
-        hParams.encodings = _updateEncodingBitrates(hParams.encodings, 16)
-            as List<RtpEncodingParameters>;
-        vParams.encodings = _updateEncodingBitrates(vParams.encodings, 16)
-            as List<RtpEncodingParameters>;
+        hParams.encodings = _updateEncodingBitrates(hParams.encodings, 16);
+        vParams.encodings = _updateEncodingBitrates(vParams.encodings, 16);
         break;
       case 'QnHD':
-        hParams.encodings = _updateEncodingBitrates(hParams.encodings, 0.25)
-            as List<RtpEncodingParameters>;
-        vParams.encodings = _updateEncodingBitrates(vParams.encodings, 0.25)
-            as List<RtpEncodingParameters>;
+        hParams.encodings = _updateEncodingBitrates(hParams.encodings, 0.25);
+        vParams.encodings = _updateEncodingBitrates(vParams.encodings, 0.25);
         break;
     }
 
@@ -513,16 +505,39 @@ void updateRoomParametersClient({
 }
 
 /// Helper function to adjust bitrate for encoding configurations.
-List<Map<String, dynamic>> _updateEncodingBitrates(
+List<RtpEncodingParameters> _updateEncodingBitrates(
     List encodings, double factor) {
   return encodings.map((encoding) {
-    final updatedEncoding = Map<String, dynamic>.from(encoding);
-    if (updatedEncoding['maxBitrate'] != null) {
-      updatedEncoding['maxBitrate'] =
-          (updatedEncoding['maxBitrate'] * factor).toInt();
-      updatedEncoding['initialAvailableBitrate'] =
-          (updatedEncoding['initialAvailableBitrate'] * factor).toInt();
+    // If encoding is already an RtpEncodingParameters object
+    if (encoding is RtpEncodingParameters) {
+      return RtpEncodingParameters(
+        rid: encoding.rid,
+        maxBitrate: encoding.maxBitrate != null
+            ? (encoding.maxBitrate! * factor).toInt()
+            : null,
+        minBitrate: encoding.minBitrate != null
+            ? (encoding.minBitrate! * factor).toInt()
+            : null,
+        scalabilityMode: encoding.scalabilityMode,
+        scaleResolutionDownBy: encoding.scaleResolutionDownBy,
+      );
     }
-    return updatedEncoding;
+
+    // If encoding is a Map, convert it to RtpEncodingParameters
+    final encodingMap = encoding is Map<String, dynamic>
+        ? encoding
+        : Map<String, dynamic>.from(encoding);
+
+    return RtpEncodingParameters(
+      rid: encodingMap['rid'] as String?,
+      maxBitrate: encodingMap['maxBitrate'] != null
+          ? (encodingMap['maxBitrate'] * factor).toInt()
+          : null,
+      minBitrate: encodingMap['minBitrate'] != null
+          ? (encodingMap['minBitrate'] * factor).toInt()
+          : null,
+      scalabilityMode: encodingMap['scalabilityMode'] as String?,
+      scaleResolutionDownBy: encodingMap['scaleResolutionDownBy'] as double?,
+    );
   }).toList();
 }

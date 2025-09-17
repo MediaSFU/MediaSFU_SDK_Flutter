@@ -236,6 +236,7 @@ import '../../types/types.dart'
 import '../../methods/utils/create_response_join_room.dart'
     show createResponseJoinRoom, CreateResponseJoinRoomOptions;
 import '../../methods/utils/mediasfu_parameters.dart' show MediasfuParameters;
+import '../../types/custom_builders.dart' show VideoCardType, AudioCardType, MiniCardType, CustomComponentType;
 
 class MediasfuChatOptions {
   PreJoinPageType? preJoinPageWidget;
@@ -254,6 +255,14 @@ class MediasfuChatOptions {
   JoinRoomOnMediaSFUType? joinMediaSFURoom;
   CreateRoomOnMediaSFUType? createMediaSFURoom;
 
+  // Custom builders for VideoCard, AudioCard, and MiniCard components
+  VideoCardType? customVideoCard;
+  AudioCardType? customAudioCard;
+  MiniCardType? customMiniCard;
+  
+  // Custom component widget - allows complete replacement of the MediaSFU interface
+  CustomComponentType? customComponent;
+
   MediasfuChatOptions({
     this.preJoinPageWidget,
     this.localLink = '',
@@ -270,6 +279,10 @@ class MediasfuChatOptions {
     this.noUIPreJoinOptionsJoin,
     this.joinMediaSFURoom = joinRoomOnMediaSFU,
     this.createMediaSFURoom = createRoomOnMediaSFU,
+    this.customVideoCard,
+    this.customAudioCard,
+    this.customMiniCard,
+    this.customComponent,
   });
 }
 
@@ -3197,6 +3210,21 @@ class _MediasfuChatState extends State<MediasfuChat> {
     updateSpecificState(widget.options.sourceParameters, 'customImage', value);
   }
 
+  void updateCustomVideoCard(VideoCardType? value) {
+    mediasfuParameters.customVideoCard = value;
+    updateSpecificState(widget.options.sourceParameters, 'customVideoCard', value);
+  }
+
+  void updateCustomAudioCard(AudioCardType? value) {
+    mediasfuParameters.customAudioCard = value;
+    updateSpecificState(widget.options.sourceParameters, 'customAudioCard', value);
+  }
+
+  void updateCustomMiniCard(MiniCardType? value) {
+    mediasfuParameters.customMiniCard = value;
+    updateSpecificState(widget.options.sourceParameters, 'customMiniCard', value);
+  }
+
   void updateSelectedImage(String? value) {
     selectedImage.value = value;
     mediasfuParameters.selectedImage = value;
@@ -5030,6 +5058,17 @@ class _MediasfuChatState extends State<MediasfuChat> {
         updateAnnotateScreenStream: updateAnnotateScreenStream,
         updateMainScreenCanvas: updateMainScreenCanvas,
         updateIsScreenboardModalVisible: updateIsScreenboardModalVisible,
+        
+        // Custom builders
+        customVideoCard: widget.options.customVideoCard,
+        customAudioCard: widget.options.customAudioCard,
+        customMiniCard: widget.options.customMiniCard,
+        
+        // Custom builder update functions
+        updateCustomVideoCard: updateCustomVideoCard,
+        updateCustomAudioCard: updateCustomAudioCard,
+        updateCustomMiniCard: updateCustomMiniCard,
+        
         getUpdatedAllParams: () => mediasfuParameters);
 
     if (widget.options.returnUI != null && widget.options.returnUI == false) {
@@ -5338,6 +5377,11 @@ class _MediasfuChatState extends State<MediasfuChat> {
   }
 
   Widget _buildRoomInterface() {
+    // If a custom component is provided, use it instead of the default interface
+    if (widget.options.customComponent != null) {
+      return widget.options.customComponent!(parameters: mediasfuParameters);
+    }
+    
     return widget.options.returnUI != null && widget.options.returnUI == false
         ? Stack(
             children: [

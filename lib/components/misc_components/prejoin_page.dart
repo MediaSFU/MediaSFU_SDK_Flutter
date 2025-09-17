@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../../methods/utils/create_room_on_media_sfu.dart'
     show createRoomOnMediaSFU;
@@ -650,8 +652,71 @@ class _PreJoinPageState extends State<PreJoinPage> {
         localData!.apiUserName!.isNotEmpty &&
         localData!.apiKey != null &&
         localData!.apiKey!.isNotEmpty) {
-      // Prepare payload for MediaSFU
+      // Store references to prevent race conditions
+      final apiUserName = localData!.apiUserName!;
+      final apiKey = localData!.apiKey!;
 
+      // Build a unique identifier for this create request
+      final roomIdentifier = 'local_create_${name}_${durationInt}_$capacityInt';
+      final pendingKey = 'prejoin_pending_$roomIdentifier';
+      const pendingTimeout = 30 * 1000; // 30 seconds
+
+      // Check pending status to prevent duplicate requests
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final pendingRequest = prefs.getString(pendingKey);
+        if (pendingRequest != null) {
+          final pendingData = jsonDecode(pendingRequest);
+          final timeSincePending = DateTime.now().millisecondsSinceEpoch -
+              ((pendingData['timestamp'] as num?)?.toInt() ?? 0);
+          if (timeSincePending < pendingTimeout) {
+            pending = false;
+            widget.options.parameters.updateIsLoadingModalVisible(false);
+            if (mounted) {
+              setState(() {
+                _error = 'Room creation already in progress';
+              });
+            }
+            return;
+          } else {
+            // Stale lock, clear it
+            await prefs.remove(pendingKey);
+          }
+        }
+      } catch (e) {
+        // Ignore SharedPreferences read/JSON errors
+      }
+
+      // Mark request as pending
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(
+          pendingKey,
+          jsonEncode({
+            'timestamp': DateTime.now().millisecondsSinceEpoch,
+            'payload': {
+              'action': 'create',
+              'userName': name,
+              'duration': durationInt,
+              'capacity': capacityInt,
+            },
+          }),
+        );
+
+        // Auto-clear the pending flag after timeout to avoid stale locks
+        Future.delayed(const Duration(milliseconds: pendingTimeout), () async {
+          try {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.remove(pendingKey);
+          } catch (e) {
+            // Ignore errors
+          }
+        });
+      } catch (e) {
+        // Ignore SharedPreferences write errors
+      }
+
+      // Prepare payload for MediaSFU
       final payloadMap = {
         'action': 'create',
         'duration': durationInt,
@@ -665,42 +730,68 @@ class _PreJoinPageState extends State<PreJoinPage> {
               widget.options.noUIPreJoinOptionsCreate != null
           ? widget.options.noUIPreJoinOptionsCreate!
           : CreateMediaSFURoomOptions.fromMap(payloadMap);
-      // Create room on MediaSFU
-      final response = await widget.options.createMediaSFURoom!(
-        CreateMediaSFUOptions(
-          payload: payload,
-          apiUserName: localData!.apiUserName!,
-          apiKey: localData!.apiKey!,
-          localLink: widget.options.localLink ?? '',
-        ),
-      );
 
-      if (response.success && response.data is CreateJoinRoomResponse) {
-        await checkLimitsAndMakeRequest(
-          apiUserName: response.data.roomName,
-          apiToken: response.data.secret,
-          link: response.data.link,
-          userName: createData.userName,
-          parameters: widget.options.parameters,
-          validate: false,
+      try {
+        // Create room on MediaSFU
+        final response = await widget.options.createMediaSFURoom!(
+          CreateMediaSFUOptions(
+            payload: payload,
+            apiUserName: apiUserName,
+            apiKey: apiKey,
+            localLink: widget.options.localLink ?? '',
+          ),
         );
-        final data = response.data;
-        // Update createData with MediaSFU details
-        createData.eventID = data.roomName;
-        createData.secureCode = data.secureCode;
-        createData.mediasfuURL = data.publicURL;
 
-        // Proceed to create local room
-        await _createRoomOnLocalServer(
-          createData: createData,
-          link: data.link,
-        );
-      } else {
+        // Clear pending status on completion
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.remove(pendingKey);
+        } catch (e) {
+          // Ignore errors
+        }
+
+        if (response.success && response.data is CreateJoinRoomResponse) {
+          await checkLimitsAndMakeRequest(
+            apiUserName: response.data.roomName,
+            apiToken: response.data.secret,
+            link: response.data.link,
+            userName: createData.userName,
+            parameters: widget.options.parameters,
+            validate: false,
+          );
+          final data = response.data;
+          // Update createData with MediaSFU details
+          createData.eventID = data.roomName;
+          createData.secureCode = data.secureCode;
+          createData.mediasfuURL = data.publicURL;
+
+          // Proceed to create local room
+          await _createRoomOnLocalServer(
+            createData: createData,
+            link: data.link,
+          );
+        } else {
+          pending = false;
+          widget.options.parameters.updateIsLoadingModalVisible(false);
+          if (mounted) {
+            setState(() {
+              _error = 'Unable to create room on MediaSFU.';
+            });
+          }
+        }
+      } catch (error) {
+        // Clear pending status on error
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.remove(pendingKey);
+        } catch (e) {
+          // Ignore errors
+        }
         pending = false;
         widget.options.parameters.updateIsLoadingModalVisible(false);
         if (mounted) {
           setState(() {
-            _error = 'Unable to create room on MediaSFU.';
+            _error = 'Unable to create room on MediaSFU. $error';
           });
         }
       }
@@ -803,6 +894,67 @@ class _PreJoinPageState extends State<PreJoinPage> {
         ? widget.options.noUIPreJoinOptionsCreate!
         : CreateMediaSFURoomOptions.fromMap(payloadMap);
 
+    // Build a unique identifier for this create request (non-local)
+    final roomIdentifier =
+        'mediasfu_create_${name}_${durationInt}_$capacityInt';
+    final pendingKey = 'prejoin_pending_$roomIdentifier';
+    const pendingTimeout = 30 * 1000; // 30 seconds
+
+    // Check pending status to prevent duplicate requests
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final pendingRequest = prefs.getString(pendingKey);
+      if (pendingRequest != null) {
+        final pendingData = jsonDecode(pendingRequest);
+        final timeSincePending = DateTime.now().millisecondsSinceEpoch -
+            ((pendingData['timestamp'] as num?)?.toInt() ?? 0);
+        if (timeSincePending < pendingTimeout) {
+          pending = false;
+          widget.options.parameters.updateIsLoadingModalVisible(false);
+          if (mounted) {
+            setState(() {
+              _error = 'Room creation already in progress';
+            });
+          }
+          return;
+        } else {
+          // Stale lock, clear it
+          await prefs.remove(pendingKey);
+        }
+      }
+    } catch (e) {
+      // Ignore SharedPreferences read/JSON errors
+    }
+
+    // Mark request as pending
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        pendingKey,
+        jsonEncode({
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+          'payload': {
+            'action': 'create',
+            'userName': name,
+            'duration': durationInt,
+            'capacity': capacityInt,
+          },
+        }),
+      );
+
+      // Auto-clear the pending flag after timeout to avoid stale locks
+      Future.delayed(const Duration(milliseconds: pendingTimeout), () async {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.remove(pendingKey);
+        } catch (e) {
+          // Ignore errors
+        }
+      });
+    } catch (e) {
+      // Ignore SharedPreferences write errors
+    }
+
     try {
       final response = await widget.options.createMediaSFURoom!(
         CreateMediaSFUOptions(
@@ -812,6 +964,14 @@ class _PreJoinPageState extends State<PreJoinPage> {
           localLink: widget.options.localLink ?? '',
         ),
       );
+
+      // Clear pending status on completion
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove(pendingKey);
+      } catch (e) {
+        // Ignore errors
+      }
 
       if (response.success && response.data is CreateJoinRoomResponse) {
         final data = response.data;
@@ -842,6 +1002,13 @@ class _PreJoinPageState extends State<PreJoinPage> {
         }
       }
     } catch (error) {
+      // Clear pending status on error
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove(pendingKey);
+      } catch (e) {
+        // Ignore errors
+      }
       pending = false;
       widget.options.parameters.showAlert?.call(
         message: 'Unable to create room. ${error.toString()}',
@@ -981,7 +1148,7 @@ class _PreJoinPageState extends State<PreJoinPage> {
           fillColor: Colors.white,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
         ),
-        value: _eventType.isEmpty ? null : _eventType,
+        initialValue: _eventType.isEmpty ? null : _eventType,
         hint: const Text('Select Event Type'),
         items: const [
           DropdownMenuItem(value: 'chat', child: Text('Chat')),

@@ -1,6 +1,6 @@
 name: mediasfu_sdk
 description: "MediaSFU SDK for Flutter provides powerful streaming capabilities for creating high-performance cross-platform applications."
-version: 2.1.9
+version: 2.2.0
 homepage: https://www.mediasfu.com
 repository: https://github.com/MediaSFU/MediaSFU_SDK_Flutter
 
@@ -16,12 +16,12 @@ dependencies:
   url_launcher: ^6.2.5
   clipboard: ^2.0.2
   flutter_colorpicker: ^1.0.3
-  mediasfu_mediasoup_client: ^0.0.8
+  mediasfu_mediasoup_client: ^0.0.9
   http: ^1.2.1
   intl: ^0.20.0
   font_awesome_flutter: ^10.7.0
   shared_preferences: ^2.2.3
-  flutter_webrtc: ^1.0.0
+  flutter_webrtc: ^1.2.0
   audioplayers: ^6.1.0
   collection: ^1.18.0
 
@@ -29,7 +29,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
   dartdoc: ^8.0.7
 
 

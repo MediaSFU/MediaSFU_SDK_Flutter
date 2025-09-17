@@ -8,6 +8,7 @@ class MiniCardOptions {
   final String? imageSource;
   final bool roundedImage;
   final BoxDecoration? imageStyle;
+  final MiniCardType? customBuilder;
 
   MiniCardOptions({
     required this.initials,
@@ -16,6 +17,7 @@ class MiniCardOptions {
     this.imageSource,
     this.roundedImage = true,
     this.imageStyle,
+    this.customBuilder,
   });
 }
 
@@ -31,6 +33,7 @@ typedef MiniCardType = Widget Function({required MiniCardOptions options});
 ///
 /// ### Example Usage:
 /// ```dart
+/// // Using the default MiniCard
 /// MiniCard(
 ///   options: MiniCardOptions(
 ///     initials: "AB",
@@ -44,6 +47,34 @@ typedef MiniCardType = Widget Function({required MiniCardOptions options});
 ///     roundedImage: true,
 ///   ),
 /// );
+///
+/// // Using a custom MiniCard builder
+/// Widget myCustomMiniCard({required MiniCardOptions options}) {
+///   return Container(
+///     decoration: BoxDecoration(
+///       color: Colors.green,
+///       shape: BoxShape.circle,
+///     ),
+///     child: Center(
+///       child: Text(
+///         options.initials,
+///         style: TextStyle(
+///           fontSize: options.fontSize,
+///           fontWeight: FontWeight.bold,
+///           color: Colors.white,
+///         ),
+///       ),
+///     ),
+///   );
+/// }
+///
+/// MiniCard(
+///   options: MiniCardOptions(
+///     initials: "AB",
+///     fontSize: 18,
+///     customBuilder: myCustomMiniCard, // Pass the custom builder
+///   ),
+/// );
 /// ```
 class MiniCard extends StatelessWidget {
   final MiniCardOptions options;
@@ -52,6 +83,13 @@ class MiniCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // If a custom builder is provided, use it
+    if (options.customBuilder != null) {
+      return options.customBuilder!(
+        options: options,
+      );
+    }
+
     return Container(
       decoration: options.customStyle,
       child: options.imageSource != null ? _buildImage() : _buildInitialsText(),

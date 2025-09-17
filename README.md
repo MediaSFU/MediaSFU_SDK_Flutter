@@ -68,6 +68,7 @@ MediaSFU offers a cutting-edge streaming experience that empowers users to custo
 - [Features](#features)
 - [Getting Started](#getting-started)
 - [Basic Usage Guide](#basic-usage-guide)
+- [Custom UI Components](#custom-ui-components)
 - [Intermediate Usage Guide](#intermediate-usage-guide)
 - [Advanced Usage Guide](#advanced-usage-guide)
 - [API Reference](#api-reference)
@@ -326,6 +327,137 @@ To use these prebuilt event rooms, simply import them into your application:
 ```dart
 import 'package:mediasfu_sdk/mediasfu_sdk.dart';
 ```
+
+---
+
+## Three Powerful Usage Modes
+
+MediaSFU provides **three flexible usage modes** to fit any development need, from dead simple implementation to advanced customization. All modes give you access to the same powerful media infrastructure through `sourceParameters`.
+
+### 🎯 **Mode 1: Default MediaSFU UI** - Dead Simple
+Perfect for rapid prototyping and production apps that want MediaSFU's polished interface out-of-the-box.
+
+```dart
+// Just pass your credentials - everything else is handled automatically
+final options = MediasfuGenericOptions(
+  credentials: credentials,
+);
+
+return MediasfuGeneric(options: options);
+```
+
+**What you get:**
+- ✅ **Automatic Layout**: All media organized in `FlexibleGrid` and `FlexibleVideo`
+- ✅ **Smart Audio Management**: Audio participants contained in `AudioGrid`
+- ✅ **Built-in Controls**: Mute, video toggle, screen share, chat, polls, breakout rooms
+- ✅ **Responsive Design**: Adapts to any screen size and orientation
+- ✅ **Professional UI**: Polished interface ready for production
+
+### 🛠️ **Mode 2: Custom UI with MediaSFU Backend** - Ultimate Flexibility
+Build your own interface while leveraging MediaSFU's powerful media infrastructure.
+
+```dart
+final options = MediasfuGenericOptions(
+  credentials: credentials,
+  returnUI: false, // Use your custom UI
+  sourceParameters: sourceParameters.value,
+  updateSourceParameters: updateSourceParameters,
+);
+
+// Access everything through sourceParameters
+sourceParameters.value?.clickVideo(ClickVideoOptions(parameters: sourceParameters.value!));
+sourceParameters.value?.clickAudio(ClickAudioOptions(parameters: sourceParameters.value!));
+```
+
+**What you get:**
+- ✅ **Full Control**: Design any UI/UX you want
+- ✅ **Complete Access**: All MediaSFU functionality through `sourceParameters`
+- ✅ **Media Components**: Access `FlexibleGrid`, `FlexibleVideo`, `AudioGrid` as needed
+- ✅ **Real-time State**: Live participant data, media streams, chat messages
+- ✅ **Zero Backend Work**: All media infrastructure handled by MediaSFU
+
+### 🎨 **Mode 3: Custom Component Replacement** - Best of Both Worlds
+Replace the entire MediaSFU interface while keeping all the backend functionality.
+
+```dart
+Widget myCustomInterface({required MediasfuParameters parameters}) {
+  return Scaffold(
+    body: Column(
+      children: [
+        // Your custom header
+        MyCustomHeader(roomName: parameters.roomName),
+        
+        // Use MediaSFU's flexible components in your layout
+        Expanded(
+          child: FlexibleVideo(
+            customWidth: MediaQuery.of(context).size.width,
+            customHeight: 400,
+            parameters: parameters,
+          ),
+        ),
+        
+        // Your custom controls with MediaSFU functionality
+        MyCustomControls(
+          onToggleVideo: () => parameters.clickVideo(ClickVideoOptions(parameters: parameters)),
+          onToggleAudio: () => parameters.clickAudio(ClickAudioOptions(parameters: parameters)),
+        ),
+      ],
+    ),
+  );
+}
+
+final options = MediasfuGenericOptions(
+  credentials: credentials,
+  customComponent: myCustomInterface,
+);
+```
+
+**What you get:**
+- ✅ **Custom Design**: Your branded interface with your UX decisions
+- ✅ **MediaSFU Components**: Reuse `FlexibleGrid`, `FlexibleVideo`, `AudioGrid` in your layout
+- ✅ **Full Functionality**: All MediaSFU features accessible through `parameters`
+- ✅ **Minimal Code**: Focus on design, not infrastructure
+
+---
+
+### 📊 **All Modes Include the Same Powerful Infrastructure**
+
+No matter which mode you choose, you get access to:
+
+**Media Management:**
+- **`FlexibleGrid`**: Automatically arranges video participants in optimal grid layouts
+- **`FlexibleVideo`**: Manages main video display with smooth transitions
+- **`AudioGrid`**: Organizes audio-only participants with visual indicators
+
+**Real-time Features:**
+- **Live Participants**: Dynamic participant list with join/leave notifications
+- **Chat System**: Direct and group messaging with emoji support
+- **Screen Sharing**: High-quality screen sharing with audience controls
+- **Breakout Rooms**: Create and manage sub-meetings within your session
+- **Polls & Surveys**: Real-time audience engagement tools
+
+**Advanced Controls:**
+- **Media Settings**: Camera/microphone selection, quality settings
+- **Recording**: Cloud recording with custom layouts and branding
+- **Broadcasting**: Live streaming to social platforms
+- **Whiteboard**: Collaborative drawing and annotation tools
+
+### 🚀 **Start Simple, Scale Complex**
+
+```dart
+// Start with this (5 lines)
+final options = MediasfuGenericOptions(credentials: credentials);
+return MediasfuGeneric(options: options);
+
+// Scale to this when you need custom UI
+final options = MediasfuGenericOptions(
+  credentials: credentials,
+  customComponent: myBrandedInterface, // Your complete custom UI
+  // All the same powerful features, your design
+);
+```
+
+**The beauty of MediaSFU**: You can start with the default UI and gradually customize as your needs grow, without ever losing functionality or starting over.
 
 ---
 
@@ -1770,6 +1902,292 @@ During local UI development, the MediaSFU view is designed to be responsive to c
 While developing locally, users may encounter occasional error warnings as the UI attempts to communicate with the server. These warnings can be safely ignored, as they are simply indicative of unsuccessful server requests in the local development environment.
 
 > **Note:** this mode is experimental and have numerous null values that may cause the application to crash but it is useful for testing purposes.
+
+---
+
+# Custom UI Components <a name="custom-ui-components"></a>
+
+MediaSFU provides extensive customization options that allow you to tailor the interface to your specific needs. You can customize individual components or completely replace the entire MediaSFU interface.
+
+## CustomComponentType - Complete Interface Replacement
+
+The **CustomComponentType** functionality allows you to completely replace the default MediaSFU interface with your own custom implementation while retaining all the underlying MediaSFU functionality.
+
+### Key Features
+
+- **Complete Interface Control**: Replace the entire MediaSFU UI with your custom design
+- **Full Access to MediaSFU Parameters**: Access all MediaSFU state and methods through `MediasfuParameters`
+- **Seamless Integration**: Your custom component integrates seamlessly with MediaSFU's backend functionality
+- **Event Type Support**: Available for all MediaSFU event types (Generic, Broadcast, Chat, Conference, Webinar)
+
+### Basic Implementation
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:mediasfu_sdk/mediasfu_sdk.dart';
+
+// Define your custom MediaSFU interface
+Widget myCustomMediaSFUInterface({
+  required MediasfuParameters parameters,
+}) {
+  return Scaffold(
+    appBar: AppBar(
+      title: Text('My Custom MediaSFU Interface'),
+      backgroundColor: Colors.purple,
+    ),
+    body: Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.purple.shade100, Colors.purple.shade300],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Column(
+        children: [
+          // Your custom header
+          Container(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              'Welcome to ${parameters.roomName}',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+          ),
+          
+          // Custom video display area
+          Expanded(
+            child: Container(
+              margin: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(
+                  'Custom Video Area',
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                ),
+              ),
+            ),
+          ),
+          
+          // Custom control buttons
+          Container(
+            padding: EdgeInsets.all(16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                FloatingActionButton(
+                  heroTag: "mic",
+                  onPressed: () {
+                    // Toggle microphone using MediaSFU functionality
+                    parameters.clickAudio(
+                      ClickAudioOptions(parameters: parameters)
+                    );
+                  },
+                  backgroundColor: parameters.micActive ? Colors.green : Colors.red,
+                  child: Icon(
+                    parameters.micActive ? Icons.mic : Icons.mic_off,
+                    color: Colors.white,
+                  ),
+                ),
+                FloatingActionButton(
+                  heroTag: "video",
+                  onPressed: () {
+                    // Toggle video using MediaSFU functionality
+                    parameters.clickVideo(
+                      ClickVideoOptions(parameters: parameters)
+                    );
+                  },
+                  backgroundColor: parameters.videoActive ? Colors.green : Colors.red,
+                  child: Icon(
+                    parameters.videoActive ? Icons.videocam : Icons.videocam_off,
+                    color: Colors.white,
+                  ),
+                ),
+                FloatingActionButton(
+                  heroTag: "endCall",
+                  onPressed: () {
+                    // End call using MediaSFU functionality
+                    parameters.clickEndCall(
+                      ClickEndCallOptions(parameters: parameters)
+                    );
+                  },
+                  backgroundColor: Colors.red,
+                  child: Icon(Icons.call_end, color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+// Use the custom interface in your app
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final credentials = Credentials(
+      apiUserName: 'your_api_username',
+      apiKey: 'your_api_key',
+    );
+
+    final options = MediasfuGenericOptions(
+      credentials: credentials,
+      customComponent: myCustomMediaSFUInterface,
+    );
+
+    return MaterialApp(
+      home: MediasfuGeneric(options: options),
+    );
+  }
+}
+```
+
+## Custom Component Builders
+
+In addition to complete interface replacement, you can customize individual components like VideoCard, AudioCard, and MiniCard:
+
+```dart
+// Custom VideoCard with gradient design
+Widget myCustomVideoCard({
+  required Participant participant,
+  required stream,
+  required MediasfuParameters parameters,
+}) {
+  return Container(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [Colors.blue.shade200, Colors.blue.shade400],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Stack(
+      children: [
+        // Video stream would be rendered here
+        Positioned(
+          bottom: 8,
+          left: 8,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.black54,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              participant.name ?? 'Unknown',
+              style: TextStyle(color: Colors.white, fontSize: 12),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+// Apply custom builders to MediaSFU options
+final options = MediasfuGenericOptions(
+  credentials: credentials,
+  videoCardComponent: myCustomVideoCard,
+  audioCardComponent: myCustomAudioCard,
+  miniCardComponent: myCustomMiniCard,
+);
+```
+
+## Available CustomComponentType Options
+
+The `customComponent` option is available in all MediaSFU event type options:
+
+- **MediasfuGenericOptions**: `customComponent`
+- **MediasfuBroadcastOptions**: `customComponent`
+- **MediasfuChatOptions**: `customComponent`
+- **MediasfuConferenceOptions**: `customComponent`
+- **MediasfuWebinarOptions**: `customComponent`
+
+## Advanced Example - Type-Specific Custom Interfaces
+
+```dart
+// Different custom interfaces for different event types
+Widget customBroadcastInterface({required MediasfuParameters parameters}) {
+  return Scaffold(
+    backgroundColor: Colors.red.shade50,
+    appBar: AppBar(
+      title: Text('🔴 Live Broadcast'),
+      backgroundColor: Colors.red,
+    ),
+    body: Column(
+      children: [
+        Container(
+          padding: EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Icon(Icons.circle, color: Colors.red, size: 12),
+              SizedBox(width: 8),
+              Text('LIVE', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+              Spacer(),
+              Text('Viewers: ${parameters.participants.length}'),
+            ],
+          ),
+        ),
+        // Your custom broadcast UI here
+      ],
+    ),
+  );
+}
+
+Widget customConferenceInterface({required MediasfuParameters parameters}) {
+  return Scaffold(
+    backgroundColor: Colors.blue.shade50,
+    appBar: AppBar(
+      title: Text('🎥 Conference Room'),
+      backgroundColor: Colors.blue,
+    ),
+    body: Column(
+      children: [
+        Container(
+          padding: EdgeInsets.all(16),
+          child: Text(
+            'Conference: ${parameters.roomName}',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        ),
+        // Your custom conference UI here
+      ],
+    ),
+  );
+}
+
+// Apply different interfaces to different event types
+final broadcastOptions = MediasfuBroadcastOptions(
+  credentials: credentials,
+  customComponent: customBroadcastInterface,
+);
+
+final conferenceOptions = MediasfuConferenceOptions(
+  credentials: credentials,
+  customComponent: customConferenceInterface,
+);
+```
+
+## Benefits of Custom Components
+
+1. **Brand Consistency**: Match your app's design language and branding
+2. **Enhanced User Experience**: Create interfaces optimized for your specific use case
+3. **Feature Integration**: Seamlessly integrate MediaSFU functionality with your app's features
+4. **Complete Control**: Full control over layout, styling, and user interactions
+5. **Maintained Functionality**: Keep all MediaSFU's powerful features while using your custom UI
+
+## Example Files
+
+For complete working examples, check out:
+- `example/lib/custom_builders_example.dart` - Individual component customization
+- `example/lib/complete_custom_component_example.dart` - Complete interface replacement examples
+
+---
 
 
 # Intermediate Usage Guide <a name="intermediate-usage-guide"></a>

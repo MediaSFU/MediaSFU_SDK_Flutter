@@ -5,7 +5,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
 import 'package:socket_io_client/socket_io_client.dart';
-import '../../types/types.dart' hide MediaStream;
+import '../../types/types.dart' hide MediaStream, VideoCardType, AudioCardType, MiniCardType;
+import '../../types/custom_builders.dart' show VideoCardType, AudioCardType, MiniCardType;
 
 class MediasfuParameters
     implements
@@ -369,6 +370,13 @@ class MediasfuParameters
   ComponentSizes componentSizes;
 
   // ---------------------
+  // Custom Builders
+  // ---------------------
+  VideoCardType? customVideoCard;
+  AudioCardType? customAudioCard;
+  MiniCardType? customMiniCard;
+
+  // ---------------------
   // Permissions
   // ---------------------
   bool hasCameraPermission;
@@ -673,6 +681,9 @@ class MediasfuParameters
   void Function(bool) updateVideoAlreadyOn;
   void Function(bool) updateAudioAlreadyOn;
   void Function(ComponentSizes) updateComponentSizes;
+  void Function(VideoCardType?) updateCustomVideoCard;
+  void Function(AudioCardType?) updateCustomAudioCard;
+  void Function(MiniCardType?) updateCustomMiniCard;
   void Function(bool) updateHasCameraPermission;
   void Function(bool) updateHasAudioPermission;
   void Function(bool) updateTransportCreated;
@@ -1192,6 +1203,13 @@ class MediasfuParameters
     required this.componentSizes,
 
     // ---------------------
+    // Custom Builders Initialization
+    // ---------------------
+    this.customVideoCard,
+    this.customAudioCard,
+    this.customMiniCard,
+
+    // ---------------------
     // Permissions Initialization
     // ---------------------
     required this.hasCameraPermission,
@@ -1497,6 +1515,9 @@ class MediasfuParameters
     required this.updateVideoAlreadyOn,
     required this.updateAudioAlreadyOn,
     required this.updateComponentSizes,
+    required this.updateCustomVideoCard,
+    required this.updateCustomAudioCard,
+    required this.updateCustomMiniCard,
     required this.updateHasCameraPermission,
     required this.updateHasAudioPermission,
     required this.updateTransportCreated,
@@ -1984,6 +2005,11 @@ class MediasfuParameters
         'updateDevice': updateDevice,
         'updateSocket': updateSocket,
         'updateLocalSocket': updateLocalSocket,
-        'updateValidated': updateValidated
+        'updateValidated': updateValidated,
+        
+        // Custom builders update functions
+        'updateCustomVideoCard': updateCustomVideoCard,
+        'updateCustomAudioCard': updateCustomAudioCard,
+        'updateCustomMiniCard': updateCustomMiniCard,
       };
 }

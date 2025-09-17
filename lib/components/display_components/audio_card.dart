@@ -30,6 +30,7 @@ abstract class AudioCardParameters {
 ///
 /// Example:
 /// ```dart
+/// // Using the default AudioCard
 /// AudioCard(
 ///   options: AudioCardOptions(
 ///     name: "Participant Name",
@@ -38,6 +39,35 @@ abstract class AudioCardParameters {
 ///     barColor: Colors.red,
 ///     parameters: parameters,
 ///   ),
+/// );
+///
+/// // Using a custom AudioCard builder
+/// Widget myCustomAudioCard({required AudioCardOptions options}) {
+///   return Container(
+///     decoration: BoxDecoration(
+///       color: Colors.orange,
+///       borderRadius: BorderRadius.circular(15),
+///     ),
+///     child: Row(
+///       children: [
+///         Icon(Icons.person),
+///         Text('Custom: ${options.name}'),
+///         // Your custom audio controls here
+///       ],
+///     ),
+///   );
+/// }
+///
+/// AudioCard(
+///   options: AudioCardOptions(
+///     name: "Participant Name",
+///     customStyle: BoxDecoration(color: Colors.grey),
+///     participant: participantData,
+///     barColor: Colors.red,
+///     parameters: parameters,
+///     customBuilder: myCustomAudioCard, // Pass the custom builder
+///   ),
+/// );
 /// );
 /// ```
 class AudioCardOptions {
@@ -60,6 +90,7 @@ class AudioCardOptions {
   final Participant participant;
   final Color backgroundColor;
   final AudioCardParameters parameters;
+  final AudioCardType? customBuilder;
 
   AudioCardOptions({
     this.controlUserMedia = controlMedia,
@@ -79,6 +110,7 @@ class AudioCardOptions {
     required this.participant,
     this.backgroundColor = Colors.white,
     required this.parameters,
+    this.customBuilder,
   });
 }
 
@@ -285,6 +317,13 @@ class _AudioCardState extends State<AudioCard> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    // If a custom builder is provided, use it
+    if (widget.options.customBuilder != null) {
+      return widget.options.customBuilder!(
+        options: widget.options,
+      );
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: widget.options.backgroundColor,

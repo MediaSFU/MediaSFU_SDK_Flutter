@@ -5,26 +5,17 @@ import 'methods/utils/join_room_on_media_sfu.dart' show joinRoomOnMediaSFU;
 import 'types/types.dart'
     show
         ClickVideoOptions,
+        ClickAudioOptions,
+        ClickScreenShareOptions,
         CreateMediaSFURoomOptions,
         EventType,
         MediasfuParameters,
-        SeedData;
+        Participant;
 
 import 'components/mediasfu_components/mediasfu_chat.dart'
     show MediasfuChat, MediasfuChatOptions;
 import 'components/misc_components/prejoin_page.dart'
-    show PreJoinPage, PreJoinPageOptions, Credentials;
-
-// Import methods for generating random participants, messages, requests, and waiting room lists if using seed data
-// Ensure you have equivalent Dart methods for generating seed data
-import 'methods/utils/generate_random_participants.dart'
-    show GenerateRandomParticipantsOptions, generateRandomParticipants;
-import 'methods/utils/generate_random_messages.dart'
-    show GenerateRandomMessagesOptions, generateRandomMessages;
-import 'methods/utils/generate_random_request_list.dart'
-    show GenerateRandomRequestListOptions, generateRandomRequestList;
-import 'methods/utils/generate_random_waiting_room_list.dart'
-    show generateRandomWaitingRoomList;
+    show PreJoinPageOptions, Credentials;
 
 void main() {
   runApp(const MyApp());
@@ -69,6 +60,592 @@ Widget myCustomPreJoinPage({
           ),
         ],
       ),
+    ),
+  );
+}
+
+/// Custom VideoCard builder for chat sessions
+/// This replaces the default VideoCard with a custom green gradient design
+Widget myCustomChatVideoCard({
+  required Participant participant,
+  required stream,
+  required double width,
+  required double height,
+  imageSize,
+  doMirror,
+  showControls,
+  showInfo,
+  name,
+  backgroundColor,
+  onVideoPress,
+  parameters,
+}) {
+  return Container(
+    width: width,
+    height: height,
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [Colors.green.shade800, Colors.lightGreen.shade600],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: Colors.white, width: 3),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black26,
+          blurRadius: 10,
+          offset: Offset(0, 5),
+        ),
+      ],
+    ),
+    child: Stack(
+      children: [
+        // Video content placeholder
+        ClipRRect(
+          borderRadius: BorderRadius.circular(13),
+          child: Container(
+            width: double.infinity,
+            height: double.infinity,
+            color: Colors.black54,
+            child: Center(
+              child: Icon(
+                Icons.chat_bubble,
+                size: 64,
+                color: Colors.white70,
+              ),
+            ),
+          ),
+        ),
+        // Custom chat overlay
+        if (showInfo == true)
+          Positioned(
+            top: 12,
+            left: 12,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.green.shade600, Colors.lightGreen.shade500],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.message, color: Colors.white, size: 16),
+                  SizedBox(width: 4),
+                  Text(
+                    name ?? participant.name,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
+/// Custom AudioCard builder for chat sessions
+/// Features a green gradient design for audio-only participants
+Widget myCustomChatAudioCard({
+  required String name,
+  required bool barColor,
+  textColor,
+  cardBackgroundColor,
+  customWidth,
+  customHeight,
+  imageSource,
+  roundedImage,
+  imageStyle,
+}) {
+  return Container(
+    width: customWidth ?? 100,
+    height: customHeight ?? 100,
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [Colors.green.shade700, Colors.lightGreen.shade500],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: Colors.white, width: 2),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black26,
+          blurRadius: 8,
+          offset: Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Chat icon
+        Container(
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white24,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            Icons.chat,
+            color: Colors.white,
+            size: 32,
+          ),
+        ),
+        SizedBox(height: 8),
+        
+        // Participant name
+        Text(
+          name,
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        
+        // Audio wave indicator
+        if (barColor)
+          Container(
+            margin: EdgeInsets.only(top: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(
+                4,
+                (index) => Container(
+                  width: 4,
+                  height: 20 + (index * 3),
+                  margin: EdgeInsets.symmetric(horizontal: 1),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
+/// Custom MiniCard builder for chat sessions
+/// Displays small participant cards with chat-specific styling
+Widget myCustomChatMiniCard({
+  required String name,
+  required bool showWaveform,
+  overlayPosition,
+  barColor,
+  textColor,
+  imageSource,
+  roundedImage,
+  imageStyle,
+}) {
+  return Container(
+    width: 80,
+    height: 80,
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: showWaveform 
+            ? [Colors.green.shade600, Colors.lightGreen.shade400]
+            : [Colors.grey.shade700, Colors.grey.shade500],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(
+        color: showWaveform ? Colors.white : Colors.grey.shade400, 
+        width: 2,
+      ),
+    ),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          showWaveform ? Icons.chat_bubble : Icons.person,
+          color: Colors.white,
+          size: 24,
+        ),
+        SizedBox(height: 4),
+        Text(
+          name,
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 10,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    ),
+  );
+}
+
+/// Complete Custom Chat Interface
+/// This replaces the entire MediaSFU chat interface with a custom design
+Widget myCustomChatInterface({required MediasfuParameters parameters}) {
+  return Scaffold(
+    backgroundColor: Colors.green.shade900,
+    appBar: AppBar(
+      title: Text('💬 Chat Room'),
+      backgroundColor: Colors.green.shade800,
+      foregroundColor: Colors.white,
+      elevation: 0,
+    ),
+    body: Column(
+      children: [
+        // Chat status header
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.green.shade800, Colors.lightGreen.shade600],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.forum, color: Colors.white, size: 24),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Chat Room: ${parameters.roomName}',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.people, color: Colors.white70, size: 16),
+                  SizedBox(width: 4),
+                  Text(
+                    'Online: ${parameters.participants.length}',
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                  Spacer(),
+                  Icon(Icons.person, color: Colors.white70, size: 16),
+                  SizedBox(width: 4),
+                  Text(
+                    'You: ${parameters.member}',
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        
+        // Chat controls
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade800,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildChatControlButton(
+                onPressed: () => parameters.clickVideo(
+                  ClickVideoOptions(parameters: parameters),
+                ),
+                icon: parameters.videoAction ? Icons.videocam : Icons.videocam_off,
+                label: parameters.videoAction ? 'Video On' : 'Video Off',
+                isActive: parameters.videoAction,
+                activeColor: Colors.green,
+                inactiveColor: Colors.red,
+              ),
+              _buildChatControlButton(
+                onPressed: () => parameters.clickAudio(
+                  ClickAudioOptions(parameters: parameters),
+                ),
+                icon: parameters.micAction ? Icons.mic : Icons.mic_off,
+                label: parameters.micAction ? 'Mic On' : 'Mic Off',
+                isActive: parameters.micAction,
+                activeColor: Colors.green,
+                inactiveColor: Colors.red,
+              ),
+              _buildChatControlButton(
+                onPressed: () {
+                  // Custom chat functionality
+                },
+                icon: Icons.chat,
+                label: 'Send Message',
+                isActive: true,
+                activeColor: Colors.blue,
+                inactiveColor: Colors.grey,
+              ),
+            ],
+          ),
+        ),
+        
+        // Main chat area - participants list
+        Expanded(
+          child: Container(
+            margin: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade800,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade700,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      topRight: Radius.circular(16),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.group_add, color: Colors.white),
+                      SizedBox(width: 8),
+                      Text(
+                        'Chat Participants (${parameters.participants.length})',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: parameters.participants.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.chat_bubble_outline,
+                                size: 64,
+                                color: Colors.white54,
+                              ),
+                              SizedBox(height: 16),
+                              Text(
+                                'No one in the chat yet',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'Invite friends to start chatting!',
+                                style: TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: parameters.participants.length,
+                          itemBuilder: (context, index) {
+                            final participant = parameters.participants[index];
+                            return _buildChatParticipantCard(participant, Colors.green.shade600);
+                          },
+                        ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        
+        // Chat action bar
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade800,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 4,
+                offset: Offset(0, -2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade700,
+                    borderRadius: BorderRadius.circular(25),
+                    border: Border.all(color: Colors.green.shade600),
+                  ),
+                  child: TextField(
+                    style: TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: 'Type a message...',
+                      hintStyle: TextStyle(color: Colors.grey.shade400),
+                      border: InputBorder.none,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.green.shade600,
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  onPressed: () {
+                    // Send message functionality
+                  },
+                  icon: Icon(Icons.send, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildChatControlButton({
+  required VoidCallback onPressed,
+  required IconData icon,
+  required String label,
+  required bool isActive,
+  required Color activeColor,
+  required Color inactiveColor,
+}) {
+  return Expanded(
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, color: Colors.white),
+        label: Text(
+          label,
+          style: const TextStyle(color: Colors.white),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isActive ? activeColor : inactiveColor,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _buildChatParticipantCard(Participant participant, Color accentColor) {
+  return Container(
+    margin: const EdgeInsets.only(bottom: 8),
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: Colors.grey.shade700,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: Colors.grey.shade600),
+    ),
+    child: Row(
+      children: [
+        CircleAvatar(
+          backgroundColor: accentColor,
+          radius: 20,
+          child: Text(
+            participant.name.isNotEmpty 
+                ? participant.name[0].toUpperCase()
+                : '?',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                participant.name,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                participant.islevel ?? 'member',
+                style: TextStyle(
+                  color: Colors.grey.shade400,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: Colors.green.shade600,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.chat_bubble,
+                color: Colors.white,
+                size: 16,
+              ),
+              SizedBox(width: 4),
+              Text(
+                'Online',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     ),
   );
 }
@@ -277,6 +854,21 @@ class _MyAppState extends State<MyApp> {
 
       // Update source parameters if not using the default UI
       updateSourceParameters: !returnUI ? updateSourceParameters : null,
+
+      // ======== CUSTOM COMPONENT OPTIONS ========
+      // Uncomment ONE of the following sections to enable custom UI components:
+
+      // OPTION 1: Custom builders for individual components (recommended for most customizations)
+      /*
+      customVideoCard: myCustomChatVideoCard,
+      customAudioCard: myCustomChatAudioCard,
+      customMiniCard: myCustomChatMiniCard,
+      */
+
+      // OPTION 2: Complete custom interface replacement (for advanced customizations)
+      /*
+      customComponent: myCustomChatInterface,
+      */
 
       // Provide custom room functions if not using the default functions
       createMediaSFURoom: createRoomOnMediaSFU,

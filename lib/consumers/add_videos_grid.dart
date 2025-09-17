@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
-import '../components/display_components/mini_card.dart';
-import '../components/display_components/video_card.dart';
-import '../components/display_components/audio_card.dart';
+import '../components/display_components/mini_card.dart' hide MiniCardType;
+import '../components/display_components/video_card.dart' hide VideoCardType;
+import '../components/display_components/audio_card.dart' hide AudioCardType;
 import '../types/types.dart'
     show
         Participant,
@@ -12,6 +12,8 @@ import '../types/types.dart'
         EventType,
         UpdateMiniCardsGridOptions,
         UpdateMiniCardsGridParameters;
+import '../types/custom_builders.dart'
+    show VideoCardType, AudioCardType, MiniCardType;
 
 typedef UpdateOtherGridStreams = void Function(List<List<Widget>>);
 typedef UpdateAddAltGrid = void Function(bool);
@@ -38,6 +40,11 @@ abstract class AddVideosGridParameters
   List<List<Widget>> get otherGridStreams;
   UpdateOtherGridStreams get updateOtherGridStreams;
   UpdateMiniCardsGridType get updateMiniCardsGrid;
+  
+  // Custom component builders
+  VideoCardType? get customVideoCard;
+  AudioCardType? get customAudioCard;
+  MiniCardType? get customMiniCard;
 
   // Method to retrieve updated parameters
   AddVideosGridParameters Function() get getUpdatedAllParams;
@@ -142,6 +149,11 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
         List.from(parameters.otherGridStreams);
     final updateOtherGridStreams = parameters.updateOtherGridStreams;
     final updateMiniCardsGrid = parameters.updateMiniCardsGrid;
+    
+    // Extract custom component builders
+    final customVideoCard = parameters.customVideoCard;
+    final customAudioCard = parameters.customAudioCard;
+    final customMiniCard = parameters.customMiniCard;
 
     // Initialize new components
     List<List<Widget>> newComponents = [[], []];
@@ -171,34 +183,24 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
             orElse: () =>
                 Participant(id: '', name: '', videoID: '', audioID: ''),
           );
-          newComponents[0].add(AudioCard(
-              options: AudioCardOptions(
-            name: participant.name ?? "",
-            barColor: Colors.red,
-            textColor: Colors.white,
-            customStyle: BoxDecoration(
-              color: Colors.transparent,
-              border: Border.all(
-                color: eventType != EventType.broadcast
-                    ? Colors.black
-                    : Colors.transparent,
-                width: eventType != EventType.broadcast ? 2.0 : 0.0,
-              ),
-            ),
-            controlsPosition: 'topLeft',
-            infoPosition: 'topRight',
-            roundedImage: true,
-            parameters: parameters,
-            backgroundColor: Colors.transparent,
-            showControls: eventType != EventType.chat,
-            participant: actualParticipant,
-          )));
-        } else {
-          newComponents[0].add(
-            MiniCard(
-                options: MiniCardOptions(
-              initials: participant.name ?? "",
-              fontSize: 20,
+          
+          // Use custom AudioCard builder if available
+          if (customAudioCard != null) {
+            newComponents[0].add(customAudioCard(
+              name: participant.name ?? "",
+              barColor: true, // This maps to the red color
+              textColor: Colors.white,
+              imageSource: "", // You may need to add actual image source
+              roundedImage: 1.0,
+              imageStyle: Colors.transparent,
+              parameters: parameters,
+            ));
+          } else {
+            newComponents[0].add(AudioCard(
+                options: AudioCardOptions(
+              name: participant.name ?? "",
+              barColor: Colors.red,
+              textColor: Colors.white,
               customStyle: BoxDecoration(
                 color: Colors.transparent,
                 border: Border.all(
@@ -208,21 +210,35 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
                   width: eventType != EventType.broadcast ? 2.0 : 0.0,
                 ),
               ),
-            )),
-          );
-        }
-      } else {
-        if (remoteProducerId == 'youyou' || remoteProducerId == 'youyouyou') {
-          String name = 'You';
-          if (islevel == '2' && eventType != EventType.chat) {
-            name = 'You (Host)';
+              controlsPosition: 'topLeft',
+              infoPosition: 'topRight',
+              roundedImage: true,
+              parameters: parameters,
+              backgroundColor: Colors.transparent,
+              showControls: eventType != EventType.chat,
+              participant: actualParticipant,
+            )));
           }
-
-          if (!videoAlreadyOn) {
+        } else {
+          // Use custom MiniCard builder if available
+          if (customMiniCard != null) {
+            newComponents[0].add(customMiniCard(
+              initials: participant.name ?? "",
+              fontSize: "20",
+              customStyle: false,
+              name: participant.name ?? "",
+              showVideoIcon: false,
+              showAudioIcon: false,
+              imageSource: "",
+              roundedImage: 1.0,
+              imageStyle: Colors.transparent,
+              parameters: parameters,
+            ));
+          } else {
             newComponents[0].add(
               MiniCard(
                   options: MiniCardOptions(
-                initials: name,
+                initials: participant.name ?? "",
                 fontSize: 20,
                 customStyle: BoxDecoration(
                   color: Colors.transparent,
@@ -235,6 +251,48 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
                 ),
               )),
             );
+          }
+        }
+      } else {
+        if (remoteProducerId == 'youyou' || remoteProducerId == 'youyouyou') {
+          String name = 'You';
+          if (islevel == '2' && eventType != EventType.chat) {
+            name = 'You (Host)';
+          }
+
+          if (!videoAlreadyOn) {
+            // Use custom MiniCard builder if available
+            if (customMiniCard != null) {
+              newComponents[0].add(customMiniCard(
+                initials: name,
+                fontSize: "20",
+                customStyle: false,
+                name: name,
+                showVideoIcon: false,
+                showAudioIcon: false,
+                imageSource: "",
+                roundedImage: 1.0,
+                imageStyle: Colors.transparent,
+                parameters: parameters,
+              ));
+            } else {
+              newComponents[0].add(
+                MiniCard(
+                    options: MiniCardOptions(
+                  initials: name,
+                  fontSize: 20,
+                  customStyle: BoxDecoration(
+                    color: Colors.transparent,
+                    border: Border.all(
+                      color: eventType != EventType.broadcast
+                          ? Colors.black
+                          : Colors.transparent,
+                      width: eventType != EventType.broadcast ? 2.0 : 0.0,
+                    ),
+                  ),
+                )),
+              );
+            }
           } else {
             participant = Stream(
               id: 'youyouyou',
@@ -251,23 +309,41 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
                   Participant(id: '', name: '', videoID: '', audioID: ''),
             );
 
-            newComponents[0].add(
-              VideoCard(
-                  options: VideoCardOptions(
-                videoStream: participant.stream,
-                remoteProducerId: participant.stream?.id ?? '',
-                eventType: eventType,
-                forceFullDisplay:
-                    eventType == EventType.webinar ? false : forceFullDisplay,
+            // Use custom VideoCard builder if available
+            if (customVideoCard != null) {
+              newComponents[0].add(customVideoCard(
                 participant: actualParticipant,
-                backgroundColor: Colors.transparent,
+                stream: participant,
+                width: 100.0, // You may need to calculate actual width
+                height: 100.0, // You may need to calculate actual height
+                imageSize: null,
+                doMirror: "true",
                 showControls: false,
                 showInfo: false,
                 name: participant.name ?? '',
-                doMirror: true,
+                backgroundColor: Colors.transparent,
+                onVideoPress: null,
                 parameters: parameters,
-              )),
-            );
+              ));
+            } else {
+              newComponents[0].add(
+                VideoCard(
+                    options: VideoCardOptions(
+                  videoStream: participant.stream,
+                  remoteProducerId: participant.stream?.id ?? '',
+                  eventType: eventType,
+                  forceFullDisplay:
+                      eventType == EventType.webinar ? false : forceFullDisplay,
+                  participant: actualParticipant,
+                  backgroundColor: Colors.transparent,
+                  showControls: false,
+                  showInfo: false,
+                  name: participant.name ?? '',
+                  doMirror: true,
+                  parameters: parameters,
+                )),
+              );
+            }
           }
         } else {
           Participant? participant_ = refParticipants.firstWhere(
@@ -277,21 +353,39 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
           );
 
           if (participant_.name.isNotEmpty) {
-            newComponents[0].add(VideoCard(
-              options: VideoCardOptions(
-                videoStream: participant.stream,
-                remoteProducerId: remoteProducerId,
-                eventType: eventType,
-                forceFullDisplay: forceFullDisplay,
+            // Use custom VideoCard builder if available
+            if (customVideoCard != null) {
+              newComponents[0].add(customVideoCard(
                 participant: participant_,
-                backgroundColor: Colors.transparent,
+                stream: participant,
+                width: 100.0, // You may need to calculate actual width
+                height: 100.0, // You may need to calculate actual height
+                imageSize: null,
+                doMirror: "false",
                 showControls: eventType != EventType.chat,
                 showInfo: true,
                 name: participant_.name,
-                doMirror: false,
+                backgroundColor: Colors.transparent,
+                onVideoPress: null,
                 parameters: parameters,
-              ),
-            ));
+              ));
+            } else {
+              newComponents[0].add(VideoCard(
+                options: VideoCardOptions(
+                  videoStream: participant.stream,
+                  remoteProducerId: remoteProducerId,
+                  eventType: eventType,
+                  forceFullDisplay: forceFullDisplay,
+                  participant: participant_,
+                  backgroundColor: Colors.transparent,
+                  showControls: eventType != EventType.chat,
+                  showInfo: true,
+                  name: participant_.name,
+                  doMirror: false,
+                  parameters: parameters,
+                ),
+              ));
+            }
           }
         }
       }
@@ -332,47 +426,77 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
               orElse: () =>
                   Participant(id: '', name: '', videoID: '', audioID: ''),
             );
-            newComponents[1].add(
-              AudioCard(
-                  options: AudioCardOptions(
+            
+            // Use custom AudioCard builder if available
+            if (customAudioCard != null) {
+              newComponents[1].add(customAudioCard(
                 name: participant.name ?? "",
-                barColor: Colors.red,
+                barColor: true, // This maps to the red color
                 textColor: Colors.white,
-                customStyle: BoxDecoration(
-                  color: Colors.transparent,
-                  border: Border.all(
-                    color: eventType != EventType.broadcast
-                        ? Colors.black
-                        : Colors.transparent,
-                    width: eventType != EventType.broadcast ? 2.0 : 0.0,
-                  ),
-                ),
-                controlsPosition: 'topLeft',
-                infoPosition: 'topRight',
-                roundedImage: true,
+                imageSource: "", // You may need to add actual image source
+                roundedImage: 1.0,
+                imageStyle: Colors.transparent,
                 parameters: parameters,
-                backgroundColor: Colors.transparent,
-                showControls: eventType != EventType.chat,
-                participant: actualParticipant,
-              )),
-            );
-          } else {
-            newComponents[1].add(
-              MiniCard(
-                  options: MiniCardOptions(
-                initials: participant.name ?? "",
-                fontSize: 20,
-                customStyle: BoxDecoration(
-                  color: Colors.transparent,
-                  border: Border.all(
-                    color: eventType != EventType.broadcast
-                        ? Colors.black
-                        : Colors.transparent,
-                    width: eventType != EventType.broadcast ? 2.0 : 0.0,
+              ));
+            } else {
+              newComponents[1].add(
+                AudioCard(
+                    options: AudioCardOptions(
+                  name: participant.name ?? "",
+                  barColor: Colors.red,
+                  textColor: Colors.white,
+                  customStyle: BoxDecoration(
+                    color: Colors.transparent,
+                    border: Border.all(
+                      color: eventType != EventType.broadcast
+                          ? Colors.black
+                          : Colors.transparent,
+                      width: eventType != EventType.broadcast ? 2.0 : 0.0,
+                    ),
                   ),
-                ),
-              )),
-            );
+                  controlsPosition: 'topLeft',
+                  infoPosition: 'topRight',
+                  roundedImage: true,
+                  parameters: parameters,
+                  backgroundColor: Colors.transparent,
+                  showControls: eventType != EventType.chat,
+                  participant: actualParticipant,
+                )),
+              );
+            }
+          } else {
+            // Use custom MiniCard builder if available
+            if (customMiniCard != null) {
+              newComponents[1].add(customMiniCard(
+                initials: participant.name ?? "",
+                fontSize: "20",
+                customStyle: false,
+                name: participant.name ?? "",
+                showVideoIcon: false,
+                showAudioIcon: false,
+                imageSource: "",
+                roundedImage: 1.0,
+                imageStyle: Colors.transparent,
+                parameters: parameters,
+              ));
+            } else {
+              newComponents[1].add(
+                MiniCard(
+                    options: MiniCardOptions(
+                  initials: participant.name ?? "",
+                  fontSize: 20,
+                  customStyle: BoxDecoration(
+                    color: Colors.transparent,
+                    border: Border.all(
+                      color: eventType != EventType.broadcast
+                          ? Colors.black
+                          : Colors.transparent,
+                      width: eventType != EventType.broadcast ? 2.0 : 0.0,
+                    ),
+                  ),
+                )),
+              );
+            }
           }
         } else {
           Participant? participant_ = refParticipants.firstWhere(
@@ -382,22 +506,40 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
           );
 
           if (participant_.name.isNotEmpty) {
-            newComponents[1].add(
-              VideoCard(
-                  options: VideoCardOptions(
-                videoStream: participant.stream,
-                remoteProducerId: remoteProducerId,
-                eventType: eventType,
-                forceFullDisplay: forceFullDisplay,
+            // Use custom VideoCard builder if available
+            if (customVideoCard != null) {
+              newComponents[1].add(customVideoCard(
                 participant: participant_,
-                backgroundColor: Colors.transparent,
+                stream: participant,
+                width: 100.0, // You may need to calculate actual width
+                height: 100.0, // You may need to calculate actual height
+                imageSize: null,
+                doMirror: "false",
                 showControls: eventType != EventType.chat,
                 showInfo: true,
                 name: participant_.name,
-                doMirror: false,
+                backgroundColor: Colors.transparent,
+                onVideoPress: null,
                 parameters: parameters,
-              )),
-            );
+              ));
+            } else {
+              newComponents[1].add(
+                VideoCard(
+                    options: VideoCardOptions(
+                  videoStream: participant.stream,
+                  remoteProducerId: remoteProducerId,
+                  eventType: eventType,
+                  forceFullDisplay: forceFullDisplay,
+                  participant: participant_,
+                  backgroundColor: Colors.transparent,
+                  showControls: eventType != EventType.chat,
+                  showInfo: true,
+                  name: participant_.name,
+                  doMirror: false,
+                  parameters: parameters,
+                )),
+              );
+            }
           }
         }
 

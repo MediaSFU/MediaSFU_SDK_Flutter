@@ -33,3 +33,4 @@ build/
 doc/doc_assets/header.html
 dartdoc_options.yaml
 doc/doc_assets/footer.html
+doc/CUSTOM_BUILDERS.md

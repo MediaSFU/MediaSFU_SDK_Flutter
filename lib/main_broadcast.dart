@@ -1,30 +1,20 @@
-// ignore_for_file: unused_shown_name, unused_import, unused_local_variable, dead_code
 import 'package:flutter/material.dart';
 import 'methods/utils/create_room_on_media_sfu.dart' show createRoomOnMediaSFU;
 import 'methods/utils/join_room_on_media_sfu.dart' show joinRoomOnMediaSFU;
 import 'types/types.dart'
     show
         ClickVideoOptions,
+        ClickAudioOptions,
+        ClickScreenShareOptions,
         CreateMediaSFURoomOptions,
         EventType,
         MediasfuParameters,
-        SeedData;
+        Participant;
 
 import 'components/mediasfu_components/mediasfu_broadcast.dart'
     show MediasfuBroadcast, MediasfuBroadcastOptions;
 import 'components/misc_components/prejoin_page.dart'
-    show PreJoinPage, PreJoinPageOptions, Credentials;
-
-// Import methods for generating random participants, messages, requests, and waiting room lists if using seed data
-// Ensure you have equivalent Dart methods for generating seed data
-import 'methods/utils/generate_random_participants.dart'
-    show GenerateRandomParticipantsOptions, generateRandomParticipants;
-import 'methods/utils/generate_random_messages.dart'
-    show GenerateRandomMessagesOptions, generateRandomMessages;
-import 'methods/utils/generate_random_request_list.dart'
-    show GenerateRandomRequestListOptions, generateRandomRequestList;
-import 'methods/utils/generate_random_waiting_room_list.dart'
-    show generateRandomWaitingRoomList;
+    show PreJoinPageOptions, Credentials;
 
 void main() {
   runApp(const MyApp());
@@ -48,27 +38,639 @@ Widget myCustomPreJoinPage({
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            'Hello, ${credentials.apiUserName}!',
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          const Text(
+            'Welcome to Your Custom Broadcast Experience!',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
           const Text(
-            'Get ready to join your broadcast session.',
-            style: TextStyle(fontSize: 18),
+            'You are about to join a broadcast session with enhanced features.',
+            style: TextStyle(fontSize: 16),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 40),
           ElevatedButton(
             onPressed: () {
-              // Proceed to the session by updating the validation status
-              if (options != null) {
-                options.parameters.updateValidated(true);
-              }
+              // Custom logic here
             },
-            child: const Text('Join Now'),
+            child: const Text('Join Broadcast'),
           ),
         ],
       ),
+    ),
+  );
+}
+
+/// Custom VideoCard builder for broadcast sessions
+/// This replaces the default VideoCard with a custom purple gradient design
+Widget myCustomBroadcastVideoCard({
+  required Participant participant,
+  required stream,
+  required double width,
+  required double height,
+  imageSize,
+  doMirror,
+  showControls,
+  showInfo,
+  name,
+  backgroundColor,
+  onVideoPress,
+  parameters,
+}) {
+  return Container(
+    width: width,
+    height: height,
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [Colors.red.shade800, Colors.orange.shade600],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: Colors.white, width: 3),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black26,
+          blurRadius: 10,
+          offset: Offset(0, 5),
+        ),
+      ],
+    ),
+    child: Stack(
+      children: [
+        // Video content placeholder
+        ClipRRect(
+          borderRadius: BorderRadius.circular(13),
+          child: Container(
+            width: double.infinity,
+            height: double.infinity,
+            color: Colors.black54,
+            child: Center(
+              child: Icon(
+                Icons.broadcast_on_personal,
+                size: 64,
+                color: Colors.white70,
+              ),
+            ),
+          ),
+        ),
+        // Custom broadcast overlay
+        if (showInfo == true)
+          Positioned(
+            top: 12,
+            left: 12,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.red.shade600, Colors.orange.shade500],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.live_tv, color: Colors.white, size: 16),
+                  SizedBox(width: 4),
+                  Text(
+                    name ?? participant.name,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
+/// Custom AudioCard builder for broadcast sessions
+/// Features a red/orange gradient design for audio-only participants
+Widget myCustomBroadcastAudioCard({
+  required String name,
+  required bool barColor,
+  textColor,
+  cardBackgroundColor,
+  customWidth,
+  customHeight,
+  imageSource,
+  roundedImage,
+  imageStyle,
+}) {
+  return Container(
+    width: customWidth ?? 100,
+    height: customHeight ?? 100,
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [Colors.red.shade700, Colors.orange.shade500],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: Colors.white, width: 2),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black26,
+          blurRadius: 8,
+          offset: Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Broadcast icon
+        Container(
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white24,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            Icons.radio,
+            color: Colors.white,
+            size: 32,
+          ),
+        ),
+        SizedBox(height: 8),
+        
+        // Participant name
+        Text(
+          name,
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        
+        // Audio wave indicator
+        if (barColor)
+          Container(
+            margin: EdgeInsets.only(top: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(
+                4,
+                (index) => Container(
+                  width: 4,
+                  height: 20 + (index * 3),
+                  margin: EdgeInsets.symmetric(horizontal: 1),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
+/// Custom MiniCard builder for broadcast sessions
+/// Displays small participant cards with broadcast-specific styling
+Widget myCustomBroadcastMiniCard({
+  required String name,
+  required bool showWaveform,
+  overlayPosition,
+  barColor,
+  textColor,
+  imageSource,
+  roundedImage,
+  imageStyle,
+}) {
+  return Container(
+    width: 80,
+    height: 80,
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: showWaveform 
+            ? [Colors.red.shade600, Colors.orange.shade400]
+            : [Colors.grey.shade700, Colors.grey.shade500],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(
+        color: showWaveform ? Colors.white : Colors.grey.shade400, 
+        width: 2,
+      ),
+    ),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          showWaveform ? Icons.broadcast_on_personal : Icons.person,
+          color: Colors.white,
+          size: 24,
+        ),
+        SizedBox(height: 4),
+        Text(
+          name,
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 10,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    ),
+  );
+}
+
+/// Complete Custom Broadcast Interface
+/// This replaces the entire MediaSFU broadcast interface with a custom design
+Widget myCustomBroadcastInterface({required MediasfuParameters parameters}) {
+  return Scaffold(
+    backgroundColor: Colors.red.shade900,
+    appBar: AppBar(
+      title: Text('🔴 Live Broadcast Studio'),
+      backgroundColor: Colors.red.shade800,
+      foregroundColor: Colors.white,
+      elevation: 0,
+    ),
+    body: Column(
+      children: [
+        // Broadcast status header
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.red.shade800, Colors.orange.shade600],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      'LIVE',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Broadcasting: ${parameters.roomName}',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.people, color: Colors.white70, size: 16),
+                  SizedBox(width: 4),
+                  Text(
+                    'Viewers: ${parameters.participants.length}',
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                  Spacer(),
+                  Icon(Icons.person, color: Colors.white70, size: 16),
+                  SizedBox(width: 4),
+                  Text(
+                    'Host: ${parameters.member}',
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        
+        // Broadcast controls
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade800,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildBroadcastControlButton(
+                onPressed: () => parameters.clickVideo(
+                  ClickVideoOptions(parameters: parameters),
+                ),
+                icon: parameters.videoAction ? Icons.videocam : Icons.videocam_off,
+                label: parameters.videoAction ? 'Camera On' : 'Camera Off',
+                isActive: parameters.videoAction,
+                activeColor: Colors.green,
+                inactiveColor: Colors.red,
+              ),
+              _buildBroadcastControlButton(
+                onPressed: () => parameters.clickAudio(
+                  ClickAudioOptions(parameters: parameters),
+                ),
+                icon: parameters.micAction ? Icons.mic : Icons.mic_off,
+                label: parameters.micAction ? 'Mic On' : 'Mic Off',
+                isActive: parameters.micAction,
+                activeColor: Colors.green,
+                inactiveColor: Colors.red,
+              ),
+              _buildBroadcastControlButton(
+                onPressed: () => parameters.clickScreenShare(
+                  ClickScreenShareOptions(parameters: parameters),
+                ),
+                icon: parameters.screenAction 
+                    ? Icons.stop_screen_share 
+                    : Icons.screen_share,
+                label: parameters.screenAction ? 'Stop Share' : 'Share Screen',
+                isActive: parameters.screenAction,
+                activeColor: Colors.orange,
+                inactiveColor: Colors.blue,
+              ),
+            ],
+          ),
+        ),
+        
+        // Main broadcast area - viewers list
+        Expanded(
+          child: Container(
+            margin: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade800,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade700,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      topRight: Radius.circular(16),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.visibility, color: Colors.white),
+                      SizedBox(width: 8),
+                      Text(
+                        'Live Viewers (${parameters.participants.length})',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: parameters.participants.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.people_outline,
+                                size: 64,
+                                color: Colors.white54,
+                              ),
+                              SizedBox(height: 16),
+                              Text(
+                                'No viewers joined yet',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'Share your broadcast link to get viewers!',
+                                style: TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: parameters.participants.length,
+                          itemBuilder: (context, index) {
+                            final participant = parameters.participants[index];
+                            return _buildBroadcastViewerCard(participant, Colors.red.shade600);
+                          },
+                        ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        
+        // Broadcast action bar
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade800,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 4,
+                offset: Offset(0, -2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildBroadcastActionButton(
+                onPressed: () {
+                  // Custom streaming settings
+                },
+                icon: Icons.settings_input_composite,
+                label: 'Stream Settings',
+                color: Colors.blue.shade600,
+              ),
+              _buildBroadcastActionButton(
+                onPressed: () {
+                  // Custom viewer management
+                },
+                icon: Icons.group,
+                label: 'Manage Viewers',
+                color: Colors.green.shade600,
+              ),
+              _buildBroadcastActionButton(
+                onPressed: () {
+                  // End broadcast
+                },
+                icon: Icons.stop_circle,
+                label: 'End Broadcast',
+                color: Colors.red.shade600,
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildBroadcastControlButton({
+  required VoidCallback onPressed,
+  required IconData icon,
+  required String label,
+  required bool isActive,
+  required Color activeColor,
+  required Color inactiveColor,
+}) {
+  return Expanded(
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, color: Colors.white),
+        label: Text(
+          label,
+          style: const TextStyle(color: Colors.white),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isActive ? activeColor : inactiveColor,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _buildBroadcastActionButton({
+  required VoidCallback onPressed,
+  required IconData icon,
+  required String label,
+  required Color color,
+}) {
+  return ElevatedButton.icon(
+    onPressed: onPressed,
+    icon: Icon(icon, color: Colors.white),
+    label: Text(label, style: const TextStyle(color: Colors.white)),
+    style: ElevatedButton.styleFrom(
+      backgroundColor: color,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    ),
+  );
+}
+
+Widget _buildBroadcastViewerCard(Participant participant, Color accentColor) {
+  return Container(
+    margin: const EdgeInsets.only(bottom: 8),
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: Colors.grey.shade700,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: Colors.grey.shade600),
+    ),
+    child: Row(
+      children: [
+        CircleAvatar(
+          backgroundColor: accentColor,
+          radius: 20,
+          child: Text(
+            participant.name.isNotEmpty 
+                ? participant.name[0].toUpperCase()
+                : '?',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                participant.name,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                participant.islevel ?? 'viewer',
+                style: TextStyle(
+                  color: Colors.grey.shade400,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: Colors.green.shade600,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.visibility,
+                color: Colors.white,
+                size: 16,
+              ),
+              SizedBox(width: 4),
+              Text(
+                'Watching',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     ),
   );
 }
@@ -277,6 +879,21 @@ class _MyAppState extends State<MyApp> {
 
       // Update source parameters if not using the default UI
       updateSourceParameters: !returnUI ? updateSourceParameters : null,
+
+      // ======== CUSTOM COMPONENT OPTIONS ========
+      // Uncomment ONE of the following sections to enable custom UI components:
+
+      // OPTION 1: Custom builders for individual components (recommended for most customizations)
+      /*
+      customVideoCard: myCustomBroadcastVideoCard,
+      customAudioCard: myCustomBroadcastAudioCard,
+      customMiniCard: myCustomBroadcastMiniCard,
+      */
+
+      // OPTION 2: Complete custom interface replacement (for advanced customizations)
+      /*
+      customComponent: myCustomBroadcastInterface,
+      */
 
       // Provide custom room functions if not using the default functions
       createMediaSFURoom: createRoomOnMediaSFU,

@@ -180,17 +180,23 @@ class _PollModalState extends State<PollModal> {
     switch (newPoll['type']) {
       case 'trueFalse':
       case 'yesNo':
-        return newPoll['options'].map<Widget>((option) {
-          return Row(
-            children: [
-              Radio(
-                  value: option,
-                  groupValue: newPoll['type'],
-                  onChanged: (_) {}),
-              Text(option),
-            ],
-          );
-        }).toList();
+        return [
+          RadioGroup<String>(
+            onChanged: (value) {}, // Disabled for preview
+            child: Column(
+              children: newPoll['options'].map<Widget>((option) {
+                return Row(
+                  children: [
+                    Radio<String>(
+                      value: option,
+                    ),
+                    Text(option),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+        ];
       case 'custom':
         return [
           ...newPoll['options'].asMap().entries.map((entry) {
@@ -239,19 +245,14 @@ class _PollModalState extends State<PollModal> {
     final member = widget.options.member;
     final handleVotePoll = widget.options.handleVotePoll;
 
-    return poll!.options.asMap().entries.map<Widget>((entry) {
-      int i = entry.key;
-      String option = entry.value;
-      return ListTile(
-        title: Text(option),
-        leading: Radio(
-          value: i,
-          groupValue: poll.voters?[member],
-          onChanged: (_) {
+    return [
+      RadioGroup<int>(
+        onChanged: (int? value) {
+          if (value != null) {
             handleVotePoll(
               HandleVotePollOptions(
                 pollId: poll.id!,
-                optionIndex: i,
+                optionIndex: value,
                 socket: widget.options.socket,
                 showAlert: widget.options.showAlert,
                 member: member,
@@ -260,10 +261,22 @@ class _PollModalState extends State<PollModal> {
                     widget.options.updateIsPollModalVisible,
               ),
             );
-          },
+          }
+        },
+        child: Column(
+          children: poll!.options.asMap().entries.map<Widget>((entry) {
+            int i = entry.key;
+            String option = entry.value;
+            return ListTile(
+              title: Text(option),
+              leading: Radio<int>(
+                value: i,
+              ),
+            );
+          }).toList(),
         ),
-      );
-    }).toList();
+      ),
+    ];
   }
 
   @override

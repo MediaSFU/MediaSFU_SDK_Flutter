@@ -41,6 +41,7 @@ abstract class VideoCardParameters implements AudioDecibelCheckParameters {
 ///
 /// ### Example:
 /// ```dart
+/// // Using the default VideoCard
 /// VideoCard(
 ///   options: VideoCardOptions(
 ///     parameters: VideoCardParametersImplementation(),
@@ -49,6 +50,34 @@ abstract class VideoCardParameters implements AudioDecibelCheckParameters {
 ///     eventType: EventType.video,
 ///     videoStream: mediaStream,
 ///     participant: participant,
+///   ),
+/// );
+///
+/// // Using a custom VideoCard builder
+/// Widget myCustomVideoCard({required VideoCardOptions options}) {
+///   return Container(
+///     decoration: BoxDecoration(
+///       color: Colors.purple,
+///       borderRadius: BorderRadius.circular(20),
+///     ),
+///     child: Column(
+///       children: [
+///         Text('Custom: ${options.name}'),
+///         // Your custom video display logic here
+///       ],
+///     ),
+///   );
+/// }
+///
+/// VideoCard(
+///   options: VideoCardOptions(
+///     parameters: VideoCardParametersImplementation(),
+///     name: "John Doe",
+///     remoteProducerId: "12345",
+///     eventType: EventType.video,
+///     videoStream: mediaStream,
+///     participant: participant,
+///     customBuilder: myCustomVideoCard, // Pass the custom builder
 ///   ),
 /// );
 /// ```
@@ -75,6 +104,7 @@ class VideoCardOptions {
   final Color backgroundColor;
   final bool doMirror;
   final ControlMediaType controlUserMedia;
+  final VideoCardType? customBuilder;
 
   VideoCardOptions({
     required this.parameters,
@@ -98,6 +128,7 @@ class VideoCardOptions {
     this.backgroundColor = const Color(0xFF2c678f),
     this.doMirror = false,
     this.controlUserMedia = controlMedia,
+    this.customBuilder,
   });
 }
 
@@ -279,6 +310,13 @@ class _VideoCardState extends State<VideoCard> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    // If a custom builder is provided, use it
+    if (widget.options.customBuilder != null) {
+      return widget.options.customBuilder!(
+        options: widget.options,
+      );
+    }
+
     animateWaveform();
     try {
       return Container(

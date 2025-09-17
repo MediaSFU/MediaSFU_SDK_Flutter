@@ -278,6 +278,21 @@ class _MyAppState extends State<MyApp> {
       // Update source parameters if not using the default UI
       updateSourceParameters: !returnUI ? updateSourceParameters : null,
 
+      // ======== CUSTOM COMPONENT OPTIONS ========
+      // Uncomment ONE of the following sections to enable custom UI components:
+
+      // OPTION 1: Custom builders for individual components (recommended for most customizations)
+      /*
+      customVideoCard: myCustomWebinarVideoCard,
+      customAudioCard: myCustomWebinarAudioCard,
+      customMiniCard: myCustomWebinarMiniCard,
+      */
+
+      // OPTION 2: Complete custom interface replacement (for advanced customizations)
+      /*
+      customComponent: myCustomWebinarInterface,
+      */
+
       // Provide custom room functions if not using the default functions
       createMediaSFURoom: createRoomOnMediaSFU,
       joinMediaSFURoom: joinRoomOnMediaSFU,

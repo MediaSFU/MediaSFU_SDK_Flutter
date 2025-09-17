@@ -5,26 +5,17 @@ import 'methods/utils/join_room_on_media_sfu.dart' show joinRoomOnMediaSFU;
 import 'types/types.dart'
     show
         ClickVideoOptions,
+        ClickAudioOptions,
+        ClickScreenShareOptions,
         CreateMediaSFURoomOptions,
         EventType,
         MediasfuParameters,
-        SeedData;
+        Participant;
 
 import 'components/mediasfu_components/mediasfu_conference.dart'
     show MediasfuConference, MediasfuConferenceOptions;
 import 'components/misc_components/prejoin_page.dart'
-    show PreJoinPage, PreJoinPageOptions, Credentials;
-
-// Import methods for generating random participants, messages, requests, and waiting room lists if using seed data
-// Ensure you have equivalent Dart methods for generating seed data
-import 'methods/utils/generate_random_participants.dart'
-    show GenerateRandomParticipantsOptions, generateRandomParticipants;
-import 'methods/utils/generate_random_messages.dart'
-    show GenerateRandomMessagesOptions, generateRandomMessages;
-import 'methods/utils/generate_random_request_list.dart'
-    show GenerateRandomRequestListOptions, generateRandomRequestList;
-import 'methods/utils/generate_random_waiting_room_list.dart'
-    show generateRandomWaitingRoomList;
+    show PreJoinPageOptions, Credentials;
 
 void main() {
   runApp(const MyApp());
@@ -69,6 +60,600 @@ Widget myCustomPreJoinPage({
           ),
         ],
       ),
+    ),
+  );
+}
+
+/// Custom VideoCard builder for conference sessions
+/// This replaces the default VideoCard with a custom blue gradient design
+Widget myCustomConferenceVideoCard({
+  required Participant participant,
+  required stream,
+  required double width,
+  required double height,
+  imageSize,
+  doMirror,
+  showControls,
+  showInfo,
+  name,
+  backgroundColor,
+  onVideoPress,
+  parameters,
+}) {
+  return Container(
+    width: width,
+    height: height,
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [Colors.blue.shade800, Colors.teal.shade600],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: Colors.white, width: 3),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black26,
+          blurRadius: 10,
+          offset: Offset(0, 5),
+        ),
+      ],
+    ),
+    child: Stack(
+      children: [
+        // Video content placeholder
+        ClipRRect(
+          borderRadius: BorderRadius.circular(13),
+          child: Container(
+            width: double.infinity,
+            height: double.infinity,
+            color: Colors.black54,
+            child: Center(
+              child: Icon(
+                Icons.video_call,
+                size: 64,
+                color: Colors.white70,
+              ),
+            ),
+          ),
+        ),
+        // Custom conference overlay
+        if (showInfo == true)
+          Positioned(
+            top: 12,
+            left: 12,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.blue.shade600, Colors.teal.shade500],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.groups, color: Colors.white, size: 16),
+                  SizedBox(width: 4),
+                  Text(
+                    name ?? participant.name,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
+/// Custom AudioCard builder for conference sessions
+/// Features a blue/teal gradient design for audio-only participants
+Widget myCustomConferenceAudioCard({
+  required String name,
+  required bool barColor,
+  textColor,
+  cardBackgroundColor,
+  customWidth,
+  customHeight,
+  imageSource,
+  roundedImage,
+  imageStyle,
+}) {
+  return Container(
+    width: customWidth ?? 100,
+    height: customHeight ?? 100,
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [Colors.blue.shade700, Colors.teal.shade500],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: Colors.white, width: 2),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black26,
+          blurRadius: 8,
+          offset: Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Conference icon
+        Container(
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white24,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            Icons.people,
+            color: Colors.white,
+            size: 32,
+          ),
+        ),
+        SizedBox(height: 8),
+        
+        // Participant name
+        Text(
+          name,
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        
+        // Audio wave indicator
+        if (barColor)
+          Container(
+            margin: EdgeInsets.only(top: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(
+                4,
+                (index) => Container(
+                  width: 4,
+                  height: 20 + (index * 3),
+                  margin: EdgeInsets.symmetric(horizontal: 1),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
+/// Custom MiniCard builder for conference sessions
+/// Displays small participant cards with conference-specific styling
+Widget myCustomConferenceMiniCard({
+  required String name,
+  required bool showWaveform,
+  overlayPosition,
+  barColor,
+  textColor,
+  imageSource,
+  roundedImage,
+  imageStyle,
+}) {
+  return Container(
+    width: 80,
+    height: 80,
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: showWaveform 
+            ? [Colors.blue.shade600, Colors.teal.shade400]
+            : [Colors.grey.shade700, Colors.grey.shade500],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(
+        color: showWaveform ? Colors.white : Colors.grey.shade400, 
+        width: 2,
+      ),
+    ),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          showWaveform ? Icons.groups : Icons.person,
+          color: Colors.white,
+          size: 24,
+        ),
+        SizedBox(height: 4),
+        Text(
+          name,
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 10,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    ),
+  );
+}
+
+/// Complete Custom Conference Interface
+/// This replaces the entire MediaSFU conference interface with a custom design
+Widget myCustomConferenceInterface({required MediasfuParameters parameters}) {
+  return Scaffold(
+    backgroundColor: Colors.blue.shade900,
+    appBar: AppBar(
+      title: Text('🎥 Conference Room'),
+      backgroundColor: Colors.blue.shade800,
+      foregroundColor: Colors.white,
+      elevation: 0,
+    ),
+    body: Column(
+      children: [
+        // Conference status header
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blue.shade800, Colors.teal.shade600],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.meeting_room, color: Colors.white, size: 24),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Conference: ${parameters.roomName}',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.people, color: Colors.white70, size: 16),
+                  SizedBox(width: 4),
+                  Text(
+                    'Participants: ${parameters.participants.length}',
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                  Spacer(),
+                  Icon(Icons.person, color: Colors.white70, size: 16),
+                  SizedBox(width: 4),
+                  Text(
+                    'You: ${parameters.member}',
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        
+        // Conference controls
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade800,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildConferenceControlButton(
+                onPressed: () => parameters.clickVideo(
+                  ClickVideoOptions(parameters: parameters),
+                ),
+                icon: parameters.videoAction ? Icons.videocam : Icons.videocam_off,
+                label: parameters.videoAction ? 'Video On' : 'Video Off',
+                isActive: parameters.videoAction,
+                activeColor: Colors.green,
+                inactiveColor: Colors.red,
+              ),
+              _buildConferenceControlButton(
+                onPressed: () => parameters.clickAudio(
+                  ClickAudioOptions(parameters: parameters),
+                ),
+                icon: parameters.micAction ? Icons.mic : Icons.mic_off,
+                label: parameters.micAction ? 'Mic On' : 'Mic Off',
+                isActive: parameters.micAction,
+                activeColor: Colors.green,
+                inactiveColor: Colors.red,
+              ),
+              _buildConferenceControlButton(
+                onPressed: () => parameters.clickScreenShare(
+                  ClickScreenShareOptions(parameters: parameters),
+                ),
+                icon: parameters.screenAction 
+                    ? Icons.stop_screen_share 
+                    : Icons.screen_share,
+                label: parameters.screenAction ? 'Stop Share' : 'Share Screen',
+                isActive: parameters.screenAction,
+                activeColor: Colors.orange,
+                inactiveColor: Colors.blue,
+              ),
+            ],
+          ),
+        ),
+        
+        // Main conference area - participants list
+        Expanded(
+          child: Container(
+            margin: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade800,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade700,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      topRight: Radius.circular(16),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.group, color: Colors.white),
+                      SizedBox(width: 8),
+                      Text(
+                        'Conference Participants (${parameters.participants.length})',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: parameters.participants.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.people_outline,
+                                size: 64,
+                                color: Colors.white54,
+                              ),
+                              SizedBox(height: 16),
+                              Text(
+                                'Waiting for participants to join...',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: parameters.participants.length,
+                          itemBuilder: (context, index) {
+                            final participant = parameters.participants[index];
+                            return _buildConferenceParticipantCard(participant, Colors.blue.shade600);
+                          },
+                        ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        
+        // Conference action bar
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade800,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 4,
+                offset: Offset(0, -2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildConferenceActionButton(
+                onPressed: () {
+                  // Custom chat functionality
+                },
+                icon: Icons.chat_bubble,
+                label: 'Chat',
+                color: Colors.blue.shade600,
+              ),
+              _buildConferenceActionButton(
+                onPressed: () {
+                  // Custom recording
+                },
+                icon: Icons.fiber_manual_record,
+                label: 'Record',
+                color: Colors.red.shade600,
+              ),
+              _buildConferenceActionButton(
+                onPressed: () {
+                  // Leave conference
+                },
+                icon: Icons.exit_to_app,
+                label: 'Leave',
+                color: Colors.grey.shade600,
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildConferenceControlButton({
+  required VoidCallback onPressed,
+  required IconData icon,
+  required String label,
+  required bool isActive,
+  required Color activeColor,
+  required Color inactiveColor,
+}) {
+  return Expanded(
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, color: Colors.white),
+        label: Text(
+          label,
+          style: const TextStyle(color: Colors.white),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isActive ? activeColor : inactiveColor,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _buildConferenceActionButton({
+  required VoidCallback onPressed,
+  required IconData icon,
+  required String label,
+  required Color color,
+}) {
+  return ElevatedButton.icon(
+    onPressed: onPressed,
+    icon: Icon(icon, color: Colors.white),
+    label: Text(label, style: const TextStyle(color: Colors.white)),
+    style: ElevatedButton.styleFrom(
+      backgroundColor: color,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    ),
+  );
+}
+
+Widget _buildConferenceParticipantCard(Participant participant, Color accentColor) {
+  return Container(
+    margin: const EdgeInsets.only(bottom: 8),
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: Colors.grey.shade700,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: Colors.grey.shade600),
+    ),
+    child: Row(
+      children: [
+        CircleAvatar(
+          backgroundColor: accentColor,
+          radius: 20,
+          child: Text(
+            participant.name.isNotEmpty 
+                ? participant.name[0].toUpperCase()
+                : '?',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                participant.name,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                participant.islevel ?? 'participant',
+                style: TextStyle(
+                  color: Colors.grey.shade400,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: (participant.muted ?? false) ? Colors.red : Colors.green,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Icon(
+                (participant.muted ?? false) ? Icons.mic_off : Icons.mic,
+                color: Colors.white,
+                size: 16,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: (participant.videoOn ?? false) ? Colors.green : Colors.red,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Icon(
+                (participant.videoOn ?? false) ? Icons.videocam : Icons.videocam_off,
+                color: Colors.white,
+                size: 16,
+              ),
+            ),
+          ],
+        ),
+      ],
     ),
   );
 }
@@ -277,6 +862,21 @@ class _MyAppState extends State<MyApp> {
 
       // Update source parameters if not using the default UI
       updateSourceParameters: !returnUI ? updateSourceParameters : null,
+
+      // ======== CUSTOM COMPONENT OPTIONS ========
+      // Uncomment ONE of the following sections to enable custom UI components:
+
+      // OPTION 1: Custom builders for individual components (recommended for most customizations)
+      /*
+      customVideoCard: myCustomConferenceVideoCard,
+      customAudioCard: myCustomConferenceAudioCard,
+      customMiniCard: myCustomConferenceMiniCard,
+      */
+
+      // OPTION 2: Complete custom interface replacement (for advanced customizations)
+      /*
+      customComponent: myCustomConferenceInterface,
+      */
 
       // Provide custom room functions if not using the default functions
       createMediaSFURoom: createRoomOnMediaSFU,

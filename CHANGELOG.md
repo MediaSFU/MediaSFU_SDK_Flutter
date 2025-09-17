@@ -1,3 +1,10 @@
+### 2.2.0
+
+* Custom builders support for VideoCard, AudioCard, and MiniCard components.
+* Complete custom interface support using `CustomComponentType`.
+* Return `CustomComponent` instances from the builders as well as the full display widgets.
+* PCMU and PCMA audio codec support.
+
 ### 2.1.9
 
 * Support for the latest version of WebRTC.
