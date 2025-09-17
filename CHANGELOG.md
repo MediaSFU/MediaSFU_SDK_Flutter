@@ -4,6 +4,7 @@
 * Complete custom interface support using `CustomComponentType`.
 * Return `CustomComponent` instances from the builders as well as the full display widgets.
 * PCMU and PCMA audio codec support.
+* Chrome 140+ video production fix in progress.
 
 ### 2.1.9
 
