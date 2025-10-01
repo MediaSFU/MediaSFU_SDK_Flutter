@@ -149,6 +149,8 @@ export '../methods/utils/mini_audio_player/mini_audio_player.dart';
 
 // Other Utils
 export '../methods/utils/format_number.dart';
+export '../methods/utils/get_media_devices_list.dart';
+export '../methods/utils/get_participant_media.dart';
 export '../methods/utils/generate_random_messages.dart';
 export '../methods/utils/generate_random_participants.dart';
 export '../methods/utils/generate_random_polls.dart';

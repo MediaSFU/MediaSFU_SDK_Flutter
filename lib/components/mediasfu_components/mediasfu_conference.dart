@@ -203,6 +203,10 @@ import '../../consumers/switch_user_audio.dart' show switchUserAudio;
 import '../../consumers/receive_room_messages.dart'
     show receiveRoomMessages, ReceiveRoomMessagesOptions;
 import '../../methods/utils/format_number.dart' show formatNumber;
+import '../../methods/utils/get_media_devices_list.dart'
+    show getMediaDevicesList;
+import '../../methods/utils/get_participant_media.dart'
+    show getParticipantMedia;
 import '../../consumers/connect_ips.dart' show connectIps;
 import '../../consumers/connect_local_ips.dart' show connectLocalIps;
 
@@ -5091,6 +5095,8 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
         switchUserAudio: switchUserAudio,
         getDomains: getDomains,
         formatNumber: formatNumber,
+        getMediaDevicesList: getMediaDevicesList,
+        getParticipantMedia: getParticipantMedia,
         connectIps: connectIps,
         connectLocalIps: connectLocalIps,
         createDeviceClient: createDeviceClient,

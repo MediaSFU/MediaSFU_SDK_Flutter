@@ -45,6 +45,14 @@ export 'package:mediasfu_sdk/methods/stream_methods/click_screen_share.dart'
     show clickScreenShare;
 export 'package:mediasfu_sdk/methods/utils/format_number.dart'
     show formatNumber;
+export 'package:mediasfu_sdk/methods/utils/get_media_devices_list.dart'
+    show getMediaDevicesList, GetMediaDevicesListType;
+export 'package:mediasfu_sdk/methods/utils/get_participant_media.dart'
+    show
+        getParticipantMedia,
+        GetParticipantMediaType,
+        GetParticipantMediaOptions,
+        GetParticipantMediaParameters;
 export 'package:mediasfu_sdk/consumers/connect_ips.dart' show connectIps;
 export 'package:mediasfu_sdk/consumers/connect_local_ips.dart'
     show connectLocalIps;

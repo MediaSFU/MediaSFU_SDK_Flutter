@@ -38,7 +38,8 @@ class MediasfuParameters
         BreakoutRoomsModalParameters,
         WaitingRoomModalParameters,
         ParticipantsModalParameters,
-        RequestsModalParameters {
+        RequestsModalParameters,
+        GetParticipantMediaParameters {
   // ======== Parameters ========
 
   // ---------------------
@@ -773,6 +774,8 @@ class MediasfuParameters
   final SwitchUserAudioType switchUserAudio;
   final GetDomainsType getDomains;
   final FormatNumberType formatNumber;
+  final GetMediaDevicesListType getMediaDevicesList;
+  final GetParticipantMediaType getParticipantMedia;
   final ConnectIpsType connectIps;
   ConnectLocalIpsType? connectLocalIps;
   final CreateDeviceClientType createDeviceClient;
@@ -1607,6 +1610,8 @@ class MediasfuParameters
     required this.switchUserAudio,
     required this.getDomains,
     required this.formatNumber,
+    required this.getMediaDevicesList,
+    required this.getParticipantMedia,
     required this.connectIps,
     this.connectLocalIps,
     required this.createDeviceClient,

@@ -403,17 +403,18 @@ packages:
   mediasfu_mediasoup_client:
     dependency: transitive
     description:
-      path: "../../mediasfu_mediasoup_client"
-      relative: true
-    source: path
-    version: "0.0.8"
+      name: mediasfu_mediasoup_client
+      sha256: "73b1db8c50f61856ccf8b03d5a3d09374a8ccf50ce1e58c7af4abe22f86ba8c8"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.9"
   mediasfu_sdk:
     dependency: "direct main"
     description:
       path: ".."
       relative: true
     source: path
-    version: "2.1.9"
+    version: "2.2.0"
   meta:
     dependency: transitive
     description:

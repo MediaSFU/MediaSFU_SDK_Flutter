@@ -5,6 +5,7 @@
 /// 
 /// The CustomComponentType allows you to provide a completely custom interface
 /// while still having access to all MediaSFU parameters and functionality.
+library;
 
 import 'package:flutter/material.dart';
 import 'package:mediasfu_sdk/mediasfu_sdk.dart';

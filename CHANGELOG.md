@@ -1,3 +1,9 @@
+### 2.2.1
+
+* Updated README.md with more easy-to-follow examples for custom builders and complete custom interface usage.
+* Added `getMediaDevicesList` function to `MediasfuParameters` for retrieving available media devices.
+* Added `getParticipantMedia` function to `MediasfuParameters` for accessing media (video/audio) of specific participants.
+
 ### 2.2.0
 
 * Custom builders support for VideoCard, AudioCard, and MiniCard components.

@@ -2,23 +2,24 @@
   <img src="https://www.mediasfu.com/logo192.png" width="100" alt="MediaSFU Logo">
 </p>
 
-<p align="center">
-  <a href="https://twitter.com/media_sfu">
-    <img src="https://img.icons8.com/color/48/000000/twitter--v1.png" alt="Twitter" style="margin-right: 10px;">
-  </a>
-  <a href="https://www.mediasfu.com/forums">
-    <img src="https://img.icons8.com/color/48/000000/communication--v1.png" alt="Community Forum" style="margin-right: 10px;">
-  </a>
-  <a href="https://github.com/MediaSFU">
-    <img src="https://img.icons8.com/fluent/48/000000/github.png" alt="Github" style="margin-right: 10px;">
-  </a>
-  <a href="https://www.mediasfu.com/">
-    <img src="https://img.icons8.com/color/48/000000/domain--v1.png" alt="Website" style="margin-right: 10px;">
-  </a>
-  <a href="https://www.youtube.com/channel/UCELghZRPKMgjih5qrmXLtqw">
-    <img src="https://img.icons8.com/color/48/000000/youtube--v1.png" alt="Youtube" style="margin-right: 10px;">
-  </a>
-</p>
+
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  [![Twitter](https://img.shields.io/badge/Twitter-1DA1F2?style=flat&logo=twitter&logoColor=white)](https://twitter.com/media_sfu)
+  [![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/MediaSFU)
+  [![Website](https://img.shields.io/badge/Website-4285F4?style=flat&logo=google-chrome&logoColor=white)](https://www.mediasfu.com/)
+  [![YouTube](https://img.shields.io/badge/YouTube-FF0000?style=flat&logo=youtube&logoColor=white)](https://www.youtube.com/channel/UCELghZRPKMgjih5qrmXLtqw)
+  [![Community](https://img.shields.io/badge/Community-Forum-blue?style=flat&logo=discourse&logoColor=white)](https://www.mediasfu.com/forums)
+
+
+
+  [![Built with MediaSFU](https://img.shields.io/badge/Built%20with-MediaSFU-blue)](https://mediasfu.com)
+  [![Flutter](https://img.shields.io/badge/Flutter-02569B?style=flat&logo=flutter&logoColor=white)](https://flutter.dev)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+  [![React](https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB)](https://reactjs.org)
+  [![React Native](https://img.shields.io/badge/React_Native-20232A?style=flat&logo=react&logoColor=61DAFB)](https://reactnative.dev)
+
+
+MediaSFU Flutter SDK provides a comprehensive solution for building real-time communication applications. Part of the MediaSFU ecosystem with cross-platform support for web, mobile, and desktop environments using React.js, Flutter, React Native, and Expo.
 
 ---
 
@@ -53,6 +54,33 @@ MediaSFU offers a cutting-edge streaming experience that empowers users to custo
 
 # MediaSFU Flutter Package Documentation
 
+## 🚀 Quick Access to New Features
+
+### Media Device & Stream Utilities
+
+The SDK now includes powerful utility methods for advanced media control:
+
+**`getMediaDevicesList`** - Enumerate available cameras and microphones with automatic permission handling:
+```dart
+final cameras = await getMediaDevicesList('videoinput');
+final microphones = await getMediaDevicesList('audioinput');
+```
+
+**`getParticipantMedia`** - Retrieve specific participant's video or audio stream from the session:
+```dart
+final videoStream = getParticipantMedia(
+  options: GetParticipantMediaOptions(
+    participantId: 'producer-123',
+    mediaType: 'video',
+    parameters: mediasfuParameters,
+  ),
+);
+```
+
+These utilities enable advanced features like custom device selection interfaces, participant stream monitoring, and dynamic media routing. [See full documentation](#media-device-stream-utilities).
+
+---
+
 ## Unlock the Power of MediaSFU Community Edition  
 
 **MediaSFU Community Edition is free and open-source**—perfect for developers who want to run their own media server without upfront costs. With robust features and simple setup, you can launch your media solution in minutes. **Ready to scale?** Upgrade seamlessly to **MediaSFU Cloud** for enterprise-grade performance and global scalability.  
@@ -67,10 +95,12 @@ MediaSFU offers a cutting-edge streaming experience that empowers users to custo
 
 - [Features](#features)
 - [Getting Started](#getting-started)
-- [Basic Usage Guide](#basic-usage-guide)
-- [Custom UI Components](#custom-ui-components)
-- [Intermediate Usage Guide](#intermediate-usage-guide)
-- [Advanced Usage Guide](#advanced-usage-guide)
+- [📱 Flutter SDK Guide](#flutter-sdk-guide)
+  - [Quick Start](#quick-start-5-minutes)
+  - [Understanding the Architecture](#understanding-mediasfu-architecture)
+  - [Core Concepts & Components](#core-concepts--components)
+  - [Working with Methods](#working-with-methods)
+  - [Customization & Styling](#customization--styling)
 - [API Reference](#api-reference)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
@@ -86,6 +116,15 @@ MediaSFU's Flutter SDK comes with a host of powerful features out of the box:
 5. **Chat (Direct & Group)**: Facilitate communication with direct and group chat options.
 6. **Cloud Recording (track-based)**: Customize recordings with track-based options, including watermarks, name tags, background colors, and more.
 7. **Managed Events**: Manage events with features to handle abandoned and inactive participants, as well as enforce time and capacity limits.
+
+### 🆕 New Advanced Media Access
+
+The SDK now includes powerful utility methods for fine-grained control over media devices and participant streams:
+
+- **`getMediaDevicesList`**: Enumerate available cameras and microphones with permission handling
+- **`getParticipantMedia`**: Retrieve specific participant's video or audio streams by ID or name
+
+These utilities enable advanced features like device selection interfaces, participant stream monitoring, and custom media routing. [Learn more in the Media Device & Stream Utilities section](#media-device-stream-utilities).
 
 
 # Getting Started <a name="getting-started"></a>
@@ -267,15 +306,1681 @@ If you are targeting **Flutter Web**, ensure you have proper configurations for 
 
 By following these steps, you ensure that your Flutter app has the necessary permissions and configurations for camera, microphone, and network access on both iOS and Android platforms.
 
-# Basic Usage Guide <a name="basic-usage-guide"></a>
+---
 
-A basic guide on how to use the package for common tasks.
+# 📱 Flutter SDK Guide <a name="flutter-sdk-guide"></a>
 
-This section will guide users through the initial setup and installation of the Flutter package.
+This comprehensive guide will walk you through everything you need to know about building real-time communication apps with MediaSFU's Flutter SDK. Whether you're a beginner or an experienced developer, you'll find clear explanations, practical examples, and best practices.
 
-This guide provides a basic overview of how to set up and use the `mediasfu_sdk` module for common tasks across platforms.
+---
 
-### Initial Setup and Installation
+## Quick Start (5 Minutes) <a name="quick-start-5-minutes"></a>
+
+Get your first MediaSFU app running in just a few minutes.
+
+### Step 1: Install the Package
+
+```bash
+flutter pub add mediasfu_sdk
+```
+
+### Step 2: Import and Use
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:mediasfu_sdk/mediasfu_sdk.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // Option 1: Use without credentials (for testing)
+    final options = MediasfuGenericOptions();
+
+    // Option 2: Use with MediaSFU Cloud credentials
+    // final credentials = Credentials(
+    //   apiUserName: 'your_username',
+    //   apiKey: 'your_api_key',
+    // );
+    // final options = MediasfuGenericOptions(credentials: credentials);
+
+    return MaterialApp(
+      title: 'MediaSFU App',
+      home: MediasfuGeneric(options: options),
+    );
+  }
+}
+```
+
+### Step 3: Run Your App
+
+```bash
+flutter run
+```
+
+**That's it!** You now have a fully functional video conferencing app with:
+- ✅ Video and audio streaming
+- ✅ Screen sharing
+- ✅ Chat messaging
+- ✅ Participant management
+- ✅ Recording capabilities
+
+---
+
+## Understanding MediaSFU Architecture <a name="understanding-mediasfu-architecture"></a>
+
+Before diving deeper, let's understand how MediaSFU is structured.
+
+### The Three-Layer Architecture
+
+```
+┌─────────────────────────────────────────────┐
+│          Your Flutter Application            │
+│  (main.dart, custom widgets, business logic) │
+└─────────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────────┐
+│         MediaSFU Components Layer           │
+│  (MediasfuGeneric, MediasfuBroadcast, etc.) │
+│         - Pre-built UI components            │
+│         - Event handling                     │
+│         - State management                   │
+└─────────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────────┐
+│         MediaSFU Core Methods Layer         │
+│    (Stream control, room management,        │
+│     WebRTC handling, socket communication)  │
+└─────────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────────┐
+│         MediaSFU Backend Services           │
+│  (MediaSFU Cloud or Community Edition)      │
+└─────────────────────────────────────────────┘
+```
+
+### Key Concepts
+
+#### 1. **Event Room Types**
+
+MediaSFU provides 5 specialized room types, each optimized for specific use cases:
+
+| Room Type | Best For | Key Features |
+|-----------|----------|--------------|
+| **MediasfuGeneric** | General purpose meetings | Flexible layout, all features enabled |
+| **MediasfuBroadcast** | Live streaming events | Optimized for one-to-many communication |
+| **MediasfuWebinar** | Educational sessions | Presenter focus, Q&A features |
+| **MediasfuConference** | Business meetings | Equal participant layout, collaboration tools |
+| **MediasfuChat** | Interactive discussions | Chat-first interface, quick connections |
+
+```dart
+// Choose the right room type for your use case
+import 'package:mediasfu_sdk/mediasfu_sdk.dart';
+
+// For a webinar
+home: MediasfuWebinar(options: MediasfuWebinarOptions(...));
+
+// For a broadcast
+home: MediasfuBroadcast(options: MediasfuBroadcastOptions(...));
+
+// For a conference
+home: MediasfuConference(options: MediasfuConferenceOptions(...));
+```
+
+#### 2. **The Three Usage Modes**
+
+MediaSFU offers three progressive levels of customization:
+
+##### Mode 1: Default UI (Simplest)
+Use MediaSFU's complete pre-built interface - perfect for rapid development.
+
+```dart
+final options = MediasfuGenericOptions(
+  credentials: credentials,
+);
+
+return MediasfuGeneric(options: options);
+```
+
+**When to use:**
+- ✅ Prototyping or MVP development
+- ✅ Need a production-ready UI quickly
+- ✅ Standard video conferencing features are sufficient
+
+##### Mode 2: Custom UI with MediaSFU Backend (Most Flexible)
+Build your own UI while using MediaSFU's powerful backend infrastructure.
+
+```dart
+final options = MediasfuGenericOptions(
+  credentials: credentials,
+  returnUI: false, // Don't render MediaSFU's UI
+  sourceParameters: sourceParameters.value,
+  updateSourceParameters: updateSourceParameters,
+);
+
+// Access MediaSFU features in your custom UI
+sourceParameters.value?.clickVideo(...);
+sourceParameters.value?.clickAudio(...);
+```
+
+**When to use:**
+- ✅ Need complete control over UI/UX
+- ✅ Building a custom branded experience
+- ✅ Integrating into existing app design
+
+##### Mode 3: Component Replacement (Balanced)
+Replace specific MediaSFU components while keeping the rest of the infrastructure.
+
+```dart
+Widget myCustomInterface({required MediasfuParameters parameters}) {
+  return YourCustomWidget(
+    // Use MediaSFU components in your layout
+    child: FlexibleVideo(parameters: parameters),
+  );
+}
+
+final options = MediasfuGenericOptions(
+  credentials: credentials,
+  customComponent: myCustomInterface,
+);
+```
+
+**When to use:**
+- ✅ Need custom main interface but want to keep MediaSFU's components
+- ✅ Partial customization with minimal effort
+- ✅ Want to maintain MediaSFU's functionality while customizing layout
+
+#### 3. **Parameters: Your Control Center**
+
+The `MediasfuParameters` object is your gateway to all MediaSFU functionality:
+
+```dart
+class MediasfuParameters {
+  // Media Controls
+  void clickVideo(ClickVideoOptions options) { }
+  void clickAudio(ClickAudioOptions options) { }
+  void clickScreenShare(ClickScreenShareOptions options) { }
+  
+  // Room State
+  String roomName;
+  List<Participant> participants;
+  List<Stream> allVideoStreams;
+  List<Stream> allAudioStreams;
+  
+  // UI State
+  bool isVideoVisible;
+  bool isAudioVisible;
+  bool isScreenSharing;
+  
+  // And 200+ more properties and methods...
+}
+```
+
+**Access patterns:**
+
+```dart
+// In Mode 1 (Default UI): Parameters are managed internally
+// You don't need to access them directly
+
+// In Mode 2 (Custom UI): Access via sourceParameters
+sourceParameters.value?.clickVideo(
+  ClickVideoOptions(parameters: sourceParameters.value!),
+);
+
+// In Mode 3 (Component Replacement): Passed to your custom component
+Widget myCustomInterface({required MediasfuParameters parameters}) {
+  // Use parameters directly
+  parameters.clickVideo(ClickVideoOptions(parameters: parameters));
+}
+```
+
+---
+
+## Core Concepts & Components <a name="core-concepts--components"></a>
+
+Now that you understand the architecture, let's explore the building blocks.
+
+### 1. Display Components: Building Your Video Layout
+
+MediaSFU provides powerful components for organizing and displaying media streams.
+
+#### Primary Layout Components
+
+**FlexibleVideo** - Main video display area
+```dart
+FlexibleVideo(
+  customWidth: MediaQuery.of(context).size.width,
+  customHeight: 400,
+  parameters: parameters,
+)
+```
+- Automatically handles main presenter or screen share
+- Smooth transitions between different video sources
+- Responsive sizing
+
+**FlexibleGrid** - Participant grid layout
+```dart
+FlexibleGrid(
+  customWidth: MediaQuery.of(context).size.width,
+  customHeight: 600,
+  parameters: parameters,
+  // Automatically arranges participants in optimal grid
+)
+```
+- Intelligent grid sizing (2x2, 3x3, 4x4, etc.)
+- Pagination for large participant lists
+- Automatic reflow on orientation change
+
+**AudioGrid** - Audio-only participants
+```dart
+AudioGrid(
+  parameters: parameters,
+  // Shows visual indicators for audio-only participants
+)
+```
+- Displays participants without video
+- Audio level indicators
+- Compact layout for efficiency
+
+#### Container Components
+
+| Component | Purpose | Use Case |
+|-----------|---------|----------|
+| **MainContainerComponent** | Primary content wrapper | Wraps all main content areas |
+| **MainAspectComponent** | Aspect ratio container | Maintains proper video proportions |
+| **MainScreenComponent** | Screen layout manager | Organizes screen regions |
+| **SubAspectComponent** | Secondary content container | For picture-in-picture, sidebars |
+
+**Example: Building a custom layout**
+```dart
+Widget buildCustomLayout(MediasfuParameters parameters) {
+  return Column(
+    children: [
+      // Main video area
+      Expanded(
+        flex: 3,
+        child: FlexibleVideo(
+          customWidth: double.infinity,
+          customHeight: double.infinity,
+          parameters: parameters,
+        ),
+      ),
+      
+      // Participant grid
+      Expanded(
+        flex: 2,
+        child: FlexibleGrid(
+          customWidth: double.infinity,
+          customHeight: double.infinity,
+          parameters: parameters,
+        ),
+      ),
+      
+      // Audio-only participants
+      Container(
+        height: 80,
+        child: AudioGrid(parameters: parameters),
+      ),
+    ],
+  );
+}
+```
+
+### 2. Control Components: User Interactions
+
+**ControlButtonsComponent** - Standard control bar
+```dart
+ControlButtonsComponent(
+  parameters: parameters,
+  position: 'bottom', // or 'top', 'left', 'right'
+  // Includes: mute, video, screenshare, participants, chat, etc.
+)
+```
+
+**ControlButtonsAltComponent** - Alternative layout
+```dart
+ControlButtonsAltComponent(
+  parameters: parameters,
+  // Different button arrangement or styling
+)
+```
+
+**ControlButtonsComponentTouch** - Touch-optimized floating controls
+```dart
+ControlButtonsComponentTouch(
+  parameters: parameters,
+  // Floating action buttons for mobile
+)
+```
+
+### 3. Modal Components: Feature Interfaces
+
+MediaSFU includes modals for various features:
+
+```dart
+// Participants management
+ParticipantsModal(parameters: parameters)
+
+// Chat interface
+MessagesModal(parameters: parameters)
+
+// Settings panel
+SettingsModal(parameters: parameters)
+
+// Display settings
+DisplaySettingsModal(parameters: parameters)
+
+// Recording controls
+RecordingModal(parameters: parameters)
+
+// Polls interface
+PollModal(parameters: parameters)
+
+// Breakout rooms
+BreakoutRoomsModal(parameters: parameters)
+```
+
+**Accessing modals programmatically:**
+```dart
+// Show/hide participants modal
+parameters.updateIsParticipantsModalVisible(true);
+
+// Show/hide chat
+parameters.updateIsMessagesModalVisible(true);
+
+// Show/hide settings
+parameters.updateIsSettingsModalVisible(true);
+```
+
+### 4. Video Cards: Individual Participant Display
+
+**VideoCard** - Individual participant video element
+```dart
+VideoCard(
+  videoStream: participantStream,
+  remoteProducerId: 'producer-id',
+  eventType: 'conference',
+  forceFullDisplay: false,
+  participant: participantObject,
+  backgroundColor: Colors.black,
+  showControls: true,
+  showInfo: true,
+  parameters: parameters,
+)
+```
+
+**AudioCard** - Individual audio-only participant
+```dart
+AudioCard(
+  name: 'Participant Name',
+  barColor: Colors.blue,
+  textColor: Colors.white,
+  customStyle: TextStyle(...),
+  controlsPosition: 'topLeft',
+  infoPosition: 'topRight',
+  participant: participantObject,
+  parameters: parameters,
+)
+```
+
+**MiniCard** - Compact participant display (for grids)
+```dart
+MiniCard(
+  participant: participantObject,
+  showControls: false,
+  parameters: parameters,
+)
+```
+
+### 5. Working with Participants
+
+Understanding participant objects is crucial for custom UI development.
+
+```dart
+// Participant structure
+class Participant {
+  String id;              // Unique identifier
+  String name;            // Display name
+  bool muted;             // Audio state
+  bool videoOn;           // Video state
+  String? audioID;        // Audio producer ID
+  String? videoID;        // Video producer ID
+  List<Stream> stream;    // Media streams
+  bool islevel;           // Privilege level
+  // ... and more properties
+}
+
+// Accessing participants
+final participants = parameters.participants;
+
+// Filter participants by criteria
+final videoParticipants = participants.where((p) => p.videoOn).toList();
+final audioOnlyParticipants = participants.where((p) => !p.videoOn).toList();
+
+// Find specific participant
+final participant = participants.firstWhere(
+  (p) => p.id == 'participant-id',
+  orElse: () => null,
+);
+
+// Access participant streams
+for (var participant in parameters.participants) {
+  if (participant.videoID != null) {
+    // Participant has video
+    final videoStream = parameters.allVideoStreams.firstWhere(
+      (s) => s.producerId == participant.videoID,
+      orElse: () => null,
+    );
+  }
+}
+```
+
+### 6. Stream Management
+
+Working with media streams directly for advanced use cases.
+
+```dart
+// Get all video streams
+final videoStreams = parameters.allVideoStreams;
+
+// Get all audio streams
+final audioStreams = parameters.allAudioStreams;
+
+// Stream structure
+class Stream {
+  String producerId;           // Producer identifier
+  MediaStream? stream;         // Actual media stream
+  String? kind;               // 'video' or 'audio'
+  String? videoID;            // Associated video ID
+  String? audioID;            // Associated audio ID
+  String? name;               // Participant name
+  // ... more properties
+}
+
+// Using the new utility methods
+import 'package:mediasfu_sdk/mediasfu_sdk.dart';
+
+// Get specific participant's video stream
+final videoStream = getParticipantMedia(
+  options: GetParticipantMediaOptions(
+    participantId: 'producer-123',
+    mediaType: 'video',
+    parameters: parameters,
+  ),
+);
+
+// Or by participant name
+final audioStream = getParticipantMedia(
+  options: GetParticipantMediaOptions(
+    participantName: 'John Doe',
+    mediaType: 'audio',
+    parameters: parameters,
+  ),
+);
+```
+
+### 7. Room Configuration
+
+Understanding room setup options.
+
+```dart
+// Creating a room
+final createOptions = CreateMediaSFURoomOptions(
+  action: 'create',
+  capacity: 50,              // Maximum participants
+  duration: 60,              // Duration in minutes
+  eventType: EventType.conference,
+  userName: 'Your Name',
+  // Optional advanced settings
+  recordOnly: false,         // Record-only mode
+  mediaType: 'video',        // or 'audio'
+  videoOptimized: true,      // Optimize for video quality
+);
+
+// Joining an existing room
+final joinOptions = JoinMediaSFURoomOptions(
+  action: 'join',
+  meetingID: 'room-id-here',
+  userName: 'Your Name',
+);
+
+// Using the options
+final options = MediasfuGenericOptions(
+  credentials: credentials,
+  noUIPreJoinOptionsCreate: createOptions,
+  // or
+  // noUIPreJoinOptionsJoin: joinOptions,
+);
+```
+
+### 8. Event Handling & Callbacks
+
+MediaSFU provides numerous callbacks for event handling.
+
+```dart
+final options = MediasfuGenericOptions(
+  credentials: credentials,
+  
+  // Connection events
+  onConnect: () {
+    print('Connected to MediaSFU');
+  },
+  
+  onDisconnect: () {
+    print('Disconnected from MediaSFU');
+  },
+  
+  // Participant events  
+  onParticipantJoined: (Participant participant) {
+    print('${participant.name} joined');
+  },
+  
+  onParticipantLeft: (String participantId) {
+    print('Participant $participantId left');
+  },
+  
+  // Media events
+  onVideoStateChanged: (bool isOn) {
+    print('Video is now ${isOn ? 'on' : 'off'}');
+  },
+  
+  onAudioStateChanged: (bool isOn) {
+    print('Audio is now ${isOn ? 'on' : 'off'}');
+  },
+  
+  // Room events
+  onRoomClosed: () {
+    print('Room has been closed');
+  },
+  
+  onError: (String error) {
+    print('Error: $error');
+  },
+);
+```
+
+---
+
+## Working with Methods <a name="working-with-methods"></a>
+
+MediaSFU provides 200+ methods for controlling every aspect of your real-time communication experience. Let's explore the most important categories.
+
+### Media Control Methods
+
+#### Video Control
+
+```dart
+// Toggle video on/off
+parameters.clickVideo(
+  ClickVideoOptions(parameters: parameters),
+);
+
+// Switch camera (front/back)
+parameters.switchVideoAlt(
+  SwitchVideoAltOptions(parameters: parameters),
+);
+
+// Switch to specific camera by ID
+final cameras = await getMediaDevicesList('videoinput');
+parameters.switchUserVideo(
+  SwitchUserVideoOptions(
+    videoPreference: cameras[1].deviceId,
+    parameters: parameters,
+  ),
+);
+
+// Get current video state
+final isVideoOn = parameters.videoAlreadyOn;
+
+// Listen for video state changes
+parameters.updateVideoAlreadyOn = (bool isOn) {
+  print('Video state changed: $isOn');
+};
+```
+
+#### Audio Control
+
+```dart
+// Toggle audio on/off
+parameters.clickAudio(
+  ClickAudioOptions(parameters: parameters),
+);
+
+// Switch microphone
+final microphones = await getMediaDevicesList('audioinput');
+parameters.switchUserAudio(
+  SwitchUserAudioOptions(
+    audioPreference: microphones[1].deviceId,
+    parameters: parameters,
+  ),
+);
+
+// Get current audio state
+final isAudioOn = parameters.audioAlreadyOn;
+final hasHostPermission = parameters.micAction; // Host approval for mic usage
+
+// Mute/unmute specific participant (host only)
+parameters.muteParticipant(
+  MuteParticipantOptions(
+    participantId: 'participant-id',
+    parameters: parameters,
+  ),
+);
+```
+
+#### Screen Sharing
+
+```dart
+// Start screen sharing
+parameters.clickScreenShare(
+  ClickScreenShareOptions(parameters: parameters),
+);
+
+// Stop screen sharing
+parameters.stopShareScreen(
+  StopShareScreenOptions(parameters: parameters),
+);
+
+// Check if screen sharing is available
+final canShare = await parameters.checkScreenShare(
+  CheckScreenShareOptions(parameters: parameters),
+);
+
+// Get screen share state
+final isSharing = parameters.screenAlreadyOn;
+final shareAudio = parameters.shareScreenStarted; // Sharing with audio
+```
+
+### Device Management Methods
+
+```dart
+// Get available cameras
+final cameras = await getMediaDevicesList('videoinput');
+for (var camera in cameras) {
+  print('Camera: ${camera.label} (${camera.deviceId})');
+}
+
+// Get available microphones
+final microphones = await getMediaDevicesList('audioinput');
+for (var mic in microphones) {
+  print('Microphone: ${mic.label} (${mic.deviceId})');
+}
+
+// Building a device selector UI
+Widget buildDeviceSelector(MediasfuParameters parameters) {
+  return Column(
+    children: [
+      FutureBuilder<List<MediaDeviceInfo>>(
+        future: getMediaDevicesList('videoinput'),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) return CircularProgressIndicator();
+          
+          return DropdownButton<String>(
+            hint: Text('Select Camera'),
+            items: snapshot.data!.map((device) {
+              return DropdownMenuItem(
+                value: device.deviceId,
+                child: Text(device.label),
+              );
+            }).toList(),
+            onChanged: (deviceId) {
+              parameters.switchUserVideo(
+                SwitchUserVideoOptions(
+                  videoPreference: deviceId!,
+                  parameters: parameters,
+                ),
+              );
+            },
+          );
+        },
+      ),
+      
+      // Similar for microphones...
+    ],
+  );
+}
+```
+
+### Participant Management Methods
+
+```dart
+// Get all participants
+final participants = parameters.participants;
+
+// Get participant count
+final count = parameters.participantsCounter;
+
+// Request to unmute participant (sends request)
+parameters.requestMuteParticipant(
+  RequestMuteParticipantOptions(
+    participantId: 'participant-id',
+    parameters: parameters,
+  ),
+);
+
+// Remove participant from room (host only)
+parameters.disconnectUserInitiate(
+  DisconnectUserInitiateOptions(
+    member: participantId,
+    parameters: parameters,
+  ),
+);
+
+// Change participant role (host only)
+parameters.modifyParticipantRole(
+  ModifyParticipantRoleOptions(
+    participantId: 'participant-id',
+    role: 'moderator', // or 'participant', 'host'
+    parameters: parameters,
+  ),
+);
+```
+
+### Chat & Messaging Methods
+
+```dart
+// Send a message
+parameters.sendMessage(
+  SendMessageOptions(
+    message: 'Hello everyone!',
+    type: 'chat', // or 'direct'
+    receivers: [], // Empty for group, or list of IDs for direct
+    parameters: parameters,
+  ),
+);
+
+// Send direct message
+parameters.sendMessage(
+  SendMessageOptions(
+    message: 'Private message',
+    type: 'direct',
+    receivers: ['participant-id'],
+    parameters: parameters,
+  ),
+);
+
+// Access message history
+final messages = parameters.messages;
+
+// Listen for new messages
+parameters.updateMessages = (List<Message> newMessages) {
+  // Handle new messages
+};
+```
+
+### Recording Methods
+
+```dart
+// Start recording
+parameters.startRecording(
+  StartRecordingOptions(
+    parameters: parameters,
+  ),
+);
+
+// Stop recording
+parameters.stopRecording(
+  StopRecordingOptions(
+    parameters: parameters,
+  ),
+);
+
+// Pause recording
+parameters.pauseRecording(
+  PauseRecordingOptions(
+    parameters: parameters,
+  ),
+);
+
+// Resume recording
+parameters.resumeRecording(
+  ResumeRecordingOptions(
+    parameters: parameters,
+  ),
+);
+
+// Configure recording settings
+parameters.updateRecording(
+  UpdateRecordingOptions(
+    recordingMediaOptions: 'video', // or 'audio'
+    recordingAudioOptions: 'all', // or 'host'
+    recordingVideoOptions: 'all', // or 'host'
+    recordingVideoType: 'fullDisplay', // or 'bestDisplay', 'all'
+    recordingDisplayType: 'video', // 'media', 'video', 'all'
+    recordingBackgroundColor: '#000000',
+    recordingNameTagsColor: '#ffffff',
+    recordingOrientationVideo: 'landscape', // or 'portrait'
+    recordingNameTags: true,
+    recordingAddHLS: false,
+    parameters: parameters,
+  ),
+);
+
+// Check recording state
+final isRecording = parameters.recordStarted;
+final isPaused = parameters.recordPaused;
+```
+
+### Polls & Surveys Methods
+
+```dart
+// Create a poll
+parameters.handleCreatePoll(
+  HandleCreatePollOptions(
+    poll: Poll(
+      question: 'What time works best?',
+      type: 'multiple', // or 'single'
+      options: ['10 AM', '2 PM', '5 PM'],
+    ),
+    parameters: parameters,
+  ),
+);
+
+// Vote on a poll
+parameters.handleVotePoll(
+  HandleVotePollOptions(
+    pollId: 'poll-id',
+    optionIndex: 1,
+    parameters: parameters,
+  ),
+);
+
+// End a poll
+parameters.handleEndPoll(
+  HandleEndPollOptions(
+    pollId: 'poll-id',
+    parameters: parameters,
+  ),
+);
+
+// Access poll data
+final polls = parameters.polls;
+final activePoll = polls.firstWhere((p) => p.status == 'active');
+```
+
+### Breakout Rooms Methods
+
+```dart
+// Create breakout rooms
+parameters.createBreakoutRooms(
+  CreateBreakoutRoomsOptions(
+    numberOfRooms: 3,
+    participants: participants,
+    parameters: parameters,
+  ),
+);
+
+// Assign participant to room
+parameters.assignParticipantToRoom(
+  AssignParticipantToRoomOptions(
+    participantId: 'participant-id',
+    roomIndex: 0,
+    parameters: parameters,
+  ),
+);
+
+// Start breakout rooms
+parameters.startBreakoutRooms(
+  StartBreakoutRoomsOptions(parameters: parameters),
+);
+
+// Stop breakout rooms
+parameters.stopBreakoutRooms(
+  StopBreakoutRoomsOptions(parameters: parameters),
+);
+
+// Access breakout room data
+final breakoutRooms = parameters.breakoutRooms;
+final currentRoom = parameters.currentBreakoutRoom;
+```
+
+### Utility Methods
+
+```dart
+// Format large numbers
+final formatted = formatNumber(1250000); // Returns "1.25M"
+
+// Sleep/delay
+await sleep(milliseconds: 1000);
+
+// Check permissions
+final hasPermission = await checkPermission(
+  CheckPermissionOptions(
+    permissionType: 'camera', // or 'audio'
+    parameters: parameters,
+  ),
+);
+
+// Update display settings
+parameters.updateMainWindow(true); // Show/hide main window
+
+// Navigate between pages
+parameters.switchVideoAlt(
+  SwitchVideoAltOptions(parameters: parameters),
+);
+
+// Trigger layout recalculation
+parameters.onScreenChanges(
+  OnScreenChangesOptions(
+    changed: true,
+    parameters: parameters,
+  ),
+);
+```
+
+### Advanced WebRTC Methods
+
+For developers who need low-level control:
+
+```dart
+// Connect to socket server
+await connectSocket(
+  ConnectSocketOptions(
+    apiUserName: credentials.apiUserName,
+    apiKey: credentials.apiKey,
+    apiToken: token,
+    link: serverLink,
+  ),
+);
+
+// Create device (mediasoup device)
+await createDeviceClient(
+  CreateDeviceClientOptions(parameters: parameters),
+);
+
+// Handle transport connections
+await connectSendTransportVideo(
+  ConnectSendTransportVideoOptions(parameters: parameters),
+);
+
+await connectSendTransportAudio(
+  ConnectSendTransportAudioOptions(parameters: parameters),
+);
+
+// Resume/pause consumer transports
+await processConsumerTransports(
+  ProcessConsumerTransportsOptions(
+    consumerTransports: parameters.consumerTransports,
+    lStreams: parameters.lStreams,
+    parameters: parameters,
+  ),
+);
+```
+
+**Complete method documentation:** Visit [mediasfu.com/flutter](https://www.mediasfu.com/flutter/) for detailed documentation on all 200+ methods.
+
+---
+
+## Customization & Styling <a name="customization--styling"></a>
+
+Make MediaSFU match your brand and design requirements.
+
+### 1. Customizing Pre-Join Page
+
+Replace the default pre-join page with your own:
+
+```dart
+Widget myCustomPreJoinPage({
+  PreJoinPageOptions? options,
+  required Credentials credentials,
+}) {
+  return Scaffold(
+    backgroundColor: Colors.blue[50],
+    body: Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Your logo
+          Image.asset('assets/logo.png', width: 150),
+          SizedBox(height: 40),
+          
+          // Custom welcome text
+          Text(
+            'Welcome to ${credentials.apiUserName}',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          
+          SizedBox(height: 20),
+          
+          // Custom join button
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              padding: EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+            ),
+            onPressed: () {
+              // Validate and join
+              if (options != null) {
+                options.parameters.updateValidated(true);
+              }
+            },
+            child: Text('Join Meeting', style: TextStyle(fontSize: 18)),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+// Use it
+final options = MediasfuGenericOptions(
+  credentials: credentials,
+  preJoinPageWidget: ({PreJoinPageOptions? options}) {
+    return myCustomPreJoinPage(
+      options: options,
+      credentials: credentials,
+    );
+  },
+);
+```
+
+### 2. Custom Control Buttons
+
+Create your own control bar:
+
+```dart
+Widget myCustomControls(MediasfuParameters parameters) {
+  return Container(
+    padding: EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.black.withOpacity(0.8),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Custom video button
+        IconButton(
+          icon: Icon(
+            parameters.videoAlreadyOn ? Icons.videocam : Icons.videocam_off,
+            color: Colors.white,
+          ),
+          onPressed: () {
+            parameters.clickVideo(
+              ClickVideoOptions(parameters: parameters),
+            );
+          },
+        ),
+        
+        // Custom audio button
+        IconButton(
+          icon: Icon(
+            parameters.audioAlreadyOn ? Icons.mic : Icons.mic_off,
+            color: Colors.white,
+          ),
+          onPressed: () {
+            parameters.clickAudio(
+              ClickAudioOptions(parameters: parameters),
+            );
+          },
+        ),
+        
+        // Custom screen share button
+        IconButton(
+          icon: Icon(
+            parameters.screenAlreadyOn ? Icons.stop_screen_share : Icons.screen_share,
+            color: Colors.white,
+          ),
+          onPressed: () {
+            parameters.clickScreenShare(
+              ClickScreenShareOptions(parameters: parameters),
+            );
+          },
+        ),
+        
+        // Add more custom buttons...
+      ],
+    ),
+  );
+}
+```
+
+### 3. Themed Components
+
+Apply your app's theme to MediaSFU components:
+
+```dart
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'My Video App',
+      theme: ThemeData(
+        primarySwatch: Colors.purple,
+        scaffoldBackgroundColor: Colors.grey[100],
+        
+        // Button theme
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.purple,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        
+        // Icon theme
+        iconTheme: IconThemeData(
+          color: Colors.purple,
+          size: 24,
+        ),
+        
+        // Text theme
+        textTheme: TextTheme(
+          headlineMedium: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.purple[900],
+          ),
+        ),
+      ),
+      home: MediasfuGeneric(options: options),
+    );
+  }
+}
+```
+
+### 4. Custom Video Card Styling
+
+Customize how participant videos appear:
+
+```dart
+VideoCard(
+  videoStream: stream,
+  remoteProducerId: producerId,
+  eventType: 'conference',
+  forceFullDisplay: false,
+  participant: participant,
+  
+  // Styling options
+  backgroundColor: Colors.deepPurple[900]!,
+  showControls: true,
+  showInfo: true,
+  rounded: true,
+  border: Border.all(color: Colors.purple, width: 2),
+  
+  // Custom overlay
+  overlayContent: Container(
+    padding: EdgeInsets.all(8),
+    child: Text(
+      participant.name,
+      style: TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.bold,
+        shadows: [Shadow(color: Colors.black, blurRadius: 4)],
+      ),
+    ),
+  ),
+  
+  parameters: parameters,
+)
+```
+
+### 5. Complete Custom Interface
+
+Build a fully custom interface from scratch:
+
+```dart
+Widget myCompleteCustomUI({required MediasfuParameters parameters}) {
+  return Scaffold(
+    backgroundColor: Colors.black,
+    
+    // App bar with meeting info
+    appBar: AppBar(
+      backgroundColor: Colors.transparent,
+      title: Row(
+        children: [
+          Icon(Icons.videocam, color: Colors.red),
+          SizedBox(width: 8),
+          Text('Live Meeting'),
+          Spacer(),
+          Text(
+            '${parameters.participantsCounter} participants',
+            style: TextStyle(fontSize: 14),
+          ),
+        ],
+      ),
+    ),
+    
+    body: Column(
+      children: [
+        // Main video area (80% of screen)
+        Expanded(
+          flex: 8,
+          child: parameters.screenAlreadyOn
+              ? FlexibleVideo(
+                  customWidth: double.infinity,
+                  customHeight: double.infinity,
+                  parameters: parameters,
+                )
+              : FlexibleGrid(
+                  customWidth: double.infinity,
+                  customHeight: double.infinity,
+                  parameters: parameters,
+                ),
+        ),
+        
+        // Control bar
+        Container(
+          height: 80,
+          padding: EdgeInsets.symmetric(horizontal: 24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.transparent,
+                Colors.black.withOpacity(0.8),
+              ],
+            ),
+          ),
+          child: myCustomControls(parameters),
+        ),
+        
+        // Participant strip (10% of screen)
+        Container(
+          height: 100,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: parameters.participants.length,
+            itemBuilder: (context, index) {
+              final participant = parameters.participants[index];
+              return Container(
+                width: 100,
+                margin: EdgeInsets.all(4),
+                child: MiniCard(
+                  participant: participant,
+                  parameters: parameters,
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    ),
+    
+    // Floating action buttons
+    floatingActionButton: Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        FloatingActionButton(
+          heroTag: 'chat',
+          mini: true,
+          onPressed: () {
+            parameters.updateIsMessagesModalVisible(true);
+          },
+          child: Icon(Icons.chat),
+        ),
+        SizedBox(height: 8),
+        FloatingActionButton(
+          heroTag: 'participants',
+          mini: true,
+          onPressed: () {
+            parameters.updateIsParticipantsModalVisible(true);
+          },
+          child: Icon(Icons.people),
+        ),
+      ],
+    ),
+  );
+}
+
+// Use your custom UI
+final options = MediasfuGenericOptions(
+  credentials: credentials,
+  customComponent: myCompleteCustomUI,
+);
+```
+
+### 6. Responsive Design
+
+Make your interface adapt to different screen sizes:
+
+```dart
+Widget buildResponsiveLayout(BuildContext context, MediasfuParameters parameters) {
+  final screenSize = MediaQuery.of(context).size;
+  final isTablet = screenSize.width > 600;
+  final isDesktop = screenSize.width > 1200;
+  
+  if (isDesktop) {
+    // Desktop layout: side-by-side
+    return Row(
+      children: [
+        // Main content
+        Expanded(
+          flex: 3,
+          child: FlexibleVideo(
+            customWidth: double.infinity,
+            customHeight: double.infinity,
+            parameters: parameters,
+          ),
+        ),
+        
+        // Sidebar with participants
+        Container(
+          width: 300,
+          child: Column(
+            children: [
+              Expanded(
+                child: ParticipantsModal(parameters: parameters),
+              ),
+              Container(
+                height: 200,
+                child: MessagesModal(parameters: parameters),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  } else if (isTablet) {
+    // Tablet layout: stacked with controls on side
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            children: [
+              Expanded(
+                flex: 3,
+                child: FlexibleVideo(
+                  customWidth: double.infinity,
+                  customHeight: double.infinity,
+                  parameters: parameters,
+                ),
+              ),
+              Expanded(
+                child: FlexibleGrid(
+                  customWidth: double.infinity,
+                  customHeight: double.infinity,
+                  parameters: parameters,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          width: 80,
+          child: ControlButtonsComponent(
+            parameters: parameters,
+            position: 'right',
+          ),
+        ),
+      ],
+    );
+  } else {
+    // Mobile layout: full screen with floating controls
+    return Stack(
+      children: [
+        FlexibleVideo(
+          customWidth: screenSize.width,
+          customHeight: screenSize.height,
+          parameters: parameters,
+        ),
+        Positioned(
+          bottom: 20,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: ControlButtonsComponentTouch(
+              parameters: parameters,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+```
+
+### 7. Dark/Light Mode Support
+
+```dart
+class ThemedMediaSFU extends StatelessWidget {
+  final bool isDarkMode;
+  
+  const ThemedMediaSFU({Key? key, required this.isDarkMode}) : super(key: key);
+  
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      theme: isDarkMode
+          ? ThemeData.dark().copyWith(
+              primaryColor: Colors.deepPurple,
+              scaffoldBackgroundColor: Colors.grey[900],
+            )
+          : ThemeData.light().copyWith(
+              primaryColor: Colors.blue,
+              scaffoldBackgroundColor: Colors.white,
+            ),
+      home: MediasfuGeneric(
+        options: MediasfuGenericOptions(
+          credentials: credentials,
+          // MediaSFU will inherit theme colors
+        ),
+      ),
+    );
+  }
+}
+```
+
+---
+
+### 📚 Complete Example: Production-Ready Custom App
+
+Here's a complete example combining everything we've learned:
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:mediasfu_sdk/mediasfu_sdk.dart';
+
+void main() {
+  runApp(const MyVideoApp());
+}
+
+class MyVideoApp extends StatelessWidget {
+  const MyVideoApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'My Custom Video App',
+      theme: ThemeData(
+        primarySwatch: Colors.deepPurple,
+        useMaterial3: true,
+      ),
+      home: const VideoRoomPage(),
+    );
+  }
+}
+
+class VideoRoomPage extends StatefulWidget {
+  const VideoRoomPage({super.key});
+
+  @override
+  State<VideoRoomPage> createState() => _VideoRoomPageState();
+}
+
+class _VideoRoomPageState extends State<VideoRoomPage> {
+  final ValueNotifier<MediasfuParameters?> sourceParameters = ValueNotifier(null);
+  
+  @override
+  Widget build(BuildContext context) {
+    final credentials = Credentials(
+      apiUserName: 'your_username',
+      apiKey: 'your_api_key',
+    );
+
+    // Build custom UI
+    Widget customUI({required MediasfuParameters parameters}) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Header
+              _buildHeader(parameters),
+              
+              // Main video area
+              Expanded(
+                child: _buildMainContent(parameters),
+              ),
+              
+              // Controls
+              _buildControls(parameters),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final options = MediasfuGenericOptions(
+      credentials: credentials,
+      customComponent: customUI,
+      sourceParameters: sourceParameters.value,
+      updateSourceParameters: (params) {
+        sourceParameters.value = params;
+      },
+    );
+
+    return MediasfuGeneric(options: options);
+  }
+
+  Widget _buildHeader(MediasfuParameters parameters) {
+    return Container(
+      padding: EdgeInsets.all(16),
+      color: Colors.deepPurple,
+      child: Row(
+        children: [
+          Icon(Icons.videocam, color: Colors.white),
+          SizedBox(width: 8),
+          Text(
+            parameters.roomName,
+            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          Spacer(),
+          Chip(
+            label: Text('${parameters.participantsCounter}'),
+            avatar: Icon(Icons.people, size: 18),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMainContent(MediasfuParameters parameters) {
+    return FlexibleVideo(
+      customWidth: double.infinity,
+      customHeight: double.infinity,
+      parameters: parameters,
+    );
+  }
+
+  Widget _buildControls(MediasfuParameters parameters) {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Colors.transparent, Colors.black87],
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _controlButton(
+            icon: parameters.videoAlreadyOn ? Icons.videocam : Icons.videocam_off,
+            label: 'Video',
+            onTap: () => parameters.clickVideo(ClickVideoOptions(parameters: parameters)),
+            isActive: parameters.videoAlreadyOn,
+          ),
+          _controlButton(
+            icon: parameters.audioAlreadyOn ? Icons.mic : Icons.mic_off,
+            label: 'Audio',
+            onTap: () => parameters.clickAudio(ClickAudioOptions(parameters: parameters)),
+            isActive: parameters.audioAlreadyOn,
+          ),
+          _controlButton(
+            icon: Icons.screen_share,
+            label: 'Share',
+            onTap: () => parameters.clickScreenShare(ClickScreenShareOptions(parameters: parameters)),
+            isActive: parameters.screenAlreadyOn,
+          ),
+          _controlButton(
+            icon: Icons.chat,
+            label: 'Chat',
+            onTap: () => parameters.updateIsMessagesModalVisible(true),
+            isActive: false,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _controlButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    required bool isActive,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isActive ? Colors.deepPurple : Colors.white24,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Colors.white),
+            SizedBox(height: 4),
+            Text(label, style: TextStyle(color: Colors.white, fontSize: 12)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    sourceParameters.dispose();
+    super.dispose();
+  }
+}
+```
+
+---
+
+### 🎓 Learning Path Recommendations
+
+1. **Beginners**: Start with Mode 1 (Default UI) to understand how everything works
+2. **Intermediate**: Experiment with custom pre-join pages and themed components
+3. **Advanced**: Build custom UIs with Mode 2 or Mode 3, integrate with state management
+
+### 📖 Additional Resources
+
+- **Full API Documentation**: [mediasfu.com/flutter](https://www.mediasfu.com/flutter/)
+- **Video Tutorials**: [YouTube Channel](https://www.youtube.com/channel/UCELghZRPKMgjih5qrmXLtqw)
+- **Community Forum**: [forums.mediasfu.com](https://www.mediasfu.com/forums)
+- **Example Projects**: [GitHub](https://github.com/MediaSFU)
+
+---
+
+## Legacy Documentation
+
+The following sections contain the original documentation for reference. For the structured guide above, please refer to the Flutter SDK Guide section.
+
+###
+
+Initial Setup and Installation
 
 1. **Add Dependency**
 
@@ -3134,6 +4839,122 @@ To create a custom UI, you can refer to existing MediaSFU implementations like:
 Once your custom components are built, modify the imports of `prepopulateUserMedia` and `addVideosGrid` to point to your custom implementations instead of the default MediaSFU ones.
 
 This allows for full flexibility in how media is displayed in both the main and mini grids, giving you the ability to tailor the user experience to your specific needs.
+
+# Media Device & Stream Utilities <a name="media-device-stream-utilities"></a>
+
+MediaSFU provides two powerful utility methods for advanced media device management and participant stream access:
+
+| Method | Description |
+|--------|-------------|
+| `getMediaDevicesList` | Enumerate available cameras and microphones with automatic permission handling |
+| `getParticipantMedia` | Retrieve specific participant's video or audio streams by ID or name |
+
+## Method Details
+
+### getMediaDevicesList
+
+Retrieves a list of available media devices (cameras or microphones) with automatic permission handling.
+
+**Signature:**
+```dart
+Future<List<MediaDeviceInfo>> getMediaDevicesList(String kind)
+```
+
+**Parameters:**
+- `kind` (String): The type of media device to enumerate
+  - `'videoinput'` - Cameras/video devices
+  - `'audioinput'` - Microphones/audio input devices
+
+**Returns:** `Future<List<MediaDeviceInfo>>` - List of available devices
+
+**Example Usage:**
+```dart
+import 'package:mediasfu_sdk/mediasfu_sdk.dart';
+
+// Get all available cameras
+final cameras = await getMediaDevicesList('videoinput');
+for (final device in cameras) {
+  print('Camera: ${device.label} (${device.deviceId})');
+}
+
+// Get all available microphones
+final microphones = await getMediaDevicesList('audioinput');
+for (final device in microphones) {
+  print('Microphone: ${device.label} (${device.deviceId})');
+}
+```
+
+**Common Use Cases:**
+- Building custom device selection interfaces
+- Displaying available cameras/microphones to users
+- Validating device availability before streaming
+- Creating device switching functionality
+
+---
+
+### getParticipantMedia
+
+Retrieves a specific participant's video or audio stream from the session.
+
+**Signature:**
+```dart
+MediaStream? getParticipantMedia({
+  required GetParticipantMediaOptions options,
+})
+```
+
+**Parameters:**
+- `options` (GetParticipantMediaOptions): Configuration object containing:
+  - `participantId` (String, optional): Producer ID of the participant's stream
+  - `participantName` (String, optional): Name of the participant
+  - `mediaType` (String): Type of media to retrieve - `'video'` or `'audio'`
+  - `parameters` (GetParticipantMediaParameters): MediaSFU parameters object with:
+    - `allVideoStreams` (List<Stream>): All video streams in the session
+    - `allAudioStreams` (List<Stream>): All audio streams in the session
+    - `participants` (List<Participant>): List of all participants
+
+**Returns:** `MediaStream?` - The participant's media stream, or `null` if not found
+
+**Example Usage:**
+```dart
+import 'package:mediasfu_sdk/mediasfu_sdk.dart';
+
+// Inside a MediaSFU component or with access to MediasfuParameters
+
+// Get participant's video stream by producer ID
+final videoStream = getParticipantMedia(
+  options: GetParticipantMediaOptions(
+    participantId: 'producer-123',
+    mediaType: 'video',
+    parameters: mediasfuParameters,
+  ),
+);
+
+// Get participant's audio stream by name
+final audioStream = getParticipantMedia(
+  options: GetParticipantMediaOptions(
+    participantName: 'John Doe',
+    mediaType: 'audio',
+    parameters: mediasfuParameters,
+  ),
+);
+
+if (videoStream != null) {
+  // Use the stream (e.g., display in a custom widget)
+  print('Found video stream: ${videoStream.id}');
+}
+```
+
+**Common Use Cases:**
+- Implementing custom participant video/audio displays
+- Creating picture-in-picture layouts with specific participants
+- Building participant spotlight features
+- Monitoring specific participant streams
+- Creating custom stream routing logic
+
+---
+
+**Note:** These methods are available through the MediaSFU SDK and are automatically passed to all MediaSFU components (MediasfuGeneric, MediasfuBroadcast, MediasfuChat, MediasfuConference, MediasfuWebinar). Access them through the `MediasfuParameters` object in your custom methods or event handlers.
 
 # API Reference <a name="api-reference"></a>
 

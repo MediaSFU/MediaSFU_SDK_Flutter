@@ -210,6 +210,10 @@ import '../../consumers/switch_user_audio.dart' show switchUserAudio;
 import '../../consumers/receive_room_messages.dart'
     show receiveRoomMessages, ReceiveRoomMessagesOptions;
 import '../../methods/utils/format_number.dart' show formatNumber;
+import '../../methods/utils/get_media_devices_list.dart'
+    show getMediaDevicesList;
+import '../../methods/utils/get_participant_media.dart'
+    show getParticipantMedia;
 import '../../consumers/connect_ips.dart' show connectIps;
 import '../../consumers/connect_local_ips.dart' show connectLocalIps;
 
@@ -344,7 +348,8 @@ import '../../types/types.dart'
 import '../../methods/utils/create_response_join_room.dart'
     show createResponseJoinRoom, CreateResponseJoinRoomOptions;
 import '../../methods/utils/mediasfu_parameters.dart' show MediasfuParameters;
-import '../../types/custom_builders.dart' show VideoCardType, AudioCardType, MiniCardType, CustomComponentType;
+import '../../types/custom_builders.dart'
+    show VideoCardType, AudioCardType, MiniCardType, CustomComponentType;
 
 class MediasfuGenericOptions {
   PreJoinPageType? preJoinPageWidget;
@@ -362,12 +367,12 @@ class MediasfuGenericOptions {
   JoinMediaSFURoomOptions? noUIPreJoinOptionsJoin;
   JoinRoomOnMediaSFUType? joinMediaSFURoom;
   CreateRoomOnMediaSFUType? createMediaSFURoom;
-  
+
   // Custom builders for display components
   VideoCardType? customVideoCard;
   AudioCardType? customAudioCard;
   MiniCardType? customMiniCard;
-  
+
   // Custom component widget - allows complete replacement of the MediaSFU interface
   CustomComponentType? customComponent;
 
@@ -3319,17 +3324,20 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
 
   void updateCustomVideoCard(VideoCardType? value) {
     mediasfuParameters.customVideoCard = value;
-    updateSpecificState(widget.options.sourceParameters, 'customVideoCard', value);
+    updateSpecificState(
+        widget.options.sourceParameters, 'customVideoCard', value);
   }
 
   void updateCustomAudioCard(AudioCardType? value) {
     mediasfuParameters.customAudioCard = value;
-    updateSpecificState(widget.options.sourceParameters, 'customAudioCard', value);
+    updateSpecificState(
+        widget.options.sourceParameters, 'customAudioCard', value);
   }
 
   void updateCustomMiniCard(MiniCardType? value) {
     mediasfuParameters.customMiniCard = value;
-    updateSpecificState(widget.options.sourceParameters, 'customMiniCard', value);
+    updateSpecificState(
+        widget.options.sourceParameters, 'customMiniCard', value);
   }
 
   void updateSelectedImage(String? value) {
@@ -5489,6 +5497,8 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
         switchUserAudio: switchUserAudio,
         getDomains: getDomains,
         formatNumber: formatNumber,
+        getMediaDevicesList: getMediaDevicesList,
+        getParticipantMedia: getParticipantMedia,
         connectIps: connectIps,
         connectLocalIps: connectLocalIps,
         createDeviceClient: createDeviceClient,
@@ -6230,17 +6240,16 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
         updateAnnotateScreenStream: updateAnnotateScreenStream,
         updateMainScreenCanvas: updateMainScreenCanvas,
         updateIsScreenboardModalVisible: updateIsScreenboardModalVisible,
-        
+
         // Custom builders
         customVideoCard: widget.options.customVideoCard,
         customAudioCard: widget.options.customAudioCard,
         customMiniCard: widget.options.customMiniCard,
-        
+
         // Custom builder update functions
         updateCustomVideoCard: updateCustomVideoCard,
         updateCustomAudioCard: updateCustomAudioCard,
         updateCustomMiniCard: updateCustomMiniCard,
-        
         getUpdatedAllParams: () => mediasfuParameters);
 
     if (widget.options.returnUI != null && widget.options.returnUI == false) {
@@ -6776,7 +6785,7 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
     if (widget.options.customComponent != null) {
       return widget.options.customComponent!(parameters: mediasfuParameters);
     }
-    
+
     return widget.options.returnUI != null && widget.options.returnUI == false
         ? Stack(
             children: [
