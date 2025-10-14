@@ -1,3 +1,8 @@
+### 2.2.2
+
+* Added custom overrides for all UI components in the SDK.
+* Updated README.md with more easy-to-follow examples for overrides and complete usage.
+
 ### 2.2.1
 
 * Updated README.md with more easy-to-follow examples for custom builders and complete custom interface usage.

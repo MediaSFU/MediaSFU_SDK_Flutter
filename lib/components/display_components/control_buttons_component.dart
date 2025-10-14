@@ -320,6 +320,39 @@ class ControlButtonsComponentOptions {
   final ControlButtonsButtonLabelBuilder? labelBuilder;
   final double? gap;
 
+/// Configuration for the control-buttons component displaying a horizontal/vertical action bar.
+///
+/// * **buttons** - Array of `ControlButton` objects; each has `name`, `icon`, `alternateIcon`, `onPress`, `active`, `show`, `disabled`, `customComponent`.
+/// * **alignment** - Main-axis alignment for button layout (default: `MainAxisAlignment.start`).
+/// * **vertical** - Boolean controlling layout direction: `true` = vertical (Column), `false` = horizontal (Row). Default: `false`.
+/// * **buttonBackgroundColor** - Global background color for all buttons; overridden by `buttonBackgroundColors` or per-button `backgroundColor`.
+/// * **buttonsContainerConstraints** - Optional `BoxConstraints` for container size limits.
+/// * **buttonBackgroundColors** - Map of state-based background colors: `{'default': Color, 'pressed': Color, 'disabled': Color}`.
+/// * **buttonColor** - Global text color for button labels; overridden by per-button `color`.
+/// * **activeIconColor** / **inactiveIconColor** - Global icon colors for active/inactive states; overridden by per-button `activeColor`/`inActiveColor`.
+/// * **iconSize** - Global icon size; overridden by per-button `iconSize`.
+/// * **textStyle** - Global text style for labels; overridden by per-button `textStyle`.
+/// * **containerPadding** / **containerMargin** / **containerDecoration** / **containerAlignment** / **containerClipBehavior** - Container styling options.
+/// * **buttonPadding** / **buttonMargin** / **buttonDecoration** / **buttonBorderRadius** / **buttonConstraints** - Per-button styling options.
+/// * **contentPadding** / **contentMainAxisAlignment** / **contentCrossAxisAlignment** / **contentGap** - Icon+label layout options within button.
+/// * **alternateIconComponent** - Global custom widget for active icon; overridden by per-button `alternateIconWidget`.
+/// * **labelPadding** / **iconPadding** - Padding around label/icon.
+/// * **gap** - Spacing between buttons in logical pixels.
+/// * **containerBuilder** - Override entire container; receives `ControlButtonsContainerContext` with `direction`, `visibleButtons`.
+/// * **buttonsBuilder** - Override button layout; receives `ControlButtonsButtonsContext` with `buttons`, `spacedButtons`.
+/// * **buttonBuilder** - Override individual button; receives `ControlButtonsButtonContext` with `button`, `index`, `isActive`.
+/// * **buttonContentBuilder** - Override button content (icon+label); receives `ControlButtonsButtonContentContext` with `icon`, `label`.
+/// * **iconBuilder** - Override icon widget; receives `ControlButtonsButtonIconContext` with `button`, `isActive`.
+/// * **labelBuilder** - Override label widget; receives `ControlButtonsButtonLabelContext` with `button`, `isActive`.
+///
+/// ### Usage
+/// 1. Component filters `buttons` by `show == true`, builds list of visible buttons.
+/// 2. Each button displays icon (or `alternateIcon` when `active == true`) above label (if `name` provided).
+/// 3. Icon color determined by `active ? activeIconColor : inactiveIconColor` (or per-button overrides).
+/// 4. Label color determined by `buttonColor` (or per-button `color`).
+/// 5. Button tap invokes `onPress` callback (if not `disabled`).
+/// 6. Layout direction determined by `vertical`: `false` = Row, `true` = Column.
+/// 7. Override via `MediasfuUICustomOverrides.controlButtonsComponent` to inject custom button designs, animations, or tooltips.
   const ControlButtonsComponentOptions({
     required this.buttons,
     this.alignment = MainAxisAlignment.start,
@@ -362,10 +395,24 @@ class ControlButtonsComponentOptions {
 typedef ControlButtonsComponentType = Widget Function(
     ControlButtonsComponentOptions options);
 
-/// `ControlButtonsComponent` - A widget that displays a set of control buttons based on specified options.
+/// Control-buttons bar displaying action buttons with icon/label, active states, and horizontal/vertical layout.
 ///
-/// This widget arranges a collection of `ControlButton` instances either horizontally or vertically,
-/// providing an interactive and visually flexible control panel.
+/// * Filters `buttons` by `show == true`, builds list of visible buttons.
+/// * Each button displays:
+///   - Icon: `icon` (inactive) or `alternateIcon` (active); color from
+///     `active ? activeIconColor : inactiveIconColor` (or per-button overrides).
+///   - Label: `name` text below icon; color from `buttonColor` (or per-button `color`).
+/// * Button tap invokes `onPress` callback (if not `disabled`).
+/// * Layout direction: `vertical == false` = Row (horizontal), `vertical == true` = Column (vertical).
+/// * Alignment via `alignment` (MainAxisAlignment for main axis).
+/// * Spacing between buttons via `gap`.
+/// * Per-button customization via `customComponent` (replaces icon+label),
+///   `backgroundColor` map (state colors), `decoration`, `padding`, `margin`, `constraints`.
+/// * Six builder hooks (`containerBuilder`, `buttonsBuilder`, `buttonBuilder`,
+///   `buttonContentBuilder`, `iconBuilder`, `labelBuilder`) for granular customization.
+///
+/// Override via `MediasfuUICustomOverrides.controlButtonsComponent` to inject
+/// custom button designs, animations, tooltips, or haptic feedback.
 ///
 /// ### Example Usage:
 /// ```dart

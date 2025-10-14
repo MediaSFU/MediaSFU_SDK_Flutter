@@ -11,7 +11,26 @@ import '../../methods/utils/get_modal_position.dart'
     show getModalPosition, GetModalPositionOptions;
 import '../../types/types.dart' show EventType;
 
-/// Options class for configuring the MenuModal widget.
+/// Configuration payload for [MenuModal].
+///
+/// Powers the quick-action tray that surfaces meeting metadata and custom
+/// buttons:
+///
+/// * `customButtons`: inject your own action list with icons, text, and
+///   callbacks. Rendered via [CustomButtons], enabling branded styling or
+///   dynamic visibility.
+/// * `shareButtons`: toggle social-sharing controls that expose the meeting ID
+///   and passcode to external channels.
+/// * `roomName` / `adminPasscode`: meeting credentials displayed in the modal.
+///   The passcode is only shown when `islevel == '2'` (admin).
+/// * `position`: string (e.g., `'bottomRight'`, `'center'`) controlling modal
+///   placement via `getModalPosition`.
+/// * `localLink`: optional URL for Community Edition servers, displayed in
+///   share components.
+///
+/// Override this component via `MediasfuUICustomOverrides.menuModal` to inject
+/// custom branding, alternative share channels, or additional quick-action
+/// buttons.
 class MenuModalOptions {
   final Color backgroundColor;
   final bool isVisible;
@@ -78,25 +97,19 @@ typedef MenuModalType = Widget Function(MenuModalOptions options);
 /// );
 /// ```
 
-/// `MenuModal` - Displays a modal with a configurable menu.
+/// Quick-action menu modal surfacing meeting metadata and custom commands.
 ///
-/// This widget can display various options in a modal, including custom buttons,
-/// meeting ID and passcode information, and share buttons for social sharing.
+/// * Displays `MeetingIdComponent` (shareable room name), optional
+///   `MeetingPasscodeComponent` (admin-only when `islevel == '2'`), and
+///   `ShareButtonsComponent` for social sharing.
+/// * Renders `CustomButtons` from the options, enabling you to inject branded
+///   actions, debug tools, or CRM shortcuts.
+/// * Positions itself via `getModalPosition` using the `position` string.
+/// * Hides gracefully when `isVisible` is false.
 ///
-/// ### Parameters:
-/// - `options`: Instance of `MenuModalOptions` with configuration settings for the modal.
-///
-/// ### Widget Structure:
-/// - The modal includes a header with a title and close icon.
-/// - Below the header, it displays custom buttons, the meeting passcode (for admins), the meeting ID, and share buttons.
-/// - Positioned on the screen based on the `position` parameter.
-///
-/// ### Customization:
-/// - **Visibility**: Control modal visibility with `isVisible`.
-/// - **Custom Buttons**: Add buttons by specifying `CustomButtonsOptions`.
-/// - **Share Buttons**: Toggle share buttons with `shareButtons`.
-/// - **Positioning**: Adjust modal position with `position` (e.g., 'bottomRight').
-
+/// Override this component via `MediasfuUICustomOverrides.menuModal` to inject
+/// alternative share channels, custom metadata displays, or additional quick
+/// actions.
 class MenuModal extends StatelessWidget {
   final MenuModalOptions options;
 

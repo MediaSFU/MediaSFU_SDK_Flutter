@@ -18,7 +18,28 @@ abstract class RequestsModalParameters {
   // dynamic operator [](String key);
 }
 
-/// Options for the RequestsModal widget.
+/// Configuration for the requests modal displaying participant requests (screenshare/video/audio).
+///
+/// * **requestList** - Array of `Request` objects; each has `id`, `name`, `icon` (FontAwesome icon name like 'fa-microphone', 'fa-video', 'fa-desktop').
+/// * **requestCounter** - Count of pending requests; shown in modal header badge.
+/// * **onRequestItemPress** - Override for `respondToRequests`; receives {request, updateRequestList, requestList, action, roomName, socket}. `action` is `'accepted'` (grant) or `'rejected'` (deny); emits `updateRequestAction` socket event.
+/// * **onRequestFilterChange** - Callback when search input changes; filters `requestList` by participant name.
+/// * **updateRequestList** - Updates `requestList` in parent state after grant/deny.
+/// * **roomName** - Session identifier for socket event.
+/// * **socket** - Socket.IO client for emitting `updateRequestAction` event.
+/// * **position** - Modal placement via `getModalPosition` (e.g., 'topRight').
+/// * **backgroundColor** - Background color for modal container.
+/// * **renderRequestComponent** - Custom renderer for individual request items; receives `RenderRequestComponentOptions` with `request`, `onRequestItemPress`, `requestList`, `updateRequestList`, `roomName`, `socket`. Defaults to `RenderRequestComponent` widget.
+/// * **parameters** - Must expose `getUpdatedAllParams`.
+///
+/// ### Usage
+/// 1. Modal displays header with "Requests" title and counter badge.
+/// 2. Search input filters `requestList` by participant name.
+/// 3. Each request row shows name, icon (microphone/video/screenshare), and "Accept" (green) / "Reject" (red) buttons.
+/// 4. "Accept" button calls `onRequestItemPress` with `action: 'accepted'`, emitting `updateRequestAction` socket event with `{requestId, action: 'accepted', roomName}`.
+/// 5. "Reject" button calls `onRequestItemPress` with `action: 'rejected'`, emitting `updateRequestAction` event with `action: 'rejected'`.
+/// 6. After grant/deny, `updateRequestList` removes request from queue.
+/// 7. Override via `MediasfuUICustomOverrides.requestsModal` to inject custom approval workflows, analytics tracking, or automated policies.
 class RequestsModalOptions {
   final bool isRequestsModalVisible;
   final VoidCallback onRequestClose;
@@ -60,43 +81,26 @@ class RequestsModalOptions {
 
 typedef RequestsModalType = Widget Function({RequestsModalOptions options});
 
-/// `RequestsModal` displays a modal window containing a list of requests and
-/// provides search and filter functionality. The modal allows users to accept
-/// or reject each request using real-time actions through a socket connection.
+/// Requests modal displaying participant permission requests (screenshare/video/audio) with grant/deny actions (host-only).
 ///
-/// ### Parameters:
-/// - [options] (`RequestsModalOptions`): A configuration object with properties:
-///   - `isRequestsModalVisible` (bool): Controls modal visibility.
-///   - `onRequestClose` (VoidCallback): Closes the modal.
-///   - `requestCounter` (int): Count of active requests, displayed in the header.
-///   - `onRequestFilterChange` (Function): Updates the filter query for the request list.
-///   - `requestList` (List&lt;Request&gt;): List of current requests to display.
-///   - `onRequestItemPress` (RespondToRequestsType): Callback for handling request item actions.
-///   - `updateRequestList` (Function): Updates the list of requests.
-///   - `roomName` (String): Name of the room associated with the requests.
-///   - `socket` (io.Socket): Socket instance for emitting responses.
-///   - `backgroundColor` (Color): Background color of the modal.
-///   - `position` (String): Controls the modal position on the screen (e.g., 'topRight').
-///   - `parameters` (RequestsModalParameters): Additional parameters.
-///   - `renderRequestComponent` (RenderRequestComponentType): Function to render each request item.
+/// * Displays scrollable list of `Request` objects from `requestList`.
+/// * Header shows "Requests" title with counter badge (`requestCounter`).
+/// * Search input filters list by participant name via `onRequestFilterChange`.
+/// * Each request row shows participant name, icon (FontAwesome icon from
+///   `request.icon` like 'fa-microphone', 'fa-video', 'fa-desktop'), and "Accept"
+///   (green checkmark) / "Reject" (red X) icon buttons.
+/// * "Accept" calls `onRequestItemPress` with `action: 'accepted'`, which emits
+///   `updateRequestAction` socket event with `{requestId, action: 'accepted', roomName}`,
+///   then removes request from `requestList` via `updateRequestList`.
+/// * "Reject" calls `onRequestItemPress` with `action: 'rejected'`, emitting
+///   `updateRequestAction` event with `action: 'rejected'`, then removes from queue.
+/// * Empty state shows "No requests" when list is empty.
+/// * Positions via `getModalPosition` using `options.position`.
+/// * Request items rendered via `renderRequestComponent` (defaults to
+///   `RenderRequestComponent` widget); can be overridden for custom rendering.
 ///
-/// ### Example:
-/// ```dart
-/// RequestsModal(
-///   options: RequestsModalOptions(
-///     isRequestsModalVisible: true,
-///     onRequestClose: () => print('Modal closed'),
-///     requestCounter: 5,
-///     onRequestFilterChange: (query) => print('Filtering requests with: $query'),
-///     requestList: [Request(id: '1', name: 'John', icon: 'fa-microphone')],
-///     updateRequestList: (newList) => setState(() => requests = newList),
-///     roomName: 'MainRoom',
-///     socket: socket,
-///     position: 'topRight',
-///     parameters: {},
-///   ),
-/// );
-/// ```
+/// Override via `MediasfuUICustomOverrides.requestsModal` to inject custom
+/// approval workflows, analytics tracking, or automated policies.
 ///
 /// ### Workflow:
 /// 1. **Visibility**: The `isRequestsModalVisible` controls whether the modal is shown.

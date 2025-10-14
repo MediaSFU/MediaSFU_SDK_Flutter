@@ -1,33 +1,24 @@
 import 'package:flutter/material.dart';
 
-/// `MainContainerComponentOptions` - Configuration options for `MainContainerComponent`.
+/// Configuration payload for [MainContainerComponent].
 ///
-/// ### Properties:
-/// - `backgroundColor` (`Color`): Background color of the container.
-/// - `children` (`List<Widget>`): List of child widgets to be displayed inside the container.
-/// - `containerWidthFraction` (`double`): Fraction of the screen width that the container should occupy (default is 1.0).
-/// - `containerHeightFraction` (`double`): Fraction of the screen height that the container should occupy (default is 1.0).
-/// - `marginLeft` (`double`): Left margin of the container (default is 0.0).
-/// - `marginRight` (`double`): Right margin of the container (default is 0.0).
-/// - `marginTop` (`double`): Top margin of the container (default is 0.0).
-/// - `marginBottom` (`double`): Bottom margin of the container (default is 0.0).
+/// Powers the root container that wraps all MediaSFU UI surfaces. Typically
+/// overridden via `MediasfuUICustomOverrides.mainContainer` to apply branded
+/// theming, shadows, borders, or gradient backgrounds without rebuilding the
+/// entire experience:
 ///
-/// ### Example Usage:
-/// ```dart
-/// MainContainerComponentOptions(
-///   backgroundColor: Colors.blue,
-///   children: [
-///     Text("Child 1"),
-///     Text("Child 2"),
-///   ],
-///   containerWidthFraction: 0.8,
-///   containerHeightFraction: 0.6,
-///   marginLeft: 10,
-///   marginRight: 10,
-///   marginTop: 20,
-///   marginBottom: 20,
-/// );
-/// ```
+/// * `containerWidthFraction` / `containerHeightFraction`: scale the container
+///   relative to the screen dimensions. Defaults to 1.0 (full viewport).
+/// * Legacy margin fields (`marginLeft`, `marginRight`, `marginTop`,
+///   `marginBottom`) combine into a single [EdgeInsets] unless `margin` is
+///   explicitly set—in which case `margin` overrides the legacy values.
+/// * `decoration`: replaces the default `BoxDecoration(color: backgroundColor)`
+///   so you can inject gradients, images, or multi-layer effects.
+/// * `children`: rendered inside a [Stack], enabling layered overlays, floating
+///   action buttons, or positioned widgets.
+///
+/// Use this options object when you want to inject theming providers, apply
+/// rounded corners, or add debug overlays to the entire MediaSFU surface.
 class MainContainerComponentOptions {
   /// The background color of the container.
   final Color backgroundColor;
@@ -89,35 +80,27 @@ class MainContainerComponentOptions {
 typedef MainContainerComponentType = Widget Function(
     {required MainContainerComponentOptions options});
 
-/// `MainContainerComponent` - A container widget with customizable dimensions, margins, and background color.
+/// Root container widget wrapping the entire MediaSFU UI surface.
 ///
-/// This component adapts its width and height based on the specified fractions of the screen size.
-/// It also allows for custom margins and provides a background color for the container.
+/// * Scales dimensions by `containerWidthFraction` / `containerHeightFraction`
+///   relative to the screen, allowing the experience to occupy a subset of the
+///   viewport (e.g., for picture-in-picture or split-screen UIs).
+/// * Applies margin via legacy fields or the unified `margin` property, and
+///   optional `padding`, `decoration`, `alignment`, and `clipBehavior` for
+///   advanced theming.
+/// * Renders `children` inside a [Stack] so you can layer overlays, debug info,
+///   or floating controls atop the experience.
 ///
-/// ### Parameters:
-/// - `options` (`MainContainerComponentOptions`): Configuration options to customize the container.
-///
-/// ### Example Usage:
-/// ```dart
-/// MainContainerComponent(
-///   options: MainContainerComponentOptions(
-///     backgroundColor: Colors.blue,
-///     children: [
-///       Text("Sample Text"),
-///     ],
-///     containerWidthFraction: 0.9,
-///     containerHeightFraction: 0.5,
-///     marginLeft: 15,
-///     marginRight: 15,
-///     marginTop: 10,
-///     marginBottom: 10,
-///   ),
-/// );
-/// ```
+/// Override this component via `MediasfuUICustomOverrides.mainContainer` to
+/// inject gradients, rounded corners, shadows, or theming providers without
+/// replacing the entire layout tree. Commonly used to apply branded backgrounds
+/// or wrap the UI in additional context providers.
 ///
 /// ### Notes:
-/// - `MainContainerComponent` uses the `Stack` widget to allow layered child widgets.
-/// - The component adjusts to screen size changes by recalculating width and height based on the fractions provided.
+/// - The component recalculates dimensions on every build, ensuring responsive
+///   behavior during orientation changes or window resizes.
+/// - When `decoration` is `null`, a simple `BoxDecoration(color: backgroundColor)`
+///   is applied.
 class MainContainerComponent extends StatelessWidget {
   final MainContainerComponentOptions options;
 

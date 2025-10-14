@@ -151,37 +151,150 @@ typedef ControlButtonsAltButtonBuilder = Widget Function(
   ControlButtonsAltButtonContext context,
 );
 
-/// ControlButtonsAltComponentOptions - Configures settings for the `ControlButtonsAltComponent`.
+/// Configuration options for the `ControlButtonsAltComponent`.
 ///
-/// ### Example Usage:
+/// Provides properties to customize an alternative control button bar with flexible
+/// positioning, alignment, and layout direction. Similar to `ControlButtonsComponent`
+/// but with different default styling and layout options.
+///
+/// **Core Properties:**
+/// - `buttons`: List of AltButton objects defining each button (icon, callback, colors, active state)
+/// - `showAspect`: If false, hides entire component; useful for conditional visibility
+///
+/// **Layout Configuration:**
+/// - `direction`: Button arrangement: 'horizontal' (default) or 'vertical'
+/// - `position`: Horizontal alignment: 'left', 'right', 'center' (default: 'left')
+/// - `location`: Vertical alignment: 'top' (default), 'bottom', 'center'
+///
+/// **Styling:**
+/// - `buttonsContainerStyle`: BoxDecoration for button group container
+/// - `containerPadding`/`containerMargin`/`containerAlignment`: Outer container layout
+///
+/// **Icon Components:**
+/// - `iconComponent`: Custom widget replacing default inactive icon display
+/// - `alternateIconComponent`: Custom widget replacing default active icon display
+///
+/// **Builder Hooks (4):**
+/// - `customBuilder`: Full widget replacement; receives ControlButtonsAltComponentOptions
+/// - `wrapperBuilder`: Override outer wrapper; receives child + default
+/// - `containerBuilder`: Override container; receives child + default
+/// - `layoutBuilder`: Override button layout (Row/Column); receives buttons + default
+/// - `buttonBuilder`: Override individual buttons; receives AltButton + default
+///
+/// **AltButton Properties:**
+/// Each button in `buttons` array supports:
+/// - `name`: Display label text
+/// - `icon`: Primary icon (inactive state)
+/// - `alternateIcon`: Icon shown when `active=true`
+/// - `onPress`: Callback function on tap
+/// - `defaultBackgroundColor`: Background when inactive
+/// - `pressedBackgroundColor`: Background when active
+/// - `active`: Toggle state (affects icon and color)
+/// - `activeColor`/`inActiveColor`: Icon tint colors
+/// - `textColor`: Label text color
+/// - `show`: If false, hides this button
+/// - `disabled`: If true, makes button non-interactive
+/// - `customComponent`: Custom widget replacing icon+label
+///
+/// **Usage Patterns:**
+/// 1. **Basic Horizontal Bar:**
+///    ```dart
+///    ControlButtonsAltComponent(
+///      options: ControlButtonsAltComponentOptions(
+///        buttons: [
+///          AltButton(
+///            name: 'Mic',
+///            icon: Icons.mic_off,
+///            alternateIcon: Icons.mic,
+///            onPress: toggleMic,
+///            active: isMicOn,
+///            activeColor: Colors.green,
+///            inActiveColor: Colors.red,
+///          ),
+///          AltButton(
+///            name: 'Camera',
+///            icon: Icons.videocam_off,
+///            alternateIcon: Icons.videocam,
+///            onPress: toggleCamera,
+///            active: isCameraOn,
+///          ),
+///        ],
+///        direction: 'horizontal',
+///        position: 'center',
+///        location: 'bottom',
+///      ),
+///    )
+///    ```
+///
+/// 2. **Vertical Sidebar:**
+///    ```dart
+///    ControlButtonsAltComponent(
+///      options: ControlButtonsAltComponentOptions(
+///        buttons: controlButtons,
+///        direction: 'vertical',
+///        position: 'right',
+///        location: 'center',
+///        buttonsContainerStyle: BoxDecoration(
+///          color: Colors.black54,
+///          borderRadius: BorderRadius.circular(8),
+///        ),
+///      ),
+///    )
+///    ```
+///
+/// 3. **Custom Button Renderer:**
+///    ```dart
+///    ControlButtonsAltComponent(
+///      options: ControlButtonsAltComponentOptions(
+///        buttons: buttons,
+///        buttonBuilder: (context) {
+///          final button = context.button;
+///          return Tooltip(
+///            message: button.name ?? '',
+///            child: context.defaultButton,
+///          );
+///        },
+///      ),
+///    )
+///    ```
+///
+/// 4. **Conditional Visibility:**
+///    ```dart
+///    ControlButtonsAltComponent(
+///      options: ControlButtonsAltComponentOptions(
+///        buttons: [
+///          AltButton(name: 'Share', icon: Icons.screen_share, onPress: shareScreen, show: canShare),
+///          AltButton(name: 'Record', icon: Icons.fiber_manual_record, onPress: startRecord, show: isHost),
+///        ],
+///        showAspect: isMediaControlsVisible,
+///      ),
+///    )
+///    ```
+///
+/// **Override Integration:**
+/// Can be overridden via `MediasfuUICustomOverrides`:
 /// ```dart
-/// ControlButtonsAltComponentOptions(
-///   buttons: [
-///     ControlButton(
-///       name: 'Start',
-///       icon: Icons.play_arrow,
-///       onPress: () => print('Play button pressed'),
-///       defaultBackgroundColor: Colors.black,
-///       pressedBackgroundColor: Colors.green,
+/// overrides: MediasfuUICustomOverrides(
+///   controlButtonsAltOptions: ComponentOverride<ControlButtonsAltComponentOptions>(
+///     builder: (existingOptions) => ControlButtonsAltComponentOptions(
+///       buttons: existingOptions.buttons,
+///       position: 'center',
+///       location: 'bottom',
+///       buttonsContainerStyle: BoxDecoration(
+///         gradient: LinearGradient(colors: [Colors.blue, Colors.purple]),
+///         borderRadius: BorderRadius.circular(24),
+///       ),
 ///     ),
-///     ControlButton(
-///       name: 'Stop',
-///       icon: Icons.stop,
-///       onPress: () => print('Stop button pressed'),
-///       defaultBackgroundColor: Colors.black,
-///       pressedBackgroundColor: Colors.red,
-///     ),
-///   ],
-///   position: 'center',
-///   location: 'bottom',
-///   direction: 'horizontal',
-///   buttonsContainerStyle: BoxDecoration(
-///     color: Colors.white,
-///     borderRadius: BorderRadius.circular(8),
 ///   ),
-///   showAspect: true,
-/// );
+/// ),
 /// ```
+///
+/// **Differences from ControlButtonsComponent:**
+/// - Uses AltButton model (different properties than ControlButton)
+/// - position/location props for flexible alignment (vs fixed positioning)
+/// - Simpler layout (no row/column gap props)
+/// - Different default styling approach
+/// - No icon+content separate builders (unified buttonBuilder)
 class ControlButtonsAltComponentOptions {
   /// An array of button configurations to render within the component.
   final List<AltButton> buttons;
@@ -254,34 +367,152 @@ class ControlButtonsAltComponentOptions {
   });
 }
 
-/// ControlButtonsAltComponent - A widget that displays a configurable set of control buttons with flexible styling and alignment options.
+/// A stateless widget rendering an alternative control button bar with flexible positioning.
 ///
-/// ### Example Usage:
-/// ```dart
-/// ControlButtonsAltComponent(
-///   options: ControlButtonsAltComponentOptions(
-///     buttons: [
-///       AltButton(
-///         name: 'Mute',
-///         icon: Icons.mic_off,
-///         onPress: () => print('Mic off'),
-///         defaultBackgroundColor: Colors.grey,
-///         pressedBackgroundColor: Colors.blue,
-///         active: true,
-///       ),
-///       AltButton(
-///         name: 'Camera',
-///         icon: Icons.videocam,
-///         onPress: () => print('Camera on'),
-///       ),
-///     ],
-///     position: 'right',
-///     location: 'center',
-///     direction: 'horizontal',
-///   ),
-/// );
+/// Displays a row or column of interactive buttons (AltButton) with customizable alignment,
+/// layout direction, and styling. Alternative to `ControlButtonsComponent` with different
+/// layout options (position/location props vs fixed positioning).
+///
+/// **Rendering Logic:**
+/// 1. If `showAspect=false` → returns empty Container
+/// 2. If `customBuilder` provided → delegates full rendering
+/// 3. Filters buttons: only renders buttons where `show=true`
+/// 4. Builds layout: Row (horizontal) or Column (vertical) containing buttons
+/// 5. Wraps layout in Container with alignment (position/location)
+/// 6. Applies builder hooks at each layer
+///
+/// **Layout Structure:**
+/// ```
+/// Container (wrapperBuilder)
+///   └─ Container (containerBuilder)
+///      └─ Align (position/location → Alignment)
+///         └─ Row/Column (layoutBuilder)
+///            ├─ GestureDetector (buttonBuilder)
+///            │  └─ Container (button background)
+///            │     └─ Column
+///            │        ├─ Icon (or alternateIcon if active)
+///            │        └─ Text (button.name)
+///            ├─ GestureDetector ...
+///            └─ ...
 /// ```
 ///
+/// **Button Rendering:**
+/// Each AltButton becomes:
+/// - GestureDetector (onTap → button.onPress)
+/// - Container (background color: defaultBackgroundColor or pressedBackgroundColor if active)
+/// - Column with:
+///   - Icon (uses icon or alternateIcon based on active state)
+///   - Text (button.name)
+/// - Icon color: activeColor if active, else inActiveColor
+/// - Opacity: 0.5 if disabled, else 1.0
+///
+/// **Position/Location Mapping:**
+/// - `position='left'` + `location='top'` → Alignment.topLeft
+/// - `position='center'` + `location='bottom'` → Alignment.bottomCenter
+/// - `position='right'` + `location='center'` → Alignment.centerRight
+/// - All 9 combinations of (left/center/right) × (top/center/bottom) supported
+///
+/// **Builder Hook Priorities:**
+/// - `customBuilder` → full widget replacement (ignores all other props)
+/// - `wrapperBuilder` → wraps outer container; receives child + default
+/// - `containerBuilder` → wraps inner container; receives child + default
+/// - `layoutBuilder` → wraps Row/Column; receives buttons list + default
+/// - `buttonBuilder` → wraps individual button; receives AltButton + default
+///
+/// **Common Use Cases:**
+/// 1. **Bottom Control Bar:**
+///    ```dart
+///    ControlButtonsAltComponent(
+///      options: ControlButtonsAltComponentOptions(
+///        buttons: [
+///          AltButton(name: 'Mic', icon: Icons.mic_off, onPress: toggleMic),
+///          AltButton(name: 'Video', icon: Icons.videocam_off, onPress: toggleVideo),
+///          AltButton(name: 'Share', icon: Icons.screen_share, onPress: shareScreen),
+///        ],
+///        direction: 'horizontal',
+///        position: 'center',
+///        location: 'bottom',
+///      ),
+///    )
+///    ```
+///
+/// 2. **Right Sidebar (Vertical):**
+///    ```dart
+///    ControlButtonsAltComponent(
+///      options: ControlButtonsAltComponentOptions(
+///        buttons: quickActions,
+///        direction: 'vertical',
+///        position: 'right',
+///        location: 'center',
+///        buttonsContainerStyle: BoxDecoration(color: Colors.black54),
+///      ),
+///    )
+///    ```
+///
+/// 3. **Conditional Button Visibility:**
+///    ```dart
+///    ControlButtonsAltComponent(
+///      options: ControlButtonsAltComponentOptions(
+///        buttons: [
+///          AltButton(name: 'Host Controls', icon: Icons.settings, onPress: openHostMenu, show: isHost),
+///          AltButton(name: 'Leave', icon: Icons.exit_to_app, onPress: leaveRoom),
+///        ],
+///        position: 'left',
+///        location: 'top',
+///      ),
+///    )
+///    ```
+///
+/// 4. **Custom Button Wrapper:**
+///    ```dart
+///    ControlButtonsAltComponent(
+///      options: ControlButtonsAltComponentOptions(
+///        buttons: buttons,
+///        buttonBuilder: (context) {
+///          final button = context.button;
+///          return Badge(
+///            label: button.active ? Text('ON') : null,
+///            child: context.defaultButton,
+///          );
+///        },
+///      ),
+///    )
+///    ```
+///
+/// **Override Integration:**
+/// Integrates with `MediasfuUICustomOverrides` for global styling:
+/// ```dart
+/// overrides: MediasfuUICustomOverrides(
+///   controlButtonsAltOptions: ComponentOverride<ControlButtonsAltComponentOptions>(
+///     builder: (existingOptions) => ControlButtonsAltComponentOptions(
+///       buttons: existingOptions.buttons,
+///       direction: existingOptions.direction,
+///       position: 'center',
+///       location: 'bottom',
+///       buttonsContainerStyle: BoxDecoration(
+///         color: Colors.black87,
+///         borderRadius: BorderRadius.circular(32),
+///         boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8)],
+///       ),
+///     ),
+///   ),
+/// ),
+/// ```
+///
+/// **Active State Behavior:**
+/// - When `active=true`: uses `alternateIcon` (if provided) and `activeColor`
+/// - When `active=false`: uses `icon` and `inActiveColor`
+/// - Background color switches between `defaultBackgroundColor` and `pressedBackgroundColor`
+///
+/// **Disabled State:**
+/// - Reduces opacity to 0.5
+/// - onPress callback still fires (caller should handle disabled logic)
+///
+/// **Implementation Notes:**
+/// - Filters buttons before rendering (only `show=true` buttons)
+/// - Direction prop directly maps to Row (horizontal) or Column (vertical)
+/// - Position+location props combined into single Alignment value
+/// - Builder hooks receive both context and default widget for wrapping patterns
 class ControlButtonsAltComponent extends StatelessWidget {
   final ControlButtonsAltComponentOptions options;
 

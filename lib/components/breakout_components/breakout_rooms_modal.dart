@@ -129,18 +129,20 @@ abstract class BreakoutRoomsModalParameters {
   // dynamic operator [](String key);
 }
 
-/// Options for configuring the `BreakoutRoomsModal` widget.
+/// Configuration for the breakout-rooms modal enabling multi-room participant assignment and control.
 ///
-/// This modal manages breakout rooms, allowing for creating, editing, and deleting rooms.
+/// * **parameters** - Must expose `participants`, `breakoutRooms` (list of `List<BreakoutParticipant>`), `breakOutRoomStarted`, `breakOutRoomEnded`, `canStartBreakout`, `currentRoomIndex`, `meetingDisplayType`, `prevMeetingDisplayType`, `roomName`, `shareScreenStarted`, `shared`, `socket`, `localSocket`, `itemPageLimit`, `showAlert`, and update functions for each state.
+/// * **position** - Modal placement via `getModalPosition` (e.g., 'topRight').
+/// * **backgroundColor** - Background color for modal container.
 ///
-/// ### Example Usage:
-/// ```dart
-/// final breakoutOptions = BreakoutRoomsModalOptions(
-///   isVisible: true,
-///   onBreakoutRoomsClose: closeModal,
-///   parameters: breakoutRoomParams,
-/// );
-/// ```
+/// ### Usage
+/// 1. Host can create up to 10 breakout rooms via "Add Room" button.
+/// 2. Edit room: opens `EditRoomModal` to assign/unassign participants; modal filters `participants` by `breakoutRooms` membership, showing assigned and unassigned lists; drag-drop or click to move participants between rooms.
+/// 3. Delete room: removes room from `breakoutRooms`, reassigns participants to unassigned pool.
+/// 4. Remove participant: unassigns from specific room while keeping in unassigned pool.
+/// 5. "Start Breakout Rooms" button: validates at least one room with participants, emits `startBreakoutRooms` socket event, saves `prevMeetingDisplayType`, sets `meetingDisplayType = 'all'`, updates `breakOutRoomStarted = true`.
+/// 6. "Stop Breakout Rooms" button: emits `stopBreakoutRooms` event, restores `meetingDisplayType = prevMeetingDisplayType`, updates `breakOutRoomEnded = true`, `breakOutRoomStarted = false`.
+/// 7. Override via `MediasfuUICustomOverrides.breakoutRoomsModal` to inject custom room-assignment logic, analytics tracking, or sub-room moderation controls.
 class BreakoutRoomsModalOptions {
   /// Determines if the modal is visible.
   final bool isVisible;
@@ -422,19 +424,28 @@ class EditRoomModal extends StatelessWidget {
   }
 }
 
-/// A modal widget for managing breakout rooms within a meeting.
-/// Allows users to create, edit, and delete rooms, assign participants, and start breakout rooms.
-/// ### Example Usage:
-/// ```dart
-/// BreakoutRoomsModal(
-///  options: BreakoutRoomsModalOptions(
-///   isVisible: true,
-///   onBreakoutRoomsClose: closeModal,
-///  parameters: breakoutRoomParams,
-/// ),
-/// );
-/// ```
+/// Breakout-rooms modal enabling multi-room participant assignment, editing, and session control.
 ///
+/// * Host can create up to 10 breakout rooms via "Add Room" button, auto-generating
+///   `breakoutRooms` entries with empty participant lists.
+/// * Edit room: opens `EditRoomModal` displaying "Assigned Participants" (current
+///   room members) and "Unassigned Participants" (filtered from `participants` where
+///   `breakRoom == null`); click "+" to add, "x" to remove.
+/// * Delete room: invokes `handleDeleteRoom`, removing from `breakoutRooms`,
+///   reassigning participants to unassigned pool (sets `breakRoom = null`).
+/// * Remove participant: calls `handleRemoveParticipant`, setting `breakRoom = null`
+///   for specific participant while preserving room.
+/// * "Start Breakout Rooms" button: validates at least one room with participants,
+///   emits `startBreakoutRooms` socket event with `{breakoutRooms, newParticipantAction}`,
+///   saves `prevMeetingDisplayType`, sets `meetingDisplayType = 'all'`, updates
+///   `breakOutRoomStarted = true`, `canStartBreakout = false`.
+/// * "Stop Breakout Rooms" button: emits `stopBreakoutRooms` event, restores
+///   `meetingDisplayType = prevMeetingDisplayType`, updates `breakOutRoomEnded = true`,
+///   `breakOutRoomStarted = false`.
+/// * Positions via `getModalPosition` using `options.position`.
+///
+/// Override via `MediasfuUICustomOverrides.breakoutRoomsModal` to inject custom
+/// room-assignment logic, analytics tracking, or sub-room moderation controls.
 class BreakoutRoomsModal extends StatefulWidget {
   final BreakoutRoomsModalOptions options;
 

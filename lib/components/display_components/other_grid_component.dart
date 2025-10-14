@@ -2,7 +2,24 @@ import 'package:flutter/material.dart';
 
 import 'meeting_progress_timer.dart';
 
-/// OtherGridComponentOptions - Configuration options for the `OtherGridComponent`.
+/// Configuration payload for [OtherGridComponent].
+///
+/// These options power the MediaSFU "other participants" grid override and
+/// expose points for responsive layout and builder customization:
+///
+/// * `width` / `height` act as optional hints. When non-positive they are
+///   replaced with values derived from the surrounding layout constraints so the
+///   grid never collapses during first paint.
+/// * `children` are rendered inside a [Stack]; `childrenBuilder` can wrap or
+///   replace the stack and receives the computed surface [Size].
+/// * `showTimer`, `meetingProgressTime`, `timerOptions`, and `timerBuilder`
+///   allow the MediaSFU session timer to be injected alongside your widgets.
+/// * `containerBuilder` gives the opportunity to re-theme the host container
+///   while preserving padding, margin, and clipping semantics defined in the
+///   options.
+///
+/// Supply this object via `MediasfuUICustomOverrides` when overriding
+/// `otherGrid`.
 class OtherGridComponentOptions {
   final Color backgroundColor;
   final List<Widget> children;
@@ -76,29 +93,17 @@ typedef OtherGridComponentChildrenBuilder = Widget Function(
   List<Widget> defaultChildren,
 );
 
-/// OtherGridComponent - A widget for displaying a grid with customizable background color, children, and optional timer.
+/// Responsive container backing the MediaSFU "other participants" surface.
 ///
-/// This widget displays a grid-like container with optional timer functionality. It allows flexibility for various layouts
-/// by accepting child widgets and controlling visibility through `showAspect`.
-///
-/// ### Parameters:
-/// - `options` (`OtherGridComponentOptions`): Configuration options for the grid component.
-///
-/// ### Example Usage:
-/// ```dart
-/// OtherGridComponent(
-///   options: OtherGridComponentOptions(
-///     backgroundColor: Colors.black,
-///     width: 100.0,
-///     height: 100.0,
-///     showAspect: true,
-///     timeBackgroundColor: Colors.white,
-///     showTimer: true,
-///     meetingProgressTime: "10:00",
-///     children: [ChildWidget()],
-///   ),
-/// );
-/// ```
+/// * Uses [LayoutBuilder] to derive usable dimensions when width/height are
+///   unset or non-positive, preventing the grid from disappearing while session
+///   metadata loads.
+/// * Emits the resolved [Size] to `childrenBuilder` so nested layouts can adapt
+///   to available space.
+/// * Rehydrates timer UI through `timerBuilder` / `timerOptions` and can be
+///   themed by wrapping it in `containerBuilder`.
+/// * Returns [SizedBox.shrink] when `showAspect` is `false`, mirroring the
+///   built-in component lifecycle.
 class OtherGridComponent extends StatelessWidget {
   final OtherGridComponentOptions options;
 

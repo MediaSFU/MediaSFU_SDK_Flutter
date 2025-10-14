@@ -122,6 +122,26 @@ typedef FlexibleVideoScreenboardBuilder = Widget? Function(
   Widget? defaultScreenboard,
 );
 
+/// Configuration payload for [FlexibleVideo].
+///
+/// Powers the MediaSFU main video grid with responsive card sizing and
+/// optional screen-share annotation overlays:
+///
+/// * `customWidth` / `customHeight` set requested card dimensions. The widget
+///   clamps them to available constraints so cards remain visible even when
+///   initial values are large or the viewport is narrow.
+/// * `annotateScreenStream` + `localStreamScreen` enable overlaying annotation
+///   canvases atop screen shares. The card width adjusts to the stream's native
+///   resolution when annotations are active.
+/// * Rich builder surface (`containerBuilder`, `gridBuilder`, `rowBuilder`,
+///   `cellBuilder`, `screenboardBuilder`) lets you inject custom rendering
+///   layers while preserving the built-in grid logic.
+/// * Computed `cardSize`, `cardLeft`, and `canvasLeft` are passed to each
+///   builder context so downstream widgets can align or position elements
+///   relative to the final card geometry.
+///
+/// Override this component via `MediasfuUICustomOverrides.flexibleVideo` when
+/// you need branded tiling, watermarks, or alternative card layouts.
 class FlexibleVideoOptions {
   final double customWidth;
   final double customHeight;
@@ -215,6 +235,18 @@ class FlexibleVideoOptions {
 
 typedef FlexibleVideoType = Widget Function({required FlexibleVideoOptions options});
 
+/// Responsive video-grid widget that powers MediaSFU's main participant layout.
+///
+/// * Computes card size from available layout constraints, accounting for row/
+///   column spacing, padding, and margins so cards never overflow or collapse.
+/// * Supports screen-share annotation by adjusting card width to match the
+///   stream's native resolution when `annotateScreenStream` is enabled.
+/// * Exposes computed metrics (`Size cardSize`, offsets) to all builder hooks
+///   so custom renderers can align overlays or watermarks consistently.
+/// * Hides itself gracefully via [SizedBox.shrink] when `showAspect` is false.
+///
+/// Use this widget in `MediasfuUICustomOverrides.flexibleVideo` to deliver
+/// branded layouts, CRM integrations, or alternative tiling strategies.
 class FlexibleVideo extends StatefulWidget {
   final FlexibleVideoOptions options;
 

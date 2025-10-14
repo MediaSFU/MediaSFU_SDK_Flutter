@@ -1,21 +1,53 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-/// AlertComponentOptions - Configuration options for the `AlertComponent` widget.
+/// Configuration for the alert-component overlay displaying success/error messages with auto-dismiss.
 ///
-/// Example:
-/// ```dart
-/// AlertComponent(
-///   options: AlertComponentOptions(
-///     visible: true,
-///     message: "Operation successful!",
-///     type: "success",
-///     duration: 3000,
-///     onHide: () => print("Alert hidden"),
-///     textColor: Colors.white,
-///   ),
-/// );
-/// ```
+/// * **visible** - Boolean controlling alert visibility; when `true`, displays full-screen overlay with alert message.
+/// * **message** - Alert text content.
+/// * **type** - Alert type: `'success'` (green background) or `'danger'`/`'error'` (red background).
+/// * **duration** - Auto-dismiss delay in milliseconds (default: 4000ms); set to `0` to disable auto-dismiss.
+/// * **onHide** - Callback invoked when alert is dismissed (auto-dismiss or tap-to-dismiss).
+/// * **textColor** - Color for alert message text (default: `Colors.black`).
+/// * **successColor** - Custom background color for success alerts; if not provided, defaults to `Color(0xFFD4EDDA)` (light green).
+/// * **dangerColor** - Custom background color for danger alerts; if not provided, defaults to `Color(0xFFF8D7DA)` (light red).
+/// * **overlayOpacity** - Opacity for full-screen overlay background (default: 0.5).
+/// * **overlayColor** - Color for full-screen overlay (default: `Colors.black`).
+/// * **overlayPadding** - Padding for overlay (default: 16px all sides).
+/// * **overlayAlignment** - Alignment for alert container within overlay (default: `Alignment.center`).
+/// * **overlayDismissible** - Boolean controlling whether tapping overlay background dismisses alert (default: `true`).
+/// * **onOverlayTap** - Custom callback when overlay background is tapped; return `true` to dismiss, `false` to keep open.
+/// * **contentDismissible** - Boolean controlling whether tapping alert content dismisses alert (default: `true`).
+/// * **onContentTap** - Custom callback when alert content is tapped; return `true` to dismiss, `false` to keep open.
+/// * **containerDecoration** - Decoration for alert container (background, border, border radius); if not provided, defaults to type-based background with rounded corners.
+/// * **containerPadding** - Padding for alert container (default: horizontal 24px, vertical 20px).
+/// * **containerMargin** - Margin for alert container.
+/// * **containerClipBehavior** - Clip behavior for alert container.
+/// * **maxWidth** - Maximum width for alert container (default: 420px).
+/// * **minWidth** - Minimum width for alert container.
+/// * **messageStyle** - Custom TextStyle for alert message.
+/// * **messagePadding** - Padding for message text.
+/// * **messageAlignment** - Text alignment for message (default: `TextAlign.center`).
+/// * **messageMaxLines** - Maximum lines for message text.
+/// * **contentSpacing** - Spacing between content elements (leading/message/trailing) in logical pixels (default: 12).
+/// * **contentAlignment** - Cross-axis alignment for content elements (default: `CrossAxisAlignment.center`).
+/// * **contentMainAxisSize** - Main-axis size for content (default: `MainAxisSize.min`).
+/// * **actions** - Optional list of action widgets (buttons) below message.
+/// * **leading** - Optional leading widget (icon) before message.
+/// * **trailing** - Optional trailing widget (close button) after message.
+/// * **messageBuilder** - Override message widget; receives `AlertMessageContext` with `options` and `defaultMessage`.
+/// * **contentBuilder** - Override content container; receives `AlertContentContext` with `options`, `message`, and `defaultContent`.
+/// * **overlayBuilder** - Override entire overlay; receives `AlertOverlayContext` with `options`, `content`, and `defaultOverlay`.
+/// * **animationDuration** - Duration for fade-in/out animation (default: 200ms).
+/// * **animationCurve** - Curve for fade animation (default: `Curves.easeInOut`).
+///
+/// ### Usage
+/// 1. Alert displays full-screen semi-transparent overlay when `visible == true`.
+/// 2. Alert container centered with type-based background color (green for success, red for danger), rounded corners, shadow.
+/// 3. Message displayed with `textColor` and `messageAlignment`.
+/// 4. Auto-dismisses after `duration` milliseconds (if `duration > 0`); invokes `onHide`.
+/// 5. Tap-to-dismiss enabled via `overlayDismissible` (tap overlay background) or `contentDismissible` (tap alert content).
+/// 6. Override via `MediasfuUICustomOverrides.alertComponent` to inject branded alert designs, custom animations, or action buttons.
 
 typedef AlertTapCallback = bool Function();
 
@@ -154,21 +186,25 @@ class AlertComponentOptions {
 typedef AlertComponentType = Widget Function(
     {required AlertComponentOptions options});
 
-/// AlertComponent - A widget for displaying alerts with customizable options.
+/// Full-screen alert overlay displaying success/error messages with auto-dismiss and tap-to-dismiss.
 ///
-/// Example:
-/// ```dart
-/// AlertComponent(
-///   options: AlertComponentOptions(
-///     visible: true,
-///     message: "An error occurred",
-///     type: "error",
-///     duration: 3000,
-///     onHide: () => print("Alert hidden"),
-///     textColor: Colors.white,
-///   ),
-/// );
-/// ```
+/// * Displays full-screen semi-transparent overlay when `visible == true`.
+/// * Alert container centered with type-based background color:
+///   - Success: light green (`Color(0xFFD4EDDA)`) or `successColor`.
+///   - Danger/Error: light red (`Color(0xFFF8D7DA)`) or `dangerColor`.
+/// * Message displayed with `textColor` (default: black) and `messageAlignment` (default: center).
+/// * Auto-dismisses after `duration` milliseconds (default: 4000ms; set to `0` to disable).
+/// * Tap overlay background (if `overlayDismissible == true`) or alert content
+///   (if `contentDismissible == true`) to dismiss; invokes `onHide` on dismiss.
+/// * Fades in/out with `animationDuration` (default: 200ms) and `animationCurve`
+///   (default: `Curves.easeInOut`).
+/// * Offers three builder hooks (`messageBuilder`, `contentBuilder`, `overlayBuilder`)
+///   for granular customization.
+/// * Optional `leading` (icon), `trailing` (close button), and `actions` (button list)
+///   for rich alert designs.
+///
+/// Override via `MediasfuUICustomOverrides.alertComponent` to inject branded alert
+/// designs, custom animations, or action buttons.
 class AlertComponent extends StatefulWidget {
   final AlertComponentOptions options;
 

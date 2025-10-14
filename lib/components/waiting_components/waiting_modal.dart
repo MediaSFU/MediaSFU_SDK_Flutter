@@ -39,7 +39,30 @@ abstract class WaitingRoomModalParameters {
   // dynamic operator [](String key);
 }
 
-/// Options for the WaitingRoomModal.
+/// Configuration for the waiting-room modal enabling host to accept/reject participants queued for entry.
+///
+/// * **waitingRoomList** - Array of `WaitingRoomParticipant` objects; displayed in scrollable list.
+/// * **waitingRoomCounter** - Count of participants in queue; shown in modal header.
+/// * **onWaitingRoomItemPress** - Override for `respondToWaiting`; receives {participantId, participantName, updateWaitingList, waitingList, type, roomName, socket}. `type` is `'accepted'` (admit) or `'rejected'` (deny); emits `updateWaiting` socket event with action.
+/// * **onWaitingRoomFilterChange** - Callback when search input changes; filters `waitingRoomList` by name.
+/// * **updateWaitingList** - Updates `waitingRoomList` in parent state after admit/reject.
+/// * **roomName** - Session identifier for socket event.
+/// * **socket** - Socket.IO client for emitting `updateWaiting` event.
+/// * **position** - Modal placement via `getModalPosition` (e.g., 'topRight').
+/// * **backgroundColor** - Background color for modal container.
+/// * **parameters** - Must expose `waitingRoomList`, `filteredWaitingRoomList`, `waitingRoomCounter`, `roomName`, `socket`, `updateWaitingRoomList`, `getUpdatedAllParams`.
+/// * **styles** - Optional `WaitingRoomModalStyleOptions` for advanced theming.
+/// * **title** / **emptyState** - Custom widgets for header and empty list placeholder.
+/// * **headerBuilder** / **searchBuilder** / **listBuilder** / **itemBuilder** / **bodyBuilder** / **contentBuilder** - Builder hooks for granular customization.
+///
+/// ### Usage
+/// 1. Modal displays header with "Waiting Room" title and counter badge.
+/// 2. Search input filters `waitingRoomList` by participant name.
+/// 3. Each participant row shows name with "Accept" (green) and "Reject" (red) buttons.
+/// 4. "Accept" button calls `onWaitingRoomItemPress` with `type: 'accepted'`, emitting `updateWaiting` socket event with `{participantId, participantName, action: 'accepted', roomName}`.
+/// 5. "Reject" button calls `onWaitingRoomItemPress` with `type: 'rejected'`, emitting `updateWaiting` socket event with `{participantId, participantName, action: 'rejected', roomName}`.
+/// 6. After admit/reject, `updateWaitingList` removes participant from queue.
+/// 7. Override via `MediasfuUICustomOverrides.waitingRoomModal` to inject custom admission logic, pre-admission surveys, or analytics tracking.
 class WaitingRoomModalOptions {
   final bool isWaitingModalVisible;
   final VoidCallback onWaitingRoomClose;
@@ -93,38 +116,25 @@ typedef WaitingRoomModalType = WaitingRoomModal Function({
   required WaitingRoomModalOptions options,
 });
 
-/// A modal interface to manage participants in a waiting room, allowing hosts to accept or reject entries.
+/// Waiting-room modal displaying queued participants with accept/reject actions (host-only).
 ///
-/// This modal displays a searchable list of participants in the waiting room.
-/// Each participant can be accepted or rejected through corresponding buttons.
-/// The modal also updates dynamically with any changes in the waiting room list.
+/// * Displays scrollable list of `WaitingRoomParticipant` objects from `waitingRoomList`.
+/// * Header shows "Waiting Room" title with counter badge (`waitingRoomCounter`).
+/// * Search input filters list by participant name via `onWaitingRoomFilterChange`.
+/// * Each participant row shows name with "Accept" (green checkmark) and "Reject"
+///   (red X) icon buttons.
+/// * "Accept" calls `onWaitingRoomItemPress` with `type: 'accepted'`, which emits
+///   `updateWaiting` socket event with `{participantId, participantName, action: 'accepted', roomName}`,
+///   then removes participant from `waitingRoomList` via `updateWaitingList`.
+/// * "Reject" calls `onWaitingRoomItemPress` with `type: 'rejected'`, emitting
+///   `updateWaiting` event with `action: 'rejected'`, then removes from queue.
+/// * Empty state shows "No participants in waiting room" when list is empty.
+/// * Positions via `getModalPosition` using `options.position`.
+/// * Offers six builder hooks (`headerBuilder`, `searchBuilder`, `listBuilder`,
+///   `itemBuilder`, `bodyBuilder`, `contentBuilder`) for granular customization.
 ///
-/// ### Parameters:
-/// - [options] (`WaitingRoomModalOptions`): Contains configurable properties such as the waiting room list, counter, visibility status,
-///   and callback functions for accepting/rejecting participants and handling list changes.
-///
-/// ### Example usage:
-/// ```dart
-/// WaitingRoomModal(
-///   options: WaitingRoomModalOptions(
-///     waitingRoomList: [
-///       WaitingRoomParticipant(id: '1', name: 'John Doe'),
-///       WaitingRoomParticipant(id: '2', name: 'Jane Smith'),
-///     ],
-///     waitingRoomCounter: 2,
-///     isWaitingModalVisible: true,
-///     onWaitingRoomClose: () => print("Modal closed"),
-///     onWaitingRoomItemPress: (parameters) async {
-///       final participantId = parameters.participantId;
-///       final accepted = parameters.type;
-///       print("Participant $participantId ${accepted ? 'accepted' : 'rejected'}");
-///     },
-///     onWaitingRoomFilterChange: (query) => print("Filter changed: $query"),
-///     roomName: 'MeetingRoom123',
-///     socket: socket,
-///     updateWaitingList: () => print("Waiting list updated"),
-///   ),
-/// )
+/// Override via `MediasfuUICustomOverrides.waitingRoomModal` to inject custom
+/// admission logic, pre-admission surveys, or analytics tracking.
 /// ```
 ///
 /// ### Functional Details:

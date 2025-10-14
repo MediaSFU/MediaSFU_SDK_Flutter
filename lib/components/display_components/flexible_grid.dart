@@ -2,31 +2,40 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-/// `FlexibleGridOptions` - Configuration options for the `FlexibleGrid` widget.
+/// Configuration payload for [FlexibleGrid].
 ///
-/// ### Properties:
-/// - `customWidth` (`double?`): Optional width of each grid item. If `null`, a default aspect ratio of 1.0 is used.
-/// - `customHeight` (`double?`): Optional height of each grid item. If `null`, a default aspect ratio of 1.0 is used.
-/// - `rows` (`int`): The number of rows in the grid layout. Must be greater than 0.
-/// - `columns` (`int`): The number of columns in the grid layout. Must be greater than 0.
-/// - `componentsToRender` (`List<Widget>`): A list of widgets (e.g., video streams or images) to render in the grid cells. If fewer components are provided than cells in the grid, the components are repeated.
-/// - `backgroundColor` (`Color`): The background color of each grid cell. Defaults to `Colors.transparent`.
-/// - `showAspect` (`bool`): Controls the visibility of the entire grid. If `false`, the grid is hidden. Defaults to `true`.
+/// The options surface mirrors the override hooks exposed by `MediasfuUICustomOverrides`
+/// and is intended for advanced UI composition. In addition to basic row/column
+/// sizing it supports:
 ///
-/// ### Example Usage:
+/// * Responsive sizing: `customWidth` / `customHeight` act as upper bounds. When
+///   they are `null`, non-finite, or non-positive the grid derives sizes from its
+///   layout constraints so cells always remain visible.
+/// * Rich spacing controls: per-row and per-column spacing, padding, margin, and
+///   decoration at the container, row, and cell levels.
+/// * Builder hooks: inject custom renderers or wrappers via `containerBuilder`,
+///   `gridBuilder`, `rowBuilder`, `cellBuilder`, and `emptyCellBuilder` without
+///   re-implementing grid logic.
+/// * Custom empty-state handling: provide `emptyCell` content or a builder to
+///   handle cells whose index exceeds `componentsToRender.length`.
+///
+/// Example – render a three-by-three grid that adapts to the available width and
+/// decorates empty cells:
+///
 /// ```dart
 /// FlexibleGridOptions(
-///   customWidth: 100.0,
-///   customHeight: 100.0,
+///   customWidth: null, // allow the grid to derive width from constraints
+///   customHeight: null,
 ///   rows: 3,
 ///   columns: 3,
-///   componentsToRender: [
-///     Text("Item 1"),
-///     Text("Item 2"),
-///     Icon(Icons.star),
-///   ],
-///   backgroundColor: Colors.blueAccent,
-///   showAspect: true,
+///   componentsToRender: const [Icon(Icons.person)],
+///   emptyCellBuilder: (context, suggested) => DecoratedBox(
+///     decoration: BoxDecoration(
+///       color: Colors.blueGrey.shade900,
+///       borderRadius: BorderRadius.circular(12),
+///     ),
+///     child: suggested,
+///   ),
 /// );
 /// ```
 class FlexibleGridOptions {
@@ -195,32 +204,19 @@ typedef FlexibleGridEmptyCellBuilder = Widget? Function(
 typedef FlexibleGridType = Widget Function(
     {required FlexibleGridOptions options});
 
-/// `FlexibleGrid` - A widget that displays a flexible grid layout based on specified rows and columns.
+/// A responsive grid widget built specifically for the MediaSFU UI surface.
 ///
-/// The `FlexibleGrid` widget uses the options provided in `FlexibleGridOptions` to construct a grid layout.
-/// The grid cells can display a repeated pattern of components when there are fewer components than slots in the grid.
+/// * Automatically measures available space via [LayoutBuilder] so cells never
+///   collapse to zero when `GridSizes` reports `0` (common during first paint).
+/// * Treats `options.customWidth` / `customHeight` as suggested maxima—actual
+///   dimensions are capped by available width/height after subtracting padding
+///   and spacing.
+/// * Re-uses components in `componentsToRender` when the grid has more slots
+///   than widgets and can render custom placeholders via `emptyCellBuilder` or
+///   `emptyCell`.
 ///
-/// ### Example Usage:
-/// ```dart
-/// FlexibleGrid(
-///   options: FlexibleGridOptions(
-///     customWidth: 100.0,
-///     customHeight: 100.0,
-///     rows: 2,
-///     columns: 2,
-///     componentsToRender: [
-///       Text("Component 1"),
-///       Icon(Icons.star),
-///       Icon(Icons.circle),
-///     ],
-///     backgroundColor: Colors.grey,
-///   ),
-/// );
-/// ```
-///
-/// ### Notes:
-/// - If there are fewer components than grid slots, the provided components are repeated across the grid.
-/// - `customWidth` and `customHeight` determine the cell dimensions; otherwise, the cells use a default 1:1 aspect ratio.
+/// Use this widget when overriding `flexibleGrid`, `flexibleGridAlt`, or
+/// `otherGrid` via `MediasfuUICustomOverrides`.
 class FlexibleGrid extends StatelessWidget {
   final FlexibleGridOptions options;
 

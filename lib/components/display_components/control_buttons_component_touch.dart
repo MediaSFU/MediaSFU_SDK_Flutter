@@ -292,24 +292,229 @@ class ButtonTouch {
   });
 }
 
-/// ControlButtonsComponentTouchOptions - Configuration options for `ControlButtonsComponentTouch`.
+/// Configuration options for the `ControlButtonsComponentTouch`.
 ///
-/// ### Example Usage:
+/// Provides extensive customization for touch-optimized control button bars with
+/// per-button styling, state colors, accessibility, and six builder hooks. Most
+/// comprehensive variant of control buttons with mobile/tablet touch targets in mind.
+///
+/// **Core Properties:**
+/// - `buttons`: List of ButtonTouch objects (each button fully customizable)
+/// - `showAspect`: If false, hides entire component; useful for conditional visibility
+///
+/// **Layout Configuration:**
+/// - `direction`: Button arrangement: 'horizontal' (default) or 'vertical'
+/// - `position`: Horizontal alignment: 'left' (default), 'right', 'center'
+/// - `location`: Vertical alignment: 'top' (default), 'bottom', 'center'
+/// - `gap`: Spacing between buttons (default: null, no spacing)
+///
+/// **Container Styling:**
+/// - `containerDecoration`: BoxDecoration for button group wrapper
+/// - `containerPadding`: Padding around button group (default: EdgeInsets.symmetric(vertical: 10))
+/// - `containerMargin`: Margin for button group container
+/// - `containerAlignment`: Alignment override (default: computed from position+location)
+/// - `containerClipBehavior`: Clip behavior (default: Clip.none)
+///
+/// **Global Button Styling (applied to all buttons unless overridden per-button):**
+/// - `buttonBackgroundColors`: ControlButtonsTouchStateColors with default/active/disabled/pressed colors
+/// - `buttonColor`: Default icon color
+/// - `activeIconColor`: Icon color when button.active=true
+/// - `inactiveIconColor`: Icon color when button.active=false
+/// - `iconSize`: Icon dimensions
+/// - `textStyle`: Label text styling
+/// - `buttonPadding`/`buttonMargin`: Spacing for each button
+/// - `buttonDecoration`: BoxDecoration for button containers
+/// - `buttonBorderRadius`: Border radius for buttons
+/// - `buttonConstraints`: Size constraints for buttons
+///
+/// **Content Layout (icon+label arrangement):**
+/// - `contentPadding`: Padding within button content area
+/// - `contentMainAxisAlignment`: Alignment along button's main axis
+/// - `contentCrossAxisAlignment`: Alignment along button's cross axis
+/// - `contentGap`: Spacing between icon and label
+/// - `labelPadding`: Padding around label text
+/// - `iconPadding`: Padding around icon
+///
+/// **Icon Components:**
+/// - `iconComponent`: Custom widget replacing default inactive icon display
+/// - `alternateIconComponent`: Custom widget replacing default active icon display
+///
+/// **Builder Hooks (6):**
+/// - `containerBuilder`: Override outer Container; receives ControlButtonsTouchContainerContext + default
+/// - `buttonsBuilder`: Override Row/Column layout; receives ControlButtonsTouchButtonsContext + default
+/// - `buttonBuilder`: Override individual button wrapper; receives ControlButtonsTouchButtonContext + default
+/// - `buttonContentBuilder`: Override icon+label layout; receives ControlButtonsTouchButtonContentContext + default
+/// - `iconBuilder`: Override icon widget; receives ControlButtonsTouchButtonIconContext + default
+/// - `labelBuilder`: Override label text; receives ControlButtonsTouchButtonLabelContext + default
+///
+/// **ButtonTouch Properties (per-button customization):**
+/// Each button in `buttons` array supports:
+/// - `name`: Display label text
+/// - `icon`: Primary icon (inactive state)
+/// - `alternateIcon`: Icon shown when `active=true`
+/// - `onPress`: Callback function on tap
+/// - `color`: Base icon color (overrides global buttonColor)
+/// - `activeColor`/`inActiveColor`: Icon tint colors (override global colors)
+/// - `active`: Toggle state (affects icon and background color)
+/// - `show`: If false, hides this button
+/// - `disabled`: If true, makes button non-interactive and applies disabled color
+/// - `backgroundColor`: Map with 'default', 'pressed', 'active', 'disabled' color keys
+/// - `padding`/`margin`/`decoration`/`constraints`: Per-button layout props
+/// - `contentPadding`/`contentMainAxisAlignment`/`contentCrossAxisAlignment`/`contentGap`: Per-button content layout
+/// - `iconSize`: Per-button icon size override
+/// - `textStyle`: Per-button label styling
+/// - `labelPadding`/`iconPadding`: Per-button spacing
+/// - `iconWidget`/`alternateIconWidget`: Custom icon widgets
+/// - `customComponent`: Full button replacement widget
+/// - `contentBuilder`/`buttonBuilder`/`iconBuilder`/`labelBuilder`: Per-button builder hooks
+/// - `semanticsLabel`: Accessibility label (important for screen readers)
+///
+/// **Usage Patterns:**
+/// 1. **Basic Touch Bar:**
+///    ```dart
+///    ControlButtonsComponentTouch(
+///      options: ControlButtonsComponentTouchOptions(
+///        buttons: [
+///          ButtonTouch(
+///            name: 'Mic',
+///            icon: Icons.mic_off,
+///            alternateIcon: Icons.mic,
+///            onPress: toggleMic,
+///            active: isMicOn,
+///            semanticsLabel: 'Toggle microphone',
+///          ),
+///          ButtonTouch(
+///            name: 'Camera',
+///            icon: Icons.videocam_off,
+///            alternateIcon: Icons.videocam,
+///            onPress: toggleCamera,
+///            active: isCameraOn,
+///            semanticsLabel: 'Toggle camera',
+///          ),
+///        ],
+///        direction: 'horizontal',
+///        position: 'center',
+///        location: 'bottom',
+///        gap: 16,
+///      ),
+///    )
+///    ```
+///
+/// 2. **State Colors:**
+///    ```dart
+///    ControlButtonsComponentTouch(
+///      options: ControlButtonsComponentTouchOptions(
+///        buttons: buttons,
+///        buttonBackgroundColors: ControlButtonsTouchStateColors(
+///          defaultColor: Colors.grey[800],
+///          activeColor: Colors.green,
+///          disabledColor: Colors.grey[600],
+///          pressedColor: Colors.blue,
+///        ),
+///        activeIconColor: Colors.white,
+///        inactiveIconColor: Colors.grey[400],
+///      ),
+///    )
+///    ```
+///
+/// 3. **Per-Button Customization:**
+///    ```dart
+///    ControlButtonsComponentTouch(
+///      options: ControlButtonsComponentTouchOptions(
+///        buttons: [
+///          ButtonTouch(
+///            name: 'Record',
+///            icon: Icons.fiber_manual_record,
+///            onPress: startRecording,
+///            backgroundColor: {'default': Colors.red, 'pressed': Colors.red[700]},
+///            iconSize: 32,
+///            textStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+///          ),
+///          ButtonTouch(
+///            name: 'Stop',
+///            icon: Icons.stop,
+///            onPress: stopRecording,
+///            disabled: !isRecording,
+///          ),
+///        ],
+///      ),
+///    )
+///    ```
+///
+/// 4. **Custom Button Content:**
+///    ```dart
+///    ControlButtonsComponentTouch(
+///      options: ControlButtonsComponentTouchOptions(
+///        buttons: buttons,
+///        buttonContentBuilder: (context, defaultContent) {
+///          final button = context.button;
+///          return Column(
+///            children: [
+///              Badge(
+///                label: button.active ? Text('ON') : null,
+///                child: context.icon ?? SizedBox(),
+///              ),
+///              if (button.name != null) context.label ?? SizedBox(),
+///            ],
+///          );
+///        },
+///      ),
+///    )
+///    ```
+///
+/// 5. **Accessibility-Enhanced:**
+///    ```dart
+///    ControlButtonsComponentTouch(
+///      options: ControlButtonsComponentTouchOptions(
+///        buttons: [
+///          ButtonTouch(
+///            icon: Icons.mic_off,
+///            onPress: toggleMic,
+///            semanticsLabel: isMicOn ? 'Mute microphone' : 'Unmute microphone',
+///            active: isMicOn,
+///          ),
+///        ],
+///        buttonConstraints: BoxConstraints(minWidth: 48, minHeight: 48), // WCAG touch target
+///      ),
+///    )
+///    ```
+///
+/// **Override Integration:**
+/// Can be overridden via `MediasfuUICustomOverrides`:
 /// ```dart
-/// ControlButtonsComponentTouchOptions(
-///   buttons: [
-///     ButtonTouch(name: 'Play', icon: Icons.play_arrow, onPress: () {} ),
-///     ButtonTouch(name: 'Stop', icon: Icons.stop, onPress: () {}, disabled: true ),
-///   ],
-///   position: 'right',
-///   location: 'bottom',
-///   direction: 'horizontal',
-///   containerDecoration: BoxDecoration(
-///     color: Colors.grey,
-///     borderRadius: BorderRadius.circular(8),
+/// overrides: MediasfuUICustomOverrides(
+///   controlButtonsTouchOptions: ComponentOverride<ControlButtonsComponentTouchOptions>(
+///     builder: (existingOptions) => ControlButtonsComponentTouchOptions(
+///       buttons: existingOptions.buttons,
+///       position: 'center',
+///       location: 'bottom',
+///       gap: 20,
+///       containerDecoration: BoxDecoration(
+///         gradient: LinearGradient(colors: [Colors.black87, Colors.black54]),
+///         borderRadius: BorderRadius.circular(24),
+///       ),
+///       buttonBackgroundColors: ControlButtonsTouchStateColors(
+///         defaultColor: Colors.transparent,
+///         activeColor: Colors.blue[700],
+///         pressedColor: Colors.blue[800],
+///       ),
+///       iconSize: 28,
+///     ),
 ///   ),
-/// );
+/// ),
 /// ```
+///
+/// **Touch Optimization:**
+/// - Default button constraints ensure minimum 48x48 touch targets (WCAG 2.1 guideline)
+/// - Larger icon sizes (default 16, recommended 24-32 for touch)
+/// - Spacing via gap prop prevents accidental touches
+/// - Disabled state visually distinct (color + opacity)
+/// - Semantics labels for screen reader support
+///
+/// **Differences from Other Variants:**
+/// - **vs ControlButtonsComponent**: More extensive per-button customization, state colors, accessibility props
+/// - **vs ControlButtonsAltComponent**: Uses ButtonTouch model (richer than AltButton), 6 builder hooks vs 4, state color system
+/// - Most comprehensive: Supports per-button builders, semantics, state colors, content layout customization
 class ControlButtonsComponentTouchOptions {
   final List<ButtonTouch> buttons;
   final String position;
@@ -391,19 +596,190 @@ class ControlButtonsComponentTouchOptions {
 typedef ControlButtonsComponentTouchType = Widget Function(
     ControlButtonsComponentTouchOptions options);
 
-/// ControlButtonsComponentTouch - Renders a customizable set of control buttons.
+/// A stateless widget rendering touch-optimized control buttons with extensive customization.
 ///
-/// ### Example Usage:
-/// ```dart
-/// ControlButtonsComponentTouch(
-///   options: ControlButtonsComponentTouchOptions(
-///     buttons: [
-///       ButtonTouch(name: 'Play', icon: Icons.play_arrow, onPress: () {} ),
-///       ButtonTouch(name: 'Pause', icon: Icons.pause, onPress: () {} ),
-///     ],
-///   ),
-/// );
+/// Most comprehensive control button variant designed for mobile/tablet touch interfaces.
+/// Provides per-button styling, state color system, accessibility support, and six
+/// builder hooks for maximum flexibility.
+///
+/// **Rendering Logic:**
+/// 1. If `showAspect=false` → returns invisible Container
+/// 2. Filters buttons: only renders buttons where `show=true`
+/// 3. Builds button widgets using _buildButton (applies all styling/state logic)
+/// 4. Inserts gap widgets between buttons (if gap > 0)
+/// 5. Wraps in Row (horizontal) or Column (vertical)
+/// 6. Wraps in Container with alignment (position/location)
+/// 7. Applies builder hooks at each layer
+///
+/// **Layout Structure:**
 /// ```
+/// Visibility (showAspect)
+///   └─ Container (containerBuilder)
+///      └─ Row/Column (buttonsBuilder)
+///         ├─ [IF gap > 0] SizedBox (spacing)
+///         ├─ Semantics (buttonBuilder)
+///         │  └─ GestureDetector (onTap → button.onPress)
+///         │     └─ Container (button background, state colors)
+///         │        └─ Row/Column (buttonContentBuilder)
+///         │           ├─ [Icon] (iconBuilder)
+///         │           ├─ [IF contentGap > 0] SizedBox
+///         │           └─ [Text] (labelBuilder)
+///         ├─ [IF gap > 0] SizedBox
+///         ├─ [Next button] ...
+///         └─ ...
+/// ```
+///
+/// **Button State Logic:**
+/// For each ButtonTouch, determines background color:
+/// 1. If `disabled=true` → uses buttonBackgroundColors.disabledColor or button.backgroundColor['disabled']
+/// 2. If `active=true` → uses buttonBackgroundColors.activeColor or button.backgroundColor['active']
+/// 3. Else → uses buttonBackgroundColors.defaultColor or button.backgroundColor['default']
+/// Icon color:
+/// 1. If `active=true` → uses button.activeColor or global activeIconColor
+/// 2. Else → uses button.inActiveColor or global inactiveIconColor
+/// Icon widget:
+/// 1. If `active=true` → uses button.alternateIconWidget or alternateIconComponent or Icon(button.alternateIcon)
+/// 2. Else → uses button.iconWidget or iconComponent or Icon(button.icon)
+///
+/// **Builder Hook Priorities:**
+/// 1. Per-button builders (button.contentBuilder, button.iconBuilder, etc.) override global builders
+/// 2. Global builders (options.buttonBuilder, options.iconBuilder, etc.) applied if per-button not set
+/// 3. Builder hooks receive context objects with computed state (isActive, etc.)
+///
+/// **Touch Target Sizing:**
+/// - Default `buttonConstraints`: BoxConstraints(minWidth: 48, minHeight: 48) recommended
+/// - Meets WCAG 2.1 Level AA touch target guideline (44x44 minimum)
+/// - Icon sizes typically 24-32 for touch (vs 16-20 for mouse)
+///
+/// **Accessibility Features:**
+/// - `semanticsLabel` on each button for screen readers
+/// - Semantics widget wraps each button with label
+/// - State announced: "Button, [label], [active/inactive]"
+/// - Disabled buttons marked non-interactive
+///
+/// **Common Use Cases:**
+/// 1. **Mobile Bottom Bar:**
+///    ```dart
+///    ControlButtonsComponentTouch(
+///      options: ControlButtonsComponentTouchOptions(
+///        buttons: [
+///          ButtonTouch(name: 'Mic', icon: Icons.mic_off, alternateIcon: Icons.mic, onPress: toggleMic, active: isMicOn, semanticsLabel: 'Toggle microphone'),
+///          ButtonTouch(name: 'Video', icon: Icons.videocam_off, alternateIcon: Icons.videocam, onPress: toggleVideo, active: isVideoOn, semanticsLabel: 'Toggle camera'),
+///          ButtonTouch(name: 'Share', icon: Icons.screen_share, onPress: shareScreen, semanticsLabel: 'Share screen'),
+///          ButtonTouch(name: 'More', icon: Icons.more_horiz, onPress: openMenu, semanticsLabel: 'More options'),
+///        ],
+///        direction: 'horizontal',
+///        position: 'center',
+///        location: 'bottom',
+///        gap: 16,
+///        containerDecoration: BoxDecoration(color: Colors.black87, borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+///        buttonConstraints: BoxConstraints(minWidth: 64, minHeight: 64),
+///        iconSize: 28,
+///      ),
+///    )
+///    ```
+///
+/// 2. **Vertical Sidebar (Tablet):**
+///    ```dart
+///    ControlButtonsComponentTouch(
+///      options: ControlButtonsComponentTouchOptions(
+///        buttons: quickActions,
+///        direction: 'vertical',
+///        position: 'right',
+///        location: 'center',
+///        gap: 12,
+///        buttonBackgroundColors: ControlButtonsTouchStateColors(
+///          defaultColor: Colors.grey[800],
+///          activeColor: Colors.blue,
+///          pressedColor: Colors.blue[700],
+///        ),
+///      ),
+///    )
+///    ```
+///
+/// 3. **State-Aware Recording Button:**
+///    ```dart
+///    ControlButtonsComponentTouch(
+///      options: ControlButtonsComponentTouchOptions(
+///        buttons: [
+///          ButtonTouch(
+///            name: isRecording ? 'Stop' : 'Record',
+///            icon: isRecording ? Icons.stop : Icons.fiber_manual_record,
+///            onPress: isRecording ? stopRecording : startRecording,
+///            active: isRecording,
+///            backgroundColor: {
+///              'default': Colors.grey[800]!,
+///              'active': Colors.red,
+///              'pressed': Colors.red[700]!,
+///            },
+///            semanticsLabel: isRecording ? 'Stop recording' : 'Start recording',
+///          ),
+///        ],
+///      ),
+///    )
+///    ```
+///
+/// 4. **Custom Button with Badge:**
+///    ```dart
+///    ControlButtonsComponentTouch(
+///      options: ControlButtonsComponentTouchOptions(
+///        buttons: [
+///          ButtonTouch(
+///            name: 'Messages',
+///            icon: Icons.message,
+///            onPress: openMessages,
+///            buttonBuilder: (context, defaultButton) {
+///              return Badge(
+///                label: Text('3'),
+///                child: defaultButton,
+///              );
+///            },
+///          ),
+///        ],
+///      ),
+///    )
+///    ```
+///
+/// **Override Integration:**
+/// Integrates with `MediasfuUICustomOverrides` for global styling:
+/// ```dart
+/// overrides: MediasfuUICustomOverrides(
+///   controlButtonsTouchOptions: ComponentOverride<ControlButtonsComponentTouchOptions>(
+///     builder: (existingOptions) => ControlButtonsComponentTouchOptions(
+///       buttons: existingOptions.buttons,
+///       direction: existingOptions.direction,
+///       position: 'center',
+///       location: 'bottom',
+///       gap: 20,
+///       containerDecoration: BoxDecoration(
+///         gradient: LinearGradient(colors: [Colors.black, Colors.grey[900]!]),
+///         borderRadius: BorderRadius.circular(32),
+///         boxShadow: [BoxShadow(color: Colors.black38, blurRadius: 12)],
+///       ),
+///       buttonBackgroundColors: ControlButtonsTouchStateColors(
+///         defaultColor: Colors.grey[800],
+///         activeColor: Colors.green,
+///         disabledColor: Colors.grey[700],
+///       ),
+///       iconSize: 32,
+///       textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+///     ),
+///   ),
+/// ),
+/// ```
+///
+/// **Performance Notes:**
+/// - Filters buttons once per build (buttons.where)
+/// - Gap widgets only inserted if gap > 0 (avoids empty SizedBox)
+/// - Builder hooks called once per button per build
+/// - Semantics labels important for accessibility but don't affect render performance
+///
+/// **Implementation Details:**
+/// - Position/location props map to Alignment: ('left', 'top') → Alignment.topLeft
+/// - Direction maps to Axis: 'horizontal' → Axis.horizontal, 'vertical' → Axis.vertical
+/// - MainAxisAlignment computed from position (horizontal) or location (vertical)
+/// - Per-button props override global props (checked via ?? operator)
+/// - State color resolution: per-button.backgroundColor → global.buttonBackgroundColors → fallback colors
 class ControlButtonsComponentTouch extends StatelessWidget {
   final ControlButtonsComponentTouchOptions options;
 

@@ -1,6 +1,30 @@
 import 'package:flutter/material.dart';
 
-/// MenuItemOptions - Defines configuration options for the `MenuItemComponent`.
+/// Configuration options for the `MenuItemComponent` widget.
+///
+/// Defines the appearance and behavior of a single menu item in a list,
+/// typically used within MenuModal or custom menu implementations.
+///
+/// **Properties:**
+/// - `icon`: Optional IconData for leading icon (null = no icon displayed)
+/// - `name`: Text label for the menu item (displayed after icon)
+/// - `onPress`: Callback invoked when the menu item is tapped
+///
+/// **Common Configurations:**
+/// ```dart
+/// // 1. Menu item with icon
+/// MenuItemOptions(
+///   icon: Icons.settings,
+///   name: "Settings",
+///   onPress: () => openSettings(),
+/// )
+///
+/// // 2. Menu item without icon
+/// MenuItemOptions(
+///   name: "Help & Support",
+///   onPress: () => showHelp(),
+/// )
+/// ```
 class MenuItemOptions {
   final IconData? icon;
   final String name;
@@ -13,27 +37,92 @@ class MenuItemOptions {
   });
 }
 
-/// MenuItemComponent - A component for displaying a customizable menu item with an icon and name.
+/// A stateless widget rendering a single menu item with optional icon and text label.
 ///
-/// This component allows you to specify an icon, a label, and an action for each menu item,
-/// making it ideal for constructing flexible and reusable menu lists.
+/// Displays a tappable menu row with an optional leading icon and text label.
+/// Used as a building block for menu lists in MenuModal and custom menu implementations.
 ///
-/// ### Parameters:
-/// - `options`: An instance of `MenuItemOptions`, containing:
-///   - `icon` (optional): The icon to be displayed alongside the menu item name.
-///   - `name`: The text label for the menu item.
-///   - `onPress`: The callback function triggered when the menu item is tapped.
-///
-/// ### Example Usage:
-/// ```dart
-/// MenuItemComponent(
-///   options: MenuItemOptions(
-///     icon: Icons.coffee,
-///     name: "Coffee",
-///     onPress: () => print("Coffee selected"),
-///   ),
-/// );
+/// **Rendering Structure:**
 /// ```
+/// InkWell (onTap: onPress)
+///   └─ Container (padding: 10px vertical)
+///      └─ Row
+///         ├─ Icon (if icon != null, 20px, white)
+///         ├─ SizedBox(width: 10) (if icon != null)
+///         └─ Text (name, 16px, white)
+/// ```
+///
+/// **Common Use Cases:**
+/// 1. **Menu with Icon:**
+///    ```dart
+///    MenuItemComponent(
+///      options: MenuItemOptions(
+///        icon: Icons.settings,
+///        name: "Settings",
+///        onPress: () {
+///          Navigator.push(context, MaterialPageRoute(
+///            builder: (_) => SettingsScreen(),
+///          ));
+///        },
+///      ),
+///    )
+///    ```
+///
+/// 2. **Menu without Icon:**
+///    ```dart
+///    MenuItemComponent(
+///      options: MenuItemOptions(
+///        name: "About",
+///        onPress: () => showAboutDialog(context),
+///      ),
+///    )
+///    ```
+///
+/// 3. **Menu List:**
+///    ```dart
+///    Column(
+///      children: [
+///        MenuItemComponent(
+///          options: MenuItemOptions(
+///            icon: Icons.videocam,
+///            name: "Video Settings",
+///            onPress: () => openVideoSettings(),
+///          ),
+///        ),
+///        MenuItemComponent(
+///          options: MenuItemOptions(
+///            icon: Icons.mic,
+///            name: "Audio Settings",
+///            onPress: () => openAudioSettings(),
+///          ),
+///        ),
+///        MenuItemComponent(
+///          options: MenuItemOptions(
+///            icon: Icons.share,
+///            name: "Share Event",
+///            onPress: () => shareEvent(),
+///          ),
+///        ),
+///      ],
+///    )
+///    ```
+///
+/// **Styling:**
+/// - Icon: 20px, white color
+/// - Text: 16px, white color, regular weight
+/// - Padding: 10px vertical (symmetric)
+/// - Icon-to-text spacing: 10px (if icon present)
+///
+/// **Interaction:**
+/// - Uses InkWell for material ripple effect on tap
+/// - onPress callback invoked immediately on tap
+/// - No built-in loading state or disabled state
+///
+/// **Typical Usage Context:**
+/// - Menu items in MenuModal
+/// - Custom dropdown menus
+/// - Settings lists
+/// - Action sheets
 class MenuItemComponent extends StatelessWidget {
   final MenuItemOptions options;
 

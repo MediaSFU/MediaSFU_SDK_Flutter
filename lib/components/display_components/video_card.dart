@@ -133,53 +133,194 @@ abstract class VideoCardParameters implements AudioDecibelCheckParameters {
 
 /// Configuration options for the `VideoCard` widget.
 ///
-/// The `VideoCardOptions` class provides a comprehensive set of configuration options to customize
-/// the appearance and behavior of the `VideoCard` widget, including parameters for audio and video control,
-/// waveform animations, and display options.
+/// Provides properties to customize the video participant card display,
+/// including video stream rendering, name badge, animated waveform, video/audio controls,
+/// and mirror mode for local camera.
 ///
-/// ### Example:
+/// **Core Display Properties:**
+/// - `name`: Participant display name
+/// - `participant`: Participant model (used for mute state, audio level, permissions)
+/// - `parameters`: VideoCardParameters providing runtime state (audioDecibels, socket, etc.)
+/// - `videoStream`: MediaStream containing video track; if null, renders audio-only fallback
+/// - `remoteProducerId`: Producer ID for video stream (used for track identification)
+/// - `eventType`: Meeting type (video/broadcast/chat/conference/webinar) affecting controls visibility
+///
+/// **Video Rendering:**
+/// - `forceFullDisplay`: If true, forces video fill entire card (ignores aspect ratio)
+/// - `doMirror`: If true, applies horizontal flip (CSS scaleX(-1)) for local camera
+/// - `backgroundColor`: Fallback background color when no video (default: #2c678f blue)
+///
+/// **Audio Visualization:**
+/// - `barColor`: Waveform bar color (default: red); animated based on audio levels
+/// - Waveform displays when: video paused/off + participant unmuted + audio detected
+///
+/// **Controls/Info Overlays:**
+/// - `showControls`: If true, displays audio/video toggle buttons (default: true)
+/// - `showInfo`: If true, displays participant name badge (default: true)
+/// - `controlsPosition`: Button placement: 'topLeft', 'topRight', 'bottomLeft', 'bottomRight' (default: 'topLeft')
+/// - `infoPosition`: Name badge placement: same options (default: 'topRight')
+/// - `videoInfoComponent`: Custom widget override for info area (replaces name badge)
+/// - `videoControlsComponent`: Custom widget override for controls area (replaces buttons)
+///
+/// **Avatar/Image (for audio-only fallback):**
+/// - `imageSource`: Participant image URL for MiniCard avatar
+/// - `roundedImage`: If true, renders circular avatar (default: false)
+/// - `imageStyle`: Map styling for avatar container
+/// - `textColor`: Name badge text color (default: black)
+///
+/// **Media Control:**
+/// - `controlUserMedia`: Function handling mute/video toggle actions; default=`controlMedia`
+///   - Checks host/coHost permissions via `coHostResponsibility`
+///   - Sends socket events to control remote participants
+///   - Only host/coHost with `media` permission can control others
+///
+/// **Builder Hooks (5):**
+/// - `customBuilder`: Full widget replacement; receives VideoCardOptions
+/// - `wrapperBuilder`: Override Stack wrapper; receives stackChildren + default
+/// - `containerBuilder`: Override Container; receives child + default
+/// - `infoBuilder`: Override name badge/waveform overlay; receives nameBadge + waveform + default
+/// - `overlayBuilder`: Override waveform overlay; receives waveform + default
+/// - `waveformBuilder`: Override animated bars; receives animationControllers + default
+///
+/// **Styling Properties:**
+/// - `containerPadding`/`containerMargin`/`containerAlignment`/`containerDecoration`: Outer container layout
+/// - `overlayDecoration`: BoxDecoration for waveform overlay layer
+/// - `overlayPadding`: Padding for overlay content
+/// - `nameContainerDecoration`: BoxDecoration for name badge container
+/// - `nameContainerPadding`: Padding for name badge text
+/// - `nameTextStyle`: TextStyle override for name text
+///
+/// **Usage Patterns:**
+/// 1. **Basic Video Card:**
+///    ```dart
+///    VideoCard(
+///      options: VideoCardOptions(
+///        parameters: parameters,
+///        name: 'John Doe',
+///        remoteProducerId: 'producer-123',
+///        eventType: EventType.conference,
+///        videoStream: mediaStream,
+///        participant: participant,
+///      ),
+///    )
+///    ```
+///
+/// 2. **Local Camera (Mirrored):**
+///    ```dart
+///    VideoCard(
+///      options: VideoCardOptions(
+///        parameters: parameters,
+///        name: 'You',
+///        remoteProducerId: 'local-producer',
+///        eventType: EventType.conference,
+///        videoStream: localStream,
+///        participant: localParticipant,
+///        doMirror: true,
+///      ),
+///    )
+///    ```
+///
+/// 3. **Hide Controls (View-Only):**
+///    ```dart
+///    VideoCard(
+///      options: VideoCardOptions(
+///        parameters: parameters,
+///        name: 'John Doe',
+///        remoteProducerId: 'producer-123',
+///        eventType: EventType.broadcast,
+///        videoStream: mediaStream,
+///        participant: participant,
+///        showControls: false,
+///      ),
+///    )
+///    ```
+///
+/// 4. **Custom Controls Overlay:**
+///    ```dart
+///    VideoCard(
+///      options: VideoCardOptions(
+///        parameters: parameters,
+///        name: 'John Doe',
+///        remoteProducerId: 'producer-123',
+///        eventType: EventType.conference,
+///        videoStream: mediaStream,
+///        participant: participant,
+///        videoControlsComponent: Row(
+///          children: [
+///            IconButton(icon: Icon(Icons.mic_off), onPressed: muteAction),
+///            IconButton(icon: Icon(Icons.videocam_off), onPressed: videoOffAction),
+///            IconButton(icon: Icon(Icons.pin), onPressed: pinAction),
+///          ],
+///        ),
+///      ),
+///    )
+///    ```
+///
+/// 5. **Builder Hook Override:**
+///    ```dart
+///    VideoCard(
+///      options: VideoCardOptions(
+///        parameters: parameters,
+///        name: 'John Doe',
+///        remoteProducerId: 'producer-123',
+///        eventType: EventType.conference,
+///        videoStream: mediaStream,
+///        participant: participant,
+///        containerBuilder: (context, child, defaultContainer) {
+///          return Stack(
+///            children: [
+///              defaultContainer,
+///              Positioned(
+///                bottom: 8,
+///                right: 8,
+///                child: Icon(Icons.verified, color: Colors.blue),
+///              ),
+///            ],
+///          );
+///        },
+///      ),
+///    )
+///    ```
+///
+/// **Override Integration:**
+/// Integrates with `MediasfuUICustomOverrides` for global styling:
 /// ```dart
-/// // Using the default VideoCard
-/// VideoCard(
-///   options: VideoCardOptions(
-///     parameters: VideoCardParametersImplementation(),
-///     name: "John Doe",
-///     remoteProducerId: "12345",
-///     eventType: EventType.video,
-///     videoStream: mediaStream,
-///     participant: participant,
-///   ),
-/// );
-///
-/// // Using a custom VideoCard builder
-/// Widget myCustomVideoCard({required VideoCardOptions options}) {
-///   return Container(
-///     decoration: BoxDecoration(
-///       color: Colors.purple,
-///       borderRadius: BorderRadius.circular(20),
+/// overrides: MediasfuUICustomOverrides(
+///   videoCardOptions: ComponentOverride<VideoCardOptions>(
+///     builder: (existingOptions) => VideoCardOptions(
+///       parameters: existingOptions.parameters,
+///       name: existingOptions.name,
+///       remoteProducerId: existingOptions.remoteProducerId,
+///       eventType: existingOptions.eventType,
+///       videoStream: existingOptions.videoStream,
+///       participant: existingOptions.participant,
+///       containerDecoration: BoxDecoration(
+///         border: Border.all(color: Colors.gold, width: 2),
+///         borderRadius: BorderRadius.circular(12),
+///       ),
+///       barColor: Colors.cyan,
 ///     ),
-///     child: Column(
-///       children: [
-///         Text('Custom: ${options.name}'),
-///         // Your custom video display logic here
-///       ],
-///     ),
-///   );
-/// }
-///
-/// VideoCard(
-///   options: VideoCardOptions(
-///     parameters: VideoCardParametersImplementation(),
-///     name: "John Doe",
-///     remoteProducerId: "12345",
-///     eventType: EventType.video,
-///     videoStream: mediaStream,
-///     participant: participant,
-///     customBuilder: myCustomVideoCard, // Pass the custom builder
 ///   ),
-/// );
+/// ),
 /// ```
 ///
+/// **Waveform Display Logic:**
+/// - Waveform visible when: `!forceFullDisplay && participant.muted == false && audioDetected`
+/// - Displays 9 animated bars representing audio levels
+/// - Bar heights animate based on `audioDecibels` from `parameters.audioDecibels`
+/// - Hidden when video active or participant muted
+///
+/// **Permission-Based Controls:**
+/// - Host (islevel='2') can always control others
+/// - CoHost (islevel='1') can control if `coHostResponsibility` includes `media` permission
+/// - Participants (islevel='0') can only control themselves
+/// - Socket event `'controlMedia'` emitted when controlling remote participants
+///
+/// **Audio Decibel Integration:**
+/// - Uses `AudioDecibelCheck` component to monitor real-time audio levels
+/// - Polls `parameters.audioDecibels` list every 2 seconds
+/// - Matches by `participant.name` against `audioDecibels[i].name`
+/// - Updates waveform animation controllers based on detected level
 class VideoCardOptions {
   final VideoCardParameters parameters;
   final String name;
@@ -260,30 +401,209 @@ class VideoCardOptions {
 
 typedef VideoCardType = Widget Function({required VideoCardOptions options});
 
-/// VideoCard - A widget for displaying a video card with customizable features.
+/// A stateful widget displaying video participant card with stream rendering, controls, and waveform.
 ///
-/// The `VideoCard` widget provides an interface for rendering video streams, participant information,
-/// audio waveform animations, and control options in a structured card format. It offers options
-/// for displaying audio waveform feedback based on audio decibel levels, control buttons
-/// for managing audio and video settings, and additional participant details.
+/// Renders a participant tile showing:
+/// - Video stream via CardVideoDisplay (or MiniCard fallback if no stream)
+/// - Name badge overlay (top-right by default)
+/// - Audio/video toggle buttons (top-left by default)
+/// - Animated waveform bars (9 bars, visible when video off + audio detected)
+/// - Optional mirror mode for local camera
 ///
-/// ### Parameters:
-/// - `options` (`VideoCardOptions`): Configuration options for the video card.
+/// **Rendering Logic:**
+/// 1. If `customBuilder` provided → delegates full rendering
+/// 2. Else builds Stack with:
+///    - Background Container (containerBuilder)
+///    - Video display via CardVideoDisplay or MiniCard fallback
+///    - AudioDecibelCheck (monitors audio levels)
+///    - Waveform overlay (overlayBuilder → waveformBuilder)
+///    - Name badge (infoBuilder)
+///    - Control buttons (audio/video toggles)
 ///
-/// ### Example Usage:
-/// ```dart
-/// VideoCard(
-///   options: VideoCardOptions(
-///     parameters: VideoCardParametersImplementation(),
-///     name: "John Doe",
-///     remoteProducerId: "12345",
-///     eventType: EventType.video,
-///     videoStream: mediaStream,
-///     participant: participant,
-///   ),
-/// );
+/// **Layout Structure:**
+/// ```
+/// Stack (wrapperBuilder)
+///   ├─ Positioned.fill → Container (containerBuilder)
+///   │  └─ IF videoStream != null:
+///   │     └─ CardVideoDisplay (video stream)
+///   │     ELSE:
+///   │     └─ MiniCard (avatar fallback)
+///   ├─ AudioDecibelCheck (monitors audio, updates waveform state)
+///   ├─ IF showWaveform:
+///   │  └─ Positioned.fill → Container (overlayBuilder)
+///   │     └─ Row (waveformBuilder)
+///   │        └─ 9 × AnimatedContainer (bars)
+///   ├─ Positioned (infoPosition) → Container (infoBuilder)
+///   │  └─ Row (nameBadge + waveform indicator)
+///   └─ Positioned (controlsPosition) → Row
+///      ├─ GestureDetector (audio toggle)
+///      └─ GestureDetector (video toggle)
 /// ```
 ///
+/// **Video Stream Rendering:**
+/// - Uses `CardVideoDisplay` to render MediaStream via WebRTC RTCVideoRenderer
+/// - Applies mirror mode if `doMirror=true` (CSS scaleX(-1))
+/// - Falls back to MiniCard avatar if `videoStream` null or video track unavailable
+/// - Respects `forceFullDisplay` for aspect ratio handling
+///
+/// **Audio Level Detection:**
+/// - `AudioDecibelCheck` component polls `parameters.audioDecibels` every 2 seconds
+/// - Matches by `participant.name` against `audioDecibels[i].name`
+/// - Updates `showWaveform` state based on:
+///   - Participant unmuted (`participant.muted == false`)
+///   - Audio detected (avgAudioDecibels > threshold)
+///   - Video off or `!forceFullDisplay`
+/// - Triggers waveform animation via AnimationControllers
+///
+/// **Control Button Workflow:**
+/// 1. **Audio Toggle (Mute/Unmute):**
+///    - Taps mute icon in controls overlay
+///    - Calls `toggleAudio()` → `controlUserMedia`
+///    - Parameters: `{ participantId, participantName, type: 'audio' }`
+///    - Checks permissions (host/coHost with 'media' permission)
+///    - Emits socket event `'controlMedia'` to server
+///
+/// 2. **Video Toggle (On/Off):**
+///    - Taps video icon in controls overlay
+///    - Calls `toggleVideo()` → `controlUserMedia`
+///    - Parameters: `{ participantId, participantName, type: 'video' }`
+///    - Checks permissions (host/coHost with 'media' permission)
+///    - Emits socket event `'controlMedia'` to server
+///
+/// **Waveform Animation:**
+/// - State creates 9 AnimationControllers (1 per bar)
+/// - `animateWaveform()` starts repeat(reverse: true) animation
+/// - `resetWaveform()` stops/resets all controllers
+/// - Bar heights scale from 1px (silent) to 40px (loud)
+/// - Bars hidden if participant muted or no audio detected
+/// - Disposed on widget unmount
+///
+/// **Builder Hook Priorities:**
+/// - `customBuilder` → full widget replacement (ignores all other props)
+/// - `wrapperBuilder` → wraps Stack; receives stackChildren + default
+/// - `containerBuilder` → wraps video/avatar container; receives child + default
+/// - `infoBuilder` → wraps name badge/waveform; receives nameBadge + waveform + default
+/// - `overlayBuilder` → wraps waveform overlay; receives waveform + default
+/// - `waveformBuilder` → wraps bars; receives animationControllers + default
+///
+/// **Common Use Cases:**
+/// 1. **Grid View with Videos:**
+///    ```dart
+///    GridView.builder(
+///      itemCount: videoParticipants.length,
+///      itemBuilder: (context, index) {
+///        final participant = videoParticipants[index];
+///        return VideoCard(
+///          options: VideoCardOptions(
+///            parameters: parameters,
+///            name: participant.name,
+///            remoteProducerId: participant.videoID,
+///            eventType: EventType.conference,
+///            videoStream: participant.stream,
+///            participant: participant,
+///          ),
+///        );
+///      },
+///    )
+///    ```
+///
+/// 2. **Local Camera Preview:**
+///    ```dart
+///    VideoCard(
+///      options: VideoCardOptions(
+///        parameters: parameters,
+///        name: 'You',
+///        remoteProducerId: 'local',
+///        eventType: EventType.conference,
+///        videoStream: localStream,
+///        participant: localParticipant,
+///        doMirror: true,
+///        controlsPosition: 'bottomRight',
+///      ),
+///    )
+///    ```
+///
+/// 3. **Host-Only Controls:**
+///    ```dart
+///    VideoCard(
+///      options: VideoCardOptions(
+///        parameters: parameters,
+///        name: 'John Doe',
+///        remoteProducerId: 'producer-123',
+///        eventType: EventType.conference,
+///        videoStream: mediaStream,
+///        participant: participant,
+///        showControls: isHost,
+///        videoControlsComponent: isHost ? hostControls : null,
+///      ),
+///    )
+///    ```
+///
+/// 4. **Custom Name Badge with Status:**
+///    ```dart
+///    VideoCard(
+///      options: VideoCardOptions(
+///        parameters: parameters,
+///        name: 'John Doe',
+///        remoteProducerId: 'producer-123',
+///        eventType: EventType.conference,
+///        videoStream: mediaStream,
+///        participant: participant,
+///        infoBuilder: (context, nameBadge, waveform, defaultInfo) {
+///          return Stack(
+///            children: [
+///              defaultInfo,
+///              Positioned(
+///                bottom: 0,
+///                right: 0,
+///                child: Icon(Icons.fiber_manual_record, color: Colors.green, size: 12),
+///              ),
+///            ],
+///          );
+///        },
+///      ),
+///    )
+///    ```
+///
+/// **Override Integration:**
+/// Integrates with `MediasfuUICustomOverrides` for global styling:
+/// ```dart
+/// overrides: MediasfuUICustomOverrides(
+///   videoCardOptions: ComponentOverride<VideoCardOptions>(
+///     builder: (existingOptions) => VideoCardOptions(
+///       parameters: existingOptions.parameters,
+///       name: existingOptions.name,
+///       remoteProducerId: existingOptions.remoteProducerId,
+///       eventType: existingOptions.eventType,
+///       videoStream: existingOptions.videoStream,
+///       participant: existingOptions.participant,
+///       containerDecoration: BoxDecoration(
+///         gradient: LinearGradient(colors: [Colors.blue, Colors.purple]),
+///         borderRadius: BorderRadius.circular(16),
+///       ),
+///       barColor: Colors.yellow,
+///       nameTextStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+///     ),
+///   ),
+/// ),
+/// ```
+///
+/// **Performance Notes:**
+/// - Animation controllers created once in initState (9 controllers)
+/// - Audio level polling every 2 seconds (not every frame)
+/// - Waveform hidden when video active (skips rendering 9 bars)
+/// - Video rendering delegated to CardVideoDisplay (uses RTCVideoRenderer)
+/// - Disposed controllers + video renderer cleaned up in dispose()
+///
+/// **Permission Requirements:**
+/// - Controlling others requires host or coHost with 'media' permission
+/// - Self-control always allowed
+/// - Socket connection required for remote control actions
+///
+/// **Mirror Mode:**
+/// - Applied via CSS transform: scaleX(-1) on video element
+/// - Typically used for local camera to match user expectation
+/// - Does not affect stream data, only display
 class VideoCard extends StatefulWidget {
   final VideoCardOptions options;
 

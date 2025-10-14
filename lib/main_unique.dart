@@ -16,8 +16,7 @@ import 'components/display_components/video_card.dart'
     show VideoCard, VideoCardOptions;
 import 'components/display_components/main_container_component.dart'
     show MainContainerComponentOptions;
-import 'components/display_components/pagination.dart'
-    show PaginationOptions;
+import 'components/display_components/pagination.dart' show PaginationOptions;
 import 'components/display_components/alert_component.dart'
     show AlertComponentOptions;
 import 'components/menu_components/menu_modal.dart' show MenuModalOptions;
@@ -33,15 +32,18 @@ import 'methods/utils/join_room_on_media_sfu.dart'
 import 'types/custom_builders.dart'
     show AudioCardType, CustomComponentType, MiniCardType, VideoCardType;
 import 'types/types.dart'
-  show
-    EventType,
-    MediasfuParameters,
-    Participant,
-    Stream,
-    CreateMediaSFURoomOptions,
-    JoinMediaSFURoomOptions;
+    show
+        EventType,
+        MediasfuParameters,
+        Participant,
+        Stream,
+        CreateMediaSFURoomOptions,
+        JoinMediaSFURoomOptions;
 import 'types/ui_overrides.dart'
-    show ComponentOverride, ContainerStyleOptions, FunctionOverride,
+    show
+        ComponentOverride,
+        ContainerStyleOptions,
+        FunctionOverride,
         MediasfuUICustomOverrides;
 
 /// Toggle the scenarios and UI strategies below to explore MediaSFU's
@@ -330,8 +332,7 @@ class _MainUniqueAppState extends State<MainUniqueApp> {
               eventType: params.eventType,
               videoStream: stream.stream,
               participant: participant,
-              backgroundColor:
-                  backgroundColor ?? const Color(0xFF0f172a),
+              backgroundColor: backgroundColor ?? const Color(0xFF0f172a),
               showControls: showControls ?? true,
               showInfo: showInfo ?? true,
               forceFullDisplay: false,
@@ -474,7 +475,9 @@ class _MainUniqueAppState extends State<MainUniqueApp> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
-                  initials.isEmpty ? name.characters.take(2).join().toUpperCase() : initials,
+                  initials.isEmpty
+                      ? name.characters.take(2).join().toUpperCase()
+                      : initials,
                   style: TextStyle(
                     color: const Color(0xFFB45309),
                     fontWeight: FontWeight.w700,
@@ -498,11 +501,13 @@ class _MainUniqueAppState extends State<MainUniqueApp> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         if (showVideoIcon)
-                          const Icon(Icons.videocam, size: 14, color: Color(0xFFFB923C)),
+                          const Icon(Icons.videocam,
+                              size: 14, color: Color(0xFFFB923C)),
                         if (showVideoIcon && showAudioIcon)
                           const SizedBox(width: 6),
                         if (showAudioIcon)
-                          const Icon(Icons.mic, size: 14, color: Color(0xFFF97316)),
+                          const Icon(Icons.mic,
+                              size: 14, color: Color(0xFFF97316)),
                       ],
                     ),
                   ),
@@ -520,8 +525,8 @@ class _MainUniqueAppState extends State<MainUniqueApp> {
               child: Container(
                 constraints: const BoxConstraints(maxWidth: 420),
                 padding: const EdgeInsets.all(28),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.08),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: Colors.white24),
                 ),
@@ -812,10 +817,13 @@ class _MainUniqueAppState extends State<MainUniqueApp> {
                   }
 
                   final rows = <Widget>[
-                    _debugLine('Room', params.roomName.isEmpty ? 'pending' : params.roomName),
-                    _debugLine('Member', params.member.isEmpty ? '—' : params.member),
+                    _debugLine('Room',
+                        params.roomName.isEmpty ? 'pending' : params.roomName),
+                    _debugLine(
+                        'Member', params.member.isEmpty ? '—' : params.member),
                     _debugLine('Event type', params.eventType.name),
-                    _debugLine('Participants', params.participants.length.toString()),
+                    _debugLine(
+                        'Participants', params.participants.length.toString()),
                   ];
 
                   if (params.participants.isNotEmpty) {
@@ -967,8 +975,8 @@ class _MainUniqueAppState extends State<MainUniqueApp> {
                             OutlinedButton.icon(
                               onPressed: () =>
                                   parameters.updateIsMenuModalVisible(true),
-                              icon:
-                                  const Icon(Icons.dashboard_customize_outlined),
+                              icon: const Icon(
+                                  Icons.dashboard_customize_outlined),
                               label: const Text('Open menu modal'),
                             ),
                           ],

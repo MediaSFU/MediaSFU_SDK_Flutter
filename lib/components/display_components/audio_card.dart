@@ -8,6 +8,145 @@ import '../../consumers/control_media.dart'
 import '../../types/types.dart'
     show Participant, ShowAlert, EventType, CoHostResponsibility, AudioDecibels;
 
+/// A stateful widget displaying audio-only participant card with animated waveform and controls.
+///
+/// Renders a participant tile showing:
+/// - MiniCard avatar (image or initials)
+/// - Animated waveform bars (9 bars, height based on audio levels)
+/// - Name badge overlay (top-right by default)
+/// - Mute toggle button (top-left by default)
+///
+/// **Rendering Logic:**
+/// 1. If `customBuilder` provided → delegates full rendering
+/// 2. Else builds Stack with:
+///    - Background Container (containerBuilder)
+///    - Waveform overlay (overlayBuilder → waveformBuilder)
+///    - Name badge (infoBuilder)
+///    - Mute button (if showControls=true)
+///
+/// **Layout Structure:**
+/// ```
+/// Stack (wrapperBuilder)
+///   ├─ Positioned.fill → Container (containerBuilder)
+///   │  └─ MiniCard (avatar)
+///   ├─ Positioned.fill → Container (overlayBuilder)
+///   │  └─ Row (waveformBuilder)
+///   │     └─ 9 × AnimatedContainer (bars)
+///   ├─ Positioned (infoPosition) → Container (infoBuilder)
+///   │  └─ Text (name badge)
+///   └─ Positioned (controlsPosition) → GestureDetector
+///      └─ Icon (mute button)
+/// ```
+///
+/// **Audio Level Detection:**
+/// - Reads `parameters.audioDecibels` list to find participant's audio level
+/// - Matches by `participant.name` against `audioDecibels[i].name`
+/// - Hides waveform if participant muted (`participant.muted == true`)
+/// - Animates bar heights based on detected audio level (0-127 range)
+///
+/// **Mute Control Workflow:**
+/// 1. User taps mute button (visible if `showControls=true`)
+/// 2. Calls `controlUserMedia` function with:
+///    - `participantId`: participant.id (socket ID)
+///    - `participantName`: participant.name
+///    - `type`: 'audio' (media type)
+/// 3. `controlMedia` checks permissions:
+///    - Host (islevel='2') → always allowed
+///    - CoHost with 'media' permission → allowed
+///    - Self-mute → always allowed
+/// 4. Emits socket event `'controlMedia'` to server:
+///    ```json
+///    {
+///      "participantId": "abc123",
+///      "participantName": "John Doe",
+///      "type": "audio"
+///    }
+///    ```
+/// 5. Server broadcasts mute action to all clients
+///
+/// **Waveform Animation:**
+/// - State creates 9 AnimationControllers (1 per bar)
+/// - Effect hook polls `parameters.audioDecibels` every 2 seconds
+/// - Updates bar heights via `setState` → triggers animations
+/// - Bars scale from 1px (silent) to 40px (loud)
+/// - Disposed on widget unmount
+///
+/// **Builder Hook Priorities:**
+/// - `customBuilder` → full widget replacement (ignores all other props)
+/// - `wrapperBuilder` → wraps Stack; receives stackChildren + default
+/// - `containerBuilder` → wraps MiniCard container; receives child + default
+/// - `infoBuilder` → wraps name badge; receives overlay + default
+/// - `overlayBuilder` → wraps waveform; receives waveform + default
+/// - `waveformBuilder` → wraps bars; receives animationControllers + default
+///
+/// **Common Use Cases:**
+/// 1. **Basic Grid Display:**
+///    ```dart
+///    GridView.builder(
+///      itemCount: audioParticipants.length,
+///      itemBuilder: (context, index) {
+///        final participant = audioParticipants[index];
+///        return AudioCard(
+///          options: AudioCardOptions(
+///            name: participant.name,
+///            participant: participant,
+///            parameters: parameters,
+///            customStyle: BoxDecoration(color: Colors.grey[800]),
+///          ),
+///        );
+///      },
+///    )
+///    ```
+///
+/// 2. **Custom Controls Overlay:**
+///    ```dart
+///    AudioCard(
+///      options: AudioCardOptions(
+///        name: 'John Doe',
+///        participant: participant,
+///        parameters: parameters,
+///        videoControlsComponent: Row(
+///          children: [
+///            IconButton(icon: Icon(Icons.mic_off), onPressed: muteAction),
+///            IconButton(icon: Icon(Icons.more_vert), onPressed: showMenu),
+///          ],
+///        ),
+///      ),
+///    )
+///    ```
+///
+/// 3. **Silent Display (No Controls):**
+///    ```dart
+///    AudioCard(
+///      options: AudioCardOptions(
+///        name: 'John Doe',
+///        participant: participant,
+///        parameters: parameters,
+///        showControls: false,
+///        showInfo: false,
+///      ),
+///    )
+///    ```
+///
+/// **Override Integration:**
+/// Integrates with `MediasfuUICustomOverrides` for global styling:
+/// ```dart
+/// overrides: MediasfuUICustomOverrides(
+///   audioCardOptions: ComponentOverride<AudioCardOptions>(
+///     builder: (existingOptions) => AudioCardOptions(
+///       name: existingOptions.name,
+///       participant: existingOptions.participant,
+///       parameters: existingOptions.parameters,
+///       customStyle: BoxDecoration(
+///         gradient: LinearGradient(colors: [Colors.deepPurple, Colors.purple]),
+///         borderRadius: BorderRadius.circular(12),
+///       ),
+///       barColor: Colors.pink,
+///     ),
+///   ),
+/// ),
+/// ```
+///
 class AudioCardWrapperContext {
   final BuildContext buildContext;
   final AudioCardOptions options;
@@ -122,50 +261,138 @@ abstract class AudioCardParameters {
   // dynamic operator [](String key);
 }
 
-/// AudioCardOptions - Configuration options for the `AudioCard` widget.
+/// Configuration options for the `AudioCard` widget.
 ///
-/// Example:
+/// Provides properties to customize the audio-only participant card display,
+/// including mini-card avatar, animated waveform bars, mute controls, and overlay styling.
+///
+/// **Core Display Properties:**
+/// - `name`: Participant display name
+/// - `participant`: Participant model (used for mute state, audio level, permissions)
+/// - `parameters`: AudioCardParameters providing runtime state (audioDecibels, socket, etc.)
+/// - `customStyle`: BoxDecoration for outer container (background, border, etc.)
+/// - `backgroundColor`: Fallback background color (default: Colors.white)
+///
+/// **Audio Visualization:**
+/// - `barColor`: Waveform bar color (default: red); animated based on audio levels
+/// - `showInfo`: If true, displays participant name badge (default: true)
+/// - `showControls`: If true, shows mute toggle button (default: true)
+///
+/// **Avatar/Image Props:**
+/// - `imageSource`: Optional participant image URL for MiniCard avatar
+/// - `roundedImage`: If true, renders circular avatar (default: false)
+/// - `imageStyle`: BoxDecoration for avatar container
+/// - `textColor`: Name badge text color (default: white)
+///
+/// **Controls/Info Positioning:**
+/// - `controlsPosition`: Mute button placement: 'topLeft', 'topRight', 'bottomLeft', 'bottomRight' (default: 'topLeft')
+/// - `infoPosition`: Name badge placement: same options (default: 'topRight')
+/// - `videoInfoComponent`: Custom widget override for info area (replaces name badge)
+/// - `videoControlsComponent`: Custom widget override for controls area (replaces mute button)
+///
+/// **Mute Control:**
+/// - `controlUserMedia`: Function handling mute/unmute actions; default=`controlMedia`
+///   - Checks host/coHost permissions via `coHostResponsibility`
+///   - Sends socket events to mute remote participants
+///   - Only host/coHost with `media` permission can mute others
+///
+/// **Builder Hooks (5):**
+/// - `customBuilder`: Full widget replacement; receives AudioCardOptions
+/// - `wrapperBuilder`: Override Stack wrapper; receives stackChildren + default
+/// - `containerBuilder`: Override Container; receives child + default
+/// - `infoBuilder`: Override name badge overlay; receives overlay + default
+/// - `overlayBuilder`: Override waveform overlay; receives waveform + default
+/// - `waveformBuilder`: Override animated bars; receives animationControllers + default
+///
+/// **Styling Properties:**
+/// - `containerPadding`/`containerMargin`/`containerAlignment`: Outer container layout
+/// - `overlayDecoration`: BoxDecoration for waveform overlay layer
+/// - `overlayPadding`: Padding for overlay content
+///
+/// **Usage Patterns:**
+/// 1. **Basic Audio Card:**
+///    ```dart
+///    AudioCard(
+///      options: AudioCardOptions(
+///        name: 'John Doe',
+///        participant: participant,
+///        parameters: parameters,
+///        customStyle: BoxDecoration(color: Colors.grey[800], borderRadius: BorderRadius.circular(8)),
+///      ),
+///    )
+///    ```
+///
+/// 2. **Custom Waveform Colors:**
+///    ```dart
+///    AudioCard(
+///      options: AudioCardOptions(
+///        name: 'John Doe',
+///        participant: participant,
+///        parameters: parameters,
+///        barColor: Colors.green,
+///        customStyle: BoxDecoration(color: Colors.black),
+///      ),
+///    )
+///    ```
+///
+/// 3. **Hide Controls (View-Only):**
+///    ```dart
+///    AudioCard(
+///      options: AudioCardOptions(
+///        name: 'John Doe',
+///        participant: participant,
+///        parameters: parameters,
+///        showControls: false,
+///      ),
+///    )
+///    ```
+///
+/// 4. **Builder Hook Override:**
+///    ```dart
+///    AudioCard(
+///      options: AudioCardOptions(
+///        name: 'John Doe',
+///        participant: participant,
+///        parameters: parameters,
+///        infoBuilder: (context, overlay, defaultInfo) {
+///          return Column(
+///            children: [
+///              Text('Custom Header'),
+///              defaultInfo,
+///            ],
+///          );
+///        },
+///      ),
+///    )
+///    ```
+///
+/// **Override Integration:**
+/// Integrates with `MediasfuUICustomOverrides` for global styling:
 /// ```dart
-/// // Using the default AudioCard
-/// AudioCard(
-///   options: AudioCardOptions(
-///     name: "Participant Name",
-///     customStyle: BoxDecoration(color: Colors.grey),
-///     participant: participantData,
-///     barColor: Colors.red,
-///     parameters: parameters,
-///   ),
-/// );
-///
-/// // Using a custom AudioCard builder
-/// Widget myCustomAudioCard({required AudioCardOptions options}) {
-///   return Container(
-///     decoration: BoxDecoration(
-///       color: Colors.orange,
-///       borderRadius: BorderRadius.circular(15),
+/// overrides: MediasfuUICustomOverrides(
+///   audioCardOptions: ComponentOverride<AudioCardOptions>(
+///     builder: (existingOptions) => AudioCardOptions(
+///       name: existingOptions.name,
+///       participant: existingOptions.participant,
+///       parameters: existingOptions.parameters,
+///       customStyle: BoxDecoration(border: Border.all(color: Colors.blue, width: 2)),
+///       barColor: Colors.cyan,
 ///     ),
-///     child: Row(
-///       children: [
-///         Icon(Icons.person),
-///         Text('Custom: ${options.name}'),
-///         // Your custom audio controls here
-///       ],
-///     ),
-///   );
-/// }
-///
-/// AudioCard(
-///   options: AudioCardOptions(
-///     name: "Participant Name",
-///     customStyle: BoxDecoration(color: Colors.grey),
-///     participant: participantData,
-///     barColor: Colors.red,
-///     parameters: parameters,
-///     customBuilder: myCustomAudioCard, // Pass the custom builder
 ///   ),
-/// );
-/// );
+/// ),
 /// ```
+///
+/// **Waveform Animation:**
+/// - Displays 9 animated bars representing audio levels
+/// - Bar heights animate based on `audioDecibels` from `parameters.audioDecibels`
+/// - Animation controllers created in State (1 per bar)
+/// - Bars hidden if participant muted or no audio detected
+///
+/// **Permission-Based Mute:**
+/// - Host (islevel='2') can always mute others
+/// - CoHost (islevel='1') can mute if `coHostResponsibility` includes `media` permission
+/// - Participants (islevel='0') can only mute themselves
+/// - Socket event `'controlMedia'` emitted when muting remote participants
 class AudioCardOptions {
   final ControlMediaType controlUserMedia;
   final BoxDecoration customStyle;
@@ -232,20 +459,155 @@ class AudioCardOptions {
 
 typedef AudioCardType = Widget Function({required AudioCardOptions options});
 
-/// AudioCard - A card widget for displaying audio-related information and controls for a participant.
+/// A stateful widget displaying audio-only participant card with animated waveform and controls.
 ///
-/// Example:
-/// ```dart
-/// AudioCard(
-///   options: AudioCardOptions(
-///     name: "Participant Name",
-///     customStyle: BoxDecoration(color: Colors.grey),
-///     participant: participantData,
-///     barColor: Colors.red,
-///     parameters: parameters,
-///   ),
-/// );
+/// Renders a participant tile showing:
+/// - MiniCard avatar (image or initials)
+/// - Animated waveform bars (9 bars, height based on audio levels)
+/// - Name badge overlay (top-right by default)
+/// - Mute toggle button (top-left by default)
+///
+/// **Rendering Logic:**
+/// 1. If `customBuilder` provided → delegates full rendering
+/// 2. Else builds Stack with:
+///    - Background Container (containerBuilder)
+///    - Waveform overlay (overlayBuilder → waveformBuilder)
+///    - Name badge (infoBuilder)
+///    - Mute button (if showControls=true)
+///
+/// **Layout Structure:**
 /// ```
+/// Stack (wrapperBuilder)
+///   ├─ Positioned.fill → Container (containerBuilder)
+///   │  └─ MiniCard (avatar)
+///   ├─ Positioned.fill → Container (overlayBuilder)
+///   │  └─ Row (waveformBuilder)
+///   │     └─ 9 × AnimatedContainer (bars)
+///   ├─ Positioned (infoPosition) → Container (infoBuilder)
+///   │  └─ Text (name badge)
+///   └─ Positioned (controlsPosition) → GestureDetector
+///      └─ Icon (mute button)
+/// ```
+///
+/// **Audio Level Detection:**
+/// - Reads `parameters.audioDecibels` list to find participant's audio level
+/// - Matches by `participant.name` against `audioDecibels[i].name`
+/// - Hides waveform if participant muted (`participant.muted == true`)
+/// - Animates bar heights based on detected audio level (0-127 range)
+///
+/// **Mute Control Workflow:**
+/// 1. User taps mute button (visible if `showControls=true`)
+/// 2. Calls `controlUserMedia` function with:
+///    - `participantId`: participant.id (socket ID)
+///    - `participantName`: participant.name
+///    - `type`: 'audio' (media type)
+/// 3. `controlMedia` checks permissions:
+///    - Host (islevel='2') → always allowed
+///    - CoHost with 'media' permission → allowed
+///    - Self-mute → always allowed
+/// 4. Emits socket event `'controlMedia'` to server:
+///    ```json
+///    {
+///      "participantId": "abc123",
+///      "participantName": "John Doe",
+///      "type": "audio"
+///    }
+///    ```
+/// 5. Server broadcasts mute action to all clients
+///
+/// **Waveform Animation:**
+/// - State creates 9 AnimationControllers (1 per bar)
+/// - Effect hook polls `parameters.audioDecibels` every 2 seconds
+/// - Updates bar heights via `setState` → triggers animations
+/// - Bars scale from 1px (silent) to 40px (loud)
+/// - Disposed on widget unmount
+///
+/// **Builder Hook Priorities:**
+/// - `customBuilder` → full widget replacement (ignores all other props)
+/// - `wrapperBuilder` → wraps Stack; receives stackChildren + default
+/// - `containerBuilder` → wraps MiniCard container; receives child + default
+/// - `infoBuilder` → wraps name badge; receives overlay + default
+/// - `overlayBuilder` → wraps waveform; receives waveform + default
+/// - `waveformBuilder` → wraps bars; receives animationControllers + default
+///
+/// **Common Use Cases:**
+/// 1. **Basic Grid Display:**
+///    ```dart
+///    GridView.builder(
+///      itemCount: audioParticipants.length,
+///      itemBuilder: (context, index) {
+///        final participant = audioParticipants[index];
+///        return AudioCard(
+///          options: AudioCardOptions(
+///            name: participant.name,
+///            participant: participant,
+///            parameters: parameters,
+///            customStyle: BoxDecoration(color: Colors.grey[800]),
+///          ),
+///        );
+///      },
+///    )
+///    ```
+///
+/// 2. **Custom Controls Overlay:**
+///    ```dart
+///    AudioCard(
+///      options: AudioCardOptions(
+///        name: 'John Doe',
+///        participant: participant,
+///        parameters: parameters,
+///        videoControlsComponent: Row(
+///          children: [
+///            IconButton(icon: Icon(Icons.mic_off), onPressed: muteAction),
+///            IconButton(icon: Icon(Icons.more_vert), onPressed: showMenu),
+///          ],
+///        ),
+///      ),
+///    )
+///    ```
+///
+/// 3. **Silent Display (No Controls):**
+///    ```dart
+///    AudioCard(
+///      options: AudioCardOptions(
+///        name: 'John Doe',
+///        participant: participant,
+///        parameters: parameters,
+///        showControls: false,
+///        showInfo: false,
+///      ),
+///    )
+///    ```
+///
+/// **Override Integration:**
+/// Integrates with `MediasfuUICustomOverrides` for global styling:
+/// ```dart
+/// overrides: MediasfuUICustomOverrides(
+///   audioCardOptions: ComponentOverride<AudioCardOptions>(
+///     builder: (existingOptions) => AudioCardOptions(
+///       name: existingOptions.name,
+///       participant: existingOptions.participant,
+///       parameters: existingOptions.parameters,
+///       customStyle: BoxDecoration(
+///         gradient: LinearGradient(colors: [Colors.deepPurple, Colors.purple]),
+///         borderRadius: BorderRadius.circular(12),
+///       ),
+///       barColor: Colors.pink,
+///     ),
+///   ),
+/// ),
+/// ```
+///
+/// **Performance Notes:**
+/// - Animation controllers created once in initState
+/// - Audio level polling every 2 seconds (not every frame)
+/// - Waveform hidden if participant muted (skips rendering 9 bars)
+/// - Disposed controllers cleaned up in dispose()
+///
+/// **Permission Requirements:**
+/// - Muting others requires host or coHost with 'media' permission
+/// - Self-mute always allowed
+/// - Socket connection required for remote mute actions
 class AudioCard extends StatefulWidget {
   final AudioCardOptions options;
 

@@ -5,7 +5,22 @@ import '../../methods/exit_methods/confirm_exit.dart'
 import '../../methods/utils/get_modal_position.dart'
     show getModalPosition, GetModalPositionOptions;
 
-/// ConfirmExitModalOptions - Defines configuration options for the `ConfirmExitModal`.
+/// Configuration for the exit-confirmation modal enabling session termination or participant departure.
+///
+/// * **exitEventOnConfirm** - Override for `confirmExit`; receives {socket, member, ban, roomName}. Emits `disconnectUser` socket event (participant) or `endMeeting` (host).
+/// * **member** - Current user's name; sent in socket event.
+/// * **ban** - Boolean flag; if `true`, socket event includes `ban: true` to prevent rejoin.
+/// * **roomName** - Session identifier for socket event.
+/// * **socket** - Socket.IO client for emitting exit command.
+/// * **islevel** - Privilege level; `'2'` = host (ending event for all), others = leaving session only.
+/// * **position** - Modal placement via `getModalPosition` (e.g., 'topRight').
+/// * **backgroundColor** - Background color for modal container.
+///
+/// ### Usage
+/// 1. Modal displays warning text based on `islevel`: "Are you sure you want to exit the event?" (participant) or "Are you sure you want to end this event? (This will end it for all participants)" (host, `islevel == '2'`).
+/// 2. "Confirm" button calls `exitEventOnConfirm`, which emits `disconnectUser` (participant) or `endMeeting` (host) socket event with `{member, ban, roomName}`.
+/// 3. "Cancel" button closes modal via `onClose`.
+/// 4. Override via `MediasfuUICustomOverrides.confirmExitModal` to inject custom exit workflows, analytics tracking, or feedback prompts.
 class ConfirmExitModalOptions {
   final bool isVisible;
   final VoidCallback onClose;
@@ -65,35 +80,19 @@ typedef ConfirmExitModalType = ConfirmExitModal Function({
 /// );
 /// ```
 
-/// `ConfirmExitModal` - A modal widget that displays an exit confirmation dialog.
+/// Exit-confirmation modal prompting user to leave session or end event (host-only).
 ///
-/// This widget is useful for confirming an exit action, such as ending an event
-/// or allowing a user to leave. For users with an admin role (indicated by `islevel` '2'),
-/// a warning appears, noting that the action will end the event for all participants.
+/// * Displays warning text based on `islevel`: "Are you sure you want to exit the
+///   event?" (participant) or "Are you sure you want to end this event? (This will
+///   end it for all participants)" (host, `islevel == '2'`).
+/// * "Confirm" button invokes `exitEventOnConfirm` (defaults to `confirmExit`),
+///   which emits `disconnectUser` socket event (participant) or `endMeeting` event
+///   (host); event payload includes `{member, ban, roomName}`.
+/// * "Cancel" button closes modal via `onClose`.
+/// * Positions via `getModalPosition` using `options.position`.
 ///
-/// ### Parameters:
-/// - `options` (`ConfirmExitModalOptions`): Configuration options for the modal.
-///
-/// ### Structure:
-/// - Header with title ("Confirm Exit") and close icon.
-/// - Message indicating the impact of the exit, based on user level (`islevel`).
-/// - Buttons for "Cancel" and "Confirm":
-///   - The "Confirm" button ends the event if `islevel` is '2' or allows the user to exit otherwise.
-///
-/// ### Example Usage:
-/// ```dart
-/// ConfirmExitModal(
-///   options: ConfirmExitModalOptions(
-///     isVisible: true,
-///     onClose: () => print("Modal closed"),
-///     member: 'user123',
-///     roomName: 'eventRoom',
-///     socket: socket,
-///     islevel: '2',
-///   ),
-/// );
-/// ```
-
+/// Override via `MediasfuUICustomOverrides.confirmExitModal` to inject custom exit
+/// workflows, analytics tracking, or feedback prompts before departure.
 class ConfirmExitModal extends StatelessWidget {
   final ConfirmExitModalOptions options;
 

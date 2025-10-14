@@ -201,7 +201,31 @@ abstract class MediaSettingsModalParameters
   // dynamic operator [](String key);
 }
 
-/// MediaSettingsModalOptions - Defines configuration options for the `MediaSettingsModal`.
+/// Configuration for the media-device picker modal enabling camera/mic selection.
+///
+/// * **switchCameraOnPress** - Override for `switchVideoAlt`; receives {videoPreference, parameters}. Called when user taps "Switch Camera" (mobile).
+/// * **switchVideoOnPress** - Override for `switchVideo`; receives {videoPreference, checkoff, parameters}. Called when dropdown selection changes for video device.
+/// * **switchAudioOnPress** - Override for `switchAudio`; receives {audioPreference, parameters}. Called when dropdown selection changes for audio device.
+/// * **parameters** - Must expose `userDefaultVideoInputDevice`, `userDefaultAudioInputDevice`, `videoInputs`, `audioInputs`, `isMediaSettingsModalVisible`, `updateIsMediaSettingsModalVisible`, and `getUpdatedAllParams`.
+/// * **position** - Modal placement via `getModalPosition` (e.g., 'topRight').
+/// * **backgroundColor** - Background color for modal container.
+/// * **customBuilder** - Replace entire modal widget tree; receives `MediaSettingsModalOptions`.
+/// * **wrapperBuilder** - Override top-level Stack; receives {stackChildren, defaultWrapper}.
+/// * **containerBuilder** - Override modal container (positioned box); receives {child, defaultContainer}.
+/// * **headerBuilder** - Override header bar; receives {title, closeButton, defaultHeader}.
+/// * **sectionBuilder** - Override each device-picker section; receives {label, type, dropdown, defaultSection}.
+/// * **dropdownBuilder** - Override DropdownButton widget; receives {type, selectedValue, items, onChanged, defaultDropdown}.
+/// * **buttonBuilder** - Override "Switch Camera" button; receives {onPressed, child, defaultButton}.
+/// * **containerPadding** / **containerMargin** / **containerAlignment** / **containerDecoration** - Fine-tune modal container styling.
+/// * **titleTextStyle** / **labelTextStyle** - Typography overrides for title and section labels.
+/// * **switchButtonStyle** / **switchButtonChild** - Customize "Switch Camera" button appearance.
+///
+/// ### Usage
+/// 1. Modal populates dropdowns from `parameters.videoInputs` and `parameters.audioInputs` (list of `MediaDeviceInfo`).
+/// 2. Current selection defaults to `userDefaultVideoInputDevice` and `userDefaultAudioInputDevice`.
+/// 3. Changing dropdown invokes `switchVideoOnPress` or `switchAudioOnPress`, which update state and switch tracks.
+/// 4. "Switch Camera" button (mobile-only) cycles through front/back cameras via `switchCameraOnPress`.
+/// 5. Override via `MediasfuUICustomOverrides.mediaSettingsModal` to inject permission checks, device aliases, or preview surfaces.
 class MediaSettingsModalOptions {
   final bool isVisible;
   final VoidCallback onClose;
@@ -280,33 +304,24 @@ typedef MediaSettingsModalType = MediaSettingsModal Function({
 /// );
 /// ```
 
-/// `MediaSettingsModal` - A modal widget to configure media settings.
+/// Device-picker modal for camera/mic selection and mobile camera flipping.
 ///
-/// This widget provides dropdowns to select video and audio devices, and a button to switch the camera.
+/// * Builds dropdowns from `parameters.videoInputs` and `parameters.audioInputs`
+///   (list of `MediaDeviceInfo` from `flutter_webrtc`).
+/// * Current selection defaults to `userDefaultVideoInputDevice` and
+///   `userDefaultAudioInputDevice`.
+/// * Dropdown changes invoke `switchVideoOnPress` or `switchAudioOnPress`, which
+///   call `switchVideo`/`switchAudio` to update tracks, then persist new deviceId
+///   to `userDefaultVideoInputDevice`/`userDefaultAudioInputDevice`.
+/// * "Switch Camera" button (mobile-only) calls `switchCameraOnPress` (defaults to
+///   `switchVideoAlt`), toggling front/back cameras.
+/// * Positions via `getModalPosition` using `options.position`.
+/// * Offers seven builder hooks (`wrapperBuilder`, `containerBuilder`, `headerBuilder`,
+///   `sectionBuilder`, `dropdownBuilder`, `buttonBuilder`) plus `customBuilder` for
+///   full replacement, enabling custom device previews, permission prompts, or QR-based device linking.
 ///
-/// ### Parameters:
-/// - `options` (MediaSettingsModalOptions): Configuration options for the modal.
-///
-/// ### Widget Structure:
-/// - Header with a title and close icon.
-/// - Dropdowns for selecting camera and microphone devices.
-/// - Button to switch the camera.
-///
-/// ### Customization:
-/// - Use the `MediaSettingsModalOptions` to control appearance and behavior.
-/// - Options include custom background color, modal position, and device selection handlers.
-///
-/// ### Example Usage:
-/// ```dart
-/// MediaSettingsModal(
-///   options: MediaSettingsModalOptions(
-///     isVisible: true,
-///     onClose: () => print("Modal closed"),
-///     parameters: CustomMediaSettingsModalParameters(),
-///   ),
-/// );
-/// ```
-///
+/// Override via `MediasfuUICustomOverrides.mediaSettingsModal` to inject live
+/// preview tiles, device aliases, or permission checks.
 class MediaSettingsModal extends StatelessWidget {
   final MediaSettingsModalOptions options;
 

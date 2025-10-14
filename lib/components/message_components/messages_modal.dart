@@ -9,6 +9,29 @@ import '../../methods/message_methods/send_message.dart'
 import '../../types/types.dart'
     show CoHostResponsibility, EventType, Message, Participant, ShowAlert;
 
+/// Configuration for the messages modal enabling direct-message and group-chat workflows.
+///
+/// * **onMessagesClose** - Callback when user closes the chat interface.
+/// * **onSendMessagePress** - Override for `sendMessage`; receives {message, sender, receivers, group, socket, islevel}. Return `true` if send succeeded.
+/// * **messages** - Full list of `Message` objects; modal filters by `group`, `sender`, `receivers` based on `eventType` and selected tab.
+/// * **position** - Modal placement via `getModalPosition` (e.g., 'topRight').
+/// * **backgroundColor** / **activeTabBackgroundColor** - Theming for modal body and active tab indicator.
+/// * **eventType** - Determines tab visibility: `EventType.conference`/`EventType.webinar` show both direct/group tabs; `EventType.chat`/`EventType.broadcast` show group-only.
+/// * **member** / **islevel** - Current user's name and privilege level (`'2'` = host, `'1'` = moderator, `'0'` = participant).
+/// * **coHostResponsibility** - List of `CoHostResponsibility` objects; if `name == 'chat'` and `value == true`, co-host can see all messages.
+/// * **coHost** - Co-host username; if `member == coHost`, grant elevated permissions.
+/// * **startDirectMessage** / **directMessageDetails** - When initiating a DM from ParticipantsModal, set `startDirectMessage = true` and populate `directMessageDetails` with target `Participant`.
+/// * **updateStartDirectMessage** / **updateDirectMessageDetails** - Callbacks to reset DM state after modal opens.
+/// * **roomName** - Session identifier for outbound messages.
+/// * **socket** - Socket.IO client for real-time `sendMessage` emissions.
+/// * **chatSetting** - Permission string: `'disallow'` blocks sends; `'allow'` permits all; role-based checks apply otherwise.
+/// * **showAlert** - Optional `ShowAlert` callback for validation/error messages.
+///
+/// ### Usage
+/// 1. `_populateMessages` splits `messages` into `directMessages` and `groupMessages` based on sender/receiver logic and `eventType`.
+/// 2. Tab selection switches between these lists, with direct-message tab hidden for `EventType.chat`/`broadcast`.
+/// 3. `MessagePanel` renders the active list with reply/input affordances.
+/// 4. Override this modal via `MediasfuUICustomOverrides.messagesModal` to inject custom filtering, message encryption, or alternative send logic.
 class MessagesModalOptions {
   final bool isMessagesModalVisible;
   final VoidCallback onMessagesClose;
@@ -59,64 +82,23 @@ typedef MessagesModalType = MessagesModal Function({
   required MessagesModalOptions options,
 });
 
-/// `MessagesModal` displays a modal interface for managing direct and group messages within an event.
-/// It provides separate tabs for viewing and sending direct or group messages, configurable based on the event type.
+/// Tabbed chat interface distinguishing direct messages from group broadcast.
 ///
-/// ### Parameters:
-/// - `MessagesModalOptions` `options`: Configuration for the modal, including:
-///   - `isMessagesModalVisible`: Whether the modal is visible.
-///   - `onMessagesClose`: Callback to close the modal.
-///   - `onSendMessagePress`: Function to handle sending a message.
-///   - `messages`: List of `Message` objects to display.
-///   - `position`: Modal position on the screen (e.g., `'topRight'`).
-///   - `backgroundColor`: Modal background color.
-///   - `activeTabBackgroundColor`: Background color for the active tab.
-///   - `eventType`, `member`, `islevel`: Event and user role information for filtering messages.
-///   - `coHost`, `coHostResponsibility`: Co-host settings and responsibilities.
-///   - `directMessageDetails`: Participant details for direct messages.
-///   - `updateStartDirectMessage` and `updateDirectMessageDetails`: Functions to manage direct messaging state.
-///   - `socket`: Socket instance for real-time updates.
-///   - `showAlert`: Optional callback for displaying alerts.
+/// * Splits `messages` into `directMessages` (sender/receiver match current user)
+///   and `groupMessages` (group == true) via `_populateMessages`.
+/// * Shows two tabs (Direct / Group) for `EventType.conference`/`EventType.webinar`;
+///   shows group-only for `EventType.chat`/`EventType.broadcast`.
+/// * Auto-selects Direct tab when `startDirectMessage` is true and `directMessageDetails`
+///   is populated (DM initiated from ParticipantsModal).
+/// * `_handleSendButton` validates message length, constructs `receivers` array for
+///   direct mode (or `group: true` for group mode), invokes `onSendMessagePress`,
+///   then emits to socket if send succeeds.
+/// * Permission-checks `chatSetting`: blocks send if `'disallow'`; ignores send for
+///   participants when setting is role-restricted.
+/// * Positions via `getModalPosition` using `options.position`.
 ///
-/// ### Key Functions:
-/// - `_populateMessages`: Populates lists for `directMessages` and `groupMessages` based on event type, user roles, and responsibilities.
-/// - `_buildTabContent`: Displays content in the active tab, showing either direct or group messages depending on the selected tab.
-/// - `_handleSendButton`: Validates and sends messages, clearing the input and updating the reply state as needed.
-///
-/// ### Example Usage:
-/// ```dart
-/// MessagesModal(
-///   options: MessagesModalOptions(
-///     isMessagesModalVisible: true,
-///     onMessagesClose: () => print("Modal closed"),
-///     messages: messageList,
-///     eventType: EventType.chat,
-///     member: 'user123',
-///     islevel: '1',
-///     coHostResponsibility: [CoHostResponsibility(name: 'chat', value: true)],
-///     coHost: 'host123',
-///     startDirectMessage: false,
-///     directMessageDetails: null,
-///     updateStartDirectMessage: (value) => print("Direct message started: $value"),
-///     updateDirectMessageDetails: (participant) => print("Direct message to: ${participant?.name}"),
-///     roomName: 'MainRoom',
-///     socket: socketInstance,
-///     chatSetting: 'enabled',
-///     showAlert: (options) => print("Alert: ${options.message}"),
-///   ),
-/// );
-/// ```
-///
-/// ### Modal Content:
-/// - **Header with Tabs**: Contains tabs for switching between direct and group messaging, shown only in webinar or conference mode.
-/// - **Tab Content**: Displays a list of messages and input field, with different messages shown based on active tab.
-///
-/// ### Dependencies:
-/// - `socket_io_client` for real-time message handling.
-/// - `MessagePanel` component to display and manage messages within each tab.
-///
-/// This modal is particularly useful in events or group settings, where real-time messaging and role-based message visibility are important.
-
+/// Override via `MediasfuUICustomOverrides.messagesModal` to inject end-to-end
+/// encryption wrappers, message moderation hooks, or custom tab layouts.
 class MessagesModal extends StatefulWidget {
   final MessagesModalOptions options;
 

@@ -22,18 +22,26 @@ typedef ConfirmHereModalContentBuilder = Widget Function(
 typedef ConfirmHereModalOverlayBuilder = Widget Function(
   ConfirmHereModalOverlayContext context);
 
-/// `ConfirmHereModalOptions` defines the configuration for `ConfirmHereModal`,
-/// including visibility, callbacks, countdown, and socket settings.
+/// Configuration for the presence-confirmation modal with countdown timer and dismissal logic.
 ///
-/// - `isConfirmHereModalVisible`: Controls visibility.
-/// - `onConfirmHereClose`: Callback to handle closing.
-/// - `backgroundColor`: Modal background color.
-/// - `countdownDuration`: Duration for countdown in seconds.
-/// - `socket`: WebSocket connection.
-/// - `localSocket`: Local WebSocket connection.
-/// - `roomName`: Room name for session.
-/// - `member`: Member ID for user.
-
+/// * **countdownDuration** - Duration in seconds before auto-dismiss (default: 120s).
+/// * **socket** - Socket.IO client for emitting `updateConsumingDomains` event (server-side presence tracking).
+/// * **localSocket** - Local socket for emitting `updateConsumingDomains` event (local presence tracking).
+/// * **roomName** - Session identifier for socket events.
+/// * **member** - Current user's name; sent in socket event.
+/// * **backgroundColor** - Background color for modal container.
+/// * **displayColor** - Text color for message and countdown.
+/// * **position** - Modal placement via `getModalPosition` (e.g., 'center').
+/// * **styles** - Optional `ConfirmHereModalStyleOptions` for advanced theming.
+/// * **heading** / **description** / **loader** / **countdownLabel** / **confirmButton** - Custom widgets for sections.
+/// * **loaderBuilder** / **messageBuilder** / **countdownBuilder** / **buttonBuilder** / **bodyBuilder** / **contentBuilder** / **overlayBuilder** - Builder hooks for granular customization.
+///
+/// ### Usage
+/// 1. Modal displays "Confirm you are still active" message with countdown timer.
+/// 2. Countdown starts at `countdownDuration` seconds, decrements every second.
+/// 3. "Confirm" button emits `updateConsumingDomains` socket event with `{roomName, member, alt: true}`, then closes modal.
+/// 4. If countdown reaches 0, modal auto-dismisses via `onConfirmHereClose`.
+/// 5. Override via `MediasfuUICustomOverrides.confirmHereModal` to inject custom inactivity logic, biometric checks, or analytics tracking.
 class ConfirmHereModalOptions {
   final bool isConfirmHereModalVisible;
   final VoidCallback onConfirmHereClose;
@@ -89,22 +97,22 @@ class ConfirmHereModalOptions {
 typedef ConfirmHereModalType = Widget Function(
     {required ConfirmHereModalOptions options});
 
-/// `ConfirmHereModal` prompts the user to confirm presence with a countdown timer and action button.
+/// Presence-confirmation modal with countdown timer, auto-dismiss, and manual confirm button.
 ///
-/// Example Usage:
-/// ```dart
-/// ConfirmHereModal(
-///   options: ConfirmHereModalOptions(
-///     isConfirmHereModalVisible: true,
-///     onConfirmHereClose: () => print("Modal closed"),
-///     socket: io.Socket(),
-///     localSocket: io.Socket(),
-///     roomName: "room1",
-///     member: "user1",
-///   ),
-/// );
-/// ```
-
+/// * Displays "Confirm you are still active" message with countdown timer starting
+///   at `countdownDuration` seconds (default: 120s).
+/// * Timer decrements every second; if reaches 0, modal auto-dismisses via
+///   `onConfirmHereClose`.
+/// * "Confirm" button emits `updateConsumingDomains` socket event with
+///   `{roomName, member, alt: true}`, then closes modal via `onConfirmHereClose`.
+/// * Socket events sent to both `socket` and `localSocket` (if provided).
+/// * Positions via `getModalPosition` using `options.position` (default: 'center').
+/// * Offers seven builder hooks (`loaderBuilder`, `messageBuilder`, `countdownBuilder`,
+///   `buttonBuilder`, `bodyBuilder`, `contentBuilder`, `overlayBuilder`) for granular
+///   customization.
+///
+/// Override via `MediasfuUICustomOverrides.confirmHereModal` to inject custom
+/// inactivity logic, biometric checks, or analytics tracking.
 class ConfirmHereModal extends StatefulWidget {
   final ConfirmHereModalOptions options;
 

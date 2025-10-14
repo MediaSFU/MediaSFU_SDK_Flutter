@@ -17,6 +17,31 @@ import '../../types/types.dart'
         HandleVotePollOptions;
 import '../../types/modal_style_options.dart' show PollModalStyleOptions;
 
+/// Configuration for the polling modal enabling real-time poll creation, voting, and results display.
+///
+/// * **member** - Current user's name; used to check existing votes (prevent double-voting).
+/// * **islevel** - Privilege level (`'2'` = host, `'1'` = moderator, `'0'` = participant); host/moderator can create/end polls and view previous results.
+/// * **polls** - Array of completed `Poll` objects; only visible to host/moderator in "Previous Polls" tab.
+/// * **poll** - Active `Poll` object; displayed in "Current Poll" tab. `null` if no active poll.
+/// * **handleCreatePoll** - Override for `handleCreatePoll`; receives {poll, parameters}. Creates new poll, emits `createPoll` socket event.
+/// * **handleEndPoll** - Override for `handleEndPoll`; receives {pollId, parameters}. Ends active poll, emits `endPoll` socket event.
+/// * **handleVotePoll** - Override for `handleVotePoll`; receives {pollId, optionIndex, parameters}. Casts vote, emits `votePoll` socket event.
+/// * **updateIsPollModalVisible** - Callback to toggle modal visibility.
+/// * **socket** - Socket.IO client for emitting poll actions.
+/// * **roomName** - Session identifier for socket events.
+/// * **showAlert** - Optional `ShowAlert` callback for validation messages.
+/// * **position** - Modal placement via `getModalPosition` (e.g., 'topRight').
+/// * **backgroundColor** - Background color for modal container.
+/// * **styles** - Optional `PollModalStyleOptions` for advanced theming.
+/// * **previousPollsHeader** / **createPollHeader** / **currentPollHeader** / **emptyPreviousPollsPlaceholder** / **emptyCurrentPollPlaceholder** - Custom widgets for section headers and empty states.
+///
+/// ### Usage
+/// 1. Modal displays three tabs (host/moderator): "Previous Polls", "New Poll", "Current Poll".
+/// 2. Participants see "Current Poll" tab only.
+/// 3. "New Poll" tab: dropdown for poll type (True/False, Yes/No, Custom), question input, custom options (for Custom type).
+/// 4. "Current Poll" tab: displays question, options with vote counts/percentages; radio buttons for voting (disabled if already voted); "End Poll" button (host/moderator only).
+/// 5. "Previous Polls" tab: scrollable list of completed polls with results (host/moderator only).
+/// 6. Override via `MediasfuUICustomOverrides.pollModal` to inject analytics tracking, poll templates, or advanced voting types (ranked-choice, approval voting).
 class PollModalOptions {
   final bool isPollModalVisible;
   final VoidCallback onClose;
@@ -68,55 +93,26 @@ class PollModalOptions {
 
 typedef PollModalType = PollModal Function({required PollModalOptions options});
 
-/// `PollModal` is a modal widget that provides an interface for creating, viewing, and managing polls
-/// in a real-time environment with socket-based communication.
+/// Real-time polling interface enabling poll creation, voting, results, and history (role-based).
 ///
-/// This widget allows users to:
-/// - View previous polls and their results (for authorized users only).
-/// - Create a new poll with various types (e.g., True/False, Yes/No, or Custom).
-/// - View and participate in the currently active poll by casting votes.
-/// - End the current poll if the user has the appropriate permissions.
+/// * Displays three tabs for host/moderator (`islevel == '2'` or `'1'`): "Previous
+///   Polls" (completed polls with results), "New Poll" (creation form), "Current Poll"
+///   (active poll with voting UI).
+/// * Participants (`islevel == '0'`) see "Current Poll" tab only.
+/// * "New Poll" tab: dropdown for poll type (True/False, Yes/No, Custom), question
+///   input, custom options input (for Custom type); "Launch Poll" button calls
+///   `handleCreatePoll`, which validates input, constructs `Poll` object, and emits
+///   `createPoll` socket event.
+/// * "Current Poll" tab: displays `poll.question`, `poll.options` with vote counts
+///   and percentages (calculated from `poll.votes`); radio buttons for voting
+///   (disabled if `member` already in `poll.voters`); "Submit Vote" calls
+///   `handleVotePoll`, emitting `votePoll` socket event; "End Poll" button
+///   (host/moderator only) calls `handleEndPoll`, emitting `endPoll` event.
+/// * "Previous Polls" tab: scrollable list of completed `polls` with results.
+/// * Positions via `getModalPosition` using `options.position`.
 ///
-/// ### Parameters:
-/// - [PollModalOptions] (`options`): Configuration options for the modal, including:
-///   - `isPollModalVisible`: Whether the modal is visible.
-///   - `onClose`: Callback when the modal is closed.
-///   - `position`: Position of the modal on the screen (e.g., 'topRight').
-///   - `backgroundColor`: Background color of the modal.
-///   - `member`: Member identifier for tracking user interactions.
-///   - `islevel`: Authorization level for access control.
-///   - `polls`: List of available polls for viewing past results.
-///   - `poll`: The currently active poll.
-///   - `socket`: Socket instance for real-time communication.
-///   - `roomName`: Name of the room associated with the polls.
-///   - `showAlert`: Function to show alerts, if any.
-///   - `updateIsPollModalVisible`: Callback to update the visibility of the poll modal.
-///   - `handleCreatePoll`: Function to handle poll creation.
-///   - `handleEndPoll`: Function to handle ending a poll.
-///   - `handleVotePoll`: Function to handle voting on a poll.
-///
-/// ### Example Usage:
-/// ```dart
-/// PollModal(
-///   options: PollModalOptions(
-///     isPollModalVisible: true,
-///     onClose: () => print("Modal closed"),
-///     position: 'topRight',
-///     member: 'user123',
-///     islevel: '2',
-///     polls: [
-///       Poll(id: '1', question: 'Example Question?', options: ['Yes', 'No'], votes: [5, 3], status: 'active', voters: {} )
-///     ],
-///     poll: Poll(id: '2', question: 'Current Active Poll?', options: ['Option 1', 'Option 2'], votes: [0, 0], status: 'active', voters: {}),
-///     socket: io.Socket(),
-///     roomName: 'room_1',
-///     updateIsPollModalVisible: (visible) => print("Poll modal visibility: $visible"),
-///     handleCreatePoll: (options) => print("Poll created: ${options.poll}"),
-///     handleEndPoll: (options) => print("Poll ended: ${options.pollId}"),
-///     handleVotePoll: (options) => print("Vote cast on poll: ${options.pollId}"),
-///   ),
-/// );
-/// ```
+/// Override via `MediasfuUICustomOverrides.pollModal` to inject analytics tracking,
+/// poll templates, or advanced voting types (ranked-choice, approval voting).
 ///
 /// This example initializes the `PollModal` with mock data and handlers, enabling the user to view and interact with polls in the UI.
 

@@ -28,7 +28,58 @@ abstract class AdvancedPanelComponentParameters {
   void Function(String) get updateRecordingCustomTextColor;
 }
 
-// Options class to contain AdvancedPanelComponentParameters
+/// Configuration options for [AdvancedPanelComponent].
+///
+/// Encapsulates advanced recording configuration parameters and update callbacks for:
+/// - **Video layout:** Full display (no background), full video, or all participants
+/// - **Display filtering:** Video only, video (optimized), media, or all participants
+/// - **Visual customization:** Background color, name tags color, custom text overlay
+/// - **Orientation:** Landscape or portrait video orientation
+/// - **Text overlay:** Custom text with position and color configuration
+///
+/// **Properties:**
+/// - `parameters` ([AdvancedPanelComponentParameters]): Advanced recording configuration interface
+///
+/// **Key Callbacks (via parameters):**
+/// - `updateRecordingVideoType(String)`: Updates "fullDisplay", "bestDisplay", or "all"
+/// - `updateRecordingDisplayType(String)`: Updates "video", "videoOpt", "media", or "all"
+/// - `updateRecordingBackgroundColor(String)`: Updates hex color (e.g., "#000000")
+/// - `updateRecordingNameTagsColor(String)`: Updates name tag hex color
+/// - `updateRecordingOrientationVideo(String)`: Updates "landscape" or "portrait"
+/// - `updateRecordingNameTags(bool)`: Toggles participant name overlays
+/// - `updateRecordingAddText(bool)`: Toggles custom text overlay
+/// - `updateRecordingCustomText(String)`: Updates custom text (max 40 alphanumeric chars)
+/// - `updateRecordingCustomTextPosition(String)`: Updates "top", "middle", or "bottom"
+/// - `updateRecordingCustomTextColor(String)`: Updates custom text hex color
+///
+/// **Example:**
+/// ```dart
+/// AdvancedPanelComponentOptions(
+///   parameters: RecordingParameters(
+///     recordingVideoType: "bestDisplay",
+///     recordingDisplayType: "videoOpt",
+///     recordingBackgroundColor: "#1a1a1a",
+///     recordingNameTagsColor: "#ffffff",
+///     recordingOrientationVideo: "landscape",
+///     recordingNameTags: true,
+///     recordingAddText: true,
+///     recordingCustomText: "Company Webinar 2024",
+///     recordingCustomTextPosition: "bottom",
+///     recordingCustomTextColor: "#00ff00",
+///     eventType: EventType.webinar,
+///     updateRecordingVideoType: (type) => setState(() => _videoType = type),
+///     updateRecordingDisplayType: (type) => setState(() => _displayType = type),
+///     updateRecordingBackgroundColor: (color) => setState(() => _bgColor = color),
+///     updateRecordingNameTagsColor: (color) => setState(() => _nameColor = color),
+///     updateRecordingOrientationVideo: (orientation) => setState(() => _orientation = orientation),
+///     updateRecordingNameTags: (enable) => setState(() => _showNames = enable),
+///     updateRecordingAddText: (enable) => setState(() => _showText = enable),
+///     updateRecordingCustomText: (text) => setState(() => _customText = text),
+///     updateRecordingCustomTextPosition: (pos) => setState(() => _textPos = pos),
+///     updateRecordingCustomTextColor: (color) => setState(() => _textColor = color),
+///   ),
+/// )
+/// ```
 class AdvancedPanelComponentOptions {
   final AdvancedPanelComponentParameters parameters;
 
@@ -38,34 +89,214 @@ class AdvancedPanelComponentOptions {
 typedef AdvancedPanelType = Widget Function(
     {required AdvancedPanelComponentOptions options});
 
-/// `AdvancedPanelComponent` displays an advanced configuration panel for recording options.
+/// A stateful widget rendering an advanced recording configuration panel.
 ///
-/// ### Parameters:
-/// - [options] (`AdvancedPanelComponentOptions`): Contains configuration parameters:
-///   - `recordingVideoType` (String): Type of video recording (e.g., "fullDisplay").
-///   - `recordingDisplayType` (String): Display type for recording.
-///   - `recordingBackgroundColor` (String): Background color for the recording.
-///   - `recordingNameTagsColor` (String): Color for name tags.
-///   - `recordingOrientationVideo` (String): Video orientation.
-///   - `recordingNameTags` (bool): Enable name tags.
-///   - `recordingAddText` (bool): Add custom text.
-///   - `recordingCustomText` (String): Custom text for recording.
-///   - `recordingCustomTextPosition` (String): Position of custom text.
-///   - `recordingCustomTextColor` (String): Custom text color.
+/// Displays 6-10 configuration fields for fine-tuning recording visual appearance,
+/// layout composition, and text overlays. Provides color pickers, text input validation,
+/// and conditional field visibility based on user selections.
 ///
-/// ### Example:
-/// ```dart
-/// AdvancedPanelComponent(
-///   options: AdvancedPanelComponentOptions(
-///     parameters: MyAdvancedPanelComponentParameters(
-///       recordingVideoType: "fullDisplay",
-///       recordingDisplayType: "video",
-///       recordingBackgroundColor: "#000000",
-///       // other parameters...
-///     ),
-///   ),
-/// );
+/// **Form Fields:**
+/// 1. **Video Type (always visible):**
+///    - "Full Display (no background)" (value: "fullDisplay") - Tight crop with no empty space
+///    - "Full Video" (value: "bestDisplay") - Optimized full-frame video
+///    - "All" (value: "all") - All participants in grid
+///
+/// 2. **Display Type (hidden for EventType.broadcast):**
+///    - "Only Video Participants" (value: "video") - Participants with video enabled
+///    - "Only Video Participants (optimized)" (value: "videoOpt") - Optimized video-only layout
+///    - "Participants with media" (value: "media") - Participants with video or screenshare
+///    - "All Participants" (value: "all") - Everyone including audio-only
+///
+/// 3. **Background Color (always visible):**
+///    - Color picker button showing current hex color
+///    - Opens ColorPicker dialog from flutter_colorpicker package
+///
+/// 4. **Add Text (always visible):**
+///    - "True" (value: "true") - Enable custom text overlay
+///    - "False" (value: "false") - Disable text overlay
+///
+/// 5. **Custom Text (visible if recordingAddText == true):**
+///    - TextFormField with alphanumeric validation (max 40 chars)
+///    - RegExp: `^[a-zA-Z0-9\s]{1,40}$`
+///    - Invalid input reverts to previous value
+///
+/// 6. **Custom Text Position (visible if recordingAddText == true):**
+///    - "Top" (value: "top") - Text at top of frame
+///    - "Middle" (value: "middle") - Centered text
+///    - "Bottom" (value: "bottom") - Text at bottom
+///
+/// 7. **Custom Text Color (visible if recordingAddText == true):**
+///    - Color picker for text overlay color
+///
+/// 8. **Add Name Tags (always visible):**
+///    - "True" (value: "true") - Show participant names on videos
+///    - "False" (value: "false") - Hide name overlays
+///
+/// 9. **Name Tags Color (visible if recordingNameTags == true):**
+///    - Color picker for name tag background/text color
+///
+/// 10. **Orientation Video (always visible):**
+///     - "Landscape" (value: "landscape") - 16:9 widescreen
+///     - "Portrait" (value: "portrait") - 9:16 vertical
+///
+/// **Rendering Structure:**
 /// ```
+/// Column (crossAxisAlignment: start)
+///   ├─ buildPicker (Video Type)
+///   ├─ SizedBox (15px)
+///   ├─ [if eventType != broadcast] buildPicker (Display Type)
+///   ├─ SizedBox (15px)
+///   ├─ buildColorPicker (Background Color)
+///   ├─ SizedBox (15px)
+///   ├─ buildPicker (Add Text: true/false)
+///   ├─ SizedBox (15px)
+///   ├─ [if recordingAddText]
+///   │  ├─ buildCustomText() (TextFormField)
+///   │  ├─ buildPicker (Custom Text Position)
+///   │  ├─ buildColorPicker (Custom Text Color)
+///   │  └─ SizedBox (15px)
+///   ├─ buildPicker (Add Name Tags: true/false)
+///   ├─ [if recordingNameTags]
+///   │  ├─ buildColorPicker (Name Tags Color)
+///   │  └─ SizedBox (15px)
+///   └─ buildPicker (Orientation Video)
+/// ```
+///
+/// **State Management:**
+/// - `parsedColors`: `Map<String, Color>` storing parsed hex colors for pickers
+/// - `customTextController`: TextEditingController for custom text input
+/// - `showBackgroundColorModal`: bool for background color picker visibility
+/// - `showCustomTextColorModal`: bool for text color picker visibility
+/// - `showNameTagsColorModal`: bool for name tags color picker visibility
+/// - `selectedColorType`: String tracking which color picker is active
+/// - `recordingText`: String mirroring `recordingAddText` for conditional rendering
+///
+/// **Common Use Cases:**
+/// 1. **Professional Webinar Recording:**
+///    ```dart
+///    AdvancedPanelComponent(
+///      options: AdvancedPanelComponentOptions(
+///        parameters: RecordingParams(
+///          recordingVideoType: "bestDisplay",
+///          recordingDisplayType: "video",
+///          recordingBackgroundColor: "#1a1a1a",
+///          recordingNameTagsColor: "#ffffff",
+///          recordingOrientationVideo: "landscape",
+///          recordingNameTags: true,
+///          recordingAddText: true,
+///          recordingCustomText: "Q4 Sales Review",
+///          recordingCustomTextPosition: "bottom",
+///          recordingCustomTextColor: "#00bfff",
+///          eventType: EventType.webinar,
+///          updateRecordingVideoType: (type) => _updateState(type),
+///          updateRecordingDisplayType: (type) => _updateState(type),
+///          updateRecordingBackgroundColor: (color) => _updateState(color),
+///          updateRecordingNameTagsColor: (color) => _updateState(color),
+///          updateRecordingOrientationVideo: (orientation) => _updateState(orientation),
+///          updateRecordingNameTags: (enable) => _updateState(enable),
+///          updateRecordingAddText: (enable) => _updateState(enable),
+///          updateRecordingCustomText: (text) => _updateState(text),
+///          updateRecordingCustomTextPosition: (pos) => _updateState(pos),
+///          updateRecordingCustomTextColor: (color) => _updateState(color),
+///        ),
+///      ),
+///    )
+///    // Result: Landscape recording with blue "Q4 Sales Review" at bottom, white name tags
+///    ```
+///
+/// 2. **Portrait Social Media Recording:**
+///    ```dart
+///    AdvancedPanelComponent(
+///      options: AdvancedPanelComponentOptions(
+///        parameters: RecordingParams(
+///          recordingVideoType: "fullDisplay",
+///          recordingDisplayType: "videoOpt",
+///          recordingBackgroundColor: "#000000",
+///          recordingNameTagsColor: "#ff6b6b",
+///          recordingOrientationVideo: "portrait",
+///          recordingNameTags: true,
+///          recordingAddText: true,
+///          recordingCustomText: "@YourBrand",
+///          recordingCustomTextPosition: "top",
+///          recordingCustomTextColor: "#ffffff",
+///          eventType: EventType.conference,
+///          updateRecordingVideoType: updateVidType,
+///          updateRecordingDisplayType: updateDispType,
+///          updateRecordingBackgroundColor: updateBgColor,
+///          updateRecordingNameTagsColor: updateNameColor,
+///          updateRecordingOrientationVideo: updateOrientation,
+///          updateRecordingNameTags: updateNameTags,
+///          updateRecordingAddText: updateAddText,
+///          updateRecordingCustomText: updateCustomText,
+///          updateRecordingCustomTextPosition: updateTextPos,
+///          updateRecordingCustomTextColor: updateTextColor,
+///        ),
+///      ),
+///    )
+///    // Result: 9:16 portrait with "@YourBrand" at top, coral name tags, black background
+///    ```
+///
+/// 3. **Minimal Recording (No Overlays):**
+///    ```dart
+///    AdvancedPanelComponent(
+///      options: AdvancedPanelComponentOptions(
+///        parameters: RecordingParams(
+///          recordingVideoType: "bestDisplay",
+///          recordingDisplayType: "video",
+///          recordingBackgroundColor: "#ffffff",
+///          recordingNameTagsColor: "#000000",
+///          recordingOrientationVideo: "landscape",
+///          recordingNameTags: false, // no names
+///          recordingAddText: false, // no text
+///          recordingCustomText: "",
+///          recordingCustomTextPosition: "bottom",
+///          recordingCustomTextColor: "#000000",
+///          eventType: EventType.conference,
+///          updateRecordingVideoType: (type) => updateSettings(type),
+///          updateRecordingDisplayType: (type) => updateSettings(type),
+///          updateRecordingBackgroundColor: (color) => updateSettings(color),
+///          updateRecordingNameTagsColor: (color) => updateSettings(color),
+///          updateRecordingOrientationVideo: (orientation) => updateSettings(orientation),
+///          updateRecordingNameTags: (enable) => updateSettings(enable),
+///          updateRecordingAddText: (enable) => updateSettings(enable),
+///          updateRecordingCustomText: (text) => updateSettings(text),
+///          updateRecordingCustomTextPosition: (pos) => updateSettings(pos),
+///          updateRecordingCustomTextColor: (color) => updateSettings(color),
+///        ),
+///      ),
+///    )
+///    // Result: Clean landscape recording with white background, no overlays
+///    ```
+///
+/// **Color Picker Implementation:**
+/// - Uses flutter_colorpicker package (ColorPicker widget)
+/// - Opens AlertDialog with color picker on button tap
+/// - Persists color selection via update callback
+/// - Parses hex strings to Color objects using `_parseColor()`
+/// - Updates `parsedColors` map for reactive UI
+///
+/// **Text Input Validation:**
+/// - `validateTextInput()`: RegExp `^[a-zA-Z0-9\s]{1,40}$`
+/// - Allows: letters, numbers, spaces
+/// - Max length: 40 characters
+/// - Invalid input: reverts to previous value (no update)
+/// - Prevents special characters, emojis, or overflow
+///
+/// **EventType Filtering:**
+/// - `EventType.broadcast`: Hides "Display Type" (broadcaster controls all sources)
+/// - `EventType.conference/webinar/chat`: Shows all fields
+///
+/// **Update Callbacks:**
+/// - Invoked immediately when user changes dropdown/color/text
+/// - Should update parent state (typically MediasfuParameters)
+/// - Changes not persisted until "Confirm" button clicked in RecordingModal
+/// - Color callbacks receive hex strings (e.g., "#1a2b3c")
+///
+/// **Typical Usage Context:**
+/// - RecordingModal "Advanced" tab
+/// - Power user recording customization
+/// - Brand-consistent recording styling
+/// - Custom overlay text for branding/disclaimers
 class AdvancedPanelComponent extends StatefulWidget {
   final AdvancedPanelComponentOptions options;
 

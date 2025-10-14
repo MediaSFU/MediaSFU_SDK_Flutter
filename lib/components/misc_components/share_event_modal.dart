@@ -27,18 +27,27 @@ typedef ShareEventModalContentBuilder = Widget Function(
 typedef ShareEventModalContainerBuilder = Widget Function(
   ShareEventModalContainerContext context);
 
-/// Configuration object for [ShareEventModal].
+/// Configuration for the share-event modal displaying meeting ID, passcode (admin-only), and social sharing.
 ///
-/// Common properties include:
-/// - `isShareEventModalVisible`: Controls modal visibility.
-/// - `onShareEventClose`: Callback invoked when the modal is dismissed.
-/// - `roomName` / `adminPasscode`: Meeting metadata displayed within the body.
-/// - `shareButtons`: Toggles rendering of the share buttons section.
-/// - `position`: Controls placement via [getModalPosition].
-/// - `styles`: Optional [ShareEventModalStyleOptions] for fine-grained styling.
-/// - Builder callbacks (`headerBuilder`, `bodyBuilder`, etc.) allow replacing
-///   individual sections or wrapping the entire surface with custom widgets.
-
+/// * **roomName** - Meeting ID displayed via `MeetingIdComponent` (shareable string for joining).
+/// * **adminPasscode** - Meeting passcode displayed via `MeetingPasscodeComponent`; only shown when `islevel == '2'`.
+/// * **shareButtons** - Toggles `ShareButtonsComponent` (social share icons).
+/// * **islevel** - Privilege level; `'2'` = host (passcode visible), others see passcode as hidden.
+/// * **eventType** - `EventType` enum; passed to `ShareButtonsComponent` for context-aware share text.
+/// * **localLink** - Optional custom URL for sharing (defaults to room link).
+/// * **position** - Modal placement via `getModalPosition` (e.g., 'topRight').
+/// * **backgroundColor** - Background color for modal container.
+/// * **styles** - Optional `ShareEventModalStyleOptions` for advanced theming (width, height, borders, spacing).
+/// * **title** / **passcodeSection** / **meetingIdSection** / **shareButtonsSection** - Custom widget replacements for sections.
+/// * **headerBuilder** / **passcodeBuilder** / **meetingIdBuilder** / **shareButtonsBuilder** / **bodyBuilder** / **contentBuilder** / **containerBuilder** - Builder hooks for granular customization; each receives context object with `default*` widget and metadata.
+///
+/// ### Usage
+/// 1. Modal displays three sections: `MeetingPasscodeComponent` (admin-only), `MeetingIdComponent` (always), `ShareButtonsComponent` (if `shareButtons == true`).
+/// 2. `MeetingIdComponent` shows `roomName` with copy-to-clipboard button.
+/// 3. `MeetingPasscodeComponent` shows `adminPasscode` with copy button (admin-only).
+/// 4. `ShareButtonsComponent` renders social icons (Twitter, Facebook, Email, WhatsApp, Telegram, Clipboard) using `eventType` for share text.
+/// 5. Positions via `getModalPosition` using `options.position`.
+/// 6. Override via `MediasfuUICustomOverrides.shareEventModal` to inject branded sharing templates, deep-link generation, or analytics tracking.
 class ShareEventModalOptions {
   final Color backgroundColor;
   final bool isShareEventModalVisible;
@@ -200,24 +209,25 @@ class ShareEventModalContainerContext {
   });
 }
 
-/// `ShareEventModal` is a modal widget that allows users to share event details,
-/// copy meeting ID and passcode, and interact with sharing buttons.
+/// Share-event modal displaying meeting ID, admin passcode, and social-sharing affordances.
 ///
-/// Example usage:
-/// ```dart
-/// ShareEventModal(
-///   options: ShareEventModalOptions(
-///     isShareEventModalVisible: true,
-///     onShareEventClose: () => print("Modal closed"),
-///     roomName: "Room 1",
-///     adminPasscode: "123456",
-///     islevel: "2",
-///     eventType: "webinar",
-///     localLink: "https://example.com",
-///   ),
-/// );
-/// ```
-
+/// * Renders three sections via `bodyBuilder` (or defaults):
+///   1. `MeetingPasscodeComponent` (shown only when `islevel == '2'`) - displays
+///      `adminPasscode` with copy-to-clipboard button.
+///   2. `MeetingIdComponent` (always shown) - displays `roomName` with copy button.
+///   3. `ShareButtonsComponent` (if `shareButtons == true`) - renders social icons
+///      (Twitter, Facebook, Email, WhatsApp, Telegram, Clipboard) using `eventType`
+///      and `localLink` for share text.
+/// * Each section built via `passcodeBuilder`, `meetingIdBuilder`, `shareButtonsBuilder`;
+///   defaults to `MeetingPasscodeComponent`, `MeetingIdComponent`, `ShareButtonsComponent`.
+/// * Header via `headerBuilder` (defaults to Row with `title` and close button).
+/// * Content via `contentBuilder` (defaults to Column of header + body).
+/// * Container via `containerBuilder` (defaults to positioned Container with rounded
+///   corners, shadow, background color).
+/// * Positions via `getModalPosition` using `options.position`.
+///
+/// Override via `MediasfuUICustomOverrides.shareEventModal` to inject branded
+/// sharing templates, deep-link generation, or analytics tracking.
 class ShareEventModal extends StatelessWidget {
   final ShareEventModalOptions options;
 

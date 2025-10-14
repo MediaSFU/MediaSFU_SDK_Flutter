@@ -1,33 +1,30 @@
 import 'package:flutter/material.dart';
 import '../../types/types.dart' show ComponentSizes;
 
-/// `MainScreenComponentOptions` - Configuration options for the `MainScreenComponent` widget.
+/// Configuration payload for [MainScreenComponent].
 ///
-/// ### Properties:
-/// - `mainSize` (`double`): Determines the size of the main section in percentage (0-100).
-/// - `doStack` (`bool`): If `true`, splits the main screen into stacked sections; otherwise, all children have equal sizes.
-/// - `containerWidthFraction` (`double`): Fraction of the parent width to use for the component's width (default is `1.0`).
-/// - `containerHeightFraction` (`double`): Fraction of the parent height to use for the component's height (default is `1.0`).
-/// - `updateComponentSizes` (`Function(Map<String, double>)`): Callback to receive updated component sizes for dynamic layouts.
-/// - `defaultFraction` (`double`): Default fraction for the height when `showControls` is `true` (default is `0.94`).
-/// - `showControls` (`bool`): If `true`, applies additional spacing for screen controls; affects component height.
+/// Drives MediaSFU's adaptive spotlight/gallery split with advanced options for
+/// stacking vs. equal-size tiles:
 ///
-/// ### Example Usage:
-/// ```dart
-/// MainScreenComponentOptions(
-///   mainSize: 70,
-///   doStack: true,
-///   containerWidthFraction: 0.5,
-///   containerHeightFraction: 0.5,
-///   updateComponentSizes: (sizes) => print('Updated sizes: $sizes'),
-///   defaultFraction: 0.9,
-///   showControls: true,
-///   children: [
-///    ChildComponent1(),
-///    ChildComponent2(),
-///   ],
-/// );
-/// ```
+/// * `mainSize` (0–100): percentage of space allocated to the primary (spotlight)
+///   region when `doStack` is true. Ignored when `doStack` is false.
+/// * `doStack`: when true the first child receives `mainSize` and remaining
+///   children split the rest. When false all children share space equally.
+/// * `containerWidthFraction` / `containerHeightFraction`: scale factors applied
+///   to the parent's layout space, allowing the component to occupy less than
+///   the full viewport.
+/// * `updateComponentSizes`: callback delivering computed [ComponentSizes] so
+///   downstream widgets can react to dimension changes (e.g., repositioning
+///   control overlays or adjusting padding).
+/// * `showControls`: reserves vertical space for a control bar. The component
+///   applies `defaultFraction` (default 0.94) to the height, leaving room for
+///   buttons.
+/// * Builder hooks (`containerBuilder`, `childrenBuilder`, `childBuilder`) let
+///   you wrap or re-theme the default widget tree without re-implementing the
+///   responsive math.
+///
+/// Override this component via `MediasfuUICustomOverrides.mainScreen` when you
+/// need a custom spotlight layout or branded child arrangements.
 class MainScreenComponentOptions {
   final double mainSize;
   final bool doStack;
@@ -134,16 +131,24 @@ typedef MainScreenChildBuilder = Widget Function(
   Widget defaultChild,
 );
 
-/// `MainScreenComponent` - A flexible layout widget for creating main screens with adjustable layout and size.
+/// Adaptive layout widget powering MediaSFU's spotlight/gallery split.
 ///
-/// This widget allows defining a main screen layout that dynamically calculates the component dimensions based on screen size,
-/// orientation, and customizable layout options. It provides a flexible container for child widgets, adapting to screen size changes.
+/// * Computes child dimensions responsively based on `mainSize`, `doStack`, and
+///   screen orientation. Wide screens (aspect ratio ≥ 1) apply fractional
+///   sizing; narrow screens stack children vertically.
+/// * Invokes `updateComponentSizes` whenever layout metrics change, delivering
+///   [ComponentSizes] so external controllers can adjust pagination, overlays,
+///   or helper positioning.
+/// * Provides three builder hooks: `containerBuilder` (wrap the entire
+///   component), `childrenBuilder` (wrap the row/column that holds children),
+///   and `childBuilder` (wrap each individual child).
+/// * Respects `showControls` by reserving `(1 - defaultFraction)` of the height
+///   for an action bar.
 ///
-/// ### Parameters:
-/// - `options` (`MainScreenComponentOptions`): Options for configuring layout dimensions and behaviors.
-/// - `children` (`List<Widget>`): List of child widgets to display within the component.
+/// Use this widget in `MediasfuUICustomOverrides.mainScreen` to deliver
+/// custom spotlight arrangements, branded theming, or alternative child layouts.
 ///
-/// ### Example Usage:
+/// ### Example:
 /// ```dart
 /// MainScreenComponent(
 ///   options: MainScreenComponentOptions(

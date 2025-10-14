@@ -68,6 +68,29 @@ abstract class ParticipantsModalParameters {
   // dynamic operator [](String key);
 }
 
+/// Configuration payload for [ParticipantsModal].
+///
+/// Powers the participants list modal used throughout MediaSFU experiences,
+/// exposing hooks for moderation actions and custom rendering layers:
+///
+/// * `isParticipantsModalVisible` / `onParticipantsClose`: control visibility
+///   and handle dismissal.
+/// * `onMuteParticipants`, `onMessageParticipants`, `onRemoveParticipants`:
+///   optional function overrides for custom moderation workflows, analytics, or
+///   permission checks before invoking the default handlers.
+/// * `RenderParticipantList` / `RenderParticipantListOthers`: swap the default
+///   participant list widgets to apply custom styling, sorting, or additional
+///   columns.
+/// * `position`: string (e.g., `'topRight'`, `'center'`) controlling modal
+///   placement via `getModalPosition`.
+/// * `styles`: optional [ParticipantsModalStyleOptions] for width, height,
+///   decorations, and badge theming.
+/// * Builder hooks (`headerBuilder`, `searchBuilder`, `listsBuilder`,
+///   `bodyBuilder`, `contentBuilder`) let you wrap or replace individual
+///   sections without reimplementing permission logic.
+///
+/// Use this options object via `MediasfuUICustomOverrides.participantsModal` to
+/// deliver branded UX, integrate advanced filtering, or add participant notes.
 class ParticipantsModalOptions {
   final bool isParticipantsModalVisible;
   final VoidCallback onParticipantsClose;
@@ -129,28 +152,23 @@ class ParticipantsModalOptions {
 typedef ParticipantsModalType = Widget Function(
     {required ParticipantsModalOptions options});
 
-/// `ParticipantsModal` is a widget that displays a modal for managing participants in an event.
-/// It allows users to filter, mute, message, or remove participants depending on their permissions.
+/// Modal dialog for viewing and managing session participants.
 ///
-/// ### Parameters:
-/// - `options` (`ParticipantsModalOptions`): Configuration options for the modal, including visibility, filtering, and action callbacks.
+/// * Computes modal dimensions responsively (defaults to 80% width capped at
+///   400px, 75% height) and positions via `getModalPosition`.
+/// * Renders co-host/admin-level moderation actions (mute, message, remove)
+///   when the current user has the appropriate permissions (`islevel == '2'` or
+///   is a co-host with `participants` responsibility).
+/// * Displays a search field for client-side filtering and a badge showing the
+///   live participant count.
+/// * Provides five builder hooks (`headerBuilder`, `searchBuilder`,
+///   `listsBuilder`, `bodyBuilder`, `contentBuilder`) so you can inject custom
+///   UI sections without re-implementing permission checks.
+/// * Uses `RenderParticipantList` / `RenderParticipantListOthers` for the
+///   actual row rendering, enabling custom styling or additional columns.
 ///
-/// ### Example Usage:
-/// ```dart
-/// ParticipantsModal(
-///   options: ParticipantsModalOptions(
-///     isParticipantsModalVisible: true,
-///     onParticipantsClose: () => print("Modal closed"),
-///     onParticipantsFilterChange: (filter) => print("Filter: $filter"),
-///     participantsCounter: 10,
-///     parameters: myParticipantsModalParameters,
-///   ),
-/// );
-/// ```
-///
-/// The modal adjusts its width based on screen size, displays a search field for participant filtering,
-/// and uses different components to render participants based on their roles and access levels.
-
+/// Override this component via `MediasfuUICustomOverrides.participantsModal` to
+/// add advanced filters, participant notes, or integrate CRM data.
 class ParticipantsModal extends StatelessWidget {
   final ParticipantsModalOptions options;
 

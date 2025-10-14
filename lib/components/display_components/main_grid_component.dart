@@ -2,36 +2,146 @@ import 'package:flutter/material.dart';
 
 import 'meeting_progress_timer.dart';
 
-/// `MainGridComponentOptions` - Configuration options for the `MainGridComponent`.
+/// Configuration options for the `MainGridComponent`.
 ///
-/// ### Properties:
-/// - `backgroundColor` (`Color`): Background color of the main grid container.
-/// - `children` (`List<Widget>`): List of child widgets to be displayed inside the grid.
-/// - `mainSize` (`double`): Main component size within the grid as a percentage (0-100).
-/// - `height` (`double`): Height of the grid container.
-/// - `width` (`double`): Width of the grid container.
-/// - `showAspect` (`bool`): If `true`, displays the grid with aspect ratio; default is `true`.
-/// - `timeBackgroundColor` (`Color`): Background color of the meeting progress timer.
-/// - `showTimer` (`bool`): If `true`, displays the meeting progress timer; default is `true`.
-/// - `meetingProgressTime` (`String`): Time to display on the meeting progress timer.
+/// Provides properties to customize the main video grid container, including dimensions,
+/// background styling, child widgets (participant videos), and optional meeting timer display.
 ///
-/// ### Example Usage:
+/// **Core Display Properties:**
+/// - `children`: List of child widgets (typically VideoCard/AudioCard components)
+/// - `showAspect`: If false, hides entire component; useful for conditional visibility
+/// - `backgroundColor`: Background color for grid container (default: transparent)
+///
+/// **Dimensions:**
+/// - `width`: Container width in pixels
+/// - `height`: Container height in pixels
+/// - `mainSize`: Main component size as percentage (0-100); affects layout proportions
+///
+/// **Meeting Timer:**
+/// - `showTimer`: If true, displays MeetingProgressTimer overlay (default: true)
+/// - `meetingProgressTime`: Timer display text (e.g., "00:45:30")
+/// - `timeBackgroundColor`: Timer background color (default: transparent)
+/// - `timerOptions`: MeetingProgressTimerOptions for custom timer styling
+/// - `timerBuilder`: Custom timer widget builder (overrides default MeetingProgressTimer)
+///
+/// **Styling:**
+/// - `decoration`: BoxDecoration for container (overrides backgroundColor if provided)
+/// - `padding`: Padding inside container
+/// - `margin`: Margin around container
+/// - `clipBehavior`: Clip behavior for container (default: Clip.none)
+///
+/// **Builder Hooks (2):**
+/// - `containerBuilder`: Override outer Container; receives MainGridComponentContainerContext + default
+/// - `childrenBuilder`: Override Stack children arrangement; receives MainGridComponentChildrenContext + defaultChildren
+///
+/// **Usage Patterns:**
+/// 1. **Basic Grid with Videos:**
+///    ```dart
+///    MainGridComponent(
+///      options: MainGridComponentOptions(
+///        width: MediaQuery.of(context).size.width,
+///        height: MediaQuery.of(context).size.height,
+///        mainSize: 80,
+///        backgroundColor: Colors.black,
+///        children: videoParticipants.map((p) => VideoCard(...)).toList(),
+///        meetingProgressTime: formattedTime,
+///      ),
+///    )
+///    ```
+///
+/// 2. **Grid with Custom Timer:**
+///    ```dart
+///    MainGridComponent(
+///      options: MainGridComponentOptions(
+///        width: screenWidth,
+///        height: screenHeight,
+///        mainSize: 70,
+///        backgroundColor: Colors.grey[900]!,
+///        children: participantWidgets,
+///        showTimer: true,
+///        timerOptions: MeetingProgressTimerOptions(
+///          backgroundColor: Colors.blue,
+///          textColor: Colors.white,
+///          fontSize: 16,
+///        ),
+///        meetingProgressTime: '01:23:45',
+///      ),
+///    )
+///    ```
+///
+/// 3. **Hide Timer:**
+///    ```dart
+///    MainGridComponent(
+///      options: MainGridComponentOptions(
+///        width: width,
+///        height: height,
+///        mainSize: 100,
+///        backgroundColor: Colors.black87,
+///        children: videoCards,
+///        showTimer: false,
+///        meetingProgressTime: '',
+///      ),
+///    )
+///    ```
+///
+/// 4. **Custom Children Layout:**
+///    ```dart
+///    MainGridComponent(
+///      options: MainGridComponentOptions(
+///        width: width,
+///        height: height,
+///        mainSize: 75,
+///        backgroundColor: Colors.black,
+///        children: participants,
+///        meetingProgressTime: time,
+///        childrenBuilder: (context, defaultChildren) {
+///          return [
+///            ...defaultChildren,
+///            Positioned(
+///              bottom: 16,
+///              right: 16,
+///              child: FloatingActionButton(
+///                onPressed: openSettings,
+///                child: Icon(Icons.settings),
+///              ),
+///            ),
+///          ];
+///        },
+///      ),
+///    )
+///    ```
+///
+/// **Override Integration:**
+/// Can be overridden via `MediasfuUICustomOverrides`:
 /// ```dart
-/// MainGridComponentOptions(
-///   backgroundColor: Colors.blue,
-///   children: [
-///     // List of child widgets
-///   ],
-///   mainSize: 200,
-///   height: 300,
-///   width: 500,
-///   showAspect: true,
-///   timeBackgroundColor: Colors.white,
-///   showTimer: true,
-///   meetingProgressTime: '10:00',
-/// );
+/// overrides: MediasfuUICustomOverrides(
+///   mainGridOptions: ComponentOverride<MainGridComponentOptions>(
+///     builder: (existingOptions) => MainGridComponentOptions(
+///       width: existingOptions.width,
+///       height: existingOptions.height,
+///       mainSize: existingOptions.mainSize,
+///       backgroundColor: Colors.deepPurple[900]!,
+///       children: existingOptions.children,
+///       meetingProgressTime: existingOptions.meetingProgressTime,
+///       decoration: BoxDecoration(
+///         gradient: LinearGradient(colors: [Colors.black, Colors.deepPurple[900]!]),
+///       ),
+///     ),
+///   ),
+/// ),
 /// ```
-
+///
+/// **Timer Integration:**
+/// - Timer positioned at top-center of grid (Positioned top: 0, left/right: 0)
+/// - Timer renders above all child widgets (in Stack)
+/// - `timerOptions` provides styling: backgroundColor, textColor, fontSize, padding, etc.
+/// - `timerBuilder` allows full timer replacement for custom implementations
+///
+/// **Implementation Notes:**
+/// - Uses Stack to layer children + timer overlay
+/// - Container dimensions controlled by width/height props (no automatic sizing)
+/// - mainSize affects internal layout calculations (used by parent components)
+/// - showAspect=false makes entire component invisible (Visibility widget)
 class MainGridComponentOptions {
   /// The background color of the main grid container.
   final Color backgroundColor;
@@ -143,37 +253,173 @@ typedef MainGridComponentChildrenBuilder = Widget Function(
   List<Widget> defaultChildren,
 );
 
-/// `MainGridComponent` - A flexible grid component with customizable layout, child widgets, and background color.
+/// A stateless widget rendering the main participant video grid with optional timer overlay.
 ///
-/// This widget displays a grid container that can include custom child widgets and a configurable meeting progress timer.
-/// It provides options for controlling visibility, styling, and grid layout based on the provided configuration.
+/// Displays a fixed-size container holding participant video/audio cards in a Stack layout,
+/// with an optional MeetingProgressTimer positioned at the top center. Commonly used as
+/// the primary display area in video conferencing interfaces.
 ///
-/// ### Parameters:
-/// - `options` (`MainGridComponentOptions`): Configuration options for customizing the grid component.
+/// **Rendering Logic:**
+/// 1. If `showAspect=false` → returns invisible Container (Visibility.visible=false)
+/// 2. Builds Container with width/height from options
+/// 3. Creates Stack containing:
+///    - All children from `options.children` (participant cards)
+///    - MeetingProgressTimer (if showTimer=true) positioned at top-center
+/// 4. Applies containerBuilder hook if provided
+/// 5. Applies childrenBuilder hook if provided
 ///
-/// ### Example Usage:
-/// ```dart
-/// MainGridComponent(
-///   options: MainGridComponentOptions(
-///     backgroundColor: Colors.blue,
-///     children: [
-///       Text("Child 1"),
-///       Text("Child 2"),
-///     ],
-///     mainSize: 200,
-///     height: 300,
-///     width: 500,
-///     showAspect: true,
-///     timeBackgroundColor: Colors.white,
-///     showTimer: true,
-///     meetingProgressTime: '10:00',
-///   ),
-/// );
+/// **Layout Structure:**
+/// ```
+/// Visibility (showAspect)
+///   └─ Container (containerBuilder)
+///      ├─ width/height/backgroundColor/decoration
+///      └─ Stack
+///         ├─ ...children (VideoCard/AudioCard widgets)
+///         └─ Positioned (top: 0, left/right: 0) [IF showTimer]
+///            └─ Align (center)
+///               └─ MeetingProgressTimer (timerBuilder)
 /// ```
 ///
-/// ### Notes:
-/// - `MainGridComponent` uses the `Stack` widget to layer child widgets within the grid container.
-/// - `showAspect` controls the grid visibility; if `false`, the component is hidden.
+/// **Timer Positioning:**
+/// - Positioned at top of Stack (top: 0, left: 0, right: 0)
+/// - Aligned to Alignment.topCenter
+/// - Renders above all participant cards (last child in Stack)
+/// - Shows elapsed meeting time (e.g., "00:45:30")
+///
+/// **Builder Hook Priorities:**
+/// - `containerBuilder`: Wraps outer Container; receives context + default container
+/// - `childrenBuilder`: Wraps Stack children list; receives context + dimensions + defaultChildren
+/// - Both hooks receive MainGridComponentOptions for access to all config
+///
+/// **Common Use Cases:**
+/// 1. **Standard Video Grid:**
+///    ```dart
+///    MainGridComponent(
+///      options: MainGridComponentOptions(
+///        width: MediaQuery.of(context).size.width,
+///        height: MediaQuery.of(context).size.height * 0.7,
+///        mainSize: 80,
+///        backgroundColor: Colors.black,
+///        children: participants.map((p) => VideoCard(options: VideoCardOptions(...))).toList(),
+///        meetingProgressTime: formatDuration(meetingDuration),
+///        showTimer: true,
+///      ),
+///    )
+///    ```
+///
+/// 2. **Responsive Grid:**
+///    ```dart
+///    LayoutBuilder(
+///      builder: (context, constraints) {
+///        return MainGridComponent(
+///          options: MainGridComponentOptions(
+///            width: constraints.maxWidth,
+///            height: constraints.maxHeight,
+///            mainSize: 75,
+///            backgroundColor: Colors.grey[900]!,
+///            children: buildParticipantCards(participants, constraints),
+///            meetingProgressTime: meetingTime,
+///          ),
+///        );
+///      },
+///    )
+///    ```
+///
+/// 3. **Grid with Custom Overlay:**
+///    ```dart
+///    MainGridComponent(
+///      options: MainGridComponentOptions(
+///        width: width,
+///        height: height,
+///        mainSize: 100,
+///        backgroundColor: Colors.black,
+///        children: videoCards,
+///        meetingProgressTime: time,
+///        childrenBuilder: (context, defaultChildren) {
+///          return [
+///            ...defaultChildren,
+///            Positioned(
+///              bottom: 20,
+///              left: 20,
+///              child: Text(
+///                'Recording in progress',
+///                style: TextStyle(color: Colors.red, fontSize: 16),
+///              ),
+///            ),
+///          ];
+///        },
+///      ),
+///    )
+///    ```
+///
+/// 4. **Hide Grid Conditionally:**
+///    ```dart
+///    MainGridComponent(
+///      options: MainGridComponentOptions(
+///        width: width,
+///        height: height,
+///        mainSize: 80,
+///        backgroundColor: Colors.black,
+///        children: participants,
+///        meetingProgressTime: time,
+///        showAspect: isGridVisible, // Toggle visibility
+///      ),
+///    )
+///    ```
+///
+/// **Override Integration:**
+/// Integrates with `MediasfuUICustomOverrides` for global styling:
+/// ```dart
+/// overrides: MediasfuUICustomOverrides(
+///   mainGridOptions: ComponentOverride<MainGridComponentOptions>(
+///     builder: (existingOptions) => MainGridComponentOptions(
+///       width: existingOptions.width,
+///       height: existingOptions.height,
+///       mainSize: existingOptions.mainSize,
+///       backgroundColor: Colors.black,
+///       children: existingOptions.children,
+///       meetingProgressTime: existingOptions.meetingProgressTime,
+///       decoration: BoxDecoration(
+///         gradient: LinearGradient(
+///           begin: Alignment.topCenter,
+///           end: Alignment.bottomCenter,
+///           colors: [Colors.black, Colors.grey[900]!],
+///         ),
+///       ),
+///       timerOptions: MeetingProgressTimerOptions(
+///         backgroundColor: Colors.blue[700],
+///         textColor: Colors.white,
+///         fontSize: 18,
+///       ),
+///     ),
+///   ),
+/// ),
+/// ```
+///
+/// **Meeting Timer Features:**
+/// - Displays elapsed meeting time (format: "HH:MM:SS")
+/// - Updates via `meetingProgressTime` prop (parent manages timer state)
+/// - Customizable via `timerOptions` (colors, fonts, padding)
+/// - Can be fully replaced via `timerBuilder` hook
+/// - Hidden if `showTimer=false`
+///
+/// **Dimension Management:**
+/// - Fixed dimensions via width/height props (no automatic sizing)
+/// - Parent responsible for responsive sizing (typically uses LayoutBuilder)
+/// - mainSize prop passed to options but not directly used in rendering (used by parent layouts)
+///
+/// **Performance Notes:**
+/// - Stateless widget (no internal state)
+/// - Stack renders all children (no virtualization)
+/// - Suitable for typical meeting sizes (2-50 participants)
+/// - For larger meetings, consider implementing pagination or virtualization
+///
+/// **Implementation Details:**
+/// - Uses Visibility widget for showAspect toggling
+/// - Stack allows overlaying timer on top of participant grid
+/// - Container provides background and dimensions
+/// - Timer positioned absolutely at top-center
+/// - Builder hooks called during build (not cached)
 class MainGridComponent extends StatelessWidget {
   final MainGridComponentOptions options;
 

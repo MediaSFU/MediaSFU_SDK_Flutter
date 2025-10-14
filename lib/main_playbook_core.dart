@@ -145,34 +145,41 @@ class _CorePlaybookAppState extends State<_CorePlaybookApp> {
         )
       : null;
 
+  /// Aggregates the UI override surface showcased in the README's inline
+  /// example. Flip the feature flags at the top of the file to explore how
+  /// `MediasfuUICustomOverrides` can restyle container chrome, pagination,
+  /// alert banners, or modal shells without rewriting an entire experience.
+  ///
+  /// When both [applyUIOverrides] and [applyModalOverrides] are `false` this
+  /// getter returns `null`, allowing the experiences to fall back to stock UI.
   MediasfuUICustomOverrides? get uiOverrides {
     if (!applyUIOverrides && !applyModalOverrides) {
       return null;
     }
 
     return MediasfuUICustomOverrides(
-      // mainContainer: applyUIOverrides
-      //     ? ComponentOverride<MainContainerComponentOptions>(
-      //         render: (context, options, defaultBuilder) {
-      //           final child = defaultBuilder(context, options);
-      //           return Container(
-      //             decoration: BoxDecoration(
-      //               color: Colors.white.withValues(alpha: 0.92),
-      //               borderRadius: BorderRadius.circular(24),
-      //               boxShadow: const [
-      //                 BoxShadow(
-      //                   color: Color(0x16000000),
-      //                   blurRadius: 18,
-      //                   offset: Offset(0, 10),
-      //                 ),
-      //               ],
-      //             ),
-      //             padding: const EdgeInsets.all(16),
-      //             child: child,
-      //           );
-      //         },
-      //       )
-      //     : null,
+      mainContainer: applyUIOverrides
+          ? ComponentOverride<MainContainerComponentOptions>(
+              render: (context, options, defaultBuilder) {
+                final child = defaultBuilder(context, options);
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.92),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x16000000),
+                        blurRadius: 18,
+                        offset: Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: child,
+                );
+              },
+            )
+          : null,
       pagination: applyUIOverrides
           ? ComponentOverride<PaginationOptions>(
               render: (context, options, defaultBuilder) {
@@ -447,6 +454,11 @@ class _CorePlaybookAppState extends State<_CorePlaybookApp> {
     );
   }
 
+  /// Rich sample video-card override that mirrors the React `AppUnique.tsx`
+  /// playground. It renders the production [VideoCard] when MediaSFU helper
+  /// parameters are available and gracefully falls back to a branded tile
+  /// otherwise. Width and height are provided by the SDK to ensure the card
+  /// fits within the responsive grids.
   Widget _customVideoCard({
     required Participant participant,
     required Stream stream,
@@ -517,6 +529,10 @@ class _CorePlaybookAppState extends State<_CorePlaybookApp> {
     );
   }
 
+  /// Custom audio-card builder used to demonstrate how bar colour and metadata
+  /// can map to your own gradients or iconography. The `barColor` boolean
+  /// supplied by MediaSFU indicates whether the participant is actively
+  /// speaking.
   Widget _customAudioCard({
     required String name,
     required bool barColor,
@@ -597,6 +613,10 @@ class _CorePlaybookAppState extends State<_CorePlaybookApp> {
     );
   }
 
+  /// Branded mini-card override that emphasises participant initials and media
+  /// status icons. MediaSFU passes `fontSize` as a string for parity with the
+  /// web SDK; we convert it to a `double` and provide defaults that avoid
+  /// overflow in compact grids.
   Widget _customMiniCard({
     required String initials,
     required String fontSize,
@@ -664,6 +684,9 @@ class _CorePlaybookAppState extends State<_CorePlaybookApp> {
     );
   }
 
+  /// Fallback tile shown while the underlying MediaSFU `parameters` bundle is
+  /// still loading. Keeps the layout stable, mirrors the video-card styling,
+  /// and surfaces the participant name.
   Widget _videoFallback(String name) {
     return Container(
       color: const Color(0xFF0f172a),

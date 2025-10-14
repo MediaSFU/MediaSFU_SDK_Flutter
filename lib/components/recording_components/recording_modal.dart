@@ -75,45 +75,22 @@ abstract class RecordingModalParameters
   // dynamic operator [](String key);
 }
 
-/// Configuration options for displaying and managing the `RecordingModal`.
-/// The options include visibility, position, background color, and functions for
-/// confirming and starting recordings.
-/// The options also include parameters for recording customization and settings.
-/// The `RecordingModal` widget uses these options to display the modal and manage
-/// recording actions and settings.
+/// Configuration for the recording modal enabling server-side capture with comprehensive layout/styling options.
 ///
-/// ### Parameters:
-/// - `isRecordingModalVisible`: Visibility of the recording modal.
-/// - `onClose`: Callback function to close the recording modal.
-/// - `backgroundColor`: Background color of the recording modal.
-/// - `position`: Position of the recording modal on the screen.
-/// - `confirmRecording`: Function to confirm recording settings.
+/// * **confirmRecording** - Override for `confirmRecording`; receives {parameters}. Called when user taps "Confirm" to commit current settings before starting.
+/// * **startRecording** - Override for `startRecording`; receives {parameters}. Called when user taps "Start Recording" after confirmation; emits socket event to initiate server-side capture.
+/// * **parameters** - Must expose `recordingVideoType` (`'video'`/`'media'`/`'all'`), `recordingDisplayType` (`'video'`/`'media'`/`'all'`), `recordingBackgroundColor`, `recordingNameTagsColor`, `recordingOrientationVideo` (`'landscape'`/`'portrait'`/`'all'`), `recordingNameTags`, `recordingAddText`, `recordingCustomText`, `recordingCustomTextPosition`, `recordingCustomTextColor`, `recordingMediaOptions` (`'video'`/`'audio'`), `recordingAudioOptions` (`'all'`/`'onScreen'`/`'host'`), `recordingVideoOptions` (`'all'`/`'mainScreen'`), `recordingAddHLS`, `eventType`, and `recordPaused`.
+/// * **position** - Modal placement via `getModalPosition` (e.g., 'bottomRight').
+/// * **backgroundColor** - Background color for modal container.
+/// * **styles** - Optional `ModalStyleOptions` for advanced theming (padding, border radius, etc.).
+/// * **title** / **confirmButtonChild** / **startButtonChild** - Custom widgets for header and action buttons.
 ///
-///  ```dart
-/// void confirmRecordingFunction(ConfirmRecordingOptions options) {
-///  // Confirm recording settings
-/// }
-/// ```
-/// - `startRecording`: Function to start recording.
-///
-/// ```dart
-/// void startRecordingFunction(StartRecordingOptions options) {
-/// // Start recording
-/// }
-/// ```
-/// - `parameters`: Recording modal parameters for customization.
-///
-/// ### Example:
-/// ```dart
-/// RecordingModalOptions(
-///  isRecordingModalVisible: true,
-/// onClose: () => print('Modal closed'),
-/// confirmRecording: confirmRecordingFunction,
-/// startRecording: startRecordingFunction,
-/// parameters: recordingParameters,
-/// );
-/// ```
-///
+/// ### Usage
+/// 1. Modal displays two tabs: "Basic" (`StandardPanelComponent`) and "Advanced" (`AdvancedPanelComponent`).
+/// 2. Basic tab: `recordingVideoType`, `recordingDisplayType`, `recordingBackgroundColor`, `recordingNameTagsColor`, `recordingOrientationVideo` dropdowns; `recordingNameTags` switch.
+/// 3. Advanced tab: `recordingAddText` switch, `recordingCustomText` input, `recordingCustomTextPosition`/`recordingCustomTextColor` dropdowns; `recordingMediaOptions`, `recordingAudioOptions`, `recordingVideoOptions`, `recordingAddHLS` toggles.
+/// 4. "Confirm" button validates settings and calls `confirmRecording`, updating parameters; "Start Recording" button enabled after confirmation, invokes `startRecording` which emits socket event.
+/// 5. Override via `MediasfuUICustomOverrides.recordingModal` to inject watermark preview, compliance warnings, or custom encoding presets.
 class RecordingModalOptions {
   final bool isRecordingModalVisible;
   final VoidCallback onClose;
@@ -145,32 +122,25 @@ class RecordingModalOptions {
 typedef RecordingModalType = Widget Function(
     {required RecordingModalOptions options});
 
-/// `RecordingModal` widget is used to display recording options, enabling users to confirm,
-/// customize, and start recordings with interactive controls and settings panels.
+/// Server-side recording configuration modal with basic/advanced layout tabs.
 ///
-/// ### Parameters:
-/// - `options`: `RecordingModalOptions` containing configuration for visibility, position,
-///   background color, and recording functions.
+/// * Displays `StandardPanelComponent` (basic tab) and `AdvancedPanelComponent`
+///   (advanced tab) for comprehensive recording customization.
+/// * Basic settings: `recordingVideoType` (`'video'`/`'media'`/`'all'`),
+///   `recordingDisplayType`, `recordingBackgroundColor`, `recordingNameTagsColor`,
+///   `recordingOrientationVideo` (`'landscape'`/`'portrait'`/`'all'`), `recordingNameTags` toggle.
+/// * Advanced settings: `recordingAddText` toggle, `recordingCustomText` input,
+///   `recordingCustomTextPosition`/`recordingCustomTextColor`, `recordingMediaOptions`
+///   (`'video'`/`'audio'`), `recordingAudioOptions` (`'all'`/`'onScreen'`/`'host'`),
+///   `recordingVideoOptions` (`'all'`/`'mainScreen'`), `recordingAddHLS` toggle.
+/// * "Confirm" button validates settings and calls `confirmRecording`, persisting
+///   choices to parameters; "Start Recording" button (enabled after confirm) invokes
+///   `startRecording`, which emits `startRecordClient` socket event to initiate
+///   server-side capture.
+/// * Positions via `getModalPosition` using `options.position`.
 ///
-/// ### Example Usage:
-/// ```dart
-/// RecordingModal(
-///   options: RecordingModalOptions(
-///     isRecordingModalVisible: true,
-///     onClose: () => print('Modal closed'),
-///     confirmRecording: confirmRecordingFunction,
-///     startRecording: startRecordingFunction,
-///     parameters: recordingParameters,
-///   ),
-/// );
-/// ```
-///
-/// ### Widget Structure
-/// - **StandardPanelComponent**: Displays standard recording settings.
-/// - **AdvancedPanelComponent**: Displays advanced recording settings.
-///
-/// Both components are customizable based on parameters defined in
-/// `RecordingModalParameters`.
+/// Override via `MediasfuUICustomOverrides.recordingModal` to inject watermark
+/// preview, compliance warnings, or custom encoding presets.
 class RecordingModal extends StatelessWidget {
   final RecordingModalOptions options;
 

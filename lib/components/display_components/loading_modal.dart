@@ -66,22 +66,30 @@ typedef LoadingModalTextBuilder = Widget Function(
   Widget defaultText,
 );
 
-/// `LoadingModalOptions` - Configuration options for the `LoadingModal` widget.
+/// Configuration for the loading-modal overlay blocking user interaction during async operations.
 ///
-/// ### Properties:
-/// - `isVisible` (`bool`): Determines if the loading modal is visible.
-/// - `backgroundColor` (`Color`): Background color of the modal overlay, defaulting to a semi-transparent black.
-/// - `displayColor` (`Color`): Color for the loading indicator and loading text.
+/// * **isVisible** - Boolean controlling overlay visibility; when `true`, displays full-screen loading overlay.
+/// * **backgroundColor** - Background color for modal overlay (default: semi-transparent black `Color.fromRGBO(0, 0, 0, 0.5)`).
+/// * **displayColor** - Color for spinner and loading text (default: `Colors.black`).
+/// * **overlayColor** - Optional override for overlay background; if provided, replaces `backgroundColor`.
+/// * **loadingText** - Custom widget for loading message; if provided, `textBuilder` is ignored.
+/// * **showSpinner** - Boolean controlling spinner visibility (default: `true`).
+/// * **spinner** - Custom spinner widget; if not provided, defaults to `CircularProgressIndicator` with `displayColor`.
+/// * **spinnerTextSpacing** - Vertical spacing between spinner and text in logical pixels (default: 10).
+/// * **contentWidth** - Fixed width for content area; if not provided, defaults to 60% of screen width (min: 300px, max: 600px).
+/// * **contentPadding** - Padding for content area (default: 20px all sides).
+/// * **contentDecoration** - Decoration for content container (background, border, border radius); if not provided, defaults to white rounded rectangle with shadow.
+/// * **contentAlignment** - Alignment for content within modal (default: `Alignment.center`).
+/// * **containerBuilder** - Override entire modal container; receives `LoadingModalContainerContext` with `content` and `defaultContainer`.
+/// * **contentBuilder** - Override content area; receives `LoadingModalContentContext` with `spinner`, `text`, and `defaultContent`.
+/// * **spinnerBuilder** - Override spinner widget; receives `LoadingModalSpinnerContext` and `defaultSpinner`.
+/// * **textBuilder** - Override loading text; receives `LoadingModalTextContext` and `defaultText`.
 ///
-/// ### Example Usage:
-/// ```dart
-/// LoadingModalOptions(
-///   isVisible: true,
-///   backgroundColor: Color.fromRGBO(0, 0, 0, 0.7),
-///   displayColor: Colors.white,
-/// );
-/// ```
-
+/// ### Usage
+/// 1. Modal displays full-screen overlay blocking interaction when `isVisible == true`.
+/// 2. Content area centered with spinner (if `showSpinner == true`) above loading text "Loading...".
+/// 3. Content container defaults to white rounded rectangle with shadow, 60% screen width (clamped to 300-600px).
+/// 4. Override via `MediasfuUICustomOverrides.loadingModal` to inject branded spinners, custom animations, or progress indicators.
 class LoadingModalOptions {
   /// A boolean indicating whether the loading modal is visible.
   final bool isVisible;
@@ -155,26 +163,23 @@ class LoadingModalOptions {
 typedef LoadingModalType = Widget Function(
     {required LoadingModalOptions options});
 
-/// `LoadingModal` - A loading modal overlay widget.
+/// Full-screen loading overlay blocking interaction during async operations.
 ///
-/// This modal displays a centered loading indicator with customizable background and indicator colors.
-/// It blocks interactions outside the modal when visible.
+/// * Displays full-screen semi-transparent overlay when `isVisible == true`,
+///   preventing user interaction with underlying UI.
+/// * Centers content area (default: white rounded rectangle, 60% screen width,
+///   clamped to 300-600px) with spinner and "Loading..." text.
+/// * Spinner defaults to `CircularProgressIndicator` with `displayColor`; can be
+///   overridden via `spinner` or `spinnerBuilder`.
+/// * Loading text defaults to "Loading..." with `displayColor`; can be overridden
+///   via `loadingText` or `textBuilder`.
+/// * Content area styled via `contentDecoration` (defaults to white background,
+///   rounded corners, box shadow) with `contentPadding` (default: 20px).
+/// * Offers four builder hooks (`containerBuilder`, `contentBuilder`, `spinnerBuilder`,
+///   `textBuilder`) for granular customization.
 ///
-/// ### Features:
-/// - Fully covers the screen to create a loading overlay.
-/// - Customizable background and indicator color.
-/// - Prevents interaction outside the modal when visible.
-///
-/// ### Example Usage:
-/// ```dart
-/// LoadingModal(
-///   options: LoadingModalOptions(
-///     isVisible: true,
-///     backgroundColor: Color.fromRGBO(0, 0, 0, 0.7),
-///     displayColor: Colors.white,
-///   ),
-/// );
-/// ```
+/// Override via `MediasfuUICustomOverrides.loadingModal` to inject branded spinners,
+/// custom animations, or progress indicators.
 class LoadingModal extends StatelessWidget {
   final LoadingModalOptions options;
 

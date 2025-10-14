@@ -130,7 +130,28 @@ class EventSettingsModalButtonContext {
   });
 }
 
-/// EventSettingsModalOptions - Defines configuration options for the `EventSettingsModal`.
+/// Configuration for the event-settings modal controlling participant media permissions (host-only).
+///
+/// * **audioSetting** / **videoSetting** / **screenshareSetting** / **chatSetting** - Current permission strings: `'disallow'` (blocked for all), `'allow'` (enabled for all), `'approval'` (requires host approval).
+/// * **onModifySettings** - Override for `modifySettings`; receives {settings, socket, roomName, showAlert, updateAudioSetting, updateVideoSetting, updateScreenshareSetting, updateChatSetting}. Validates settings, emits `updateMediaSettings` socket event, updates local state via update functions.
+/// * **updateAudioSetting** / **updateVideoSetting** / **updateScreenshareSetting** / **updateChatSetting** - Callbacks to persist new settings to parent state.
+/// * **updateIsSettingsModalVisible** - Callback to close modal after save.
+/// * **roomName** - Session identifier for socket event.
+/// * **socket** - Socket.IO client for emitting `updateMediaSettings` event.
+/// * **showAlert** - Optional `ShowAlert` callback for validation messages.
+/// * **position** - Modal placement via `getModalPosition` (e.g., 'topRight').
+/// * **backgroundColor** - Background color for modal container.
+/// * **customBuilder** - Replace entire modal widget tree; receives `EventSettingsModalOptions`.
+/// * **wrapperBuilder** / **containerBuilder** / **headerBuilder** / **sectionBuilder** / **dropdownBuilder** / **buttonBuilder** - Builder hooks for granular customization.
+/// * **containerPadding** / **containerMargin** / **containerAlignment** / **containerDecoration** - Fine-tune modal container styling.
+/// * **titleTextStyle** / **labelTextStyle** - Typography overrides for title and section labels.
+/// * **saveButtonStyle** / **saveButtonChild** - Customize save button appearance.
+///
+/// ### Usage
+/// 1. Modal displays four dropdowns: "Participants Audio" (`audioSetting`), "Participants Video" (`videoSetting`), "Participants Screenshare" (`screenshareSetting`), "Chat" (`chatSetting`).
+/// 2. Each dropdown offers three options: "Disallow", "Allow", "Approval".
+/// 3. "Save" button invokes `onModifySettings`, which validates settings, emits `updateMediaSettings` socket event with `{roomName, audioSet, videoSet, screenshareSet, chatSet}`, then updates local state via `updateAudioSetting`, `updateVideoSetting`, `updateScreenshareSetting`, `updateChatSetting`.
+/// 4. Override via `MediasfuUICustomOverrides.eventSettingsModal` to inject analytics tracking, conditional permission rules, or custom validation logic.
 class EventSettingsModalOptions {
   final bool isVisible;
   final VoidCallback onClose;
@@ -266,35 +287,27 @@ typedef EventSettingsModalButtonBuilder = Widget Function(
 /// );
 /// ```
 
-/// `EventSettingsModal` - A modal widget for configuring event-specific media settings.
+/// Event-settings modal controlling participant media permissions (host-only).
 ///
-/// This widget provides options to control participant permissions for audio, video, screenshare, and chat.
-/// The settings are saved and applied using the `onModifySettings` callback, which updates the settings on the server.
+/// * Displays four dropdowns: "Participants Audio", "Participants Video",
+///   "Participants Screenshare", "Chat".
+/// * Each dropdown offers three options: "Disallow" (blocked for all), "Allow"
+///   (enabled for all), "Approval" (requires host approval).
+/// * Tracks local state (`audioState`, `videoState`, `screenshareState`, `chatState`)
+///   initialized from `options` values; updates on dropdown change.
+/// * "Save" button invokes `onModifySettings` (defaults to `modifySettings`), which:
+///   1. Validates at least one setting changed.
+///   2. Emits `updateMediaSettings` socket event with `{roomName, audioSet, videoSet, screenshareSet, chatSet}`.
+///   3. Updates parent state via `updateAudioSetting`, `updateVideoSetting`,
+///      `updateScreenshareSetting`, `updateChatSetting`.
+///   4. Closes modal via `updateIsSettingsModalVisible(false)`.
+/// * Positions via `getModalPosition` using `options.position`.
+/// * Offers six builder hooks (`wrapperBuilder`, `containerBuilder`, `headerBuilder`,
+///   `sectionBuilder`, `dropdownBuilder`, `buttonBuilder`) plus `customBuilder` for
+///   full replacement.
 ///
-/// ### Parameters:
-/// - `options` (`EventSettingsModalOptions`): Configuration options for the modal.
-///
-/// ### Structure:
-/// - Header with title ("Event Settings") and close icon.
-/// - Dropdown selectors for each setting (audio, video, screenshare, and chat).
-/// - Save button to confirm and apply the settings.
-///
-/// ### Example Usage:
-/// ```dart
-/// EventSettingsModal(
-///   options: EventSettingsModalOptions(
-///     isVisible: true,
-///     onClose: () => print("Modal closed"),
-///     audioSetting: 'allow',
-///     videoSetting: 'approval',
-///     screenshareSetting: 'disallow',
-///     chatSetting: 'allow',
-///     roomName: 'eventRoom',
-///     socket: socket,
-///   ),
-/// );
-/// ```
-
+/// Override via `MediasfuUICustomOverrides.eventSettingsModal` to inject analytics
+/// tracking, conditional permission rules, or custom validation logic.
 class EventSettingsModal extends StatefulWidget {
   final EventSettingsModalOptions options;
 

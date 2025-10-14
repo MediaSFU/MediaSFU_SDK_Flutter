@@ -19,7 +19,20 @@ abstract class DisplaySettingsModalParameters
   // void operator []=(String key, dynamic value);
 }
 
-/// DisplaySettingsModalOptions - Configuration options for the `DisplaySettingsModal`.
+/// Configuration for the display-settings modal controlling participant-grid behavior.
+///
+/// * **onModifySettings** - Override for `modifyDisplaySettings`; receives {settings, parameters}. Applies changes to `meetingDisplayType`, `autoWave`, `forceFullDisplay`, `meetingVideoOptimized`.
+/// * **parameters** - Must expose `meetingDisplayType` (current selection: `'video'`, `'media'`, or `'all'`), `autoWave`, `forceFullDisplay`, `meetingVideoOptimized`.
+/// * **position** - Modal placement via `getModalPosition` (e.g., 'topRight').
+/// * **backgroundColor** - Background color for modal container.
+///
+/// ### Usage
+/// 1. "Display Option" dropdown: `'video'` = video-only participants, `'media'` = only those with active audio/video, `'all'` = everyone including listeners.
+/// 2. "Display Audiographs" switch: enables waveform overlays on audio-only tiles.
+/// 3. "Force Full Display" switch: prevents tile collapse for inactive participants.
+/// 4. "Force Video Participants" switch: prioritizes video tiles in grid layout.
+/// 5. Save button invokes `onModifySettings` with new values, updating `parameters`.
+/// 6. Override via `MediasfuUICustomOverrides.displaySettingsModal` to inject analytics tracking, device-specific defaults, or custom display modes.
 class DisplaySettingsModalOptions {
   final bool isVisible;
   final VoidCallback onClose;
@@ -62,34 +75,21 @@ typedef DisplaySettingsModalType = DisplaySettingsModal Function(
 /// );
 /// ```
 
-/// `DisplaySettingsModal` - A modal widget for adjusting display settings.
+/// Display-settings modal controlling participant-grid composition and audiograph visibility.
 ///
-/// This widget allows users to set display preferences for a meeting or event, including display options,
-/// enabling/disabling audiographs, forcing full display, and optimizing video participant visibility.
+/// * Dropdown: "Video Participants Only" (`meetingDisplayType = 'video'`), "Media
+///   Participants Only" (`'media'`), "Show All Participants" (`'all'`).
+/// * Three Switch toggles:
+///   - **Display Audiographs** (`autoWave`): overlays waveform on audio-only tiles.
+///   - **Force Full Display** (`forceFullDisplay`): prevents tile collapse for inactive participants.
+///   - **Force Video Participants** (`meetingVideoOptimized`): prioritizes video tiles in grid.
+/// * Save button constructs `ModifyDisplaySettingsOptions` and invokes `onModifySettings`,
+///   which updates `parameters` and triggers re-layout of participant grids.
+/// * Positions via `getModalPosition` using `options.position`.
 ///
-/// ### Parameters:
-/// - `options` (`DisplaySettingsModalOptions`): Configuration options for the modal.
-///
-/// ### Structure:
-/// - Modal header with title ("Display Settings") and close button.
-/// - Dropdown selector for `Display Option` with values: Video Participants Only, Media Participants Only, and Show All Participants.
-/// - Switch toggles for settings:
-///     - `Display Audiographs`
-///     - `Force Full Display`
-///     - `Force Video Participants`
-/// - Save button to apply the selected display settings.
-///
-/// ### Example Usage:
-/// ```dart
-/// DisplaySettingsModal(
-///   options: DisplaySettingsModalOptions(
-///     isVisible: true,
-///     onClose: () => print("Modal closed"),
-///     parameters: DisplaySettingsModalParametersImplementation(),
-///   ),
-/// );
-/// ```
-
+/// Override via `MediasfuUICustomOverrides.displaySettingsModal` to inject analytics
+/// tracking, device-specific defaults, or custom display modes (e.g., speaker-focused,
+/// gallery-only, or accessibility-driven layouts).
 class DisplaySettingsModal extends StatefulWidget {
   final DisplaySettingsModalOptions options;
 
