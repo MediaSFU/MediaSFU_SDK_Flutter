@@ -150,11 +150,12 @@ import '../../consumers/start_share_screen.dart' show startShareScreen;
 import '../../consumers/request_screen_share.dart' show requestScreenShare;
 import '../../consumers/reorder_streams.dart' show reorderStreams;
 import '../../consumers/prepopulate_user_media.dart'
-    show prepopulateUserMedia, PrepopulateUserMediaOptions;
+  show prepopulateUserMedia, PrepopulateUserMediaOptions, PrepopulateUserMediaType;
 import '../../consumers/get_videos.dart' show getVideos;
 import '../../consumers/re_port.dart' show rePort;
 import '../../consumers/trigger.dart' show trigger;
-import '../../consumers/consumer_resume.dart' show consumerResume;
+import '../../consumers/consumer_resume.dart'
+  show consumerResume, ConsumerResumeType;
 import '../../consumers/connect_send_transport_audio.dart'
     show connectSendTransportAudio;
 import '../../consumers/connect_send_transport_video.dart'
@@ -169,7 +170,8 @@ import '../../consumers/check_grid.dart' show checkGrid;
 import '../../consumers/get_estimate.dart' show getEstimate;
 import '../../consumers/calculate_rows_and_columns.dart'
     show calculateRowsAndColumns;
-import '../../consumers/add_videos_grid.dart' show addVideosGrid;
+import '../../consumers/add_videos_grid.dart'
+  show addVideosGrid, AddVideosGridType;
 import '../../consumers/on_screen_changes.dart'
     show onScreenChanges, OnScreenChangesOptions;
 import '../../methods/utils/sleep.dart' show sleep;
@@ -189,6 +191,8 @@ import '../../consumers/disconnect_send_transport_screen.dart'
     show disconnectSendTransportScreen;
 import '../../consumers/connect_send_transport.dart' show connectSendTransport;
 import '../../consumers/get_piped_producers_alt.dart' show getPipedProducersAlt;
+import '../../methods/utils/mini_audio_player/mini_audio_player.dart'
+  show MiniAudioPlayer, MiniAudioPlayerOptions, MiniAudioPlayerType;
 import '../../consumers/signal_new_consumer_transport.dart'
     show signalNewConsumerTransport;
 import '../../consumers/connect_recv_transport.dart' show connectRecvTransport;
@@ -341,7 +345,15 @@ import '../../types/types.dart'
 import '../../methods/utils/create_response_join_room.dart'
     show createResponseJoinRoom, CreateResponseJoinRoomOptions;
 import '../../methods/utils/mediasfu_parameters.dart' show MediasfuParameters;
-import '../../types/custom_builders.dart' show VideoCardType, AudioCardType, MiniCardType, CustomComponentType;
+import '../../types/custom_builders.dart'
+  show VideoCardType, AudioCardType, MiniCardType, CustomComponentType, CustomWorkspaceBuilder;
+import '../../types/ui_overrides.dart'
+  show
+    ContainerStyleOptions,
+    DefaultComponentBuilder,
+    MediasfuUICustomOverrides,
+    withFunctionOverride,
+    withOverride;
 
 class MediasfuConferenceOptions {
   PreJoinPageType? preJoinPageWidget;
@@ -367,6 +379,8 @@ class MediasfuConferenceOptions {
   
   // Custom component widget - allows complete replacement of the MediaSFU interface
   CustomComponentType? customComponent;
+  ContainerStyleOptions? containerStyle;
+  MediasfuUICustomOverrides? uiOverrides;
 
   MediasfuConferenceOptions({
     this.preJoinPageWidget,
@@ -388,7 +402,20 @@ class MediasfuConferenceOptions {
     this.customAudioCard,
     this.customMiniCard,
     this.customComponent,
-  });
+    this.containerStyle,
+    this.uiOverrides,
+    CustomWorkspaceBuilder? customWorkspaceBuilder,
+  }) {
+    applyCustomWorkspaceBuilder(customWorkspaceBuilder);
+  }
+
+  CustomComponentType? get customWorkspaceBuilder => customComponent;
+
+  void applyCustomWorkspaceBuilder(CustomWorkspaceBuilder? builder) {
+    if (builder != null) {
+      customComponent = builder;
+    }
+  }
 }
 
 /// `MediasfuConference` - A generic widget for initializing and managing Mediasfu functionalities.
@@ -435,6 +462,239 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
   bool validated = false;
 
   Map<String, dynamic> initialValues = initialValuesState;
+  late MediasfuUICustomOverrides _uiOverrides;
+  late ContainerStyleOptions _containerStyle;
+  late ConsumerResumeType _consumerResumeHandler;
+  late AddVideosGridType _addVideosGridHandler;
+  late PrepopulateUserMediaType _prepopulateUserMediaHandler;
+  late MiniAudioPlayerType _miniAudioPlayerHandler;
+  late DefaultComponentBuilder<MainContainerComponentOptions>
+    _mainContainerBuilder;
+  late DefaultComponentBuilder<MainAspectComponentOptions> _mainAspectBuilder;
+  late DefaultComponentBuilder<MainScreenComponentOptions> _mainScreenBuilder;
+  late DefaultComponentBuilder<MainGridComponentOptions> _mainGridBuilder;
+  late DefaultComponentBuilder<FlexibleVideoOptions> _flexibleVideoBuilder;
+  late DefaultComponentBuilder<MeetingProgressTimerOptions>
+    _meetingProgressTimerBuilder;
+  late DefaultComponentBuilder<OtherGridComponentOptions> _otherGridBuilder;
+  late DefaultComponentBuilder<FlexibleGridOptions> _flexibleGridBuilder;
+  late DefaultComponentBuilder<FlexibleGridOptions> _flexibleGridAltBuilder;
+  late DefaultComponentBuilder<AudioGridOptions> _audioGridBuilder;
+  late DefaultComponentBuilder<PaginationOptions> _paginationBuilder;
+  late DefaultComponentBuilder<SubAspectComponentOptions> _subAspectBuilder;
+  late DefaultComponentBuilder<ControlButtonsComponentOptions>
+    _controlButtonsBuilder;
+  late DefaultComponentBuilder<ControlButtonsAltComponentOptions>
+    _controlButtonsAltBuilder;
+  late DefaultComponentBuilder<MenuModalOptions> _menuModalBuilder;
+  late DefaultComponentBuilder<DisplaySettingsModalOptions>
+    _displaySettingsModalBuilder;
+  late DefaultComponentBuilder<MediaSettingsModalOptions>
+    _mediaSettingsModalBuilder;
+  late DefaultComponentBuilder<EventSettingsModalOptions>
+    _eventSettingsModalBuilder;
+  late DefaultComponentBuilder<RequestsModalOptions> _requestsModalBuilder;
+  late DefaultComponentBuilder<WaitingRoomModalOptions>
+    _waitingRoomModalBuilder;
+  late DefaultComponentBuilder<ShareEventModalOptions>
+    _shareEventModalBuilder;
+  late DefaultComponentBuilder<RecordingModalOptions>
+    _recordingModalBuilder;
+  late DefaultComponentBuilder<CoHostModalOptions> _coHostModalBuilder;
+  late DefaultComponentBuilder<ParticipantsModalOptions>
+    _participantsModalBuilder;
+  late DefaultComponentBuilder<MessagesModalOptions> _messagesModalBuilder;
+  late DefaultComponentBuilder<PollModalOptions> _pollModalBuilder;
+  late DefaultComponentBuilder<BreakoutRoomsModalOptions>
+    _breakoutRoomsModalBuilder;
+  late DefaultComponentBuilder<ConfirmExitModalOptions>
+    _confirmExitModalBuilder;
+  late DefaultComponentBuilder<AlertComponentOptions> _alertBuilder;
+  late DefaultComponentBuilder<ConfirmHereModalOptions>
+    _confirmHereModalBuilder;
+  late DefaultComponentBuilder<LoadingModalOptions> _loadingModalBuilder;
+  late DefaultComponentBuilder<PreJoinPageOptions> _preJoinPageBuilder;
+  late DefaultComponentBuilder<WelcomePageOptions> _welcomePageBuilder;
+
+  void _hydrateUiOverrides() {
+    _uiOverrides =
+        widget.options.uiOverrides ?? const MediasfuUICustomOverrides.empty();
+    _containerStyle =
+        widget.options.containerStyle ?? const ContainerStyleOptions();
+    _consumerResumeHandler = withFunctionOverride<ConsumerResumeType>(
+      base: consumerResume,
+      override: _uiOverrides.consumerResume,
+    );
+    _addVideosGridHandler = withFunctionOverride<AddVideosGridType>(
+      base: addVideosGrid,
+      override: _uiOverrides.addVideosGrid,
+    );
+    _prepopulateUserMediaHandler =
+        withFunctionOverride<PrepopulateUserMediaType>(
+      base: prepopulateUserMedia,
+      override: _uiOverrides.prepopulateUserMedia,
+    );
+    final miniAudioPlayerBuilder = withOverride<MiniAudioPlayerOptions>(
+      override: _uiOverrides.miniAudioPlayer,
+      baseBuilder: (context, options) => MiniAudioPlayer(options: options),
+    );
+    _miniAudioPlayerHandler = (options) => Builder(
+          builder: (context) => miniAudioPlayerBuilder(context, options),
+        );
+    _mainContainerBuilder = withOverride<MainContainerComponentOptions>(
+      override: _uiOverrides.mainContainer,
+      baseBuilder: (context, options) =>
+          MainContainerComponent(options: options),
+    );
+    _mainAspectBuilder = withOverride<MainAspectComponentOptions>(
+      override: _uiOverrides.mainAspect,
+      baseBuilder: (context, options) =>
+          MainAspectComponent(options: options),
+    );
+    _mainScreenBuilder = withOverride<MainScreenComponentOptions>(
+      override: _uiOverrides.mainScreen,
+      baseBuilder: (context, options) =>
+          MainScreenComponent(options: options),
+    );
+    _mainGridBuilder = withOverride<MainGridComponentOptions>(
+      override: _uiOverrides.mainGrid,
+      baseBuilder: (context, options) =>
+          MainGridComponent(options: options),
+    );
+    _flexibleVideoBuilder = withOverride<FlexibleVideoOptions>(
+      override: _uiOverrides.flexibleVideo,
+      baseBuilder: (context, options) => FlexibleVideo(options: options),
+    );
+    _meetingProgressTimerBuilder = withOverride<MeetingProgressTimerOptions>(
+      override: _uiOverrides.meetingProgressTimer,
+      baseBuilder: (context, options) =>
+          MeetingProgressTimer(options: options),
+    );
+    _otherGridBuilder = withOverride<OtherGridComponentOptions>(
+      override: _uiOverrides.otherGrid,
+      baseBuilder: (context, options) =>
+          OtherGridComponent(options: options),
+    );
+    _flexibleGridBuilder = withOverride<FlexibleGridOptions>(
+      override: _uiOverrides.flexibleGrid,
+      baseBuilder: (context, options) => FlexibleGrid(options: options),
+    );
+    _flexibleGridAltBuilder = withOverride<FlexibleGridOptions>(
+      override: _uiOverrides.flexibleGridAlt,
+      baseBuilder: (context, options) => FlexibleGrid(options: options),
+    );
+    _audioGridBuilder = withOverride<AudioGridOptions>(
+      override: _uiOverrides.audioGrid,
+      baseBuilder: (context, options) => AudioGrid(options: options),
+    );
+    _paginationBuilder = withOverride<PaginationOptions>(
+      override: _uiOverrides.pagination,
+      baseBuilder: (context, options) => Pagination(options: options),
+    );
+    _subAspectBuilder = withOverride<SubAspectComponentOptions>(
+      override: _uiOverrides.subAspect,
+      baseBuilder: (context, options) =>
+          SubAspectComponent(options: options),
+    );
+    _controlButtonsBuilder = withOverride<ControlButtonsComponentOptions>(
+      override: _uiOverrides.controlButtons,
+      baseBuilder: (context, options) =>
+          ControlButtonsComponent(options: options),
+    );
+    _controlButtonsAltBuilder =
+        withOverride<ControlButtonsAltComponentOptions>(
+      override: _uiOverrides.controlButtonsAlt,
+      baseBuilder: (context, options) =>
+          ControlButtonsAltComponent(options: options),
+    );
+    _menuModalBuilder = withOverride<MenuModalOptions>(
+      override: _uiOverrides.menuModal,
+      baseBuilder: (context, options) => MenuModal(options: options),
+    );
+    _displaySettingsModalBuilder =
+        withOverride<DisplaySettingsModalOptions>(
+      override: _uiOverrides.displaySettingsModal,
+      baseBuilder: (context, options) =>
+          DisplaySettingsModal(options: options),
+    );
+    _mediaSettingsModalBuilder = withOverride<MediaSettingsModalOptions>(
+      override: _uiOverrides.mediaSettingsModal,
+      baseBuilder: (context, options) =>
+          MediaSettingsModal(options: options),
+    );
+    _eventSettingsModalBuilder = withOverride<EventSettingsModalOptions>(
+      override: _uiOverrides.eventSettingsModal,
+      baseBuilder: (context, options) =>
+          EventSettingsModal(options: options),
+    );
+    _requestsModalBuilder = withOverride<RequestsModalOptions>(
+      override: _uiOverrides.requestsModal,
+      baseBuilder: (context, options) => RequestsModal(options: options),
+    );
+    _waitingRoomModalBuilder = withOverride<WaitingRoomModalOptions>(
+      override: _uiOverrides.waitingRoomModal,
+      baseBuilder: (context, options) =>
+          WaitingRoomModal(options: options),
+    );
+    _shareEventModalBuilder = withOverride<ShareEventModalOptions>(
+      override: _uiOverrides.shareEventModal,
+      baseBuilder: (context, options) =>
+          ShareEventModal(options: options),
+    );
+    _recordingModalBuilder = withOverride<RecordingModalOptions>(
+      override: _uiOverrides.recordingModal,
+      baseBuilder: (context, options) =>
+          RecordingModal(options: options),
+    );
+    _coHostModalBuilder = withOverride<CoHostModalOptions>(
+      override: _uiOverrides.coHostModal,
+      baseBuilder: (context, options) => CoHostModal(options: options),
+    );
+    _participantsModalBuilder = withOverride<ParticipantsModalOptions>(
+      override: _uiOverrides.participantsModal,
+      baseBuilder: (context, options) =>
+          ParticipantsModal(options: options),
+    );
+    _messagesModalBuilder = withOverride<MessagesModalOptions>(
+      override: _uiOverrides.messagesModal,
+      baseBuilder: (context, options) => MessagesModal(options: options),
+    );
+    _pollModalBuilder = withOverride<PollModalOptions>(
+      override: _uiOverrides.pollModal,
+      baseBuilder: (context, options) => PollModal(options: options),
+    );
+    _breakoutRoomsModalBuilder = withOverride<BreakoutRoomsModalOptions>(
+      override: _uiOverrides.breakoutRoomsModal,
+      baseBuilder: (context, options) =>
+          BreakoutRoomsModal(options: options),
+    );
+    _confirmExitModalBuilder = withOverride<ConfirmExitModalOptions>(
+      override: _uiOverrides.confirmExitModal,
+      baseBuilder: (context, options) =>
+          ConfirmExitModal(options: options),
+    );
+    _alertBuilder = withOverride<AlertComponentOptions>(
+      override: _uiOverrides.alert,
+      baseBuilder: (context, options) => AlertComponent(options: options),
+    );
+    _confirmHereModalBuilder = withOverride<ConfirmHereModalOptions>(
+      override: _uiOverrides.confirmHereModal,
+      baseBuilder: (context, options) =>
+          ConfirmHereModal(options: options),
+    );
+    _loadingModalBuilder = withOverride<LoadingModalOptions>(
+      override: _uiOverrides.loadingModal,
+      baseBuilder: (context, options) => LoadingModal(options: options),
+    );
+    _preJoinPageBuilder = withOverride<PreJoinPageOptions>(
+      override: _uiOverrides.preJoinPage,
+      baseBuilder: (context, options) => PreJoinPage(options: options),
+    );
+    _welcomePageBuilder = withOverride<WelcomePageOptions>(
+      override: _uiOverrides.welcomePage,
+      baseBuilder: (context, options) => WelcomePage(options: options),
+    );
+  }
 
   Future<ResponseJoinRoom> joinRoom(
       {required io.Socket? socket,
@@ -2196,7 +2456,7 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
       } catch (error) {}
 
       try {
-        prepopulateUserMedia(
+        _prepopulateUserMediaHandler(
           PrepopulateUserMediaOptions(
             name: hostLabel.value,
             parameters: mediasfuParameters,
@@ -3083,7 +3343,7 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
       } catch (error) {}
 
       try {
-        prepopulateUserMedia(PrepopulateUserMediaOptions(
+        _prepopulateUserMediaHandler(PrepopulateUserMediaOptions(
           name: hostLabel.value,
           parameters: mediasfuParameters,
         ));
@@ -3686,16 +3946,15 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
       ),
       // Custom Record Buttons
       CustomButton(
-        // You can define custom UI components directly in Flutter
-        // In this case, you'll need to handle the custom UI rendering separately
-        // You can replace this with a custom widget/component as needed
-        customComponent: ControlButtonsAltComponent(
-          options: ControlButtonsAltComponentOptions(
-              buttons: recordButtons,
-              direction: 'horizontal',
-              showAspect: true,
-              location: 'bottom',
-              position: 'middle'),
+        customComponent: _controlButtonsAltBuilder(
+          context,
+          ControlButtonsAltComponentOptions(
+            buttons: recordButtons,
+            direction: 'horizontal',
+            showAspect: true,
+            location: 'bottom',
+            position: 'middle',
+          ),
         ),
         show: showRecordButtons.value && islevel.value == '2',
         action: () {},
@@ -4977,7 +5236,7 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
           ));
 
           if (!skipSockets) {
-            prepopulateUserMedia(
+            _prepopulateUserMediaHandler(
               PrepopulateUserMediaOptions(
                 name: hostLabel.value,
                 parameters: mediasfuParameters,
@@ -5047,6 +5306,7 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
   @override
   void initState() {
     super.initState();
+    _hydrateUiOverrides();
     mediasfuParameters = MediasfuParameters(
         updateMiniCardsGrid: updateMiniCardsGrid,
         mixStreams: mixStreams,
@@ -5056,11 +5316,11 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
         startShareScreen: startShareScreen,
         requestScreenShare: requestScreenShare,
         reorderStreams: reorderStreams,
-        prepopulateUserMedia: prepopulateUserMedia,
+  prepopulateUserMedia: _prepopulateUserMediaHandler,
         getVideos: getVideos,
         rePort: rePort,
         trigger: trigger,
-        consumerResume: consumerResume,
+  consumerResume: _consumerResumeHandler,
         connectSendTransport: connectSendTransport,
         connectSendTransportAudio: connectSendTransportAudio,
         connectSendTransportVideo: connectSendTransportVideo,
@@ -5071,7 +5331,7 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
         checkGrid: checkGrid,
         getEstimate: getEstimate,
         calculateRowsAndColumns: calculateRowsAndColumns,
-        addVideosGrid: addVideosGrid,
+  addVideosGrid: _addVideosGridHandler,
         onScreenChanges: onScreenChanges,
         sleep: sleep,
         changeVids: changeVids,
@@ -5132,7 +5392,9 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
         participants: participants.value,
         filteredParticipants: filteredParticipants.value,
         participantsCounter: participantsCounter.value,
-        participantsFilter: participantsFilter.value,
+  participantsFilter: participantsFilter.value,
+  uiOverrides: _uiOverrides,
+  containerStyle: _containerStyle,
 
         // More room details - media
         consumeSockets: consumeSockets.value,
@@ -5843,6 +6105,7 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
         customVideoCard: widget.options.customVideoCard,
         customAudioCard: widget.options.customAudioCard,
         customMiniCard: widget.options.customMiniCard,
+  miniAudioPlayerComponent: _miniAudioPlayerHandler,
         
         // Custom builder update functions
         updateCustomVideoCard: updateCustomVideoCard,
@@ -5954,12 +6217,22 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
     return validated &&
             widget.options.returnUI != null &&
             widget.options.returnUI == true
-        ? MainContainerComponent(
-            options: MainContainerComponentOptions(
-              backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
+        ? _mainContainerBuilder(
+            context,
+            MainContainerComponentOptions(
+              backgroundColor: _containerStyle.backgroundColor ??
+                  const Color.fromRGBO(217, 227, 234, 0.99),
+              containerWidthFraction: _containerStyle.widthFraction ?? 1.0,
+              containerHeightFraction: _containerStyle.heightFraction ?? 1.0,
+              margin: _containerStyle.margin,
+              padding: _containerStyle.padding,
+              decoration: _containerStyle.decoration,
+              alignment: _containerStyle.alignment,
+              clipBehavior: _containerStyle.clipBehavior,
               children: [
-                MainAspectComponent(
-                  options: MainAspectComponentOptions(
+                _mainAspectBuilder(
+                  context,
+                  MainAspectComponentOptions(
                     backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
                     updateIsWideScreen: updateIsWideScreen,
                     updateIsMediumScreen: updateIsMediumScreen,
@@ -5971,8 +6244,9 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
                       ValueListenableBuilder<ComponentSizes>(
                           valueListenable: componentSizes,
                           builder: (context, componentSizes, child) {
-                            return MainScreenComponent(
-                              options: MainScreenComponentOptions(
+                            return _mainScreenBuilder(
+                              context,
+                              MainScreenComponentOptions(
                                 doStack: true,
                                 mainSize: mainHeightWidth,
                                 updateComponentSizes: updateComponentSizes,
@@ -5984,8 +6258,9 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
                                   ValueListenableBuilder<GridSizes>(
                                     valueListenable: gridSizes,
                                     builder: (context, gridSizes, child) {
-                                      return MainGridComponent(
-                                        options: MainGridComponentOptions(
+                                      return _mainGridBuilder(
+                                        context,
+                                        MainGridComponentOptions(
                                           height: componentSizes.mainHeight,
                                           width: componentSizes.mainWidth,
                                           backgroundColor: const Color.fromRGBO(
@@ -6002,42 +6277,46 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
                                               meetingProgressTime.value,
                                           showTimer: true,
                                           children: [
-                                            FlexibleVideo(
-                                                options: FlexibleVideoOptions(
-                                              backgroundColor:
-                                                  const Color.fromRGBO(
-                                                      217, 227, 234, 0.99),
-                                              customWidth:
-                                                  componentSizes.mainWidth,
-                                              customHeight:
-                                                  componentSizes.mainHeight,
-                                              rows: 1,
-                                              columns: 1,
-                                              componentsToRender:
-                                                  mainGridStream.value,
-                                              showAspect: mainGridStream
-                                                  .value.isNotEmpty,
-                                            )),
+                                            _flexibleVideoBuilder(
+                                              context,
+                                              FlexibleVideoOptions(
+                                                backgroundColor:
+                                                    const Color.fromRGBO(
+                                                        217, 227, 234, 0.99),
+                                                customWidth:
+                                                    componentSizes.mainWidth,
+                                                customHeight:
+                                                    componentSizes.mainHeight,
+                                                rows: 1,
+                                                columns: 1,
+                                                componentsToRender:
+                                                    mainGridStream.value,
+                                                showAspect: mainGridStream
+                                                    .value.isNotEmpty,
+                                              ),
+                                            ),
                                             ValueListenableBuilder<String>(
                                                 valueListenable:
                                                     meetingProgressTime,
                                                 builder: (context,
                                                     meetingProgressTime,
                                                     child) {
-                                                  return MeetingProgressTimer(
-                                                      options:
-                                                          MeetingProgressTimerOptions(
-                                                    meetingProgressTime:
-                                                        meetingProgressTime,
-                                                    initialBackgroundColor:
-                                                        recordState == 'green'
-                                                            ? Colors.green
-                                                            : recordState ==
-                                                                    'yellow'
-                                                                ? Colors.yellow
-                                                                : Colors.red,
-                                                    showTimer: true,
-                                                  ));
+                                                  return _meetingProgressTimerBuilder(
+                                                    context,
+                                                    MeetingProgressTimerOptions(
+                                                      meetingProgressTime:
+                                                          meetingProgressTime,
+                                                      initialBackgroundColor:
+                                                          recordState == 'green'
+                                                              ? Colors.green
+                                                              : recordState ==
+                                                                      'yellow'
+                                                                  ? Colors
+                                                                      .yellow
+                                                                  : Colors.red,
+                                                      showTimer: true,
+                                                    ),
+                                                  );
                                                 }),
                                           ],
                                         ),
@@ -6047,8 +6326,9 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
                                   ValueListenableBuilder<GridSizes>(
                                       valueListenable: gridSizes,
                                       builder: (context, gridSizes, child) {
-                                        return OtherGridComponent(
-                                          options: OtherGridComponentOptions(
+                                        return _otherGridBuilder(
+                                          context,
+                                          OtherGridComponentOptions(
                                             height: componentSizes.otherHeight,
                                             width: componentSizes.otherWidth,
                                             backgroundColor:
@@ -6063,17 +6343,17 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
                                                     : recordState == 'yellow'
                                                         ? Colors.yellow
                                                         : Colors.red,
-                                            showTimer: mainHeightWidth == 0
-                                                ? true
-                                                : false,
+                                            showTimer: mainHeightWidth == 0,
                                             meetingProgressTime:
                                                 meetingProgressTime.value,
                                             children: [
-                                              AudioGrid(
-                                                  options: AudioGridOptions(
-                                                componentsToRender:
-                                                    audioOnlyStreams.value,
-                                              )),
+                                              _audioGridBuilder(
+                                                context,
+                                                AudioGridOptions(
+                                                  componentsToRender:
+                                                      audioOnlyStreams.value,
+                                                ),
+                                              ),
                                               Container(
                                                 padding: EdgeInsets.only(
                                                   top: doPaginate.value
@@ -6095,26 +6375,27 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
                                                           : 0
                                                       : 0,
                                                 ),
-                                                child: FlexibleGrid(
-                                                    options:
-                                                        FlexibleGridOptions(
-                                                  customWidth: gridSizes
-                                                      .gridWidth
-                                                      ?.toDouble(),
-                                                  customHeight: gridSizes
-                                                      .gridHeight
-                                                      ?.toDouble(),
-                                                  rows: gridRows.value,
-                                                  columns: gridCols.value,
-                                                  componentsToRender:
-                                                      otherGridStreams[0],
-                                                  backgroundColor:
-                                                      const Color.fromRGBO(
-                                                          217, 227, 234, 0.99),
-                                                  showAspect: addGrid.value &&
-                                                      otherGridStreams[0]
-                                                          .isNotEmpty,
-                                                )),
+                                                child: _flexibleGridBuilder(
+                                                  context,
+                                                  FlexibleGridOptions(
+                                                    customWidth: gridSizes
+                                                        .gridWidth
+                                                        ?.toDouble(),
+                                                    customHeight: gridSizes
+                                                        .gridHeight
+                                                        ?.toDouble(),
+                                                    rows: gridRows.value,
+                                                    columns: gridCols.value,
+                                                    componentsToRender:
+                                                        otherGridStreams[0],
+                                                    backgroundColor:
+                                                        const Color.fromRGBO(
+                                                            217, 227, 234, 0.99),
+                                                    showAspect: addGrid.value &&
+                                                        otherGridStreams[0]
+                                                            .isNotEmpty,
+                                                  ),
+                                                ),
                                               ),
                                               Container(
                                                 padding: EdgeInsets.only(
@@ -6140,29 +6421,30 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
                                                           : 0
                                                       : 0,
                                                 ),
-                                                child: FlexibleGrid(
-                                                    options:
-                                                        FlexibleGridOptions(
-                                                  customWidth: gridSizes
-                                                          .altGridWidth
-                                                          ?.toDouble() ??
-                                                      0,
-                                                  customHeight: gridSizes
-                                                          .altGridHeight
-                                                          ?.toDouble() ??
-                                                      0,
-                                                  rows: altGridRows.value,
-                                                  columns: altGridCols.value,
-                                                  componentsToRender:
-                                                      otherGridStreams[1],
-                                                  backgroundColor:
-                                                      const Color.fromRGBO(
-                                                          217, 227, 234, 0.99),
-                                                  showAspect:
-                                                      addAltGrid.value &&
-                                                          otherGridStreams[1]
-                                                              .isNotEmpty,
-                                                )),
+                                                child: _flexibleGridAltBuilder(
+                                                  context,
+                                                  FlexibleGridOptions(
+                                                    customWidth: gridSizes
+                                                            .altGridWidth
+                                                            ?.toDouble() ??
+                                                        0,
+                                                    customHeight: gridSizes
+                                                            .altGridHeight
+                                                            ?.toDouble() ??
+                                                        0,
+                                                    rows: altGridRows.value,
+                                                    columns: altGridCols.value,
+                                                    componentsToRender:
+                                                        otherGridStreams[1],
+                                                    backgroundColor:
+                                                        const Color.fromRGBO(
+                                                            217, 227, 234, 0.99),
+                                                    showAspect:
+                                                        addAltGrid.value &&
+                                                            otherGridStreams[1]
+                                                                .isNotEmpty,
+                                                  ),
+                                                ),
                                               ),
                                               ValueListenableBuilder<String>(
                                                   valueListenable:
@@ -6170,24 +6452,25 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
                                                   builder: (context,
                                                       meetingProgressTime,
                                                       child) {
-                                                    return MeetingProgressTimer(
-                                                        options:
-                                                            MeetingProgressTimerOptions(
-                                                      meetingProgressTime:
-                                                          meetingProgressTime,
-                                                      initialBackgroundColor:
-                                                          recordState == 'green'
-                                                              ? Colors.green
-                                                              : recordState ==
-                                                                      'yellow'
-                                                                  ? Colors
-                                                                      .yellow
-                                                                  : Colors.red,
-                                                      showTimer:
-                                                          mainHeightWidth == 0
-                                                              ? true
-                                                              : false,
-                                                    ));
+                                                    return _meetingProgressTimerBuilder(
+                                                      context,
+                                                      MeetingProgressTimerOptions(
+                                                        meetingProgressTime:
+                                                            meetingProgressTime,
+                                                        initialBackgroundColor:
+                                                            recordState ==
+                                                                    'green'
+                                                                ? Colors.green
+                                                                : recordState ==
+                                                                        'yellow'
+                                                                    ? Colors
+                                                                        .yellow
+                                                                    : Colors.red,
+                                                        showTimer:
+                                                            mainHeightWidth ==
+                                                                0,
+                                                      ),
+                                                    );
                                                   }),
                                               Visibility(
                                                 visible: doPaginate.value,
@@ -6206,25 +6489,27 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
                                                           .value
                                                           .toDouble()
                                                       : double.infinity,
-                                                  child: Pagination(
-                                                      options:
-                                                          PaginationOptions(
-                                                    totalPages:
-                                                        numberPages.value,
-                                                    currentUserPage:
-                                                        currentUserPage.value,
-                                                    showAspect:
-                                                        doPaginate.value,
-                                                    paginationHeight:
-                                                        paginationHeightWidth
-                                                            .value
-                                                            .toDouble(),
-                                                    direction:
-                                                        paginationDirection
-                                                            .value,
-                                                    parameters:
-                                                        mediasfuParameters,
-                                                  )),
+                                                  child: _paginationBuilder(
+                                                    context,
+                                                    PaginationOptions(
+                                                      totalPages:
+                                                          numberPages.value,
+                                                      currentUserPage:
+                                                          currentUserPage
+                                                              .value,
+                                                      showAspect:
+                                                          doPaginate.value,
+                                                      paginationHeight:
+                                                          paginationHeightWidth
+                                                              .value
+                                                              .toDouble(),
+                                                      direction:
+                                                          paginationDirection
+                                                              .value,
+                                                      parameters:
+                                                          mediasfuParameters,
+                                                    ),
+                                                  ),
                                                 ),
                                               ),
                                             ],
@@ -6244,24 +6529,27 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
                   child: ValueListenableBuilder<double>(
                     valueListenable: controlHeight,
                     builder: (context, controlHeight, child) {
-                      return SubAspectComponent(
-                        options: SubAspectComponentOptions(
-                            backgroundColor:
-                                const Color.fromRGBO(217, 227, 234, 0.99),
-                            showControls:
-                                eventType.value == EventType.webinar ||
-                                    eventType.value == EventType.conference,
-                            defaultFractionSub: 40, //40 pixels
-                            children: [
-                              ControlButtonsComponent(
-                                  options: ControlButtonsComponentOptions(
+                      return _subAspectBuilder(
+                        context,
+                        SubAspectComponentOptions(
+                          backgroundColor:
+                              const Color.fromRGBO(217, 227, 234, 0.99),
+                          showControls:
+                              eventType.value == EventType.webinar ||
+                                  eventType.value == EventType.conference,
+                          defaultFractionSub: 40,
+                          children: [
+                            _controlButtonsBuilder(
+                              context,
+                              ControlButtonsComponentOptions(
                                 buttons: controlButtons,
                                 buttonBackgroundColor: Colors.transparent,
                                 alignment: MainAxisAlignment.spaceBetween,
-                                vertical:
-                                    false, // Set to true for vertical layout
-                              )),
-                            ]),
+                                vertical: false,
+                              ),
+                            ),
+                          ],
+                        ),
                       );
                     },
                   ),
@@ -6278,8 +6566,9 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
   }
 
   Widget renderWelcomePage() {
-    return WelcomePage(
-      options: WelcomePageOptions(
+    return _welcomePageBuilder(
+      context,
+      WelcomePageOptions(
         imgSrc:
             widget.options.imgSrc ?? 'https://mediasfu.com/images/logo192.png',
         updateIsLoadingModalVisible: updateIsLoadingModalVisible,
@@ -6297,9 +6586,9 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
   }
 
   Widget? renderpreJoinPageWidget() {
-    return PreJoinPage(
-      // return widget.options.preJoinPageWidget!(
-      options: PreJoinPageOptions(
+    return _preJoinPageBuilder(
+      context,
+      PreJoinPageOptions(
         parameters: PreJoinPageParameters(
           imgSrc: widget.options.imgSrc ??
               'https://mediasfu.com/images/logo192.png',
@@ -6377,18 +6666,20 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
     return ValueListenableBuilder<bool>(
       valueListenable: isMenuModalVisible,
       builder: (context, isMenuModalVisible, child) {
-        return MenuModal(
-            options: MenuModalOptions(
-          backgroundColor: const Color.fromRGBO(181, 233, 229, 0.97),
-          isVisible: isMenuModalVisible,
-          onClose: () => updateIsMenuModalVisible(false),
-          customButtons: customMenuButtons,
-          roomName: roomName.value,
-          adminPasscode: adminPasscode.value,
-          islevel: islevel.value,
-          eventType: eventType.value,
-          localLink: widget.options.localLink,
-        ));
+        return _menuModalBuilder(
+          context,
+          MenuModalOptions(
+            backgroundColor: const Color.fromRGBO(181, 233, 229, 0.97),
+            isVisible: isMenuModalVisible,
+            onClose: () => updateIsMenuModalVisible(false),
+            customButtons: customMenuButtons,
+            roomName: roomName.value,
+            adminPasscode: adminPasscode.value,
+            islevel: islevel.value,
+            eventType: eventType.value,
+            localLink: widget.options.localLink,
+          ),
+        );
       },
     );
   }
@@ -6400,8 +6691,9 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
         return ValueListenableBuilder<bool>(
           valueListenable: recordUIChanged,
           builder: (context, recordUIChanged, child) {
-            return RecordingModal(
-              options: RecordingModalOptions(
+            return _recordingModalBuilder(
+              context,
+              RecordingModalOptions(
                 backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
                 isRecordingModalVisible: isRecordingModalVisible,
                 onClose: () {
@@ -6425,8 +6717,9 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
         return ValueListenableBuilder<List<Request>>(
           valueListenable: filteredRequestList,
           builder: (context, filteredRequestList, child) {
-            return RequestsModal(
-              options: RequestsModalOptions(
+            return _requestsModalBuilder(
+              context,
+              RequestsModalOptions(
                 backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
                 isRequestsModalVisible: isRequestsVisible,
                 onRequestClose: () {
@@ -6454,8 +6747,9 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
         return ValueListenableBuilder<List<WaitingRoomParticipant>>(
           valueListenable: filteredWaitingRoomList,
           builder: (context, filteredWaitingRoomList, child) {
-            return WaitingRoomModal(
-              options: WaitingRoomModalOptions(
+            return _waitingRoomModalBuilder(
+              context,
+              WaitingRoomModalOptions(
                 backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
                 isWaitingModalVisible: isWaitingModalVisible,
                 onWaitingRoomClose: () {
@@ -6480,15 +6774,17 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
     return ValueListenableBuilder<bool>(
       valueListenable: isDisplaySettingsModalVisible,
       builder: (context, isDisplaySettingsVisible, child) {
-        return DisplaySettingsModal(
-            options: DisplaySettingsModalOptions(
-          backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
-          isVisible: isDisplaySettingsVisible,
-          onClose: () {
-            updateIsDisplaySettingsModalVisible(false);
-          },
-          parameters: mediasfuParameters,
-        ));
+        return _displaySettingsModalBuilder(
+          context,
+          DisplaySettingsModalOptions(
+            backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
+            isVisible: isDisplaySettingsVisible,
+            onClose: () {
+              updateIsDisplaySettingsModalVisible(false);
+            },
+            parameters: mediasfuParameters,
+          ),
+        );
       },
     );
   }
@@ -6497,26 +6793,28 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
     return ValueListenableBuilder<bool>(
       valueListenable: isSettingsModalVisible,
       builder: (context, isSettingsVisible, child) {
-        return EventSettingsModal(
-            options: EventSettingsModalOptions(
-          backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
-          isVisible: isSettingsVisible,
-          updateIsSettingsModalVisible: updateIsSettingsModalVisible,
-          onClose: () {
-            updateIsSettingsModalVisible(false);
-          },
-          audioSetting: audioSetting.value,
-          videoSetting: videoSetting.value,
-          screenshareSetting: screenshareSetting.value,
-          chatSetting: chatSetting.value,
-          updateAudioSetting: updateAudioSetting,
-          updateVideoSetting: updateVideoSetting,
-          updateScreenshareSetting: updateScreenshareSetting,
-          updateChatSetting: updateChatSetting,
-          roomName: roomName.value,
-          socket: socket.value,
-          showAlert: showAlert,
-        ));
+        return _eventSettingsModalBuilder(
+          context,
+          EventSettingsModalOptions(
+            backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
+            isVisible: isSettingsVisible,
+            updateIsSettingsModalVisible: updateIsSettingsModalVisible,
+            onClose: () {
+              updateIsSettingsModalVisible(false);
+            },
+            audioSetting: audioSetting.value,
+            videoSetting: videoSetting.value,
+            screenshareSetting: screenshareSetting.value,
+            chatSetting: chatSetting.value,
+            updateAudioSetting: updateAudioSetting,
+            updateVideoSetting: updateVideoSetting,
+            updateScreenshareSetting: updateScreenshareSetting,
+            updateChatSetting: updateChatSetting,
+            roomName: roomName.value,
+            socket: socket.value,
+            showAlert: showAlert,
+          ),
+        );
       },
     );
   }
@@ -6525,8 +6823,9 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
     return ValueListenableBuilder<bool>(
       valueListenable: isCoHostModalVisible,
       builder: (context, isCoHostVisible, child) {
-        return CoHostModal(
-          options: CoHostModalOptions(
+        return _coHostModalBuilder(
+          context,
+          CoHostModalOptions(
             isCoHostModalVisible: isCoHostVisible,
             onCoHostClose: () {
               updateIsCoHostModalVisible(false);
@@ -6553,8 +6852,9 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
         return ValueListenableBuilder<List<dynamic>>(
           valueListenable: filteredParticipants,
           builder: (context, filteredParticipants, child) {
-            return ParticipantsModal(
-              options: ParticipantsModalOptions(
+            return _participantsModalBuilder(
+              context,
+              ParticipantsModalOptions(
                 backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
                 isParticipantsModalVisible: isParticipantsVisible,
                 onParticipantsClose: () {
@@ -6578,8 +6878,9 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
         return ValueListenableBuilder<List<Message>>(
           valueListenable: messages,
           builder: (context, messages, child) {
-            return MessagesModal(
-              options: MessagesModalOptions(
+            return _messagesModalBuilder(
+              context,
+              MessagesModalOptions(
                 backgroundColor: eventType.value == EventType.webinar ||
                         eventType.value == EventType.conference
                     ? const Color(0xFFF5F5F5)
@@ -6614,8 +6915,9 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
     return ValueListenableBuilder<bool>(
       valueListenable: isMediaSettingsModalVisible,
       builder: (context, isMediaSettingsVisible, child) {
-        return MediaSettingsModal(
-          options: MediaSettingsModalOptions(
+        return _mediaSettingsModalBuilder(
+          context,
+          MediaSettingsModalOptions(
             backgroundColor: const Color.fromARGB(247, 210, 219, 218),
             isVisible: isMediaSettingsVisible,
             onClose: () {
@@ -6632,8 +6934,9 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
     return ValueListenableBuilder<bool>(
       valueListenable: isConfirmExitModalVisible,
       builder: (context, isConfirmExitVisible, child) {
-        return ConfirmExitModal(
-          options: ConfirmExitModalOptions(
+        return _confirmExitModalBuilder(
+          context,
+          ConfirmExitModalOptions(
             backgroundColor: const Color.fromRGBO(181, 233, 229, 0.97),
             isVisible: isConfirmExitVisible,
             onClose: () {
@@ -6653,8 +6956,9 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
     return ValueListenableBuilder<bool>(
       valueListenable: isConfirmHereModalVisible,
       builder: (context, isConfirmHereModalVisible, child) {
-        return ConfirmHereModal(
-          options: ConfirmHereModalOptions(
+        return _confirmHereModalBuilder(
+          context,
+          ConfirmHereModalOptions(
             backgroundColor: const Color.fromRGBO(181, 233, 229, 0.97),
             isConfirmHereModalVisible: isConfirmHereModalVisible,
             onConfirmHereClose: () {
@@ -6673,10 +6977,10 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
     return ValueListenableBuilder<bool>(
       valueListenable: isShareEventModalVisible,
       builder: (context, isShareEventModalVisible, child) {
-        return ShareEventModal(
-          options: ShareEventModalOptions(
+        return _shareEventModalBuilder(
+          context,
+          ShareEventModalOptions(
             isShareEventModalVisible: isShareEventModalVisible,
-            // updateIsShareEventModalVisible: updateIsShareEventModalVisible,
             onShareEventClose: () {
               updateIsShareEventModalVisible(false);
             },
@@ -6700,8 +7004,9 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
           return ValueListenableBuilder<List<Poll>>(
             valueListenable: polls,
             builder: (context, polls, child) {
-              return PollModal(
-                options: PollModalOptions(
+              return _pollModalBuilder(
+                context,
+                PollModalOptions(
                   isPollModalVisible: isPollVisible,
                   onClose: () {
                     updateIsPollModalVisible(false);
@@ -6738,8 +7043,9 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
             return ValueListenableBuilder<List<dynamic>>(
               valueListenable: filteredParticipants,
               builder: (context, filteredParticipants, child) {
-                return BreakoutRoomsModal(
-                  options: BreakoutRoomsModalOptions(
+                return _breakoutRoomsModalBuilder(
+                  context,
+                  BreakoutRoomsModalOptions(
                     backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
                     isVisible: isBreakoutRoomsVisible,
                     onBreakoutRoomsClose: () {
@@ -6763,8 +7069,9 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
         if (!isVisible) {
           return const SizedBox(); // or return null or empty container based on your requirement
         }
-        return AlertComponent(
-          options: AlertComponentOptions(
+        return _alertBuilder(
+          context,
+          AlertComponentOptions(
             visible: isVisible,
             message: alertMessage.value,
             type: alertType.value,
@@ -6783,8 +7090,9 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
     return ValueListenableBuilder<bool>(
       valueListenable: isLoadingModalVisible,
       builder: (context, isLoadingModalVisible, child) {
-        return LoadingModal(
-          options: LoadingModalOptions(
+        return _loadingModalBuilder(
+          context,
+          LoadingModalOptions(
             isVisible: isLoadingModalVisible,
             backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
             displayColor: Colors.black,

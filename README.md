@@ -91,8 +91,550 @@ These utilities enable advanced features like custom device selection interfaces
 [![Watch the Flutter SDK Setup Guide](http://i.ytimg.com/vi/IzwVEMBQ3p0/hqdefault.jpg)](https://www.youtube.com/watch?v=IzwVEMBQ3p0)  
 🎥 [**Watch the Flutter SDK Setup Guide**](https://youtu.be/IzwVEMBQ3p0)
 
+## Quick Reference: Component Parameters & UI Overrides
+
+> **New:** The Flutter SDK now ships with a parity-friendly override. Everything you need to tweak UI, wiring, or helper injection lives in a single options object shared by `MediasfuGeneric`, `MediasfuBroadcast`, `MediasfuConference`, `MediasfuWebinar`, and `MediasfuChat`.
+
+Every experience widget accepts an `options` argument (`MediasfuGenericOptions`, `MediasfuBroadcastOptions`, etc.) with the same fields. Flip the switches in `lib/main_unique.dart` (rich playground) or `lib/main_playbook_core.dart` (code-only variant) to see each parameter in action.
+
+### Shared options surface
+
+| Parameter | Type | Default | Why it matters |
+| --- | --- | --- | --- |
+| `preJoinPageWidget` | `PreJoinPageType?` | Built-in pre-join wizard | Swap the entire pre-join flow. Receive `PreJoinPageOptions` so you can brand, validate, or auto-advance users. |
+| `localLink` | `String` | `""` | Point to your self-hosted MediaSFU deployment. Leave empty for MediaSFU Cloud. |
+| `connectMediaSFU` | `bool` | `true` | Toggle automatic socket/WebRTC connections when you just need the UI shell. |
+| `credentials` | `Credentials?` | `null` | Supply `{ apiUserName, apiKey }` for cloud connections in one place. |
+| `useLocalUIMode` | `bool?` | `null` | Run the UI in local/demo mode without touching sockets. |
+| `seedData` / `useSeed` | `SeedData?` / `bool?` | `null` / `null` | Pre-populate layouts for guided demos, QA snapshots, or storyboards. |
+| `imgSrc` | `String?` | MediaSFU logo | Override default artwork shown inside modals and pre-join surfaces. |
+| `sourceParameters` | `MediasfuParameters?` | `null` | Inject a previously captured helper bundle. |
+| `updateSourceParameters` | `void Function(MediasfuParameters?)?` | `null` | Capture the helper bundle exported by MediaSFU (media controls, modal toggles, analytics hooks). |
+| `returnUI` | `bool` | `true` | Set to `false` for headless mode while keeping transports and helpers alive. |
+| `noUIPreJoinOptionsCreate` / `noUIPreJoinOptionsJoin` | `CreateMediaSFURoomOptions?` / `JoinMediaSFURoomOptions?` | `null` | Provide pre-join payloads when `returnUI` is `false` but you still want to create/join rooms. |
+| `joinMediaSFURoom` / `createMediaSFURoom` | `JoinRoomOnMediaSFUType?` / `CreateRoomOnMediaSFUType?` | Built-in helpers | Proxy room networking through your own backend or analytics layer. |
+| `customVideoCard` / `customAudioCard` / `customMiniCard` | Builder typedefs | `null` | Replace participant renders to add CRM overlays, accessibility cues, or gamification. |
+| `customComponent` | `CustomComponentType?` | `null` | Replace the entire layout with your own workspace while reusing MediaSFU logic. Alias: `customWorkspaceBuilder`. |
+| `containerStyle` | `ContainerStyleOptions?` | `null` | Apply margin, padding, background, or layout hints to the root widget. |
+| `uiOverrides` | `MediasfuUICustomOverrides?` | `null` | Target individual UI surfaces or helper functions without rebuilding the entire experience. |
+
+> Tip: Combine `returnUI = false`, `updateSourceParameters`, and granular `uiOverrides` for a progressive migration path from the stock UI to a bespoke interface.
+
+### Sample toggle scaffold (from `lib/main_playbook_core.dart`)
+
+```dart
+const ConnectionScenario connectionScenario = ConnectionScenario.cloudOnly;
+const ExperienceKey selectedExperience = ExperienceKey.generic;
+const bool provideCardBuilders = true;
+const bool applyUIOverrides = true;
+
+final Map<ConnectionScenario, ConnectionPreset> connectionPresets = {
+  ConnectionScenario.cloudOnly: ConnectionPreset(
+    credentials: cloudCredentials,
+    localLink: '',
+    connectMediaSFU: true,
+  ),
+  ConnectionScenario.hybrid: ConnectionPreset(
+    credentials: dummyCredentials,
+    localLink: 'http://localhost:3000',
+    connectMediaSFU: true,
+  ),
+  ConnectionScenario.ceOnly: ConnectionPreset(
+    credentials: null,
+    localLink: 'http://localhost:3000',
+    connectMediaSFU: false,
+  ),
+};
+
+Widget _buildExperience() {
+  switch (selectedExperience) {
+    case ExperienceKey.generic:
+      return MediasfuGeneric(
+        options: MediasfuGenericOptions(
+          preJoinPageWidget: customPreJoin,
+          localLink: preset.localLink,
+          connectMediaSFU: preset.connectMediaSFU,
+          credentials: preset.credentials,
+          returnUI: returnUI,
+          updateSourceParameters: (value) => _parameters.value = value,
+          customComponent: customWorkspace,
+          customVideoCard: customVideoCard,
+          customAudioCard: customAudioCard,
+          customMiniCard: customMiniCard,
+          containerStyle: containerStyle,
+          uiOverrides: uiOverrides,
+          noUIPreJoinOptionsCreate: noUIRoomCreateOptions,
+          noUIPreJoinOptionsJoin: noUIRoomJoinOptions,
+          joinMediaSFURoom: joinProxy,
+          createMediaSFURoom: createProxy,
+        ),
+      );
+    // other experiences omitted for brevity
+  }
+}
+```
+
+Use the toggles at the top of the file to move between cloud, hybrid, and CE scenarios, or to switch experiences without reshaping the rest of the code. Prefer `lib/main_unique.dart` when you want an in-app control panel with switches, inspector JSON, and quick presets.
+
+### `MediasfuUICustomOverrides` keys
+
+Each field accepts either a component override (supply `component` and/or `builder` style callbacks) or a function override (`wrap`/`implementation`). Everything is optional—only set the surfaces you need.
+
+#### Layout & control surfaces
+
+| Key | Default widget | Common customization |
+| --- | --- | --- |
+| `mainContainer` | `MainContainerComponent` | Inject theming providers, dashboards, or split-screen shells. |
+| `mainAspect` | `MainAspectComponent` | Redistribute space across the hero and supporting regions. |
+| `mainScreen` | `MainScreenComponent` | Reorder spotlight vs. gallery areas. |
+| `mainGrid` | `MainGridComponent` | Modify how primary participants are arranged. |
+| `subAspect` | `SubAspectComponent` | Restyle lower-third strips in webinar/conference layouts. |
+| `otherGrid` | `OtherGridComponent` | Change the treatment of off-stage attendees. |
+| `flexibleGrid` / `flexibleGridAlt` | `FlexibleGrid` | Inject AI-driven or branded tiling logic. |
+| `flexibleVideo` | `FlexibleVideo` | Add overlays, watermarks, or captions to highlighted speakers. |
+| `audioGrid` | `AudioGrid` | Re-skin audio-only grids with avatars or status rings. |
+| `pagination` | `Pagination` | Introduce carousels, auto-pagination, or analytics. |
+| `controlButtons` | `ControlButtonsComponent` | Rebrand the primary action bar. |
+| `controlButtonsAlt` | `ControlButtonsAltComponent` | Control secondary actions or sidebar toggles. |
+| `controlButtonsTouch` | `ControlButtonsComponentTouch` | Provide mobile-first control layouts. |
+
+#### Participant cards & widgets
+
+| Key | Default widget | Common customization |
+| --- | --- | --- |
+| `miniAudio` | `MiniAudio` | Re-style audio-only mini indicators. |
+| `miniAudioPlayer` | `MiniAudioPlayer` | Replace recorded clip playback UI. |
+| `meetingProgressTimer` | `MeetingProgressTimer` | Swap elapsed timers for countdowns or milestones. |
+| `customMenuButtonsRenderer` | Menu button renderer | Inject a bespoke renderer without replacing individual buttons. |
+
+#### Modals, dialogs, and collaboration
+
+| Key | Default widget | Common customization |
+| --- | --- | --- |
+| `loadingModal` | `LoadingModal` | Show branded skeletons while connecting. |
+| `alert` | `AlertComponent` | Route alerts through your own notification system. |
+| `menuModal` | `MenuModal` | Redesign quick-action trays. |
+| `eventSettingsModal` | `EventSettingsModal` | Extend host tools with custom settings. |
+| `requestsModal` | `RequestsModal` | Build moderation queues tailored to your workflows. |
+| `waitingRoomModal` | `WaitingRoomModal` | Deliver bespoke waiting-room experiences. |
+| `coHostModal` | `CoHostModal` | Manage co-hosts with custom UX. |
+| `mediaSettingsModal` | `MediaSettingsModal` | Embed device tests or instructions. |
+| `participantsModal` | `ParticipantsModal` | Add advanced filters, search, or notes. |
+| `messagesModal` | `MessagesModal` | Drop in your own chat module. |
+| `displaySettingsModal` | `DisplaySettingsModal` | Let users select layouts, captions, or themes. |
+| `confirmExitModal` | `ConfirmExitModal` | Meet compliance or policy wording requirements. |
+| `confirmHereModal` | `ConfirmHereModal` | Customize attendance confirmations for webinars. |
+| `shareEventModal` | `ShareEventModal` | Add referral codes or QR sharing. |
+| `recordingModal` | `RecordingModal` | Tailor recording confirmation flows. |
+| `pollModal` | `PollModal` | Integrate your polling/quiz engine. |
+| `breakoutRoomsModal` | `BreakoutRoomsModal` | Implement drag-and-drop or AI room suggestions. |
+| `preJoinPage` | `PreJoinPage` | Override the on-screen wizard before joining live sessions. |
+| `welcomePage` | `WelcomePage` | Provide a fully branded welcome or marketing splash. |
+
+#### Function overrides
+
+| Key | Default function | Common customization |
+| --- | --- | --- |
+| `consumerResume` | `consumerResume` | Wrap resume calls with analytics or error handling. |
+| `addVideosGrid` | `addVideosGrid` | Replace participant ordering or layout heuristics. |
+| `prepopulateUserMedia` | `prepopulateUserMedia` | Seed local media state for tests or scripted demos. |
+
+Define overrides with `MediasfuUICustomOverrides` and hand them to any MediaSFU experience:
+
+```dart
+final MediasfuUICustomOverrides uiOverrides = MediasfuUICustomOverrides(
+  mainContainer: ComponentOverride(
+    render: (context, child, props) => Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.deepPurpleAccent, width: 3),
+      ),
+      child: child,
+    ),
+  ),
+  messagesModal: ComponentOverride(component: MyMessagesModal.new),
+  consumerResume: FunctionOverride(
+    wrap: (original) async (params) {
+      final startedAt = DateTime.now();
+      final result = await original(params);
+      debugPrint('consumerResume took: ${DateTime.now().difference(startedAt)}');
+      return result;
+    },
+  ),
+);
+```
+
+Hot reload `main_unique.dart` to experiment interactively, or use `main_playbook_core.dart` when you prefer a minimal, code-only setup.
+
+### Inline sample: modal overrides and card builders
+
+If you cannot open the playbook files directly, use the snippet below as a ready-made template. It mirrors the configuration in `lib/main_playbook_core.dart` and demonstrates:
+
+- enabling both base UI overrides and modal overrides with `MediasfuUICustomOverrides`
+- wiring in the custom `VideoCard`, `AudioCard`, and `MiniCard` builders
+- providing a fallback tile whenever MediaSFU parameters have not arrived yet
+
+```dart
+const bool provideCardBuilders = true;
+const bool applyContainerStyle = true;
+const bool applyUIOverrides = true;
+const bool applyModalOverrides = true;
+
+MediasfuUICustomOverrides? get uiOverrides {
+  if (!applyUIOverrides && !applyModalOverrides) return null;
+
+  return MediasfuUICustomOverrides(
+    mainContainer: applyUIOverrides
+        ? ComponentOverride<MainContainerComponentOptions>(
+            render: (context, options, defaultBuilder) {
+              final child = defaultBuilder(context, options);
+              return Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.92),
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x16000000),
+                      blurRadius: 18,
+                      offset: Offset(0, 10),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.all(16),
+                child: child,
+              );
+            },
+          )
+        : null,
+    pagination: applyUIOverrides
+        ? ComponentOverride<PaginationOptions>(
+            render: (context, options, defaultBuilder) {
+              final widget = defaultBuilder(context, options);
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0ea5e9),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: widget,
+              );
+            },
+          )
+        : null,
+    alert: applyUIOverrides
+        ? ComponentOverride<AlertComponentOptions>(
+            render: (context, options, defaultBuilder) {
+              final widget = defaultBuilder(context, options);
+              return DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF6366f1), Color(0xFF14b8a6)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: widget,
+              );
+            },
+          )
+        : null,
+    menuModal: applyModalOverrides
+        ? ComponentOverride<MenuModalOptions>(
+            render: (context, options, defaultBuilder) {
+              final widget = defaultBuilder(context, options);
+              return Theme(
+                data: Theme.of(context).copyWith(
+                  dialogTheme: const DialogThemeData(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(24)),
+                    ),
+                  ),
+                ),
+                child: widget,
+              );
+            },
+          )
+        : null,
+    shareEventModal: applyModalOverrides
+        ? ComponentOverride<ShareEventModalOptions>(
+            render: (context, options, defaultBuilder) {
+              final widget = defaultBuilder(context, options);
+              return Container(
+                decoration: const BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0x1C2563EB),
+                      blurRadius: 28,
+                      offset: Offset(0, 18),
+                    ),
+                  ],
+                ),
+                child: widget,
+              );
+            },
+          )
+        : null,
+    participantsModal: applyModalOverrides
+        ? ComponentOverride<ParticipantsModalOptions>(
+            render: (context, options, defaultBuilder) {
+              final widget = defaultBuilder(context, options);
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(22),
+                child: widget,
+              );
+            },
+          )
+        : null,
+  );
+}
+
+VideoCardType? get customVideoCard => provideCardBuilders
+    ? ({
+        required Participant participant,
+        required Stream stream,
+        required double width,
+        required double height,
+        int? imageSize,
+        String? doMirror,
+        bool? showControls,
+        bool? showInfo,
+        String? name,
+        Color? backgroundColor,
+        VoidCallback? onVideoPress,
+        dynamic parameters,
+      }) {
+        final params = parameters is MediasfuParameters ? parameters : null;
+        final Widget content = params != null
+            ? VideoCard(
+                options: VideoCardOptions(
+                  parameters: params,
+                  name: name ?? participant.name,
+                  remoteProducerId: stream.producerId,
+                  eventType: params.eventType,
+                  videoStream: stream.stream,
+                  participant: participant,
+                  backgroundColor: backgroundColor ?? const Color(0xFF0f172a),
+                  showControls: showControls ?? true,
+                  showInfo: showInfo ?? true,
+                  forceFullDisplay: false,
+                  doMirror: doMirror == 'true',
+                ),
+              )
+            : _videoFallback(name ?? participant.name);
+
+        final Widget expanded = SizedBox.expand(
+          child: onVideoPress != null
+              ? GestureDetector(onTap: onVideoPress, child: content)
+              : content,
+        );
+
+        return Container(
+          width: width,
+          height: height,
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF312e81), Color(0xFF2563eb)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x332563eb),
+                blurRadius: 24,
+                offset: Offset(0, 16),
+              ),
+            ],
+            border: Border.all(
+              color: const Color(0xFFc4b5fd),
+              width: 1.5,
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: expanded,
+          ),
+        );
+      }
+    : null;
+
+AudioCardType? get customAudioCard => provideCardBuilders
+    ? ({
+        required String name,
+        required bool barColor,
+        required Color textColor,
+        required String imageSource,
+        required double roundedImage,
+        required Color imageStyle,
+        dynamic parameters,
+      }) {
+        final bool active = barColor;
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: active
+                  ? const [Color(0xFF14532d), Color(0xFF22c55e)]
+                  : const [Color(0xFF1f2937), Color(0xFF4b5563)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x2214b8a6),
+                blurRadius: 18,
+                offset: Offset(0, 12),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Icon(
+                active ? Icons.graphic_eq : Icons.hearing_disabled,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      name.isEmpty ? 'Audio participant' : name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      active ? 'Microphone live' : 'Muted',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.74),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: active ? const Color(0xFFbbf7d0) : Colors.white24,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.volume_up,
+                  size: 18,
+                  color: Color(0xFF0f172a),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+    : null;
+
+MiniCardType? get customMiniCard => provideCardBuilders
+    ? ({
+        required String initials,
+        required String fontSize,
+        bool? customStyle,
+        required String name,
+        required bool showVideoIcon,
+        required bool showAudioIcon,
+        required String imageSource,
+        required double roundedImage,
+        required Color imageStyle,
+        dynamic parameters,
+      }) {
+        final double parsed = double.tryParse(fontSize) ?? 18;
+        final String displayInitials =
+            initials.isNotEmpty ? initials : name.characters.take(2).join().toUpperCase();
+
+        return Container(
+          margin: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFBEB),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFF59E0B), width: 1.5),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                displayInitials,
+                style: TextStyle(
+                  color: const Color(0xFFB45309),
+                  fontWeight: FontWeight.w700,
+                  fontSize: parsed,
+                  letterSpacing: 1,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                name,
+                style: const TextStyle(
+                  color: Color(0xFF92400E),
+                  fontSize: 12,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (showVideoIcon || showAudioIcon)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (showVideoIcon)
+                        const Icon(Icons.videocam, size: 14, color: Color(0xFFFB923C)),
+                      if (showVideoIcon && showAudioIcon)
+                        const SizedBox(width: 6),
+                      if (showAudioIcon)
+                        const Icon(Icons.mic, size: 14, color: Color(0xFFF97316)),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        );
+      }
+    : null;
+
+Widget _videoFallback(String name) {
+  return Container(
+    color: const Color(0xFF0f172a),
+    alignment: Alignment.center,
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(Icons.videocam_off, color: Colors.white70, size: 40),
+        const SizedBox(height: 8),
+        Text(
+          name,
+          style: const TextStyle(color: Colors.white70),
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    ),
+  );
+}
+```
+
+Copy-paste this block into your own app, adjust the colors or gradients, and toggle the booleans to match your brand. The helpers fall back gracefully if MediaSFU parameters are unavailable while the UI boots.
+
 ## Table of Contents
 
+- [Quick Reference: Component Parameters & UI Overrides](#quick-reference-component-parameters--ui-overrides)
 - [Features](#features)
 - [Getting Started](#getting-started)
 - [📱 Flutter SDK Guide](#flutter-sdk-guide)
@@ -101,6 +643,7 @@ These utilities enable advanced features like custom device selection interfaces
   - [Core Concepts & Components](#core-concepts--components)
   - [Working with Methods](#working-with-methods)
   - [Customization & Styling](#customization--styling)
+  - [MediaSFU Playbook (main_unique.dart)](#mediasfu-playbook-main_unique-dart)
 - [API Reference](#api-reference)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
@@ -2129,6 +2672,38 @@ final options = MediasfuGenericOptions(
 
 No matter which mode you choose, you get access to:
 
+### MediaSFU Playbook (main_unique.dart)
+
+This entry point bundles every override and hook we surfaced while porting the modal system, giving you a fast way to experiment without bouncing between files.
+
+Key switches near the top of the file let you explore different scenarios:
+
+- **`connectionScenario`** toggles between Cloud only, Hybrid (Cloud + CE proxy), or Community Edition only. Each preset updates credentials, the `localLink`, and whether MediaSFU Cloud is contacted.
+- **`selectedExperience`** lets you swap the rendered room (`MediasfuGeneric`, `MediasfuBroadcast`, `MediasfuWebinar`, `MediasfuConference`, or `MediasfuChat`) while reusing the same customization surface.
+- A cluster of boolean flags (`showPrebuiltUI`, `enableFullCustomUI`, `enableCardBuilders`, `enableUICoreOverrides`, `enableModalOverrides`, `enableContainerStyling`, `enableBackendProxyHooks`, `enableCustomPreJoin`, `enableDebugPanel`) illuminate the three customization modes described above:
+  - Flip between prebuilt UI and headless logic (`returnUI`) to watch how `sourceParameters` behaves.
+  - Inject custom `VideoCardType`, `AudioCardType`, and `MiniCardType` builders without touching the consumer pipeline.
+  - Wrap core widgets through `MediasfuUICustomOverrides` and `ContainerStyleOptions` for light-touch theming.
+  - Override modals such as `MenuModal`, `ShareEventModal`, and `ParticipantsModal` to see the new override APIs live.
+
+Beyond toggles, the playbook demonstrates advanced hooks:
+
+- Custom pre-join flows via `PreJoinPageType` and `noUIPreJoinOptions*` helpers for headless joins.
+- Backend proxy integration by wrapping `createRoomOnMediaSFU`/`joinRoomOnMediaSFU` so you can slot in your own API layer or debugging logs.
+- A live parameter side panel that listens to `ValueNotifier<MediasfuParameters?>`, making it easy to discover the helper bundle handed back by MediaSFU.
+
+> **Try it:** run `flutter run -t lib/main_unique.dart` (or set the target in VS Code) and flip the switches at the top of the file. No additional setup is required beyond the SDK itself.
+
+Use this file as a reference when wiring overrides into your own app.
+
+### Code-Only Toggle Variant (main_playbook_core.dart)
+
+`lib/main_playbook_core.dart` delivers: a minimal sample where the top-level constants control credentials, UI return behavior, custom builders, backend proxies, and experience selection. There is no additional UI—edit the file, hot reload, and observe the effect inside the chosen MediaSFU component.
+
+> **Try it:** run `flutter run -t lib/main_playbook_core.dart` (or set the target in VS Code) and tweak the constants at the top of the file to swap scenarios.
+
+Choose this variant when you prefer to reason about configuration in code only.
+
 **Media Management:**
 - **`FlexibleGrid`**: Automatically arranges video participants in optimal grid layouts
 - **`FlexibleVideo`**: Manages main video display with smooth transitions
@@ -3889,6 +4464,9 @@ final conferenceOptions = MediasfuConferenceOptions(
 ## Example Files
 
 For complete working examples, check out:
+
+- `lib/main_unique.dart` - Toggle-driven customization playbook
+- `lib/main_playbook_core.dart` - Minimal App.tsx-style configuration playground with no additional UI
 - `example/lib/custom_builders_example.dart` - Individual component customization
 - `example/lib/complete_custom_component_example.dart` - Complete interface replacement examples
 

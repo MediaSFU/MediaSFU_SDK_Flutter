@@ -46,7 +46,7 @@ Future<List<MediaDeviceInfo>> getMediaDevicesList(String kind) async {
     // This ensures device labels are available
     try {
       final constraints = <String, dynamic>{};
-      
+
       if (kind == 'videoinput') {
         constraints['video'] = true;
         constraints['audio'] = false;
@@ -61,8 +61,9 @@ Future<List<MediaDeviceInfo>> getMediaDevicesList(String kind) async {
 
       // Get user media to trigger permission prompt
       try {
-        MediaStream stream = await navigator.mediaDevices.getUserMedia(constraints);
-        
+        MediaStream stream =
+            await navigator.mediaDevices.getUserMedia(constraints);
+
         // Close the stream immediately as we don't need it
         for (var track in stream.getTracks()) {
           track.stop();

@@ -5,7 +5,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart'
-    show Consumer;
+  show Consumer;
 import '../../../types/types.dart'
     show
         AudioDecibels,
@@ -17,6 +17,9 @@ import '../../../types/types.dart'
         ReUpdateInterType,
         UpdateParticipantAudioDecibelsOptions,
         UpdateParticipantAudioDecibelsType;
+
+typedef MiniAudioPlayerType = Widget Function(
+    MiniAudioPlayerOptions options);
 
 /// Parameters for `MiniAudioPlayer`.
 abstract class MiniAudioPlayerParameters implements ReUpdateInterParameters {
@@ -32,6 +35,8 @@ abstract class MiniAudioPlayerParameters implements ReUpdateInterParameters {
 
   // Method to retrieve updated parameters
   MiniAudioPlayerParameters Function() get getUpdatedAllParams;
+
+  MiniAudioPlayerType get miniAudioPlayerComponent;
 
   // Dynamic properties map for additional parameters
   // dynamic operator [](String key);
@@ -55,9 +60,6 @@ class MiniAudioPlayerOptions {
     this.miniAudioProps,
   });
 }
-
-/// Typedef for `MiniAudioPlayerType`.
-typedef MiniAudioPlayerType = Widget Function(MiniAudioPlayerOptions options);
 
 /// A Flutter widget for playing audio streams with optional waveform visualization.
 ///

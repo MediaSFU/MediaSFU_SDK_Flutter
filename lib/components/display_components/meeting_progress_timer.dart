@@ -1,71 +1,161 @@
 import 'package:flutter/material.dart';
 
-/// MeetingProgressTimerOptions - Configuration options for the `MeetingProgressTimer`.
-///
-/// /// `MeetingProgressTimerOptions` - Configuration options for the `MeetingProgressTimer` widget.
+/// Additional positional overrides for the meeting progress timer.
+class MeetingProgressTimerPositionOverride {
+  final double? top;
+  final double? right;
+  final double? bottom;
+  final double? left;
+
+  const MeetingProgressTimerPositionOverride({
+    this.top,
+    this.right,
+    this.bottom,
+    this.left,
+  });
+}
+
+/// Context passed to custom container builders.
+class MeetingProgressTimerContainerContext {
+  final BuildContext buildContext;
+  final MeetingProgressTimerOptions options;
+
+  const MeetingProgressTimerContainerContext({
+    required this.buildContext,
+    required this.options,
+  });
+}
+
+/// Context passed to custom badge builders.
+class MeetingProgressTimerBadgeContext {
+  final BuildContext buildContext;
+  final MeetingProgressTimerOptions options;
+  final bool showTimer;
+
+  const MeetingProgressTimerBadgeContext({
+    required this.buildContext,
+    required this.options,
+    required this.showTimer,
+  });
+}
+
+/// Context passed to custom text builders.
+class MeetingProgressTimerTextContext {
+  final BuildContext buildContext;
+  final MeetingProgressTimerOptions options;
+
+  const MeetingProgressTimerTextContext({
+    required this.buildContext,
+    required this.options,
+  });
+}
+
+/// Context passed to custom position builders.
+class MeetingProgressTimerPositionContext {
+  final BuildContext buildContext;
+  final MeetingProgressTimerOptions options;
+  final double? top;
+  final double? right;
+  final double? bottom;
+  final double? left;
+
+  const MeetingProgressTimerPositionContext({
+    required this.buildContext,
+    required this.options,
+    this.top,
+    this.right,
+    this.bottom,
+    this.left,
+  });
+}
+
+typedef MeetingProgressTimerContainerBuilder = Widget Function(
+  MeetingProgressTimerContainerContext context,
+  Widget defaultContainer,
+);
+
+typedef MeetingProgressTimerBadgeBuilder = Widget Function(
+  MeetingProgressTimerBadgeContext context,
+  Widget defaultBadge,
+);
+
+typedef MeetingProgressTimerTextBuilder = Widget Function(
+  MeetingProgressTimerTextContext context,
+  Widget defaultText,
+);
+
+typedef MeetingProgressTimerPositionBuilder = Widget Function(
+  MeetingProgressTimerPositionContext context,
+  Widget defaultPositioned,
+);
+
+/// MeetingProgressTimerOptions - Configuration options for the `MeetingProgressTimer` widget.
 ///
 /// ### Properties:
 /// - `meetingProgressTime` (`String`): The time to display as the meeting progress (required).
-/// - `initialBackgroundColor` (`Color`): Background color for the timer (default is `Colors.green`).
-/// - `position` (`String`): Position of the timer on the screen. Can be `'topLeft'`, `'topRight'`, `'bottomLeft'`, or `'bottomRight'`.
-/// - `textStyle` (`TextStyle?`): Custom text style for the timer (optional).
-/// - `showTimer` (`bool`): Controls the visibility of the timer (default is `true`).
-///
-/// ### Example Usage:
-/// ```dart
-/// MeetingProgressTimerOptions(
-///   meetingProgressTime: "10:00",
-///   initialBackgroundColor: Colors.green,
-///   position: "topLeft",
-///   textStyle: TextStyle(fontSize: 16, color: Colors.white),
-///   showTimer: true,
-/// );
-/// ```
-
+/// - `initialBackgroundColor` (`Color`): Background color for the timer badge (default is `Colors.green`).
+/// - `position` (`String`): Corner position for the timer (`topLeft`, `topRight`, `bottomLeft`, `bottomRight`).
+/// - `positionOverride` (`MeetingProgressTimerPositionOverride?`): Fine-grained overrides for the badge offsets.
+/// - `containerPadding` / `containerMargin`: Padding and margin for the positioned container.
+/// - `containerDecoration`: Custom decoration for the positioned container.
+/// - `badgePadding` / `badgeMargin`: Padding and margin for the badge element.
+/// - `badgeDecoration`: Custom decoration for the badge.
+/// - `badgeBorderRadius`: Overrides the badge border radius.
+/// - `textStyle`: Custom text style for the timer string.
+/// - `textBuilder`, `badgeBuilder`, `containerBuilder`, `positionBuilder`: Hooks to override portions of the widget tree.
+/// - `showTimer`: Controls visibility of the timer.
+/// - `maintainState`: Whether to keep state when the timer is hidden (defaults to `false`).
 class MeetingProgressTimerOptions {
   final String meetingProgressTime;
   final Color initialBackgroundColor;
   final String position;
+  final MeetingProgressTimerPositionOverride? positionOverride;
+  final EdgeInsetsGeometry? containerPadding;
+  final EdgeInsetsGeometry? containerMargin;
+  final Decoration? containerDecoration;
+  final EdgeInsetsGeometry? badgePadding;
+  final EdgeInsetsGeometry? badgeMargin;
+  final Decoration? badgeDecoration;
+  final BorderRadiusGeometry? badgeBorderRadius;
   final TextStyle? textStyle;
   final bool showTimer;
+  final bool maintainState;
+  final MeetingProgressTimerContainerBuilder? containerBuilder;
+  final MeetingProgressTimerBadgeBuilder? badgeBuilder;
+  final MeetingProgressTimerTextBuilder? textBuilder;
+  final MeetingProgressTimerPositionBuilder? positionBuilder;
 
-  MeetingProgressTimerOptions({
+  const MeetingProgressTimerOptions({
     required this.meetingProgressTime,
     this.initialBackgroundColor = Colors.green,
     this.position = 'topLeft',
+    this.positionOverride,
+    this.containerPadding,
+    this.containerMargin,
+    this.containerDecoration,
+    this.badgePadding,
+    this.badgeMargin,
+    this.badgeDecoration,
+    this.badgeBorderRadius,
     this.textStyle,
     this.showTimer = true,
+    this.maintainState = false,
+    this.containerBuilder,
+    this.badgeBuilder,
+    this.textBuilder,
+    this.positionBuilder,
   });
 }
 
-typedef MeetingProgressTimerType = Widget Function(
-    {required MeetingProgressTimerOptions options});
+typedef MeetingProgressTimerType = Widget Function({
+  required MeetingProgressTimerOptions options,
+});
 
-/// `MeetingProgressTimer` - A widget that displays the meeting progress time with customizable style and position.
+/// `MeetingProgressTimer` - Displays the meeting progress time with extensive customization hooks.
 ///
-/// This widget can be positioned in any corner of the screen and is useful for displaying the ongoing
-/// meeting time, with customizable options such as background color, text style, and visibility.
-///
-/// ### Parameters:
-/// - `options` (`MeetingProgressTimerOptions`): Configuration options for the widget.
-///
-/// ### Example Usage:
-/// ```dart
-/// MeetingProgressTimer(
-///   options: MeetingProgressTimerOptions(
-///     meetingProgressTime: "10:00",
-///     initialBackgroundColor: Colors.blue,
-///     position: "bottomRight",
-///     textStyle: TextStyle(fontSize: 16, color: Colors.white),
-///     showTimer: true,
-///   ),
-/// );
-/// ```
-///
-/// ### Notes:
-/// - The timer visibility can be controlled with the `showTimer` property.
-/// - Positioning is handled based on the `position` option.
-
+/// This widget can be positioned in any screen corner and offers styling hooks for the container,
+/// badge, and text content. It mirrors the flexibility introduced on the React side, enabling
+/// advanced composition and override scenarios.
 class MeetingProgressTimer extends StatelessWidget {
   final MeetingProgressTimerOptions options;
 
@@ -73,8 +163,19 @@ class MeetingProgressTimer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Set positioning values based on the position option
-    double? top, bottom, left, right;
+    if (!options.showTimer) {
+      return Visibility(
+        visible: false,
+        maintainState: options.maintainState,
+        child: const SizedBox.shrink(),
+      );
+    }
+
+    double? top;
+    double? bottom;
+    double? left;
+    double? right;
+
     switch (options.position) {
       case 'topLeft':
         top = 0;
@@ -97,30 +198,99 @@ class MeetingProgressTimer extends StatelessWidget {
         left = 0;
     }
 
+    final override = options.positionOverride;
+    top = override?.top ?? top;
+    right = override?.right ?? right;
+    bottom = override?.bottom ?? bottom;
+    left = override?.left ?? left;
+
+    final textStyle = options.textStyle ??
+        const TextStyle(
+          color: Colors.white,
+          fontSize: 18,
+          decoration: TextDecoration.none,
+        );
+
+    final defaultText = Text(
+      options.meetingProgressTime,
+      style: textStyle,
+    );
+
+    final textNode = options.textBuilder?.call(
+          MeetingProgressTimerTextContext(
+            buildContext: context,
+            options: options,
+          ),
+          defaultText,
+        ) ??
+        defaultText;
+
+    final badgeDecoration = options.badgeDecoration ?? BoxDecoration(
+      color: options.initialBackgroundColor,
+      borderRadius: options.badgeBorderRadius ?? BorderRadius.circular(10),
+    );
+
+    final defaultBadge = Container(
+      padding: options.badgePadding ??
+          const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      margin: options.badgeMargin,
+      decoration: badgeDecoration,
+      child: textNode,
+    );
+
+    final badgeNode = options.badgeBuilder?.call(
+          MeetingProgressTimerBadgeContext(
+            buildContext: context,
+            options: options,
+            showTimer: options.showTimer,
+          ),
+          defaultBadge,
+        ) ??
+        defaultBadge;
+
+    final defaultContainer = Container(
+      padding: options.containerPadding,
+      margin: options.containerMargin,
+      decoration: options.containerDecoration,
+      child: badgeNode,
+    );
+
+    final containerNode = options.containerBuilder?.call(
+          MeetingProgressTimerContainerContext(
+            buildContext: context,
+            options: options,
+          ),
+          defaultContainer,
+        ) ??
+        defaultContainer;
+
+    final defaultPositioned = Positioned(
+      top: top,
+      right: right,
+      bottom: bottom,
+      left: left,
+      child: containerNode,
+    );
+
+    final positionedNode = options.positionBuilder?.call(
+          MeetingProgressTimerPositionContext(
+            buildContext: context,
+            options: options,
+            top: top,
+            right: right,
+            bottom: bottom,
+            left: left,
+          ),
+          defaultPositioned,
+        ) ??
+        defaultPositioned;
+
     return Visibility(
       visible: options.showTimer,
-      child: Positioned(
-        top: top,
-        bottom: bottom,
-        left: left,
-        right: right,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: options.initialBackgroundColor,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            options.meetingProgressTime,
-            style: options.textStyle ??
-                const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  decoration: TextDecoration.none,
-                ),
-          ),
-        ),
-      ),
+      maintainSize: options.maintainState,
+      maintainAnimation: options.maintainState,
+      maintainState: options.maintainState,
+      child: positionedNode,
     );
   }
 }

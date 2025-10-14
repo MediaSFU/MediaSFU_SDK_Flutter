@@ -53,6 +53,21 @@ class MainContainerComponentOptions {
   /// The bottom margin of the container.
   final double marginBottom;
 
+  /// Optional custom margin that overrides the individual margin values when provided.
+  final EdgeInsetsGeometry? margin;
+
+  /// Optional padding applied within the container.
+  final EdgeInsetsGeometry? padding;
+
+  /// Optional decoration for advanced styling (gradients, borders, etc.).
+  final Decoration? decoration;
+
+  /// Alignment for the child stack within the container.
+  final AlignmentGeometry? alignment;
+
+  /// Clip behaviour applied to the container.
+  final Clip? clipBehavior;
+
   /// Constructs a MainContainerComponentOptions object.
   const MainContainerComponentOptions({
     required this.backgroundColor,
@@ -63,6 +78,11 @@ class MainContainerComponentOptions {
     this.marginRight = 0.0,
     this.marginTop = 0.0,
     this.marginBottom = 0.0,
+    this.margin,
+    this.padding,
+    this.decoration,
+    this.alignment,
+    this.clipBehavior,
   });
 }
 
@@ -115,13 +135,18 @@ class MainContainerComponent extends StatelessWidget {
     return Container(
       width: containerWidth,
       height: containerHeight,
-      margin: EdgeInsets.fromLTRB(
-        options.marginLeft,
-        options.marginTop,
-        options.marginRight,
-        options.marginBottom,
-      ),
-      color: options.backgroundColor,
+      margin: options.margin ??
+          EdgeInsets.fromLTRB(
+            options.marginLeft,
+            options.marginTop,
+            options.marginRight,
+            options.marginBottom,
+          ),
+      padding: options.padding,
+      decoration: options.decoration,
+      color: options.decoration == null ? options.backgroundColor : null,
+      alignment: options.alignment,
+      clipBehavior: options.clipBehavior ?? Clip.none,
       child: Stack(
         children: options.children,
       ),

@@ -205,7 +205,7 @@ Widget myCustomChatAudioCard({
           ),
         ),
         SizedBox(height: 8),
-        
+
         // Participant name
         Text(
           name,
@@ -217,7 +217,7 @@ Widget myCustomChatAudioCard({
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        
+
         // Audio wave indicator
         if (barColor)
           Container(
@@ -260,7 +260,7 @@ Widget myCustomChatMiniCard({
     height: 80,
     decoration: BoxDecoration(
       gradient: LinearGradient(
-        colors: showWaveform 
+        colors: showWaveform
             ? [Colors.green.shade600, Colors.lightGreen.shade400]
             : [Colors.grey.shade700, Colors.grey.shade500],
         begin: Alignment.topLeft,
@@ -268,7 +268,7 @@ Widget myCustomChatMiniCard({
       ),
       borderRadius: BorderRadius.circular(10),
       border: Border.all(
-        color: showWaveform ? Colors.white : Colors.grey.shade400, 
+        color: showWaveform ? Colors.white : Colors.grey.shade400,
         width: 2,
       ),
     ),
@@ -360,7 +360,7 @@ Widget myCustomChatInterface({required MediasfuParameters parameters}) {
             ],
           ),
         ),
-        
+
         // Chat controls
         Container(
           padding: const EdgeInsets.all(16),
@@ -381,7 +381,9 @@ Widget myCustomChatInterface({required MediasfuParameters parameters}) {
                 onPressed: () => parameters.clickVideo(
                   ClickVideoOptions(parameters: parameters),
                 ),
-                icon: parameters.videoAction ? Icons.videocam : Icons.videocam_off,
+                icon: parameters.videoAction
+                    ? Icons.videocam
+                    : Icons.videocam_off,
                 label: parameters.videoAction ? 'Video On' : 'Video Off',
                 isActive: parameters.videoAction,
                 activeColor: Colors.green,
@@ -410,7 +412,7 @@ Widget myCustomChatInterface({required MediasfuParameters parameters}) {
             ],
           ),
         ),
-        
+
         // Main chat area - participants list
         Expanded(
           child: Container(
@@ -480,7 +482,8 @@ Widget myCustomChatInterface({required MediasfuParameters parameters}) {
                           itemCount: parameters.participants.length,
                           itemBuilder: (context, index) {
                             final participant = parameters.participants[index];
-                            return _buildChatParticipantCard(participant, Colors.green.shade600);
+                            return _buildChatParticipantCard(
+                                participant, Colors.green.shade600);
                           },
                         ),
                 ),
@@ -488,7 +491,7 @@ Widget myCustomChatInterface({required MediasfuParameters parameters}) {
             ),
           ),
         ),
-        
+
         // Chat action bar
         Container(
           padding: const EdgeInsets.all(16),
@@ -585,7 +588,7 @@ Widget _buildChatParticipantCard(Participant participant, Color accentColor) {
           backgroundColor: accentColor,
           radius: 20,
           child: Text(
-            participant.name.isNotEmpty 
+            participant.name.isNotEmpty
                 ? participant.name[0].toUpperCase()
                 : '?',
             style: const TextStyle(

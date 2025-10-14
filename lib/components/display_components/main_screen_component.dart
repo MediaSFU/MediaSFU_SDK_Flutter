@@ -37,6 +37,14 @@ class MainScreenComponentOptions {
   final double defaultFraction;
   final bool showControls;
   final List<Widget> children;
+  final EdgeInsetsGeometry? padding;
+  final EdgeInsetsGeometry? margin;
+  final Decoration? decoration;
+  final AlignmentGeometry? alignment;
+  final Clip clipBehavior;
+  final MainScreenContainerBuilder? containerBuilder;
+  final MainScreenChildrenBuilder? childrenBuilder;
+  final MainScreenChildBuilder? childBuilder;
 
   MainScreenComponentOptions({
     required this.mainSize,
@@ -47,11 +55,84 @@ class MainScreenComponentOptions {
     this.defaultFraction = 0.94,
     this.showControls = false,
     required this.children,
+    this.padding,
+    this.margin,
+    this.decoration,
+    this.alignment,
+    this.clipBehavior = Clip.none,
+    this.containerBuilder,
+    this.childrenBuilder,
+    this.childBuilder,
   });
 }
 
 typedef MainScreenComponentType = Widget Function(
     {required MainScreenComponentOptions options});
+
+class MainScreenContainerContext {
+  final BuildContext buildContext;
+  final MainScreenComponentOptions options;
+  final Size dimensions;
+  final bool isWideScreen;
+
+  const MainScreenContainerContext({
+    required this.buildContext,
+    required this.options,
+    required this.dimensions,
+    required this.isWideScreen,
+  });
+}
+
+class MainScreenChildrenContext {
+  final BuildContext buildContext;
+  final MainScreenComponentOptions options;
+  final Size dimensions;
+  final bool isWideScreen;
+
+  const MainScreenChildrenContext({
+    required this.buildContext,
+    required this.options,
+    required this.dimensions,
+    required this.isWideScreen,
+  });
+}
+
+class MainScreenChildContext {
+  final BuildContext buildContext;
+  final MainScreenComponentOptions options;
+  final int index;
+  final bool isWideScreen;
+  final bool doStack;
+  final double mainSize;
+  final Size computedSize;
+  final ComponentSizes componentSizes;
+
+  const MainScreenChildContext({
+    required this.buildContext,
+    required this.options,
+    required this.index,
+    required this.isWideScreen,
+    required this.doStack,
+    required this.mainSize,
+    required this.computedSize,
+    required this.componentSizes,
+  });
+}
+
+typedef MainScreenContainerBuilder = Widget Function(
+  MainScreenContainerContext context,
+  Widget defaultContainer,
+);
+
+typedef MainScreenChildrenBuilder = Widget Function(
+  MainScreenChildrenContext context,
+  Widget defaultChildren,
+);
+
+typedef MainScreenChildBuilder = Widget Function(
+  MainScreenChildContext context,
+  Widget defaultChild,
+);
 
 /// `MainScreenComponent` - A flexible layout widget for creating main screens with adjustable layout and size.
 ///
@@ -95,7 +176,8 @@ class MainScreenComponent extends StatelessWidget {
     final mediaQuery = MediaQuery.of(context);
     final safeAreaInsets = mediaQuery.padding + mediaQuery.systemGestureInsets;
 
-    final parentWidth = mediaQuery.size.width * options.containerWidthFraction;
+    final parentWidth =
+        mediaQuery.size.width * options.containerWidthFraction;
     final parentHeight = options.showControls
         ? mediaQuery.size.height *
             options.containerHeightFraction *
@@ -124,54 +206,111 @@ class MainScreenComponent extends StatelessWidget {
                 mainWidth: parentWidth,
                 otherWidth: parentWidth,
               );
-      } else {
-        return ComponentSizes(
-          mainHeight: parentHeight,
-          otherHeight: parentHeight,
-          mainWidth: parentWidth,
-          otherWidth: parentWidth,
-        );
       }
+
+      return ComponentSizes(
+        mainHeight: parentHeight,
+        otherHeight: parentHeight,
+        mainWidth: parentWidth,
+        otherWidth: parentWidth,
+      );
     }
 
-    final dimensions = computeDimensions();
+    final componentSizes = computeDimensions();
 
-    // Update component sizes when parent dimensions, main size, or stacking mode changes
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      options.updateComponentSizes(dimensions);
+      options.updateComponentSizes(componentSizes);
     });
 
-    return SizedBox(
-      width: parentWidth,
-      height: parentHeight,
-      child: Flex(
-        direction: isWideScreen ? Axis.horizontal : Axis.vertical,
-        children: options.children.map((child) {
-          final index = options.children.indexOf(child);
-          final childStyle = options.doStack
-              ? {
-                  'height': index == 0
-                      ? dimensions.mainHeight
-                      : dimensions.otherHeight,
-                  'width':
-                      index == 0 ? dimensions.mainWidth : dimensions.otherWidth,
-                }
-              : {
-                  'height': dimensions.mainHeight,
-                  'width': dimensions.mainWidth,
-                };
+    final dimensions = Size(parentWidth, parentHeight);
 
-          return Stack(
-            children: [
-              SizedBox(
-                width: childStyle['width'],
-                height: childStyle['height'],
-                child: child,
-              ),
-            ],
+    final children = List<Widget>.generate(options.children.length, (index) {
+      final child = options.children[index];
+
+      final Size computedSize;
+      if (options.doStack) {
+        if (index == 0) {
+          computedSize = Size(
+            componentSizes.mainWidth,
+            componentSizes.mainHeight,
           );
-        }).toList(),
-      ),
+        } else {
+          computedSize = Size(
+            componentSizes.otherWidth,
+            componentSizes.otherHeight,
+          );
+        }
+      } else {
+        computedSize = Size(
+          componentSizes.mainWidth,
+          componentSizes.mainHeight,
+        );
+      }
+
+      final defaultChild = Stack(
+        children: [
+          SizedBox(
+            width: computedSize.width,
+            height: computedSize.height,
+            child: child,
+          ),
+        ],
+      );
+
+      return options.childBuilder?.call(
+            MainScreenChildContext(
+              buildContext: context,
+              options: options,
+              index: index,
+              isWideScreen: isWideScreen,
+              doStack: options.doStack,
+              mainSize: options.mainSize,
+              computedSize: computedSize,
+              componentSizes: componentSizes,
+            ),
+            defaultChild,
+          ) ??
+          defaultChild;
+    });
+
+    final defaultChildrenWidget = Flex(
+      direction: isWideScreen ? Axis.horizontal : Axis.vertical,
+      children: children,
     );
+
+    final childrenWidget = options.childrenBuilder?.call(
+          MainScreenChildrenContext(
+            buildContext: context,
+            options: options,
+            dimensions: dimensions,
+            isWideScreen: isWideScreen,
+          ),
+          defaultChildrenWidget,
+        ) ??
+        defaultChildrenWidget;
+
+    final defaultContainer = Container(
+      width: dimensions.width,
+      height: dimensions.height,
+      padding: options.padding,
+      margin: options.margin,
+      alignment: options.alignment,
+      decoration: options.decoration,
+      clipBehavior: options.clipBehavior,
+      child: childrenWidget,
+    );
+
+    final container = options.containerBuilder?.call(
+          MainScreenContainerContext(
+            buildContext: context,
+            options: options,
+            dimensions: dimensions,
+            isWideScreen: isWideScreen,
+          ),
+          defaultContainer,
+        ) ??
+        defaultContainer;
+
+    return container;
   }
 }

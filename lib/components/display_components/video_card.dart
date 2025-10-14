@@ -2,19 +2,117 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart'
-    show MediaStream;
+  show MediaStream;
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import './card_video_display.dart'
-    show CardVideoDisplay, CardVideoDisplayOptions;
+  show CardVideoDisplay, CardVideoDisplayOptions;
 import './audio_decibel_check.dart'
-    show
-        AudioDecibelCheck,
-        AudioDecibelCheckOptions,
-        AudioDecibelCheckParameters;
+  show
+    AudioDecibelCheck,
+    AudioDecibelCheckOptions,
+    AudioDecibelCheckParameters;
 import '../../consumers/control_media.dart'
-    show controlMedia, ControlMediaOptions, ControlMediaType;
+  show controlMedia, ControlMediaOptions, ControlMediaType;
 import '../../types/types.dart'
-    show AudioDecibels, Participant, CoHostResponsibility, ShowAlert, EventType;
+  show AudioDecibels, Participant, CoHostResponsibility, ShowAlert, EventType;
+
+class VideoCardWrapperContext {
+  final BuildContext buildContext;
+  final VideoCardOptions options;
+  final List<Widget> stackChildren;
+  final Widget defaultWrapper;
+
+  const VideoCardWrapperContext({
+    required this.buildContext,
+    required this.options,
+    required this.stackChildren,
+    required this.defaultWrapper,
+  });
+}
+
+class VideoCardContainerContext {
+  final BuildContext buildContext;
+  final VideoCardOptions options;
+  final Widget child;
+  final Widget defaultContainer;
+
+  const VideoCardContainerContext({
+    required this.buildContext,
+    required this.options,
+    required this.child,
+    required this.defaultContainer,
+  });
+}
+
+class VideoCardInfoContext {
+  final BuildContext buildContext;
+  final VideoCardOptions options;
+  final Widget nameBadge;
+  final Widget waveform;
+  final Widget defaultInfo;
+
+  const VideoCardInfoContext({
+    required this.buildContext,
+    required this.options,
+    required this.nameBadge,
+    required this.waveform,
+    required this.defaultInfo,
+  });
+}
+
+class VideoCardOverlayContext {
+  final BuildContext buildContext;
+  final VideoCardOptions options;
+  final bool showWaveform;
+  final Widget waveform;
+  final Widget defaultOverlay;
+
+  const VideoCardOverlayContext({
+    required this.buildContext,
+    required this.options,
+    required this.showWaveform,
+    required this.waveform,
+    required this.defaultOverlay,
+  });
+}
+
+class VideoCardWaveformContext {
+  final BuildContext buildContext;
+  final VideoCardOptions options;
+  final bool showWaveform;
+  final List<AnimationController> animationControllers;
+  final Color barColor;
+  final Widget defaultWaveform;
+
+  const VideoCardWaveformContext({
+    required this.buildContext,
+    required this.options,
+    required this.showWaveform,
+    required this.animationControllers,
+    required this.barColor,
+    required this.defaultWaveform,
+  });
+}
+
+typedef VideoCardWrapperBuilder = Widget Function(
+  VideoCardWrapperContext context,
+);
+
+typedef VideoCardContainerBuilder = Widget Function(
+  VideoCardContainerContext context,
+);
+
+typedef VideoCardInfoBuilder = Widget Function(
+  VideoCardInfoContext context,
+);
+
+typedef VideoCardOverlayBuilder = Widget Function(
+  VideoCardOverlayContext context,
+);
+
+typedef VideoCardWaveformBuilder = Widget Function(
+  VideoCardWaveformContext context,
+);
 
 /// VideoCardParameters - Defines the parameters required for the `VideoCard` widget.
 abstract class VideoCardParameters implements AudioDecibelCheckParameters {
@@ -105,6 +203,20 @@ class VideoCardOptions {
   final bool doMirror;
   final ControlMediaType controlUserMedia;
   final VideoCardType? customBuilder;
+  final EdgeInsetsGeometry? containerPadding;
+  final EdgeInsetsGeometry? containerMargin;
+  final AlignmentGeometry? containerAlignment;
+  final BoxDecoration? containerDecoration;
+  final BoxDecoration? overlayDecoration;
+  final EdgeInsetsGeometry? overlayPadding;
+  final BoxDecoration? nameContainerDecoration;
+  final EdgeInsetsGeometry? nameContainerPadding;
+  final TextStyle? nameTextStyle;
+  final VideoCardWrapperBuilder? wrapperBuilder;
+  final VideoCardContainerBuilder? containerBuilder;
+  final VideoCardInfoBuilder? infoBuilder;
+  final VideoCardOverlayBuilder? overlayBuilder;
+  final VideoCardWaveformBuilder? waveformBuilder;
 
   VideoCardOptions({
     required this.parameters,
@@ -129,6 +241,20 @@ class VideoCardOptions {
     this.doMirror = false,
     this.controlUserMedia = controlMedia,
     this.customBuilder,
+    this.containerPadding,
+    this.containerMargin,
+    this.containerAlignment,
+    this.containerDecoration,
+    this.overlayDecoration,
+    this.overlayPadding,
+    this.nameContainerDecoration,
+    this.nameContainerPadding,
+    this.nameTextStyle,
+    this.wrapperBuilder,
+    this.containerBuilder,
+    this.infoBuilder,
+    this.overlayBuilder,
+    this.waveformBuilder,
   });
 }
 
@@ -319,136 +445,225 @@ class _VideoCardState extends State<VideoCard> with TickerProviderStateMixin {
 
     animateWaveform();
     try {
-      return Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.black, width: 2),
-          color: widget.options.backgroundColor,
-        ),
-        child: Stack(
-          children: [
-            CardVideoDisplay(
-              options: CardVideoDisplayOptions(
-                  remoteProducerId: widget.options.remoteProducerId,
-                  eventType: widget.options.eventType,
-                  forceFullDisplay: widget.options.forceFullDisplay,
-                  videoStream: widget.options.videoStream!,
-                  backgroundColor: widget.options.backgroundColor,
-                  doMirror: widget.options.doMirror),
+      final stackChildren = <Widget>[
+        Positioned.fill(child: _buildVideoDisplay()),
+        _buildOverlayPositioned(context),
+        if (widget.options.showControls) _buildControlsPositioned(),
+        _buildAudioDecibelCheck(),
+      ];
+
+      final defaultWrapper = Stack(children: stackChildren);
+
+      final wrapper = widget.options.wrapperBuilder?.call(
+            VideoCardWrapperContext(
+              buildContext: context,
+              options: widget.options,
+              stackChildren: stackChildren,
+              defaultWrapper: defaultWrapper,
             ),
-            Positioned(
-              top: widget.options.infoPosition.toLowerCase().contains('top')
-                  ? 0
-                  : null,
-              left: widget.options.infoPosition.toLowerCase().contains('left')
-                  ? 0
-                  : null,
-              bottom:
-                  widget.options.infoPosition.toLowerCase().contains('bottom')
-                      ? 0
-                      : null,
-              right: widget.options.infoPosition.toLowerCase().contains('right')
-                  ? 0
-                  : null,
-              child: widget.options.videoInfoComponent ??
-                  (widget.options.showInfo
-                      ? Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 2, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: Colors.white
-                                    .withAlpha((0.25 * 255).toInt()),
-                                borderRadius: BorderRadius.circular(0),
-                              ),
-                              child: Text(
-                                widget.options.participant.name,
-                                style: TextStyle(
-                                  color: widget.options.textColor,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 5),
-                            ValueListenableBuilder<bool>(
-                              valueListenable: showWaveform,
-                              builder: (context, show, child) {
-                                return show
-                                    ? Row(
-                                        children: List.generate(
-                                          waveformAnimations.length,
-                                          (index) => AnimatedBuilder(
-                                            animation:
-                                                waveformAnimations[index],
-                                            builder: (context, child) {
-                                              final randomHeight =
-                                                  Random().nextDouble() * 14;
-                                              return Container(
-                                                height: show ? randomHeight : 0,
-                                                width: 5,
-                                                color: widget.options.barColor,
-                                                margin:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 1),
-                                              );
-                                            },
-                                          ),
-                                        ),
-                                      )
-                                    : const SizedBox();
-                              },
-                            ),
-                          ],
-                        )
-                      : const SizedBox()),
+          ) ??
+          defaultWrapper;
+
+      final defaultContainer = Container(
+        padding: widget.options.containerPadding,
+        margin: widget.options.containerMargin,
+        alignment: widget.options.containerAlignment,
+        decoration: widget.options.containerDecoration ??
+            BoxDecoration(
+              border: Border.all(color: Colors.black, width: 2),
+              color: widget.options.backgroundColor,
             ),
-            widget.options.showControls
-                ? Positioned(
-                    top: widget.options.controlsPosition
-                            .toLowerCase()
-                            .contains('top')
-                        ? 0
-                        : null,
-                    left: widget.options.controlsPosition
-                            .toLowerCase()
-                            .contains('left')
-                        ? 0
-                        : null,
-                    bottom: widget.options.controlsPosition
-                            .toLowerCase()
-                            .contains('bottom')
-                        ? 0
-                        : null,
-                    right: widget.options.controlsPosition
-                            .toLowerCase()
-                            .contains('right')
-                        ? 0
-                        : null,
-                    child: Container(
-                      child: renderControls(),
-                    ),
-                  )
-                : const SizedBox(),
-            // Add AudioDecibelCheck widget to control the showWaveform status
-            AudioDecibelCheck(
-                options: AudioDecibelCheckOptions(
-              animateWaveform: animateWaveform,
-              resetWaveform: resetWaveform,
-              name: widget.options.name,
-              participant: widget.options.participant,
-              parameters: widget.options.parameters,
-              onShowWaveformChanged: updateShowWaveform,
-            )),
-          ],
-        ),
+        child: wrapper,
       );
+
+      final container = widget.options.containerBuilder?.call(
+            VideoCardContainerContext(
+              buildContext: context,
+              options: widget.options,
+              child: wrapper,
+              defaultContainer: defaultContainer,
+            ),
+          ) ??
+          defaultContainer;
+
+      return container;
     } catch (error) {
       if (kDebugMode) {
         print('Error adding widget: $error');
       }
       return ErrorWidget(error.toString());
     }
+  }
+
+  Widget _buildVideoDisplay() {
+    return CardVideoDisplay(
+      options: CardVideoDisplayOptions(
+        remoteProducerId: widget.options.remoteProducerId,
+        eventType: widget.options.eventType,
+        forceFullDisplay: widget.options.forceFullDisplay,
+        videoStream: widget.options.videoStream!,
+        backgroundColor: widget.options.backgroundColor,
+        doMirror: widget.options.doMirror,
+      ),
+    );
+  }
+
+  Widget _buildOverlayPositioned(BuildContext context) {
+    final position = widget.options.infoPosition.toLowerCase();
+    return Positioned(
+      top: position.contains('top') ? 0 : null,
+      left: position.contains('left') ? 0 : null,
+      bottom: position.contains('bottom') ? 0 : null,
+      right: position.contains('right') ? 0 : null,
+      child: _buildOverlay(context),
+    );
+  }
+
+  Widget _buildControlsPositioned() {
+    final position = widget.options.controlsPosition.toLowerCase();
+    return Positioned(
+      top: position.contains('top') ? 0 : null,
+      left: position.contains('left') ? 0 : null,
+      bottom: position.contains('bottom') ? 0 : null,
+      right: position.contains('right') ? 0 : null,
+      child: renderControls(),
+    );
+  }
+
+  Widget _buildAudioDecibelCheck() {
+    return AudioDecibelCheck(
+      options: AudioDecibelCheckOptions(
+        animateWaveform: animateWaveform,
+        resetWaveform: resetWaveform,
+        name: widget.options.name,
+        participant: widget.options.participant,
+        parameters: widget.options.parameters,
+        onShowWaveformChanged: updateShowWaveform,
+      ),
+    );
+  }
+
+  Widget _buildOverlay(BuildContext context) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: showWaveform,
+      builder: (context, isVisible, child) {
+        final waveform = _buildWaveform(context, isVisible);
+        final info = _buildInfo(context, waveform);
+
+        Widget defaultOverlay = info;
+
+        final hasOverlayStyling =
+            widget.options.overlayDecoration != null ||
+                widget.options.overlayPadding != null;
+
+        if (hasOverlayStyling) {
+          defaultOverlay = Container(
+            padding: widget.options.overlayPadding,
+            decoration: widget.options.overlayDecoration,
+            child: info,
+          );
+        }
+
+        return widget.options.overlayBuilder?.call(
+              VideoCardOverlayContext(
+                buildContext: context,
+                options: widget.options,
+                showWaveform: isVisible,
+                waveform: waveform,
+                defaultOverlay: defaultOverlay,
+              ),
+            ) ??
+            defaultOverlay;
+      },
+    );
+  }
+
+  Widget _buildInfo(BuildContext context, Widget waveform) {
+    final nameBadge = _buildNameBadge();
+
+    final defaultInfo = widget.options.videoInfoComponent ??
+        (widget.options.showInfo
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  nameBadge,
+                  const SizedBox(width: 5),
+                  waveform,
+                ],
+              )
+            : const SizedBox());
+
+    return widget.options.infoBuilder?.call(
+          VideoCardInfoContext(
+            buildContext: context,
+            options: widget.options,
+            nameBadge: nameBadge,
+            waveform: waveform,
+            defaultInfo: defaultInfo,
+          ),
+        ) ??
+        defaultInfo;
+  }
+
+  Widget _buildNameBadge() {
+    final defaultDecoration = BoxDecoration(
+      color: Colors.white.withAlpha((0.25 * 255).toInt()),
+      borderRadius: BorderRadius.circular(0),
+    );
+
+    final decoration = widget.options.nameContainerDecoration ?? defaultDecoration;
+    final padding = widget.options.nameContainerPadding ??
+        const EdgeInsets.symmetric(horizontal: 2, vertical: 3);
+    final textStyle = widget.options.nameTextStyle ??
+        TextStyle(
+          color: widget.options.textColor,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        );
+
+    return Container(
+      padding: padding,
+      decoration: decoration,
+      child: Text(
+        widget.options.participant.name,
+        style: textStyle,
+      ),
+    );
+  }
+
+  Widget _buildWaveform(BuildContext context, bool show) {
+    final bars = List.generate(
+      waveformAnimations.length,
+      (index) => AnimatedBuilder(
+        animation: waveformAnimations[index],
+        builder: (context, child) {
+          final randomHeight = Random().nextDouble() * 14;
+          return Container(
+            height: show ? randomHeight : 0,
+            width: 5,
+            color: widget.options.barColor,
+            margin: const EdgeInsets.symmetric(horizontal: 1),
+          );
+        },
+      ),
+    );
+
+    final Widget defaultWaveform = show
+        ? Row(
+            children: bars,
+          )
+        : const SizedBox();
+
+    return widget.options.waveformBuilder?.call(
+          VideoCardWaveformContext(
+            buildContext: context,
+            options: widget.options,
+            showWaveform: show,
+            animationControllers: waveformAnimations,
+            barColor: widget.options.barColor,
+            defaultWaveform: defaultWaveform,
+          ),
+        ) ??
+        defaultWaveform;
   }
 }

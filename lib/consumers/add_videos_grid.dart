@@ -40,7 +40,7 @@ abstract class AddVideosGridParameters
   List<List<Widget>> get otherGridStreams;
   UpdateOtherGridStreams get updateOtherGridStreams;
   UpdateMiniCardsGridType get updateMiniCardsGrid;
-  
+
   // Custom component builders
   VideoCardType? get customVideoCard;
   AudioCardType? get customAudioCard;
@@ -149,7 +149,7 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
         List.from(parameters.otherGridStreams);
     final updateOtherGridStreams = parameters.updateOtherGridStreams;
     final updateMiniCardsGrid = parameters.updateMiniCardsGrid;
-    
+
     // Extract custom component builders
     final customVideoCard = parameters.customVideoCard;
     final customAudioCard = parameters.customAudioCard;
@@ -183,7 +183,7 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
             orElse: () =>
                 Participant(id: '', name: '', videoID: '', audioID: ''),
           );
-          
+
           // Use custom AudioCard builder if available
           if (customAudioCard != null) {
             newComponents[0].add(customAudioCard(
@@ -426,7 +426,7 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
               orElse: () =>
                   Participant(id: '', name: '', videoID: '', audioID: ''),
             );
-            
+
             // Use custom AudioCard builder if available
             if (customAudioCard != null) {
               newComponents[1].add(customAudioCard(

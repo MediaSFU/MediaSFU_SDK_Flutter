@@ -2085,7 +2085,8 @@ class CreateMediaSFURoomOptions {
       dataBuffer: map['dataBuffer'] != null ? map['dataBuffer'] as bool : false,
       bufferType: map['bufferType'] != null ? map['bufferType'] as String : "",
       supportSIP: map['supportSIP'] != null ? map['supportSIP'] as bool : false,
-      directionSIP: map['directionSIP'] != null ? map['directionSIP'] as String : "both",
+      directionSIP:
+          map['directionSIP'] != null ? map['directionSIP'] as String : "both",
       preferPCMA: map['preferPCMA'] != null ? map['preferPCMA'] as bool : false,
     );
   }

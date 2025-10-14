@@ -1,5 +1,41 @@
 import 'package:flutter/material.dart';
 
+class AudioGridItemContext {
+  final BuildContext buildContext;
+  final AudioGridOptions options;
+  final int index;
+  final Widget component;
+  final Widget defaultItem;
+
+  const AudioGridItemContext({
+    required this.buildContext,
+    required this.options,
+    required this.index,
+    required this.component,
+    required this.defaultItem,
+  });
+}
+
+class AudioGridContainerContext {
+  final BuildContext buildContext;
+  final AudioGridOptions options;
+  final List<Widget> items;
+  final Widget defaultContainer;
+
+  const AudioGridContainerContext({
+    required this.buildContext,
+    required this.options,
+    required this.items,
+    required this.defaultContainer,
+  });
+}
+
+typedef AudioGridItemBuilder = Widget Function(AudioGridItemContext context);
+
+typedef AudioGridContainerBuilder = Widget Function(
+  AudioGridContainerContext context,
+);
+
 /// Configuration options for the `AudioGrid` widget.
 ///
 /// This class specifies the options available for configuring an `AudioGrid`.
@@ -16,9 +52,17 @@ import 'package:flutter/material.dart';
 /// ```
 class AudioGridOptions {
   final List<Widget> componentsToRender;
+  final AlignmentGeometry alignment;
+  final Clip clipBehavior;
+  final AudioGridItemBuilder? itemBuilder;
+  final AudioGridContainerBuilder? containerBuilder;
 
   AudioGridOptions({
     required this.componentsToRender,
+    this.alignment = AlignmentDirectional.topStart,
+    this.clipBehavior = Clip.hardEdge,
+    this.itemBuilder,
+    this.containerBuilder,
   });
 }
 
@@ -50,8 +94,39 @@ class AudioGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: options.componentsToRender,
+    final List<Widget> items = List<Widget>.generate(
+      options.componentsToRender.length,
+      (index) {
+        final component = options.componentsToRender[index];
+        final defaultItem = component;
+
+        return options.itemBuilder?.call(
+              AudioGridItemContext(
+                buildContext: context,
+                options: options,
+                index: index,
+                component: component,
+                defaultItem: defaultItem,
+              ),
+            ) ??
+            defaultItem;
+      },
     );
+
+    final Widget defaultContainer = Stack(
+      alignment: options.alignment,
+      clipBehavior: options.clipBehavior,
+      children: items,
+    );
+
+    return options.containerBuilder?.call(
+          AudioGridContainerContext(
+            buildContext: context,
+            options: options,
+            items: items,
+            defaultContainer: defaultContainer,
+          ),
+        ) ??
+        defaultContainer;
   }
 }

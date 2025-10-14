@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'meeting_progress_timer.dart';
+
 /// `MainGridComponentOptions` - Configuration options for the `MainGridComponent`.
 ///
 /// ### Properties:
@@ -58,6 +60,30 @@ class MainGridComponentOptions {
   /// The meeting progress time to display on the timer.
   final String meetingProgressTime;
 
+  /// Custom decoration for the grid container.
+  final Decoration? decoration;
+
+  /// Optional padding for the grid container.
+  final EdgeInsetsGeometry? padding;
+
+  /// Optional margin for the grid container.
+  final EdgeInsetsGeometry? margin;
+
+  /// Clip behavior for the container.
+  final Clip clipBehavior;
+
+  /// Custom timer options (overrides deprecated timer fields when provided).
+  final MeetingProgressTimerOptions? timerOptions;
+
+  /// Custom timer builder (defaults to [MeetingProgressTimer]).
+  final MeetingProgressTimerType? timerBuilder;
+
+  /// Builder to override the container composition.
+  final MainGridComponentContainerBuilder? containerBuilder;
+
+  /// Builder to override child composition inside the stack.
+  final MainGridComponentChildrenBuilder? childrenBuilder;
+
   /// Constructs a MainGridComponentOptions object.
   const MainGridComponentOptions({
     required this.backgroundColor,
@@ -69,11 +95,53 @@ class MainGridComponentOptions {
     this.timeBackgroundColor = Colors.transparent,
     this.showTimer = true,
     required this.meetingProgressTime,
+    this.decoration,
+    this.padding,
+    this.margin,
+    this.clipBehavior = Clip.none,
+    this.timerOptions,
+    this.timerBuilder,
+    this.containerBuilder,
+    this.childrenBuilder,
   });
 }
 
 typedef MainGridComponentType = Widget Function(
     {required MainGridComponentOptions options});
+
+/// Context for container builder overrides.
+class MainGridComponentContainerContext {
+  final BuildContext buildContext;
+  final MainGridComponentOptions options;
+
+  const MainGridComponentContainerContext({
+    required this.buildContext,
+    required this.options,
+  });
+}
+
+/// Context for children builder overrides.
+class MainGridComponentChildrenContext {
+  final BuildContext buildContext;
+  final MainGridComponentOptions options;
+  final Size dimensions;
+
+  const MainGridComponentChildrenContext({
+    required this.buildContext,
+    required this.options,
+    required this.dimensions,
+  });
+}
+
+typedef MainGridComponentContainerBuilder = Widget Function(
+  MainGridComponentContainerContext context,
+  Widget defaultContainer,
+);
+
+typedef MainGridComponentChildrenBuilder = Widget Function(
+  MainGridComponentChildrenContext context,
+  List<Widget> defaultChildren,
+);
 
 /// `MainGridComponent` - A flexible grid component with customizable layout, child widgets, and background color.
 ///
@@ -135,21 +203,61 @@ class MainGridComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Visibility(
-      visible: options.showAspect,
-      child: Container(
-        width: options.width,
-        height: options.height,
-        decoration: BoxDecoration(
+    if (!options.showAspect) {
+      return const SizedBox.shrink();
+    }
+
+    final size = Size(options.width, options.height);
+    final timerBuilder = options.timerBuilder ??
+        ({required MeetingProgressTimerOptions options}) =>
+            MeetingProgressTimer(options: options);
+
+    final timerOptions = options.timerOptions ?? MeetingProgressTimerOptions(
+      meetingProgressTime: options.meetingProgressTime,
+      initialBackgroundColor: options.timeBackgroundColor,
+      showTimer: options.showTimer,
+    );
+
+    final defaultChildren = <Widget>[...options.children];
+    if (timerOptions.showTimer) {
+      defaultChildren.add(timerBuilder(options: timerOptions));
+    }
+
+    final childrenWidget = options.childrenBuilder?.call(
+          MainGridComponentChildrenContext(
+            buildContext: context,
+            options: options,
+            dimensions: size,
+          ),
+          defaultChildren,
+        ) ??
+        Stack(children: defaultChildren);
+
+    final decoration = options.decoration ??
+        BoxDecoration(
           color: options.backgroundColor,
           border: Border.all(color: Colors.black, width: 4),
-        ),
-        child: Stack(
-          children: [
-            ...options.children,
-          ],
-        ),
-      ),
+        );
+
+    final defaultContainer = Container(
+      width: options.width,
+      height: options.height,
+      padding: options.padding,
+      margin: options.margin,
+      clipBehavior: options.clipBehavior,
+      decoration: decoration,
+      child: childrenWidget,
     );
+
+    final container = options.containerBuilder?.call(
+          MainGridComponentContainerContext(
+            buildContext: context,
+            options: options,
+          ),
+          defaultContainer,
+        ) ??
+        defaultContainer;
+
+    return container;
   }
 }

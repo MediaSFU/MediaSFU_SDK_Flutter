@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'standard_panel_component.dart'
     show
@@ -20,6 +22,7 @@ import '../../types/types.dart'
         ConfirmRecordingParameters,
         StartRecordingParameters,
         EventType;
+import '../../types/modal_style_options.dart' show ModalStyleOptions;
 
 /// Abstract class `RecordingModalParameters` defines recording configuration parameters
 /// and provides abstract getters for settings like video type, display type, background color,
@@ -119,6 +122,10 @@ class RecordingModalOptions {
   final ConfirmRecordingType confirmRecording;
   final StartRecordingType startRecording;
   final RecordingModalParameters parameters;
+  final ModalStyleOptions? styles;
+  final Widget? title;
+  final Widget? confirmButtonChild;
+  final Widget? startButtonChild;
 
   RecordingModalOptions({
     required this.isRecordingModalVisible,
@@ -128,6 +135,10 @@ class RecordingModalOptions {
     required this.confirmRecording,
     required this.startRecording,
     required this.parameters,
+    this.styles,
+    this.title,
+    this.confirmButtonChild,
+    this.startButtonChild,
   });
 }
 
@@ -167,144 +178,187 @@ class RecordingModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    double modalWidth = 0.75 * screenWidth;
-    if (modalWidth > 400) modalWidth = 400;
+    final style = options.styles ?? const ModalStyleOptions();
+    final mediaSize = MediaQuery.of(context).size;
 
-    final modalHeight = MediaQuery.of(context).size.height * 0.75;
+    final defaultModalWidth = math.min(mediaSize.width * 0.75, 400.0);
+    double modalWidth = style.width ?? defaultModalWidth;
+    if (style.maxWidth != null) {
+      modalWidth = math.min(modalWidth, style.maxWidth!);
+    }
+
+    final defaultModalHeight = mediaSize.height * 0.75;
+    double modalHeight = style.height ?? defaultModalHeight;
+    if (style.maxHeight != null) {
+      modalHeight = math.min(modalHeight, style.maxHeight!);
+    }
+
+    final positionData = getModalPosition(GetModalPositionOptions(
+      position: options.position,
+      modalWidth: modalWidth,
+      modalHeight: modalHeight,
+      context: context,
+    ));
+
+    final outerDecoration = style.outerContainerDecoration ??
+        BoxDecoration(
+          color: options.backgroundColor,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(10),
+            topRight: Radius.circular(10),
+          ),
+        );
+
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.max,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            options.title ??
+                Text(
+                  'Recording Settings',
+                  style: style.titleTextStyle ??
+                      const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                ),
+            IconButton(
+              onPressed: options.onClose,
+              icon: style.closeIcon ??
+                  const Icon(
+                    Icons.close,
+                    size: 20,
+                    color: Colors.black,
+                  ),
+              style: style.closeButtonStyle,
+            ),
+          ],
+        ),
+        const SizedBox(height: 15),
+        Divider(
+          height: style.dividerHeight ?? 1,
+          color: style.dividerColor ?? Colors.black,
+          thickness: style.dividerThickness ?? 1,
+          indent: style.dividerIndent,
+          endIndent: style.dividerEndIndent,
+        ),
+        const SizedBox(height: 15),
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                StandardPanelComponent(
+                  options: StandardPanelComponentOptions(
+                    parameters: options.parameters,
+                  ),
+                ),
+                AdvancedPanelComponent(
+                  options: AdvancedPanelComponentOptions(
+                    parameters: options.parameters,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                options.confirmRecording(
+                  ConfirmRecordingOptions(
+                    parameters: options.parameters,
+                  ),
+                );
+              },
+              style: style.destructiveButtonStyle ??
+                  ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 5,
+                      horizontal: 20,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    backgroundColor: Colors.red,
+                  ),
+              child: options.confirmButtonChild ??
+                  const Text(
+                    'Confirm',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                    ),
+                  ),
+            ),
+            if (!options.parameters.recordPaused)
+              ElevatedButton(
+                onPressed: () {
+                  options.startRecording(
+                    StartRecordingOptions(
+                      parameters: options.parameters,
+                    ),
+                  );
+                },
+                style: style.primaryButtonStyle ??
+                    ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 5,
+                        horizontal: 20,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      backgroundColor: Colors.green,
+                    ),
+                child: options.startButtonChild ??
+                    const Row(
+                      children: [
+                        Text(
+                          'Start ',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Icon(
+                          Icons.play_arrow,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ],
+                    ),
+              ),
+          ],
+        ),
+      ],
+    );
 
     return Visibility(
       visible: options.isRecordingModalVisible,
       child: Stack(
         children: [
           Positioned(
-            top: getModalPosition(GetModalPositionOptions(
-                position: options.position,
-                modalWidth: modalWidth,
-                modalHeight: modalHeight,
-                context: context))['top'],
-            right: getModalPosition(GetModalPositionOptions(
-                position: options.position,
-                modalWidth: modalWidth,
-                modalHeight: modalHeight,
-                context: context))['right'],
+            top: positionData['top'],
+            right: positionData['right'],
             child: Container(
               width: modalWidth,
               height: modalHeight,
-              decoration: BoxDecoration(
-                color: options.backgroundColor,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(10),
-                  topRight: Radius.circular(10),
+              decoration: outerDecoration,
+              padding: style.outerPadding ?? EdgeInsets.zero,
+              child: DecoratedBox(
+                decoration: style.contentDecoration ?? const BoxDecoration(),
+                child: Padding(
+                  padding: style.contentPadding ?? const EdgeInsets.all(20),
+                  child: content,
                 ),
-              ),
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Recording Settings',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: options.onClose,
-                        child: const Icon(
-                          Icons.close,
-                          size: 20,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 15),
-                  const Divider(
-                    height: 1,
-                    color: Colors.black,
-                    thickness: 1,
-                  ),
-                  const SizedBox(height: 15),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          StandardPanelComponent(
-                              options: StandardPanelComponentOptions(
-                                  parameters: options.parameters)),
-                          AdvancedPanelComponent(
-                              options: AdvancedPanelComponentOptions(
-                                  parameters: options.parameters)),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          options.confirmRecording(ConfirmRecordingOptions(
-                              parameters: options.parameters));
-                        },
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 5, horizontal: 20),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          backgroundColor: Colors.red, // Confirm button color
-                        ),
-                        child: const Text(
-                          'Confirm',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                      if (!options.parameters.recordPaused)
-                        ElevatedButton(
-                          onPressed: () {
-                            options.startRecording(StartRecordingOptions(
-                                parameters: options.parameters));
-                          },
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 5, horizontal: 20),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                            backgroundColor: Colors.green, // Start button color
-                          ),
-                          child: const Row(
-                            children: [
-                              Text(
-                                'Start ',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              Icon(
-                                Icons.play_arrow,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                ],
               ),
             ),
           ),

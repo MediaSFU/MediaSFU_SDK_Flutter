@@ -5,8 +5,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
 import 'package:socket_io_client/socket_io_client.dart';
-import '../../types/types.dart' hide MediaStream, VideoCardType, AudioCardType, MiniCardType;
-import '../../types/custom_builders.dart' show VideoCardType, AudioCardType, MiniCardType;
+import '../../types/types.dart'
+    hide MediaStream, VideoCardType, AudioCardType, MiniCardType;
+import '../../types/custom_builders.dart'
+    show VideoCardType, AudioCardType, MiniCardType;
+import '../../types/ui_overrides.dart'
+    show ContainerStyleOptions, MediasfuUICustomOverrides;
 
 class MediasfuParameters
     implements
@@ -376,6 +380,13 @@ class MediasfuParameters
   VideoCardType? customVideoCard;
   AudioCardType? customAudioCard;
   MiniCardType? customMiniCard;
+    MiniAudioPlayerType miniAudioPlayerComponent;
+
+    // ---------------------
+    // UI Overrides & Container Styling
+    // ---------------------
+    MediasfuUICustomOverrides uiOverrides;
+    ContainerStyleOptions containerStyle;
 
   // ---------------------
   // Permissions
@@ -897,6 +908,8 @@ class MediasfuParameters
     required this.filteredParticipants,
     required this.participantsCounter,
     required this.participantsFilter,
+        required this.uiOverrides,
+        required this.containerStyle,
 
     // ---------------------
     // Media Details Initialization
@@ -1211,6 +1224,7 @@ class MediasfuParameters
     this.customVideoCard,
     this.customAudioCard,
     this.customMiniCard,
+    required this.miniAudioPlayerComponent,
 
     // ---------------------
     // Permissions Initialization
@@ -2011,7 +2025,7 @@ class MediasfuParameters
         'updateSocket': updateSocket,
         'updateLocalSocket': updateLocalSocket,
         'updateValidated': updateValidated,
-        
+
         // Custom builders update functions
         'updateCustomVideoCard': updateCustomVideoCard,
         'updateCustomAudioCard': updateCustomAudioCard,

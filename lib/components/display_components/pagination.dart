@@ -8,6 +8,83 @@ import '../../consumers/generate_page_content.dart'
         GeneratePageContentType;
 import '../../types/types.dart' show ShowAlert, BreakoutParticipant;
 
+/// Provides context when building a custom container for [Pagination].
+class PaginationContainerContext {
+  final BuildContext context;
+  final PaginationOptions options;
+  final List<int> pages;
+  final Widget listView;
+  final Widget defaultContainer;
+
+  PaginationContainerContext({
+    required this.context,
+    required this.options,
+    required this.pages,
+    required this.listView,
+    required this.defaultContainer,
+  });
+}
+
+/// Provides context when building the content portion of a page control.
+class PaginationPageContentContext {
+  final BuildContext context;
+  final PaginationOptions options;
+  final int page;
+  final bool isActive;
+  final bool isHomePage;
+  final bool isLocked;
+  final String label;
+  final Widget defaultContent;
+
+  PaginationPageContentContext({
+    required this.context,
+    required this.options,
+    required this.page,
+    required this.isActive,
+    required this.isHomePage,
+    required this.isLocked,
+    required this.label,
+    required this.defaultContent,
+  });
+}
+
+/// Provides context when building the full button for a page control.
+class PaginationPageButtonContext {
+  final BuildContext context;
+  final PaginationOptions options;
+  final int page;
+  final bool isActive;
+  final bool isHomePage;
+  final bool isLocked;
+  final Widget content;
+  final Widget defaultButton;
+  final Future<void> Function() onSelect;
+
+  PaginationPageButtonContext({
+    required this.context,
+    required this.options,
+    required this.page,
+    required this.isActive,
+    required this.isHomePage,
+    required this.isLocked,
+    required this.content,
+    required this.defaultButton,
+    required this.onSelect,
+  });
+}
+
+typedef PaginationContainerBuilder = Widget Function(
+  PaginationContainerContext context,
+);
+
+typedef PaginationPageContentBuilder = Widget Function(
+  PaginationPageContentContext context,
+);
+
+typedef PaginationPageButtonBuilder = Widget Function(
+  PaginationPageButtonContext context,
+);
+
 abstract class PaginationParameters implements GeneratePageContentParameters {
   int get mainRoomsLength;
   int get memberRoom;
@@ -71,6 +148,9 @@ class PaginationOptions {
   final double paginationHeight;
   final bool showAspect;
   final PaginationParameters parameters;
+  final PaginationContainerBuilder? containerBuilder;
+  final PaginationPageButtonBuilder? pageButtonBuilder;
+  final PaginationPageContentBuilder? pageContentBuilder;
 
   PaginationOptions({
     required this.totalPages,
@@ -88,6 +168,9 @@ class PaginationOptions {
     this.paginationHeight = 40.0,
     this.showAspect = true,
     required this.parameters,
+    this.containerBuilder,
+    this.pageButtonBuilder,
+    this.pageContentBuilder,
   });
 }
 
@@ -219,115 +302,175 @@ class Pagination extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<int> data =
+    final List<int> pages =
         List<int>.generate(options.totalPages + 1, (index) => index);
+
+    final BoxDecoration activeDecoration = BoxDecoration(
+      color: options.activePageColor,
+      boxShadow: [
+        BoxShadow(
+          color: Colors.grey.withAlpha((0.5 * 255).toInt()),
+          spreadRadius: 1,
+          blurRadius: 2,
+          offset: const Offset(0, 1),
+        ),
+      ],
+    );
+
+    final BoxDecoration inactiveDecoration = BoxDecoration(
+      color: options.inactivePageColor,
+      border: Border.all(
+        color: Colors.black,
+        width: 1.0,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.grey.withAlpha((0.5 * 255).toInt()),
+          spreadRadius: 1,
+          blurRadius: 2,
+          offset: const Offset(0, 1),
+        ),
+      ],
+    );
+
+    Widget buildPageButton(int page, BuildContext itemContext) {
+      final bool isActive = page == options.currentUserPage;
+      final bool isHomePage = page == 0;
+      bool isLocked = false;
+
+      String displayLabel = page.toString();
+      final int mainRoomsLength = options.parameters.mainRoomsLength;
+      final int targetPage = options.parameters.memberRoom;
+
+      if (options.parameters.breakOutRoomStarted &&
+          !options.parameters.breakOutRoomEnded &&
+          page >= mainRoomsLength) {
+        final int roomNumber = page - (mainRoomsLength - 1);
+
+        if (targetPage + 1 != roomNumber) {
+          final bool isHost = options.parameters.islevel == '2';
+          if (!isHost) {
+            displayLabel = 'Room $roomNumber 🔒';
+            isLocked = true;
+          } else {
+            displayLabel = 'Room $roomNumber';
+          }
+        } else {
+          displayLabel = 'Room $roomNumber';
+        }
+      } else {
+        displayLabel = page.toString();
+      }
+
+      Widget baseContent;
+      if (isHomePage) {
+        baseContent = Icon(
+          Icons.star,
+          size: 18,
+          color: isActive ? Colors.yellow : Colors.grey,
+        );
+      } else {
+        baseContent = Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2.0),
+          child: Text(
+            displayLabel,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        );
+      }
+
+      final Widget resolvedContent = options.pageContentBuilder != null
+          ? options.pageContentBuilder!(
+              PaginationPageContentContext(
+                context: itemContext,
+                options: options,
+                page: page,
+                isActive: isActive,
+                isHomePage: isHomePage,
+                isLocked: isLocked,
+                label: displayLabel,
+                defaultContent: baseContent,
+              ),
+            )
+          : baseContent;
+
+      Future<void> onSelect() => handleClick(page, mainRoomsLength);
+
+      final Widget defaultButton = GestureDetector(
+        onTap: () async {
+          if (!isActive) {
+            await onSelect();
+          }
+        },
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+          constraints: options.buttonsContainerStyle,
+          decoration: isActive ? activeDecoration : inactiveDecoration,
+          child: Center(child: resolvedContent),
+        ),
+      );
+
+      if (options.pageButtonBuilder != null) {
+        return options.pageButtonBuilder!(
+          PaginationPageButtonContext(
+            context: itemContext,
+            options: options,
+            page: page,
+            isActive: isActive,
+            isHomePage: isHomePage,
+            isLocked: isLocked,
+            content: resolvedContent,
+            defaultButton: defaultButton,
+            onSelect: onSelect,
+          ),
+        );
+      }
+
+      return defaultButton;
+    }
+
+    final Widget listView = ListView.builder(
+      shrinkWrap: true,
+      scrollDirection:
+          options.direction == 'vertical' ? Axis.vertical : Axis.horizontal,
+      itemCount: pages.length,
+      itemBuilder: (itemContext, index) {
+        final int page = pages[index];
+        return buildPageButton(page, itemContext);
+      },
+    );
+
+    final Widget defaultContainer = Container(
+      color: options.backgroundColor,
+      constraints: BoxConstraints(
+        maxHeight: options.direction == 'vertical'
+            ? double.infinity
+            : options.paginationHeight,
+        maxWidth: options.direction == 'horizontal'
+            ? double.infinity
+            : options.paginationHeight,
+      ),
+      child: Center(child: listView),
+    );
+
+    final Widget resolvedContainer = options.containerBuilder != null
+        ? options.containerBuilder!(
+            PaginationContainerContext(
+              context: context,
+              options: options,
+              pages: pages,
+              listView: listView,
+              defaultContainer: defaultContainer,
+            ),
+          )
+        : defaultContainer;
 
     return Visibility(
       visible: options.showAspect,
-      child: Container(
-        color: options.backgroundColor,
-        constraints: BoxConstraints(
-          maxHeight: options.direction == 'vertical'
-              ? double.infinity
-              : options.paginationHeight,
-          maxWidth: options.direction == 'horizontal'
-              ? double.infinity
-              : options.paginationHeight,
-        ),
-        child: Center(
-          child: ListView.builder(
-            shrinkWrap:
-                true, // Ensures the ListView only occupies the space needed
-            scrollDirection: options.direction == 'vertical'
-                ? Axis.vertical
-                : Axis.horizontal,
-            itemCount: data.length,
-            itemBuilder: (context, index) {
-              final isActive = data[index] == options.currentUserPage;
-              final pageStyle = isActive
-                  ? BoxDecoration(
-                      color: options.activePageColor,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withAlpha((0.5 * 255).toInt()),
-                          spreadRadius: 1,
-                          blurRadius: 2,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
-                    )
-                  : BoxDecoration(
-                      color: options.inactivePageColor,
-                      border: Border.all(
-                        color: Colors.black,
-                        width: 1.0,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withAlpha((0.5 * 255).toInt()),
-                          spreadRadius: 1,
-                          blurRadius: 2,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
-                    );
-
-              String displayItem = data[index].toString();
-              final targetPage = options.parameters.memberRoom;
-
-              if (options.parameters.breakOutRoomStarted &&
-                  !(options.parameters.breakOutRoomEnded) &&
-                  data[index] >= options.parameters.mainRoomsLength) {
-                final roomNumber =
-                    data[index] - (options.parameters.mainRoomsLength - 1);
-
-                if (targetPage + 1 != roomNumber) {
-                  if (options.parameters.islevel != '2') {
-                    displayItem = 'Room $roomNumber 🔒';
-                  } else {
-                    displayItem = 'Room $roomNumber';
-                  }
-                } else {
-                  displayItem = 'Room $roomNumber';
-                }
-              } else {
-                displayItem = data[index].toString();
-              }
-
-              return GestureDetector(
-                onTap: () {
-                  if (!isActive) {
-                    handleClick(
-                        data[index], options.parameters.mainRoomsLength);
-                  }
-                },
-                child: Container(
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-                  decoration: pageStyle,
-                  child: Center(
-                    child: data[index] == 0
-                        ? Icon(Icons.star,
-                            size: 18,
-                            color: isActive ? Colors.yellow : Colors.grey)
-                        : Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 2.0),
-                            child: Text(
-                              displayItem,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ),
+      child: resolvedContainer,
     );
   }
 }

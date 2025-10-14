@@ -1,5 +1,61 @@
 import 'package:flutter/material.dart';
 
+class ControlButtonsAltWrapperContext {
+  final BuildContext buildContext;
+  final ControlButtonsAltComponentOptions options;
+  final Widget child;
+  final Widget defaultWrapper;
+
+  const ControlButtonsAltWrapperContext({
+    required this.buildContext,
+    required this.options,
+    required this.child,
+    required this.defaultWrapper,
+  });
+}
+
+class ControlButtonsAltContainerContext {
+  final BuildContext buildContext;
+  final ControlButtonsAltComponentOptions options;
+  final Widget child;
+  final Widget defaultContainer;
+
+  const ControlButtonsAltContainerContext({
+    required this.buildContext,
+    required this.options,
+    required this.child,
+    required this.defaultContainer,
+  });
+}
+
+class ControlButtonsAltLayoutContext {
+  final BuildContext buildContext;
+  final ControlButtonsAltComponentOptions options;
+  final List<Widget> buttons;
+  final Widget defaultLayout;
+
+  const ControlButtonsAltLayoutContext({
+    required this.buildContext,
+    required this.options,
+    required this.buttons,
+    required this.defaultLayout,
+  });
+}
+
+class ControlButtonsAltButtonContext {
+  final BuildContext buildContext;
+  final ControlButtonsAltComponentOptions options;
+  final AltButton button;
+  final Widget defaultButton;
+
+  const ControlButtonsAltButtonContext({
+    required this.buildContext,
+    required this.options,
+    required this.button,
+    required this.defaultButton,
+  });
+}
+
 /// AltButton - Represents a configurable button within the control button component.
 ///
 /// ### Example Usage:
@@ -79,6 +135,22 @@ class AltButton {
 typedef ControlButtonsAltComponentType = Widget Function(
     {required ControlButtonsAltComponentOptions options});
 
+typedef ControlButtonsAltWrapperBuilder = Widget Function(
+  ControlButtonsAltWrapperContext context,
+);
+
+typedef ControlButtonsAltContainerBuilder = Widget Function(
+  ControlButtonsAltContainerContext context,
+);
+
+typedef ControlButtonsAltLayoutBuilder = Widget Function(
+  ControlButtonsAltLayoutContext context,
+);
+
+typedef ControlButtonsAltButtonBuilder = Widget Function(
+  ControlButtonsAltButtonContext context,
+);
+
 /// ControlButtonsAltComponentOptions - Configures settings for the `ControlButtonsAltComponent`.
 ///
 /// ### Example Usage:
@@ -129,6 +201,30 @@ class ControlButtonsAltComponentOptions {
   /// Additional styling for the container holding the buttons.
   final BoxDecoration? buttonsContainerStyle;
 
+  /// Custom builder to replace the entire component.
+  final ControlButtonsAltComponentType? customBuilder;
+
+  /// Padding applied to the container wrapping the buttons.
+  final EdgeInsetsGeometry? containerPadding;
+
+  /// Margin applied to the container wrapping the buttons.
+  final EdgeInsetsGeometry? containerMargin;
+
+  /// Alignment of the container's child.
+  final AlignmentGeometry? containerAlignment;
+
+  /// Builder to override the wrapper surrounding the layout.
+  final ControlButtonsAltWrapperBuilder? wrapperBuilder;
+
+  /// Builder to override the top-level container.
+  final ControlButtonsAltContainerBuilder? containerBuilder;
+
+  /// Builder to override the layout that arranges the buttons.
+  final ControlButtonsAltLayoutBuilder? layoutBuilder;
+
+  /// Builder to override individual buttons.
+  final ControlButtonsAltButtonBuilder? buttonBuilder;
+
   /// A custom widget to display in place of the default icon component when the button is active.
   final Widget? alternateIconComponent;
 
@@ -147,6 +243,14 @@ class ControlButtonsAltComponentOptions {
     this.alternateIconComponent,
     this.iconComponent,
     this.showAspect = true,
+    this.customBuilder,
+    this.containerPadding,
+    this.containerMargin,
+    this.containerAlignment,
+    this.wrapperBuilder,
+    this.containerBuilder,
+    this.layoutBuilder,
+    this.buttonBuilder,
   });
 }
 
@@ -185,40 +289,87 @@ class ControlButtonsAltComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (options.customBuilder != null) {
+      return options.customBuilder!(options: options);
+    }
+
+    if (!options.showAspect) {
+      return const SizedBox.shrink();
+    }
+
+    final buttons = _buildButtons(context);
+    final layout = _buildLayout(context, buttons);
+
+    final defaultWrapper = layout;
+    final wrapper = options.wrapperBuilder?.call(
+          ControlButtonsAltWrapperContext(
+            buildContext: context,
+            options: options,
+            child: layout,
+            defaultWrapper: defaultWrapper,
+          ),
+        ) ??
+        defaultWrapper;
+
+    final defaultContainer = Container(
+      margin:
+          options.containerMargin ?? const EdgeInsets.symmetric(vertical: 5),
+      decoration: options.buttonsContainerStyle,
+      padding: options.containerPadding ?? const EdgeInsets.all(5),
+      alignment: options.containerAlignment,
+      child: wrapper,
+    );
+
+    final container = options.containerBuilder?.call(
+          ControlButtonsAltContainerContext(
+            buildContext: context,
+            options: options,
+            child: wrapper,
+            defaultContainer: defaultContainer,
+          ),
+        ) ??
+        defaultContainer;
+
     return Visibility(
       visible: options.showAspect,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 5),
-        decoration: options.buttonsContainerStyle,
-        padding: const EdgeInsets.all(5),
-        child: _buildLayout(),
-      ),
+      child: container,
     );
   }
 
   /// Builds the button layout based on the [direction] property.
-  Widget _buildLayout() {
+  Widget _buildLayout(BuildContext context, List<Widget> buttons) {
+    Widget defaultLayout;
     if (options.direction == 'horizontal') {
-      return Column(
+      defaultLayout = Column(
         mainAxisAlignment: _getVerticalMainAxisAlignment(),
         children: [
           Row(
             mainAxisAlignment: _getHorizontalMainAxisAlignment(),
-            children: _buildButtons(),
+            children: buttons,
           ),
         ],
       );
     } else {
-      return Row(
+      defaultLayout = Row(
         mainAxisAlignment: _getHorizontalMainAxisAlignment(),
         children: [
           Column(
             mainAxisAlignment: _getVerticalMainAxisAlignment(),
-            children: _buildButtons(),
+            children: buttons,
           ),
         ],
       );
     }
+
+    return options.layoutBuilder?.call(
+          ControlButtonsAltLayoutContext(
+            buildContext: context,
+            options: options,
+            buttons: buttons,
+            defaultLayout: defaultLayout,
+          ),
+        ) ??
+        defaultLayout;
   }
 
   /// Determines the horizontal alignment based on [position].
@@ -248,11 +399,11 @@ class ControlButtonsAltComponent extends StatelessWidget {
   }
 
   /// Builds the list of button widgets based on the [buttons] configuration.
-  List<Widget> _buildButtons() {
+  List<Widget> _buildButtons(BuildContext context) {
     return options.buttons.map((button) {
       if (!button.show) return const SizedBox.shrink();
 
-      return GestureDetector(
+      final Widget defaultButton = GestureDetector(
         onTap: button.disabled ? null : button.onPress,
         child: Container(
           alignment: Alignment.center,
@@ -267,22 +418,11 @@ class ControlButtonsAltComponent extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Display custom component if provided
               if (button.customComponent != null)
                 button.customComponent!
               else ...[
-                // Display icon
                 if (button.icon != null)
-                  Icon(
-                    button.active
-                        ? (button.alternateIcon ?? button.icon)
-                        : button.icon,
-                    size: 16,
-                    color: button.active
-                        ? (button.activeColor ?? Colors.white)
-                        : (button.inActiveColor ?? Colors.white),
-                  ),
-                // Display name
+                  _buildButtonIcon(button),
                 if (button.name != null)
                   Text(
                     button.name!,
@@ -296,6 +436,34 @@ class ControlButtonsAltComponent extends StatelessWidget {
           ),
         ),
       );
+
+      return options.buttonBuilder?.call(
+            ControlButtonsAltButtonContext(
+              buildContext: context,
+              options: options,
+              button: button,
+              defaultButton: defaultButton,
+            ),
+          ) ??
+          defaultButton;
     }).toList();
+  }
+
+  Widget _buildButtonIcon(AltButton button) {
+    if (button.active && options.alternateIconComponent != null) {
+      return options.alternateIconComponent!;
+    }
+
+    if (!button.active && options.iconComponent != null) {
+      return options.iconComponent!;
+    }
+
+    return Icon(
+      button.active ? (button.alternateIcon ?? button.icon) : button.icon,
+      size: 16,
+      color: button.active
+          ? (button.activeColor ?? Colors.white)
+          : (button.inActiveColor ?? Colors.white),
+    );
   }
 }

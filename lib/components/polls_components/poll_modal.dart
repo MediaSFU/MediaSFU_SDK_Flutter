@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -13,6 +15,7 @@ import '../../types/types.dart'
         HandleCreatePollOptions,
         HandleEndPollOptions,
         HandleVotePollOptions;
+import '../../types/modal_style_options.dart' show PollModalStyleOptions;
 
 class PollModalOptions {
   final bool isPollModalVisible;
@@ -31,6 +34,12 @@ class PollModalOptions {
   final HandleCreatePollType handleCreatePoll;
   final HandleEndPollType handleEndPoll;
   final HandleVotePollType handleVotePoll;
+  final PollModalStyleOptions? styles;
+  final Widget? previousPollsHeader;
+  final Widget? createPollHeader;
+  final Widget? currentPollHeader;
+  final Widget? emptyPreviousPollsPlaceholder;
+  final Widget? emptyCurrentPollPlaceholder;
 
   PollModalOptions({
     required this.isPollModalVisible,
@@ -48,6 +57,12 @@ class PollModalOptions {
     required this.handleCreatePoll,
     required this.handleEndPoll,
     required this.handleVotePoll,
+    this.styles,
+    this.previousPollsHeader,
+    this.createPollHeader,
+    this.currentPollHeader,
+    this.emptyPreviousPollsPlaceholder,
+    this.emptyCurrentPollPlaceholder,
   });
 }
 
@@ -121,6 +136,98 @@ class _PollModalState extends State<PollModal> {
     'options': []
   };
 
+  PollModalStyleOptions get _styles =>
+      widget.options.styles ?? const PollModalStyleOptions();
+
+  String _optionLabel(int index) {
+    return _styles.optionLabelBuilder?.call(index) ?? 'Option ${index + 1}';
+  }
+
+  InputDecoration _buildQuestionDecoration() {
+    final override = _styles.questionInputDecoration;
+    final baseLabel = _styles.questionLabelText ?? override?.labelText;
+    final base = InputDecoration(
+      labelText: baseLabel ?? 'Poll Question',
+      border: override?.border ??
+          OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      enabledBorder: override?.enabledBorder,
+      focusedBorder: override?.focusedBorder,
+      hintText: override?.hintText,
+      prefixIcon: override?.prefixIcon,
+      suffixIcon: override?.suffixIcon,
+      helperText: override?.helperText,
+      contentPadding: override?.contentPadding,
+      labelStyle: override?.labelStyle ??
+          const TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
+    );
+
+    if (override == null) {
+      return base;
+    }
+
+    return base.copyWith(
+      labelText: baseLabel ?? base.labelText,
+      prefixIcon: override.prefixIcon ?? base.prefixIcon,
+      suffixIcon: override.suffixIcon ?? base.suffixIcon,
+      helperText: override.helperText ?? base.helperText,
+      hintText: override.hintText ?? base.hintText,
+      contentPadding: override.contentPadding ?? base.contentPadding,
+      labelStyle: override.labelStyle ?? base.labelStyle,
+      enabledBorder: override.enabledBorder ?? base.enabledBorder,
+      focusedBorder: override.focusedBorder ?? base.focusedBorder,
+      border: override.border ?? base.border,
+    );
+  }
+
+  InputDecoration _buildOptionDecoration(int index) {
+    final override = _styles.optionInputDecoration;
+    final label = _optionLabel(index);
+    final base = InputDecoration(
+      labelText: label,
+      border: override?.border ??
+          OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      enabledBorder: override?.enabledBorder,
+      focusedBorder: override?.focusedBorder,
+      hintText: override?.hintText,
+      prefixIcon: override?.prefixIcon,
+      suffixIcon: override?.suffixIcon,
+      helperText: override?.helperText,
+      contentPadding: override?.contentPadding,
+      labelStyle: override?.labelStyle ??
+          const TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
+    );
+
+    if (override == null) {
+      return base;
+    }
+
+    return base.copyWith(
+      labelText: label,
+      labelStyle: override.labelStyle ?? base.labelStyle,
+      hintText: override.hintText ?? base.hintText,
+      helperText: override.helperText ?? base.helperText,
+      contentPadding: override.contentPadding ?? base.contentPadding,
+      prefixIcon: override.prefixIcon ?? base.prefixIcon,
+      suffixIcon: override.suffixIcon ?? base.suffixIcon,
+      enabledBorder: override.enabledBorder ?? base.enabledBorder,
+      focusedBorder: override.focusedBorder ?? base.focusedBorder,
+      border: override.border ?? base.border,
+    );
+  }
+
+  ButtonStyle? get _createButtonStyle =>
+      _styles.createButtonStyle ?? _styles.primaryButtonStyle;
+
+  ButtonStyle? get _endButtonStyle =>
+      _styles.endButtonStyle ?? _styles.destructiveButtonStyle;
+
+
   @override
   void initState() {
     super.initState();
@@ -177,35 +284,41 @@ class _PollModalState extends State<PollModal> {
   }
 
   List<Widget> renderPollOptions() {
+    final options = List<String>.from(newPoll['options'] ?? []);
+    final optionTextStyle =
+        _styles.pollOptionPreviewTextStyle ?? _styles.bodyTextStyle;
+
     switch (newPoll['type']) {
       case 'trueFalse':
       case 'yesNo':
         return [
-          RadioGroup<String>(
-            onChanged: (value) {}, // Disabled for preview
-            child: Column(
-              children: newPoll['options'].map<Widget>((option) {
-                return Row(
-                  children: [
-                    Radio<String>(
-                      value: option,
-                    ),
-                    Text(option),
-                  ],
-                );
-              }).toList(),
-            ),
+          Column(
+            children: options.map<Widget>((option) {
+              return ListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                leading: Radio<String>(
+                  value: option,
+                  enabled: false,
+                ),
+                title: Text(
+                  option,
+                  style: optionTextStyle,
+                ),
+              );
+            }).toList(),
           ),
         ];
       case 'custom':
         return [
-          ...newPoll['options'].asMap().entries.map((entry) {
-            int index = entry.key;
+          ...options.asMap().entries.map((entry) {
+            final index = entry.key;
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 5),
               child: TextField(
-                decoration: InputDecoration(labelText: 'Option ${index + 1}'),
+                decoration: _buildOptionDecoration(index),
                 maxLength: 50,
+                style: _styles.optionInputTextStyle,
                 onChanged: (text) {
                   if (mounted) {
                     setState(() {
@@ -215,15 +328,15 @@ class _PollModalState extends State<PollModal> {
                 },
               ),
             );
-          }).toList(),
-          ...List.generate((5 - newPoll['options'].length).toInt(), (index) {
+          }),
+          ...List.generate(math.max(0, 5 - options.length), (index) {
+            final optionIndex = options.length + index;
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 5),
               child: TextField(
-                decoration: InputDecoration(
-                    labelText:
-                        'Option ${newPoll['options'].length + index + 1}'),
+                decoration: _buildOptionDecoration(optionIndex),
                 maxLength: 50,
+                style: _styles.optionInputTextStyle,
                 onChanged: (text) {
                   if (mounted) {
                     setState(() {
@@ -244,9 +357,14 @@ class _PollModalState extends State<PollModal> {
     final poll = widget.options.poll;
     final member = widget.options.member;
     final handleVotePoll = widget.options.handleVotePoll;
+    final dynamic rawSelection = poll?.voters?[member];
+    final int? selectedOption = rawSelection is int ? rawSelection : null;
+    final optionTextStyle =
+        _styles.currentPollOptionTextStyle ?? _styles.bodyTextStyle;
 
     return [
       RadioGroup<int>(
+        groupValue: selectedOption,
         onChanged: (int? value) {
           if (value != null) {
             handleVotePoll(
@@ -265,13 +383,24 @@ class _PollModalState extends State<PollModal> {
         },
         child: Column(
           children: poll!.options.asMap().entries.map<Widget>((entry) {
-            int i = entry.key;
-            String option = entry.value;
-            return ListTile(
-              title: Text(option),
-              leading: Radio<int>(
-                value: i,
-              ),
+            final int index = entry.key;
+            final String option = entry.value;
+            return Builder(
+              builder: (context) {
+                final registry = RadioGroup.maybeOf<int>(context);
+                return ListTile(
+                  title: Text(
+                    option,
+                    style: optionTextStyle,
+                  ),
+                  leading: Radio<int>(
+                    value: index,
+                  ),
+                  onTap: registry == null
+                      ? null
+                      : () => registry.onChanged(index),
+                );
+              },
             );
           }).toList(),
         ),
@@ -281,247 +410,298 @@ class _PollModalState extends State<PollModal> {
 
   @override
   Widget build(BuildContext context) {
-    final double modalWidth = 0.7 * MediaQuery.of(context).size.width > 400
-        ? 400
-        : 0.7 * MediaQuery.of(context).size.width;
-    final modalHeight = MediaQuery.of(context).size.height * 0.75;
+    final style = _styles;
+    final mediaSize = MediaQuery.of(context).size;
+    final defaultModalWidth = math.min(mediaSize.width * 0.7, 400.0);
+    double modalWidth = style.width ?? defaultModalWidth;
+    if (style.maxWidth != null) {
+      modalWidth = math.min(modalWidth, style.maxWidth!);
+    }
+
+    final defaultModalHeight = mediaSize.height * 0.75;
+    double modalHeight = style.height ?? defaultModalHeight;
+    if (style.maxHeight != null) {
+      modalHeight = math.min(modalHeight, style.maxHeight!);
+    }
+
     final polls = widget.options.polls;
     final poll = widget.options.poll;
     final islevel = widget.options.islevel;
     final handleCreatePoll = widget.options.handleCreatePoll;
     final handleEndPoll = widget.options.handleEndPoll;
+    final positionData = getModalPosition(GetModalPositionOptions(
+      position: widget.options.position,
+      modalWidth: modalWidth,
+      modalHeight: modalHeight,
+      context: context,
+    ));
+
+    final filteredPreviousPolls = polls.where((polled) {
+      final matchesCurrentActive = poll != null &&
+          poll.status == 'active' &&
+          polled.id != null &&
+          polled.id == poll.id;
+      final hasId = polled.id != null && polled.id!.isNotEmpty;
+      return hasId && !matchesCurrentActive;
+    }).toList();
+
+    final outerDecoration = style.outerContainerDecoration ??
+        BoxDecoration(
+          color: widget.options.backgroundColor,
+          borderRadius: BorderRadius.circular(10),
+        );
+
+    final contentDecoration = style.contentDecoration ??
+        BoxDecoration(
+          color: widget.options.backgroundColor,
+          borderRadius: BorderRadius.circular(10),
+        );
+
+    final divider = Divider(
+      color: style.dividerColor ?? Colors.black,
+      thickness: style.dividerThickness,
+      height: style.dividerHeight,
+      indent: style.dividerIndent,
+      endIndent: style.dividerEndIndent,
+    );
+
+    final sectionTitleStyle = style.sectionTitleTextStyle ??
+        const TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
+    final pollQuestionTitleStyle = style.pollItemQuestionTextStyle ??
+        const TextStyle(fontSize: 12, fontWeight: FontWeight.bold);
+    final pollResultStyle = style.pollResultTextStyle ??
+        const TextStyle(fontSize: 12, color: Colors.grey);
+    final emptyStateStyle =
+        style.emptyStateTextStyle ?? style.bodyTextStyle ?? const TextStyle();
 
     return Visibility(
       visible: widget.options.isPollModalVisible,
       child: Stack(
         children: [
           Positioned(
-              top: getModalPosition(GetModalPositionOptions(
-                  position: widget.options.position,
-                  modalWidth: modalWidth,
-                  modalHeight: modalHeight,
-                  context: context))['top'],
-              right: getModalPosition(GetModalPositionOptions(
-                  position: widget.options.position,
-                  modalWidth: modalWidth,
-                  modalHeight: modalHeight,
-                  context: context))['right'],
+              top: positionData['top'],
+              right: positionData['right'],
               child: Container(
                 width: modalWidth,
                 height: modalHeight,
-                decoration: BoxDecoration(
-                  color: widget.options.backgroundColor,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Dialog(
-                  insetPadding: const EdgeInsets.all(20),
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    width: MediaQuery.of(context).size.width * 0.8,
-                    decoration: BoxDecoration(
-                      color: widget.options.backgroundColor,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Polls',
-                                style: TextStyle(
-                                    fontSize: 24, fontWeight: FontWeight.bold)),
-                            IconButton(
-                              icon: const FaIcon(FontAwesomeIcons.xmark),
-                              onPressed: widget.options.onClose,
-                            ),
-                          ],
-                        ),
-                        const Divider(color: Colors.black),
-                        Expanded(
-                          child: SingleChildScrollView(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (islevel == '2') ...[
-                                  const Text('Previous Polls',
-                                      style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold)),
-                                  ...polls.map<Widget>((polled) {
-                                    if (polled.id!.isEmpty ||
-                                        (poll != null &&
-                                            poll.status == 'active' &&
-                                            polled.id == poll.id)) {
-                                      return const SizedBox.shrink();
-                                    }
-                                    const SizedBox(height: 10);
-                                    return Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Question: ${polled.question}',
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
+                decoration: outerDecoration,
+                padding: style.outerPadding ?? EdgeInsets.zero,
+                child: Container(
+                  padding: style.contentPadding ?? const EdgeInsets.all(20),
+                  decoration: contentDecoration,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Polls',
+                            style: style.titleTextStyle ??
+                                const TextStyle(
+                                    fontSize: 24, fontWeight: FontWeight.bold),
+                          ),
+                          IconButton(
+                            icon: style.closeIcon ??
+                                const FaIcon(FontAwesomeIcons.xmark),
+                            style: style.closeButtonStyle,
+                            onPressed: widget.options.onClose,
+                          ),
+                        ],
+                      ),
+                      divider,
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (islevel == '2') ...[
+                                widget.options.previousPollsHeader ??
+                                    Text('Previous Polls',
+                                        style: sectionTitleStyle),
+                                if (filteredPreviousPolls.isEmpty)
+                                  widget.options
+                                          .emptyPreviousPollsPlaceholder ??
+                                      Text('No polls available',
+                                          style: emptyStateStyle)
+                                else
+                                  ...filteredPreviousPolls.map((polled) {
+                                    return Padding(
+                                      padding:
+                                          const EdgeInsets.only(bottom: 12),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Question: ${polled.question}',
+                                            style: pollQuestionTitleStyle,
                                           ),
-                                        ),
-                                        ...polled.options
-                                            .asMap()
-                                            .entries
-                                            .map((entry) {
-                                          int i = entry.key;
-                                          String option = entry.value;
-                                          return Text(
-                                            '$option: ${polled.votes![i]} votes (${calculatePercentage(polled.votes ?? [], i).toStringAsFixed(2)}%)',
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.grey,
+                                          ...polled.options
+                                              .asMap()
+                                              .entries
+                                              .map((entry) {
+                                            final i = entry.key;
+                                            final option = entry.value;
+                                            final baseVotes = polled.votes ?? [];
+                                            final safeVotes = List<int>.generate(
+                                              polled.options.length,
+                                              (voteIndex) =>
+                                                  voteIndex < baseVotes.length
+                                                      ? baseVotes[voteIndex]
+                                                      : 0,
+                                            );
+                                            return Text(
+                                              '$option: '
+                                              '${safeVotes[i]} '
+                                              'votes (${calculatePercentage(safeVotes, i).toStringAsFixed(2)}%)',
+                                              style: pollResultStyle,
+                                            );
+                                          }),
+                                          if (polled.status == 'active')
+                                            ElevatedButton(
+                                              style: _endButtonStyle ??
+                                                  ElevatedButton.styleFrom(
+                                                      backgroundColor:
+                                                          Colors.red),
+                                              onPressed: () {
+                                                handleEndPoll(
+                                                    HandleEndPollOptions(
+                                                  pollId: polled.id!,
+                                                  socket:
+                                                      widget.options.socket,
+                                                  showAlert: widget
+                                                      .options.showAlert,
+                                                  roomName:
+                                                      widget.options.roomName,
+                                                  updateIsPollModalVisible:
+                                                      widget.options
+                                                          .updateIsPollModalVisible,
+                                                ));
+                                              },
+                                              child: const Text('End Poll'),
                                             ),
-                                          );
-                                        }),
-                                        if (polled.status == 'active')
-                                          ElevatedButton(
-                                            style: ElevatedButton.styleFrom(
-                                                backgroundColor: Colors.red),
-                                            onPressed: () {
-                                              handleEndPoll(
-                                                  HandleEndPollOptions(
-                                                pollId: polled.id!,
-                                                socket: widget.options.socket,
-                                                showAlert:
-                                                    widget.options.showAlert,
-                                                roomName:
-                                                    widget.options.roomName,
-                                                updateIsPollModalVisible: widget
-                                                    .options
-                                                    .updateIsPollModalVisible,
-                                              ));
-                                            },
-                                            child: const Text('End Poll'),
-                                          ),
-                                        const Divider(color: Colors.black),
-                                      ],
+                                          divider,
+                                        ],
+                                      ),
                                     );
                                   }),
-                                  const Divider(color: Colors.black),
-                                  const SizedBox(height: 10),
-                                  const Text('Create a New Poll',
-                                      style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold)),
-                                  Padding(
-                                    padding:
-                                        const EdgeInsets.symmetric(vertical: 5),
-                                    child: TextField(
-                                      decoration: InputDecoration(
-                                        labelText: 'Poll Question',
-                                        labelStyle: TextStyle(
-                                          color: Colors.grey[800],
-                                          fontWeight: FontWeight.bold,
+                                divider,
+                                const SizedBox(height: 10),
+                                widget.options.createPollHeader ??
+                                    Text('Create a New Poll',
+                                        style: sectionTitleStyle),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 5),
+                                  child: TextField(
+                                    decoration: _buildQuestionDecoration(),
+                                    maxLength: 300,
+                                    maxLines: 3,
+                                    style: _styles.questionInputTextStyle,
+                                    onChanged: (text) {
+                                      if (mounted) {
+                                        setState(() {
+                                          newPoll['question'] = text;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ),
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 10),
+                                  child: Text(
+                                    'Select Poll Answer Type',
+                                    style: style.bodyTextStyle ??
+                                        const TextStyle(
+                                            fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 5),
+                                  child: DropdownButton<String>(
+                                    value: newPoll['type'],
+                                    style: _styles.dropdownTextStyle ??
+                                        style.bodyTextStyle,
+                                    onChanged: (String? newValue) {
+                                      if (newValue != null) {
+                                        handlePollTypeChange(newValue);
+                                      }
+                                    },
+                                    items: <String>[
+                                      'Choose...',
+                                      'trueFalse',
+                                      'yesNo',
+                                      'custom'
+                                    ].map((value) {
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(
+                                          value,
+                                          style: _styles.dropdownTextStyle ??
+                                              style.bodyTextStyle,
                                         ),
-                                        border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                        ),
-                                      ),
-                                      maxLength: 300,
-                                      maxLines: 3,
-                                      onChanged: (text) {
-                                        if (mounted) {
-                                          setState(() {
-                                            newPoll['question'] = text;
-                                          });
-                                        }
-                                      },
-                                    ),
+                                      );
+                                    }).toList(),
                                   ),
-                                  const Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 10),
-                                    child: Text(
-                                      'Select Poll Answer Type',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding:
-                                        const EdgeInsets.symmetric(vertical: 5),
-                                    child: DropdownButton<String>(
-                                      value: newPoll['type'],
-                                      onChanged: (String? newValue) {
-                                        handlePollTypeChange(newValue!);
-                                      },
-                                      items: <String>[
-                                        'Choose...',
-                                        'trueFalse',
-                                        'yesNo',
-                                        'custom'
-                                      ].map<DropdownMenuItem<String>>(
-                                          (String value) {
-                                        return DropdownMenuItem<String>(
-                                          value: value,
-                                          child: Text(value),
-                                        );
-                                      }).toList(),
-                                    ),
-                                  ),
-                                  ...renderPollOptions(),
+                                ),
+                                ...renderPollOptions(),
+                                ElevatedButton(
+                                  style: _createButtonStyle,
+                                  onPressed: () {
+                                    handleCreatePoll(HandleCreatePollOptions(
+                                      poll: Poll.fromMap(newPoll),
+                                      socket: widget.options.socket,
+                                      showAlert: widget.options.showAlert,
+                                      roomName: widget.options.roomName,
+                                      updateIsPollModalVisible: widget.options
+                                          .updateIsPollModalVisible,
+                                    ));
+                                  },
+                                  child: const Text('Create Poll'),
+                                ),
+                                divider,
+                              ],
+                              const SizedBox(height: 10),
+                              widget.options.currentPollHeader ??
+                                  Text('Current Poll',
+                                      style: sectionTitleStyle),
+                              if (poll != null &&
+                                  poll.status == 'active') ...[
+                                Text(
+                                  'Question: ${poll.question}',
+                                  style: pollQuestionTitleStyle,
+                                ),
+                                ...renderCurrentPollOptions(),
+                                if (islevel == '2')
                                   ElevatedButton(
+                                    style: _endButtonStyle ??
+                                        ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.red),
                                     onPressed: () {
-                                      handleCreatePoll(HandleCreatePollOptions(
-                                        poll: Poll.fromMap(newPoll),
+                                      handleEndPoll(HandleEndPollOptions(
+                                        pollId: poll.id!,
                                         socket: widget.options.socket,
                                         showAlert: widget.options.showAlert,
                                         roomName: widget.options.roomName,
-                                        updateIsPollModalVisible: widget
-                                            .options.updateIsPollModalVisible,
+                                        updateIsPollModalVisible: widget.options
+                                            .updateIsPollModalVisible,
                                       ));
                                     },
-                                    child: const Text('Create Poll'),
+                                    child: const Text('End Poll'),
                                   ),
-                                  const Divider(color: Colors.black),
-                                ],
-                                const SizedBox(height: 10),
-                                const Text('Current Poll',
-                                    style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold)),
-                                if (poll != null &&
-                                    poll.status == 'active') ...[
-                                  Text(
-                                    'Question: ${poll.question}',
-                                    style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  ...renderCurrentPollOptions(),
-                                  if (islevel == '2')
-                                    ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.red),
-                                      onPressed: () {
-                                        handleEndPoll(HandleEndPollOptions(
-                                          pollId: poll.id!,
-                                          socket: widget.options.socket,
-                                          showAlert: widget.options.showAlert,
-                                          roomName: widget.options.roomName,
-                                          updateIsPollModalVisible: widget
-                                              .options.updateIsPollModalVisible,
-                                        ));
-                                      },
-                                      child: const Text('End Poll'),
-                                    ),
-                                ] else ...[
-                                  const Text('No active poll'),
-                                ],
+                              ] else ...[
+                                widget.options.emptyCurrentPollPlaceholder ??
+                                    Text('No active poll',
+                                        style: emptyStateStyle),
                               ],
-                            ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               )),

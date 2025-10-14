@@ -1,8 +1,8 @@
 /// Complete Custom Component Example for MediaSFU SDK
-/// 
+///
 /// This example demonstrates how to use the CustomComponentType functionality
 /// to completely replace the default MediaSFU interface with your own custom widget.
-/// 
+///
 /// The CustomComponentType allows you to provide a completely custom interface
 /// while still having access to all MediaSFU parameters and functionality.
 library;
@@ -49,7 +49,7 @@ class CustomComponentDemo extends StatelessWidget {
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 40),
-            
+
             // Generic Component with Custom Interface
             ElevatedButton(
               onPressed: () => _showCustomGeneric(context),
@@ -61,7 +61,7 @@ class CustomComponentDemo extends StatelessWidget {
               child: const Text('Custom Generic Component'),
             ),
             const SizedBox(height: 20),
-            
+
             // Conference Component with Custom Interface
             ElevatedButton(
               onPressed: () => _showCustomConference(context),
@@ -73,7 +73,7 @@ class CustomComponentDemo extends StatelessWidget {
               child: const Text('Custom Conference Component'),
             ),
             const SizedBox(height: 20),
-            
+
             // Broadcast Component with Custom Interface
             ElevatedButton(
               onPressed: () => _showCustomBroadcast(context),
@@ -85,7 +85,7 @@ class CustomComponentDemo extends StatelessWidget {
               child: const Text('Custom Broadcast Component'),
             ),
             const SizedBox(height: 20),
-            
+
             // Chat Component with Custom Interface
             ElevatedButton(
               onPressed: () => _showCustomChat(context),
@@ -97,7 +97,7 @@ class CustomComponentDemo extends StatelessWidget {
               child: const Text('Custom Chat Component'),
             ),
             const SizedBox(height: 20),
-            
+
             // Webinar Component with Custom Interface
             ElevatedButton(
               onPressed: () => _showCustomWebinar(context),
@@ -305,7 +305,7 @@ Widget _buildCustomInterface({
             ],
           ),
         ),
-        
+
         // Media control buttons
         Container(
           padding: const EdgeInsets.all(16),
@@ -326,7 +326,9 @@ Widget _buildCustomInterface({
                 onPressed: () => parameters.clickVideo(
                   ClickVideoOptions(parameters: parameters),
                 ),
-                icon: parameters.videoAction ? Icons.videocam : Icons.videocam_off,
+                icon: parameters.videoAction
+                    ? Icons.videocam
+                    : Icons.videocam_off,
                 label: parameters.videoAction ? 'Video On' : 'Video Off',
                 isActive: parameters.videoAction,
                 activeColor: Colors.green,
@@ -346,8 +348,8 @@ Widget _buildCustomInterface({
                 onPressed: () => parameters.clickScreenShare(
                   ClickScreenShareOptions(parameters: parameters),
                 ),
-                icon: parameters.screenAction 
-                    ? Icons.stop_screen_share 
+                icon: parameters.screenAction
+                    ? Icons.stop_screen_share
                     : Icons.screen_share,
                 label: parameters.screenAction ? 'Stop Share' : 'Share',
                 isActive: parameters.screenAction,
@@ -357,7 +359,7 @@ Widget _buildCustomInterface({
             ],
           ),
         ),
-        
+
         // Main content area - participants list
         Expanded(
           child: Container(
@@ -393,7 +395,7 @@ Widget _buildCustomInterface({
                     ],
                   ),
                 ),
-                
+
                 // Participants list
                 Expanded(
                   child: parameters.participants.isEmpty
@@ -422,7 +424,8 @@ Widget _buildCustomInterface({
                           itemCount: parameters.participants.length,
                           itemBuilder: (context, index) {
                             final participant = parameters.participants[index];
-                            return _buildParticipantCard(participant, accentColor);
+                            return _buildParticipantCard(
+                                participant, accentColor);
                           },
                         ),
                 ),
@@ -430,7 +433,7 @@ Widget _buildCustomInterface({
             ),
           ),
         ),
-        
+
         // Bottom action bar
         Container(
           padding: const EdgeInsets.all(16),
@@ -539,7 +542,7 @@ Widget _buildParticipantCard(Participant participant, Color accentColor) {
           backgroundColor: accentColor,
           radius: 20,
           child: Text(
-            participant.name.isNotEmpty 
+            participant.name.isNotEmpty
                 ? participant.name[0].toUpperCase()
                 : '?',
             style: const TextStyle(
@@ -550,7 +553,7 @@ Widget _buildParticipantCard(Participant participant, Color accentColor) {
           ),
         ),
         const SizedBox(width: 12),
-        
+
         // Participant info
         Expanded(
           child: Column(
@@ -575,7 +578,7 @@ Widget _buildParticipantCard(Participant participant, Color accentColor) {
             ],
           ),
         ),
-        
+
         // Status indicators
         Row(
           children: [
@@ -595,11 +598,14 @@ Widget _buildParticipantCard(Participant participant, Color accentColor) {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: (participant.videoOn ?? false) ? Colors.green : Colors.red,
+                color:
+                    (participant.videoOn ?? false) ? Colors.green : Colors.red,
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Icon(
-                (participant.videoOn ?? false) ? Icons.videocam : Icons.videocam_off,
+                (participant.videoOn ?? false)
+                    ? Icons.videocam
+                    : Icons.videocam_off,
                 color: Colors.white,
                 size: 16,
               ),

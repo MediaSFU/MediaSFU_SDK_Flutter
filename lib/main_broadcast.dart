@@ -1,3 +1,4 @@
+// ignore_for_file: unused_shown_name, unused_import, unused_local_variable, dead_code
 import 'package:flutter/material.dart';
 import 'methods/utils/create_room_on_media_sfu.dart' show createRoomOnMediaSFU;
 import 'methods/utils/join_room_on_media_sfu.dart' show joinRoomOnMediaSFU;
@@ -203,7 +204,7 @@ Widget myCustomBroadcastAudioCard({
           ),
         ),
         SizedBox(height: 8),
-        
+
         // Participant name
         Text(
           name,
@@ -215,7 +216,7 @@ Widget myCustomBroadcastAudioCard({
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        
+
         // Audio wave indicator
         if (barColor)
           Container(
@@ -258,7 +259,7 @@ Widget myCustomBroadcastMiniCard({
     height: 80,
     decoration: BoxDecoration(
       gradient: LinearGradient(
-        colors: showWaveform 
+        colors: showWaveform
             ? [Colors.red.shade600, Colors.orange.shade400]
             : [Colors.grey.shade700, Colors.grey.shade500],
         begin: Alignment.topLeft,
@@ -266,7 +267,7 @@ Widget myCustomBroadcastMiniCard({
       ),
       borderRadius: BorderRadius.circular(10),
       border: Border.all(
-        color: showWaveform ? Colors.white : Colors.grey.shade400, 
+        color: showWaveform ? Colors.white : Colors.grey.shade400,
         width: 2,
       ),
     ),
@@ -372,7 +373,7 @@ Widget myCustomBroadcastInterface({required MediasfuParameters parameters}) {
             ],
           ),
         ),
-        
+
         // Broadcast controls
         Container(
           padding: const EdgeInsets.all(16),
@@ -393,7 +394,9 @@ Widget myCustomBroadcastInterface({required MediasfuParameters parameters}) {
                 onPressed: () => parameters.clickVideo(
                   ClickVideoOptions(parameters: parameters),
                 ),
-                icon: parameters.videoAction ? Icons.videocam : Icons.videocam_off,
+                icon: parameters.videoAction
+                    ? Icons.videocam
+                    : Icons.videocam_off,
                 label: parameters.videoAction ? 'Camera On' : 'Camera Off',
                 isActive: parameters.videoAction,
                 activeColor: Colors.green,
@@ -413,8 +416,8 @@ Widget myCustomBroadcastInterface({required MediasfuParameters parameters}) {
                 onPressed: () => parameters.clickScreenShare(
                   ClickScreenShareOptions(parameters: parameters),
                 ),
-                icon: parameters.screenAction 
-                    ? Icons.stop_screen_share 
+                icon: parameters.screenAction
+                    ? Icons.stop_screen_share
                     : Icons.screen_share,
                 label: parameters.screenAction ? 'Stop Share' : 'Share Screen',
                 isActive: parameters.screenAction,
@@ -424,7 +427,7 @@ Widget myCustomBroadcastInterface({required MediasfuParameters parameters}) {
             ],
           ),
         ),
-        
+
         // Main broadcast area - viewers list
         Expanded(
           child: Container(
@@ -494,7 +497,8 @@ Widget myCustomBroadcastInterface({required MediasfuParameters parameters}) {
                           itemCount: parameters.participants.length,
                           itemBuilder: (context, index) {
                             final participant = parameters.participants[index];
-                            return _buildBroadcastViewerCard(participant, Colors.red.shade600);
+                            return _buildBroadcastViewerCard(
+                                participant, Colors.red.shade600);
                           },
                         ),
                 ),
@@ -502,7 +506,7 @@ Widget myCustomBroadcastInterface({required MediasfuParameters parameters}) {
             ),
           ),
         ),
-        
+
         // Broadcast action bar
         Container(
           padding: const EdgeInsets.all(16),
@@ -610,7 +614,7 @@ Widget _buildBroadcastViewerCard(Participant participant, Color accentColor) {
           backgroundColor: accentColor,
           radius: 20,
           child: Text(
-            participant.name.isNotEmpty 
+            participant.name.isNotEmpty
                 ? participant.name[0].toUpperCase()
                 : '?',
             style: const TextStyle(

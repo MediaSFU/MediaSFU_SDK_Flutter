@@ -205,7 +205,7 @@ Widget myCustomConferenceAudioCard({
           ),
         ),
         SizedBox(height: 8),
-        
+
         // Participant name
         Text(
           name,
@@ -217,7 +217,7 @@ Widget myCustomConferenceAudioCard({
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        
+
         // Audio wave indicator
         if (barColor)
           Container(
@@ -260,7 +260,7 @@ Widget myCustomConferenceMiniCard({
     height: 80,
     decoration: BoxDecoration(
       gradient: LinearGradient(
-        colors: showWaveform 
+        colors: showWaveform
             ? [Colors.blue.shade600, Colors.teal.shade400]
             : [Colors.grey.shade700, Colors.grey.shade500],
         begin: Alignment.topLeft,
@@ -268,7 +268,7 @@ Widget myCustomConferenceMiniCard({
       ),
       borderRadius: BorderRadius.circular(10),
       border: Border.all(
-        color: showWaveform ? Colors.white : Colors.grey.shade400, 
+        color: showWaveform ? Colors.white : Colors.grey.shade400,
         width: 2,
       ),
     ),
@@ -360,7 +360,7 @@ Widget myCustomConferenceInterface({required MediasfuParameters parameters}) {
             ],
           ),
         ),
-        
+
         // Conference controls
         Container(
           padding: const EdgeInsets.all(16),
@@ -381,7 +381,9 @@ Widget myCustomConferenceInterface({required MediasfuParameters parameters}) {
                 onPressed: () => parameters.clickVideo(
                   ClickVideoOptions(parameters: parameters),
                 ),
-                icon: parameters.videoAction ? Icons.videocam : Icons.videocam_off,
+                icon: parameters.videoAction
+                    ? Icons.videocam
+                    : Icons.videocam_off,
                 label: parameters.videoAction ? 'Video On' : 'Video Off',
                 isActive: parameters.videoAction,
                 activeColor: Colors.green,
@@ -401,8 +403,8 @@ Widget myCustomConferenceInterface({required MediasfuParameters parameters}) {
                 onPressed: () => parameters.clickScreenShare(
                   ClickScreenShareOptions(parameters: parameters),
                 ),
-                icon: parameters.screenAction 
-                    ? Icons.stop_screen_share 
+                icon: parameters.screenAction
+                    ? Icons.stop_screen_share
                     : Icons.screen_share,
                 label: parameters.screenAction ? 'Stop Share' : 'Share Screen',
                 isActive: parameters.screenAction,
@@ -412,7 +414,7 @@ Widget myCustomConferenceInterface({required MediasfuParameters parameters}) {
             ],
           ),
         ),
-        
+
         // Main conference area - participants list
         Expanded(
           child: Container(
@@ -474,7 +476,8 @@ Widget myCustomConferenceInterface({required MediasfuParameters parameters}) {
                           itemCount: parameters.participants.length,
                           itemBuilder: (context, index) {
                             final participant = parameters.participants[index];
-                            return _buildConferenceParticipantCard(participant, Colors.blue.shade600);
+                            return _buildConferenceParticipantCard(
+                                participant, Colors.blue.shade600);
                           },
                         ),
                 ),
@@ -482,7 +485,7 @@ Widget myCustomConferenceInterface({required MediasfuParameters parameters}) {
             ),
           ),
         ),
-        
+
         // Conference action bar
         Container(
           padding: const EdgeInsets.all(16),
@@ -575,7 +578,8 @@ Widget _buildConferenceActionButton({
   );
 }
 
-Widget _buildConferenceParticipantCard(Participant participant, Color accentColor) {
+Widget _buildConferenceParticipantCard(
+    Participant participant, Color accentColor) {
   return Container(
     margin: const EdgeInsets.only(bottom: 8),
     padding: const EdgeInsets.all(12),
@@ -590,7 +594,7 @@ Widget _buildConferenceParticipantCard(Participant participant, Color accentColo
           backgroundColor: accentColor,
           radius: 20,
           child: Text(
-            participant.name.isNotEmpty 
+            participant.name.isNotEmpty
                 ? participant.name[0].toUpperCase()
                 : '?',
             style: const TextStyle(
@@ -642,11 +646,14 @@ Widget _buildConferenceParticipantCard(Participant participant, Color accentColo
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: (participant.videoOn ?? false) ? Colors.green : Colors.red,
+                color:
+                    (participant.videoOn ?? false) ? Colors.green : Colors.red,
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Icon(
-                (participant.videoOn ?? false) ? Icons.videocam : Icons.videocam_off,
+                (participant.videoOn ?? false)
+                    ? Icons.videocam
+                    : Icons.videocam_off,
                 color: Colors.white,
                 size: 16,
               ),

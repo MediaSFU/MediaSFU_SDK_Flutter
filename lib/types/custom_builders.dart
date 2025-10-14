@@ -53,3 +53,8 @@ typedef MiniCardType = Widget Function({
 typedef CustomComponentType = Widget Function({
   required MediasfuParameters parameters,
 });
+
+/// Alias mirroring the React SDK's `customWorkspaceBuilder` for parity.
+typedef CustomWorkspaceBuilder = Widget Function({
+  required MediasfuParameters parameters,
+});

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import '../methods/utils/mini_audio_player/mini_audio_player.dart'
-    show MiniAudioPlayer;
+  show MiniAudioPlayerType;
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart'
     show Consumer;
 import '../components/display_components/mini_audio.dart'
@@ -307,9 +307,9 @@ Future<void> consumerResume(ConsumerResumeOptions options) async {
           'imageStyle': const {},
         },
       );
-      final Widget nTrack = MiniAudioPlayer(
-        options: optionsMiniAudio,
-      );
+      final MiniAudioPlayerType miniAudioPlayer =
+          updatedParams.miniAudioPlayerComponent;
+      final Widget nTrack = miniAudioPlayer(optionsMiniAudio);
 
       // Add the MiniAudioPlayer to audio-only streams
       audioOnlyStreams.add(nTrack);
