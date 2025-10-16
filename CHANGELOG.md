@@ -1,3 +1,7 @@
+### 2.2.3
+
+* Updated to latest mediasfu_mediasoup_client version for Chrome 140 support.
+
 ### 2.2.2
 
 * Added custom overrides for all UI components in the SDK.
@@ -15,7 +19,7 @@
 * Complete custom interface support using `CustomComponentType`.
 * Return `CustomComponent` instances from the builders as well as the full display widgets.
 * PCMU and PCMA audio codec support.
-* Chrome 140+ video production fix in progress.
+* Chrome 140 video production fix in progress.
 
 ### 2.1.9
 

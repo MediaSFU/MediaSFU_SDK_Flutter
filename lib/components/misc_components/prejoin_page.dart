@@ -1343,12 +1343,6 @@ class _PreJoinPageState extends State<PreJoinPage> {
           localLink: widget.options.localLink ?? '',
         ),
       );
-      debugPrint('Join room response: $response');
-      debugPrint('Using link: ${widget.options.localLink}');
-      debugPrint('Using userName: $name');
-      debugPrint(
-          'Using apiUserName: ${widget.options.credentials.apiUserName}');
-      debugPrint('Using apiKey: ${widget.options.credentials.apiKey}');
 
       if (response.success && response.data is CreateJoinRoomResponse) {
         final data = response.data;
@@ -1381,12 +1375,6 @@ class _PreJoinPageState extends State<PreJoinPage> {
         print('Error joining room: $error');
         print(stackTrace);
       }
-      debugPrint('Error joining room: $error');
-      debugPrint('Using link: ${widget.options.localLink}');
-      debugPrint('Using userName: $name');
-      debugPrint(
-          'Using apiUserName: ${widget.options.credentials.apiUserName}');
-      debugPrint('Using apiKey: ${widget.options.credentials.apiKey}');
 
       widget.options.parameters.showAlert?.call(
         message: 'Unable to join room. ${error.toString()}',
