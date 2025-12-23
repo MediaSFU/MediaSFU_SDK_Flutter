@@ -95,6 +95,7 @@ class _ModernParticipantsModalState extends State<ModernParticipantsModal>
 
     // Check if this is a webinar or chat event - these benefit from high transparency
     // so users can still see the video feed behind the modal
+    // ignore: unused_local_variable
     final isLiveEvent = params.eventType == EventType.webinar ||
         params.eventType == EventType.chat;
 

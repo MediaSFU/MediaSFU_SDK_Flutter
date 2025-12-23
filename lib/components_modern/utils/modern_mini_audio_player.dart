@@ -301,12 +301,14 @@ class _ModernMiniAudioPlayerState extends State<ModernMiniAudioPlayer>
               (breakOutRoomStarted &&
                   !breakOutRoomEnded &&
                   audioActiveInRoom)) {
+            // ignore: dead_code
             final bool shouldShow = false;
 
             if (mounted && showWaveModal != shouldShow) {
               setState(() {
                 showWaveModal = shouldShow;
               });
+              // ignore: dead_code
               if (shouldShow) {
                 _fadeController.forward();
                 if (widget.options.animateWaveform) {

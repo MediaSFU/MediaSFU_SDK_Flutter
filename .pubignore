@@ -17,3 +17,7 @@ scripts/
 
 # Backup files from publish workflow
 *.github_full
+
+# Files that are gitignored but checked in (pub.dev warning)
+dartdoc_options.yaml
+doc/doc_assets/

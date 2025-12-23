@@ -169,7 +169,7 @@ Future<void> getPipedProducersAlt(
 
               // Check per-speaker preference first (higher priority than global)
               final perSpeakerPref = listenerTranslationPreferences
-                  ?.perSpeaker?[translationMeta.speakerId];
+                  ?.perSpeaker[translationMeta.speakerId];
               final globalPref = listenerTranslationPreferences?.globalLanguage;
 
               // Also check legacy overrides for backwards compatibility
@@ -178,7 +178,7 @@ Future<void> getPipedProducersAlt(
 
               if (perSpeakerPref != null) {
                 // Per-speaker preference takes highest priority
-                if (perSpeakerPref == null || perSpeakerPref.isEmpty) {
+                if (perSpeakerPref.isEmpty) {
                   overrideBlocksConsumption = true;
                 } else if (perSpeakerPref == normalizedLang) {
                   shouldConsumeForOverride = true;

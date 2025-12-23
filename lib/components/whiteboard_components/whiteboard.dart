@@ -187,6 +187,7 @@ class _WhiteboardState extends State<Whiteboard> {
   // Eraser cursor position (for visual feedback) - use ValueNotifier for efficient updates
   final ValueNotifier<Offset?> _eraserCursorNotifier =
       ValueNotifier<Offset?>(null);
+  // ignore: unused_element
   Offset? get _eraserCursorPosition => _eraserCursorNotifier.value;
   set _eraserCursorPosition(Offset? value) =>
       _eraserCursorNotifier.value = value;

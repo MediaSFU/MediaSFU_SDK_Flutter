@@ -330,10 +330,6 @@ import '../../methods/breakout_rooms_methods/breakout_room_updated.dart'
 // Mediasfu functions
 import '../../methods/utils/meeting_timer/start_meeting_progress_timer.dart'
     show startMeetingProgressTimer, StartMeetingProgressTimerOptions;
-import '../../methods/recording_methods/update_recording.dart'
-    show updateRecording, UpdateRecordingOptions;
-import '../../methods/recording_methods/stop_recording.dart'
-    show stopRecording, StopRecordingOptions;
 
 import '../../producers/socket_receive_methods/user_waiting.dart'
     show userWaiting, UserWaitingOptions;

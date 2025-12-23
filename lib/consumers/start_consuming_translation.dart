@@ -52,7 +52,7 @@ Future<void> startConsumingTranslation(
   final originalProducerId = translationMeta.originalProducerId;
   final translationProducerMap = parameters.translationProducerMap;
 
-  if (originalProducerId != null && translationProducerMap != null) {
+  if (originalProducerId.isNotEmpty && translationProducerMap != null) {
     final producersToRemove = <String>[];
 
     // Iterate over the map to find conflicting translations
@@ -131,7 +131,7 @@ Future<void> startConsumingTranslation(
   await signalNewConsumerTransport(optionsSignal);
 
   // STEP 5: Pause original producer
-  if (originalProducerId != null) {
+  if (originalProducerId.isNotEmpty) {
     final transportIndex = consumerTransports.indexWhere(
       (t) => t.producerId == originalProducerId,
     );

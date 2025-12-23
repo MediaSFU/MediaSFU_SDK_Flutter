@@ -52,8 +52,11 @@ class _BackgroundPreviewWidgetState extends State<BackgroundPreviewWidget> {
   String? _error;
 
   // For composited preview
+  // ignore: unused_field
   ui.Image? _currentFrame;
+  // ignore: unused_field
   ui.Image? _backgroundImage;
+  // ignore: unused_field
   Uint8List? _currentMask;
   Timer? _frameTimer;
 
