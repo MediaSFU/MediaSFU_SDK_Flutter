@@ -87,7 +87,8 @@ List<int> getEstimate(GetEstimateOptions options) {
       updateRemoveAltGrid(removeAltGrid);
 
       // Return estimated values based on screen width and event type
-      if (!(isMediumScreen || isWideScreen)) {
+      // isMediumScreen || isWideScreen
+      if (!(isWideScreen)) {
         return eventType == EventType.chat ||
                 (eventType == EventType.conference &&
                     !(shareScreenStarted || shared))

@@ -79,20 +79,20 @@ typedef ModifySettingsType = Future<void> Function(
 ///
 
 Future<void> modifySettings(ModifySettingsOptions options) async {
-  if (options.roomName.toLowerCase().startsWith('d')) {
-    // None of the settings should be set to 'approval' in demo mode
-    if (options.audioSet == 'approval' ||
-        options.videoSet == 'approval' ||
-        options.screenshareSet == 'approval' ||
-        options.chatSet == 'approval') {
-      options.showAlert?.call(
-        message: 'You cannot set approval for demo mode.',
-        type: 'danger',
-        duration: 3000,
-      );
-      return;
-    }
-  }
+  // if (options.roomName.toLowerCase().startsWith('d')) {
+  //   // None of the settings should be set to 'approval' in demo mode
+  //   if (options.audioSet == 'approval' ||
+  //       options.videoSet == 'approval' ||
+  //       options.screenshareSet == 'approval' ||
+  //       options.chatSet == 'approval') {
+  //     options.showAlert?.call(
+  //       message: 'You cannot set approval for demo mode.',
+  //       type: 'danger',
+  //       duration: 3000,
+  //     );
+  //     return;
+  //   }
+  // }
 
   // Update settings based on the provided options
   if (options.audioSet.isNotEmpty) options.updateAudioSetting(options.audioSet);

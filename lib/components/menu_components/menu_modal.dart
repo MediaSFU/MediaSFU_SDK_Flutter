@@ -10,6 +10,7 @@ import './custom_buttons.dart'
 import '../../methods/utils/get_modal_position.dart'
     show getModalPosition, GetModalPositionOptions;
 import '../../types/types.dart' show EventType;
+import '../../types/modal_style_options.dart' show ModalRenderMode;
 
 /// Configuration payload for [MenuModal].
 ///
@@ -44,6 +45,15 @@ class MenuModalOptions {
   final EventType eventType;
   String? localLink;
 
+  /// Theme control - whether dark mode is active
+  final bool isDarkMode;
+
+  /// Callback to toggle the theme mode
+  final void Function(bool)? onToggleTheme;
+
+  /// Render mode: modal (default overlay), sidebar (inline for desktop), inline (no wrapper)
+  final ModalRenderMode renderMode;
+
   MenuModalOptions({
     this.backgroundColor = const Color(0xFF83C0E9),
     required this.isVisible,
@@ -56,6 +66,9 @@ class MenuModalOptions {
     required this.islevel,
     required this.eventType,
     this.localLink = '',
+    this.isDarkMode = true,
+    this.onToggleTheme,
+    this.renderMode = ModalRenderMode.modal,
   });
 }
 
@@ -115,8 +128,95 @@ class MenuModal extends StatelessWidget {
 
   const MenuModal({super.key, required this.options});
 
+  /// Builds the main content of the menu (buttons, passcode, meeting ID, share)
+  Widget _buildMenuContent(BuildContext context, {bool showHeader = true}) {
+    final textColor = options.isDarkMode ? Colors.white : Colors.black;
+    final dividerColor = options.isDarkMode ? Colors.white24 : Colors.black26;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header with title and close button (only in modal mode)
+        if (showHeader) ...[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Menu',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
+              ),
+              GestureDetector(
+                onTap: options.onClose,
+                child: Icon(
+                  Icons.close,
+                  size: 20,
+                  color: textColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Divider(color: dividerColor),
+          const SizedBox(height: 10),
+        ],
+        Expanded(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              // Custom buttons section
+              CustomButtons(
+                options: CustomButtonsOptions(
+                  buttons: options.customButtons,
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // Meeting passcode for hosts
+              if (options.islevel == '2')
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: MeetingPasscodeComponent(
+                    options: MeetingPasscodeComponentOptions(
+                      meetingPasscode: options.adminPasscode,
+                    ),
+                  ),
+                ),
+
+              // Meeting ID
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: MeetingIdComponent(
+                  options: MeetingIdComponentOptions(
+                    meetingID: options.roomName,
+                  ),
+                ),
+              ),
+
+              // Share buttons, if enabled
+              if (options.shareButtons) ...[
+                ShareButtonsComponent(
+                  options: ShareButtonsComponentOptions(
+                    meetingID: options.roomName,
+                    eventType: options.eventType,
+                    localLink: options.localLink,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 25),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Modal mode: full overlay with positioning
     final double modalWidth = MediaQuery.of(context).size.width * 0.8 > 450
         ? 450
         : MediaQuery.of(context).size.width * 0.8;
@@ -145,82 +245,7 @@ class MenuModal extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
               padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header with title and close button
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Menu',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: options.onClose,
-                        child: const Icon(
-                          Icons.close,
-                          size: 20,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  const Divider(color: Colors.black),
-                  const SizedBox(height: 10),
-                  Expanded(
-                    child: ListView(
-                      children: [
-                        // Custom buttons section
-                        CustomButtons(
-                          options: CustomButtonsOptions(
-                            buttons: options.customButtons,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-
-                        // Meeting passcode for hosts
-                        if (options.islevel == '2')
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: MeetingPasscodeComponent(
-                              options: MeetingPasscodeComponentOptions(
-                                meetingPasscode: options.adminPasscode,
-                              ),
-                            ),
-                          ),
-
-                        // Meeting ID
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: MeetingIdComponent(
-                            options: MeetingIdComponentOptions(
-                              meetingID: options.roomName,
-                            ),
-                          ),
-                        ),
-
-                        // Share buttons, if enabled
-                        if (options.shareButtons) ...[
-                          ShareButtonsComponent(
-                            options: ShareButtonsComponentOptions(
-                              meetingID: options.roomName,
-                              eventType: options.eventType,
-                              localLink: options.localLink,
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 25),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+              child: _buildMenuContent(context, showHeader: true),
             ),
           ),
         ],

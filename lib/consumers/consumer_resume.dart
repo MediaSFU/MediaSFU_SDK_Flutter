@@ -5,11 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import '../methods/utils/mini_audio_player/mini_audio_player.dart'
-  show MiniAudioPlayerType;
+    show MiniAudioPlayerType;
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart'
     show Consumer;
 import '../components/display_components/mini_audio.dart'
     show MiniAudio, MiniAudioOptions;
+import '../components/display_components/simple_audio_player.dart'
+    show SimpleAudioPlayer;
 import '../types/types.dart'
     show
         ReorderStreamsType,
@@ -78,11 +80,16 @@ abstract class ConsumerResumeParameters
   void Function(bool value) get updateGotAllVids;
   void Function(String value) get updateScreenId;
   void Function(bool value) get updateDeferReceive;
+  void Function(Widget stream)? get addTranslationStream;
 
   // Mediasfu functions
   ReorderStreamsType get reorderStreams;
   PrepopulateUserMediaType get prepopulateUserMedia;
   ConsumerResumeParameters Function() get getUpdatedAllParams;
+
+  // Translation params
+  Map<String, dynamic>? get translationProducerMap;
+  Set<String>? get activeTranslationProducerIds;
 
   // Stream operator [](String key);
 }
@@ -232,6 +239,126 @@ Future<void> consumerResume(ConsumerResumeOptions options) async {
         updatedParams.prepopulateUserMedia;
 
     if (kind == 'audio') {
+      // Translation check - check if this is a translation producer
+      final activeTranslationProducerIds =
+          updatedParams.activeTranslationProducerIds;
+      final isTranslationAudio =
+          activeTranslationProducerIds?.contains(remoteProducerId) ?? false;
+
+      if (isTranslationAudio) {
+        // It is a translation producer - find the speaker info
+        String name =
+            'Translation-${remoteProducerId.substring(0, 8.clamp(0, remoteProducerId.length))}';
+
+        // Try to find the speaker from translationProducerMap
+        final translationProducerMap = updatedParams.translationProducerMap;
+        if (translationProducerMap != null) {
+          final meta = translationProducerMap[remoteProducerId];
+          if (meta != null) {
+            // Find participant by speakerId
+            Participant? participant;
+            try {
+              final speakerId = (meta as dynamic).speakerId as String?;
+              if (speakerId != null) {
+                participant = participants.firstWhere(
+                    (p) => p.id == speakerId || p.audioID == speakerId);
+              }
+            } catch (e) {
+              participant = null;
+            }
+            name = participant?.name ?? name;
+          }
+        }
+
+        // Create a simple audio player widget for translation audio (no UI needed, just plays audio)
+        final Widget translationAudio = SimpleAudioPlayer(
+          key: Key('translation-$remoteProducerId'),
+          stream: stream,
+          producerId: remoteProducerId,
+        );
+
+        // Add to translationStreams if available, otherwise audioOnlyStreams
+        if (updatedParams.addTranslationStream != null) {
+          updatedParams.addTranslationStream!(translationAudio);
+        } else {
+          audioOnlyStreams.add(translationAudio);
+          updateAudioOnlyStreams(audioOnlyStreams);
+        }
+
+        // Add to allAudioStreams
+        allAudioStreams.add(Stream(
+          producerId: remoteProducerId,
+          name: name,
+          stream: stream,
+        ));
+        updateAllAudioStreams(allAudioStreams);
+
+        // Add to audStreamNames
+        audStreamNames.add(Stream(
+          producerId: remoteProducerId,
+          name: name,
+          stream: stream,
+        ));
+        updateAudStreamNames(audStreamNames);
+        return;
+      }
+
+      // Legacy translation check using translationProducerMap
+      final translationProducerMap = updatedParams.translationProducerMap;
+      if (translationProducerMap != null) {
+        for (final entry in translationProducerMap.entries) {
+          final producerId = entry.key;
+          if (producerId == remoteProducerId) {
+            // It is a translation producer
+            final meta = entry.value;
+            Participant? participant;
+            try {
+              final speakerId = (meta as dynamic).speakerId as String?;
+              if (speakerId != null) {
+                participant = participants.firstWhere(
+                    (p) => p.id == speakerId || p.audioID == speakerId);
+              }
+            } catch (e) {
+              participant = null;
+            }
+
+            String name = participant?.name ?? 'Translation';
+
+            // Create a simple audio player widget for translation audio (no UI needed)
+            final Widget translationAudio = SimpleAudioPlayer(
+              key: Key('translation-$remoteProducerId'),
+              stream: stream,
+              producerId: remoteProducerId,
+            );
+
+            // Add to translationStreams if available, otherwise audioOnlyStreams
+            if (updatedParams.addTranslationStream != null) {
+              updatedParams.addTranslationStream!(translationAudio);
+            } else {
+              audioOnlyStreams.add(translationAudio);
+              updateAudioOnlyStreams(audioOnlyStreams);
+            }
+
+            // Add to allAudioStreams
+            allAudioStreams.add(Stream(
+              producerId: remoteProducerId,
+              name: name,
+              stream: stream,
+            ));
+            updateAllAudioStreams(allAudioStreams);
+
+            // Add to audStreamNames
+            audStreamNames.add(Stream(
+              producerId: remoteProducerId,
+              name: name,
+              stream: stream,
+            ));
+            updateAudStreamNames(audStreamNames);
+            return;
+          }
+        }
+      }
+
       // ----- Handling Audio Resumption -----
 
       // Find participant with audioID == remoteProducerId

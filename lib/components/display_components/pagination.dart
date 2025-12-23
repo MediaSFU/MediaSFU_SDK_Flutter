@@ -246,6 +246,7 @@ class PaginationOptions {
   final PaginationContainerBuilder? containerBuilder;
   final PaginationPageButtonBuilder? pageButtonBuilder;
   final PaginationPageContentBuilder? pageContentBuilder;
+  final bool isDarkMode;
 
   PaginationOptions({
     required this.totalPages,
@@ -266,6 +267,7 @@ class PaginationOptions {
     this.containerBuilder,
     this.pageButtonBuilder,
     this.pageContentBuilder,
+    this.isDarkMode = true,
   });
 }
 
@@ -289,10 +291,10 @@ typedef PaginationType = Widget Function({required PaginationOptions options});
 /// if (breakOutRoomStarted && !breakOutRoomEnded && targetPage != 0) {
 ///   // Calculate which breakout room the page represents
 ///   breakRoomIndex = targetPage - (mainRoomsLength - 1);
-///   
+///
 ///   // Find user's assigned breakout room
 ///   userBreakoutRoom = breakoutRooms.findIndex(room => room.contains(member));
-///   
+///
 ///   if (userBreakoutRoom != breakRoomIndex && breakRoomIndex >= 0) {
 ///     // User trying to access non-assigned room
 ///     if (islevel != '2') {
@@ -345,7 +347,7 @@ typedef PaginationType = Widget Function({required PaginationOptions options});
 ///   - newRoom: breakRoomIndex (host entering new room)
 ///   - prevRoom: hostNewRoom (host leaving previous room, optional)
 ///   - roomName: roomName (current meeting room name)
-/// 
+///
 /// Emitted when:
 ///   - Host switches to breakout room (newRoom = breakRoomIndex)
 ///   - Host returns to main room (newRoom = -1, prevRoom = previous breakRoomIndex)

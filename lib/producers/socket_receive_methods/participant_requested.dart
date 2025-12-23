@@ -41,9 +41,21 @@ typedef ParticipantRequestedType = void Function(
 /// // "Total requests: 3"
 /// ```
 void participantRequested(ParticipantRequestedOptions options) {
-  // Add the user request to the request list
-  final updatedRequestList = List<Request>.from(options.requestList)
-    ..add(options.userRequest);
+  // Check if a request from this participant already exists
+  final existingIndex = options.requestList.indexWhere(
+    (req) => req.id == options.userRequest.id,
+  );
+
+  List<Request> updatedRequestList;
+  if (existingIndex != -1) {
+    // Update existing request instead of adding duplicate
+    updatedRequestList = List<Request>.from(options.requestList);
+    updatedRequestList[existingIndex] = options.userRequest;
+  } else {
+    // Add the user request to the request list
+    updatedRequestList = List<Request>.from(options.requestList)
+      ..add(options.userRequest);
+  }
   options.updateRequestList(updatedRequestList);
 
   // Update the total count of requests and waiting room participants

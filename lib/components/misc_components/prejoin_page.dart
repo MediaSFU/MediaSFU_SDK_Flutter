@@ -30,6 +30,8 @@ import '../../types/types.dart'
         ResponseLocalConnection,
         ResponseLocalConnectionData,
         ShowAlert;
+import '../../components/background_components/virtual_background_types.dart'
+    show VirtualBackground;
 
 class JoinLocalEventRoomParameters {
   final String eventID;
@@ -198,6 +200,17 @@ class PreJoinPageParameters {
   Function(String) updateRoomName;
   Function(String) updateMember;
 
+  // New fields
+  Function(String)? updateAudioPreference;
+  Function(String)? updateVideoPreference;
+  Function(String)? updateAudioOutputPreference;
+  Function(bool)? updateIsDarkMode;
+  Function(EventType)? updateEventType;
+  Function(VirtualBackground)? updateVirtualBackground;
+  Function(bool)? updateKeepBackground;
+  Function(bool)? updateAppliedBackground;
+  Function(String)? updateCurrentFacingMode;
+
   PreJoinPageParameters({
     this.imgSrc,
     this.showAlert,
@@ -212,6 +225,15 @@ class PreJoinPageParameters {
     required this.updateLink,
     required this.updateRoomName,
     required this.updateMember,
+    this.updateAudioPreference,
+    this.updateVideoPreference,
+    this.updateAudioOutputPreference,
+    this.updateIsDarkMode,
+    this.updateEventType,
+    this.updateVirtualBackground,
+    this.updateKeepBackground,
+    this.updateAppliedBackground,
+    this.updateCurrentFacingMode,
   });
 }
 

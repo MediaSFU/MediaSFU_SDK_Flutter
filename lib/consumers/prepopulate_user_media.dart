@@ -3,9 +3,24 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import '../components/display_components/audio_card.dart' hide AudioCardType;
-import '../components/display_components/mini_card.dart' hide MiniCardType;
-import '../components/display_components/video_card.dart' hide VideoCardType;
+// Original component imports (commented out for testing Modern versions):
+// import '../components/display_components/audio_card.dart' hide AudioCardType;
+// import '../components/display_components/mini_card.dart' hide MiniCardType;
+// import '../components/display_components/video_card.dart' hide VideoCardType;
+
+// Modern component imports (using same Options types):
+import '../components_modern/display_components/modern_audio_card.dart'
+    show ModernAudioCard;
+import '../components_modern/display_components/modern_mini_card.dart'
+    show ModernMiniCard;
+import '../components_modern/display_components/modern_video_card.dart'
+    show ModernVideoCard;
+// Still need Options from original components:
+import '../components/display_components/audio_card.dart'
+    show AudioCardOptions, AudioCardParameters;
+import '../components/display_components/mini_card.dart' show MiniCardOptions;
+import '../components/display_components/video_card.dart'
+    show VideoCardOptions, VideoCardParameters;
 import '../types/types.dart' show Participant, Stream, EventType, MediaStream;
 import '../types/custom_builders.dart'
     show VideoCardType, AudioCardType, MiniCardType;
@@ -44,6 +59,9 @@ abstract class PrepopulateUserMediaParameters
   MediaStream? get virtualStream;
   bool get keepBackground;
   bool get annotateScreenStream;
+
+  // Theme support
+  bool get isDarkModeValue;
 
   // Custom builder functions
   VideoCardType? get customVideoCard;
@@ -177,6 +195,7 @@ Future<List<Widget>?> prepopulateUserMedia(
     MediaStream? virtualStream = parameters.virtualStream;
     bool keepBackground = parameters.keepBackground;
     bool annotateScreenStream = parameters.annotateScreenStream;
+    bool isDarkModeValue = parameters.isDarkModeValue;
 
     // Update functions
     final void Function(String) updateMainScreenPerson =
@@ -216,6 +235,10 @@ Future<List<Widget>?> prepopulateUserMedia(
         } else {
           // Remove the main grid if not shared or started
           updateMainHeightWidth(0);
+        }
+      } else {
+        if (mainHeightWidth != 84) {
+          updateMainHeightWidth(84);
         }
       }
 
@@ -318,6 +341,11 @@ Future<List<Widget>?> prepopulateUserMedia(
 
     // If host is not null, check if host videoIsOn
     if (host != null) {
+      // Sync host's muted state with audioAlreadyOn for local user (host/level 2)
+      if (islevel == '2' && host.name == member) {
+        host.muted = !audioAlreadyOn;
+      }
+
       // Populate the main screen with the host video
       if ((shareScreenStarted || shared) && hostStream != null) {
         forceFullDisplay = screenForceFullDisplay;
@@ -335,23 +363,27 @@ Future<List<Widget>?> prepopulateUserMedia(
                     showInfo: true,
                     name: host.name,
                     doMirror: "false",
-                    backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
+                    backgroundColor: isDarkModeValue
+                        ? const Color(0xFF1E1E2E)
+                        : const Color.fromRGBO(217, 227, 234, 0.99),
                     parameters: parameters,
                   )
-                : VideoCard(
+                : ModernVideoCard(
                     options: VideoCardOptions(
                       videoStream: hostStream.stream,
                       remoteProducerId: host.ScreenID ?? host.name,
                       eventType: eventType,
                       forceFullDisplay: forceFullDisplay,
                       participant: host,
-                      backgroundColor:
-                          const Color.fromRGBO(217, 227, 234, 0.99),
+                      backgroundColor: isDarkModeValue
+                          ? const Color(0xFF1E1E2E)
+                          : const Color.fromRGBO(217, 227, 234, 0.99),
                       showControls: false,
                       showInfo: true,
                       name: host.name,
                       doMirror: false,
                       parameters: parameters,
+                      isDarkMode: isDarkModeValue,
                     ),
                   ),
           );
@@ -387,22 +419,27 @@ Future<List<Widget>?> prepopulateUserMedia(
                     showInfo: true,
                     name: host.name,
                     doMirror: "true",
-                    backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
+                    backgroundColor: isDarkModeValue
+                        ? const Color(0xFF1E1E2E)
+                        : const Color.fromRGBO(217, 227, 234, 0.99),
                     parameters: parameters,
                   )
-                : VideoCard(
+                : ModernVideoCard(
                     options: VideoCardOptions(
                     videoStream: localStreamVideo,
                     remoteProducerId: host.videoID,
                     eventType: eventType,
                     forceFullDisplay: forceFullDisplay,
                     participant: host,
-                    backgroundColor: const Color.fromRGBO(217, 227, 234, 0.99),
+                    backgroundColor: isDarkModeValue
+                        ? const Color(0xFF1E1E2E)
+                        : const Color.fromRGBO(217, 227, 234, 0.99),
                     showControls: false,
                     showInfo: true,
                     name: host.name,
                     doMirror: true,
                     parameters: parameters,
+                    isDarkMode: isDarkModeValue,
                   )),
           );
 
@@ -434,19 +471,27 @@ Future<List<Widget>?> prepopulateUserMedia(
                     ? parameters.customAudioCard!(
                         name: host.name,
                         barColor: false, // Assuming red color means active
-                        textColor: const Color.fromARGB(255, 17, 16, 16),
+                        textColor: isDarkModeValue
+                            ? Colors.white
+                            : const Color.fromARGB(255, 17, 16, 16),
                         imageSource: '', // No image property in Participant
                         roundedImage: 50.0,
-                        imageStyle: Colors.transparent,
+                        imageStyle: isDarkModeValue
+                            ? const Color(0xFF1E1E2E)
+                            : Colors.transparent,
                         parameters: parameters,
                       )
-                    : AudioCard(
+                    : ModernAudioCard(
                         options: AudioCardOptions(
                         name: host.name,
                         barColor: const Color.fromARGB(255, 229, 20, 20),
-                        textColor: const Color.fromARGB(255, 17, 16, 16),
-                        customStyle: const BoxDecoration(
-                          color: Colors.transparent,
+                        textColor: isDarkModeValue
+                            ? Colors.white
+                            : const Color.fromARGB(255, 17, 16, 16),
+                        customStyle: BoxDecoration(
+                          color: isDarkModeValue
+                              ? const Color(0xFF1E1E2E)
+                              : Colors.transparent,
                         ),
                         controlsPosition: 'topLeft',
                         infoPosition: 'topRight',
@@ -454,7 +499,10 @@ Future<List<Widget>?> prepopulateUserMedia(
                         parameters: parameters,
                         participant: host,
                         showControls: islevel != '2',
-                        backgroundColor: Colors.transparent,
+                        backgroundColor: isDarkModeValue
+                            ? const Color(0xFF1E1E2E)
+                            : Colors.transparent,
+                        isDarkMode: isDarkModeValue,
                       )),
               );
 
@@ -485,16 +533,18 @@ Future<List<Widget>?> prepopulateUserMedia(
                         showAudioIcon: false,
                         imageSource: '',
                         roundedImage: 50.0,
-                        imageStyle: Colors.transparent,
+                        imageStyle: isDarkModeValue
+                            ? const Color(0xFF1E1E2E)
+                            : Colors.transparent,
                         parameters: parameters,
                       )
-                    : MiniCard(
+                    : ModernMiniCard(
                         options: MiniCardOptions(
-                            initials: name,
-                            fontSize: 20,
-                            customStyle: const BoxDecoration(
-                              color: Colors.transparent,
-                            )),
+                          initials: name,
+                          fontSize: 20,
+                          isDarkMode: isDarkModeValue,
+                          roundedImage: true,
+                        ),
                       ),
               );
 
@@ -530,24 +580,27 @@ Future<List<Widget>?> prepopulateUserMedia(
                       showInfo: true,
                       name: host.name,
                       doMirror: "false",
-                      backgroundColor:
-                          const Color.fromRGBO(217, 227, 234, 0.99),
+                      backgroundColor: isDarkModeValue
+                          ? const Color(0xFF1E1E2E)
+                          : const Color.fromRGBO(217, 227, 234, 0.99),
                       parameters: parameters,
                     )
-                  : VideoCard(
+                  : ModernVideoCard(
                       options: VideoCardOptions(
                       videoStream: hostStream!.stream,
                       remoteProducerId: host.ScreenID ?? host.name,
                       eventType: eventType,
                       forceFullDisplay: forceFullDisplay,
                       participant: host,
-                      backgroundColor:
-                          const Color.fromRGBO(217, 227, 234, 0.99),
+                      backgroundColor: isDarkModeValue
+                          ? const Color(0xFF1E1E2E)
+                          : const Color.fromRGBO(217, 227, 234, 0.99),
                       showControls: false,
                       showInfo: true,
                       name: host.name,
                       doMirror: false,
                       parameters: parameters,
+                      isDarkMode: isDarkModeValue,
                     )),
             );
 
@@ -601,24 +654,27 @@ Future<List<Widget>?> prepopulateUserMedia(
                         showInfo: true,
                         name: host.name,
                         doMirror: member == host.name ? "true" : "false",
-                        backgroundColor:
-                            const Color.fromRGBO(217, 227, 234, 0.99),
+                        backgroundColor: isDarkModeValue
+                            ? const Color(0xFF1E1E2E)
+                            : const Color.fromRGBO(217, 227, 234, 0.99),
                         parameters: parameters,
                       )
-                    : VideoCard(
+                    : ModernVideoCard(
                         options: VideoCardOptions(
                         videoStream: hostStream.stream,
                         remoteProducerId: host.videoID,
                         eventType: eventType,
                         forceFullDisplay: forceFullDisplay,
                         participant: host,
-                        backgroundColor:
-                            const Color.fromRGBO(217, 227, 234, 0.99),
+                        backgroundColor: isDarkModeValue
+                            ? const Color(0xFF1E1E2E)
+                            : const Color.fromRGBO(217, 227, 234, 0.99),
                         showControls: false,
                         showInfo: true,
                         name: host.name,
                         doMirror: member == host.name,
                         parameters: parameters,
+                        isDarkMode: isDarkModeValue,
                       )),
               );
 
@@ -637,16 +693,18 @@ Future<List<Widget>?> prepopulateUserMedia(
                         showAudioIcon: false,
                         imageSource: '',
                         roundedImage: 50.0,
-                        imageStyle: Colors.transparent,
+                        imageStyle: isDarkModeValue
+                            ? const Color(0xFF1E1E2E)
+                            : Colors.transparent,
                         parameters: parameters,
                       )
-                    : MiniCard(
+                    : ModernMiniCard(
                         options: MiniCardOptions(
-                            initials: name,
-                            fontSize: 20,
-                            customStyle: const BoxDecoration(
-                              color: Colors.transparent,
-                            )),
+                          initials: name,
+                          fontSize: 20,
+                          isDarkMode: isDarkModeValue,
+                          roundedImage: true,
+                        ),
                       ),
               );
 
@@ -680,16 +738,18 @@ Future<List<Widget>?> prepopulateUserMedia(
                   showAudioIcon: false,
                   imageSource: '',
                   roundedImage: 50.0,
-                  imageStyle: Colors.transparent,
+                  imageStyle: isDarkModeValue
+                      ? const Color(0xFF1E1E2E)
+                      : Colors.transparent,
                   parameters: parameters,
                 )
-              : MiniCard(
+              : ModernMiniCard(
                   options: MiniCardOptions(
-                      initials: name,
-                      fontSize: 20,
-                      customStyle: const BoxDecoration(
-                        color: Colors.transparent,
-                      )),
+                    initials: name,
+                    fontSize: 20,
+                    isDarkMode: isDarkModeValue,
+                    roundedImage: true,
+                  ),
                 ),
         );
 

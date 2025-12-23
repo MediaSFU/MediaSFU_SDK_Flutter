@@ -20,7 +20,8 @@ import '../types/types.dart'
         ProducerClosedType,
         ReorderStreamsParameters,
         ReorderStreamsType,
-        ResponseJoinRoom;
+        ResponseJoinRoom,
+        TranslationMeta;
 
 /// Parameters interface for connecting IPs and managing socket connections.
 abstract class ConnectIpsParameters
@@ -168,11 +169,17 @@ Future<List<dynamic>> connectIps(ConnectIpsOptions options) async {
 
           // Event handler for 'new-pipe-producer'
           remoteSock.on('new-pipe-producer', (data) async {
+            TranslationMeta? translationMeta;
+            if (data['translationMeta'] != null) {
+              translationMeta =
+                  TranslationMeta.fromMap(data['translationMeta']);
+            }
             final optionsNewPipeProducer = NewPipeProducerOptions(
               producerId: data['producerId'],
               islevel: data['islevel'],
               nsock: remoteSock,
               parameters: parameters,
+              translationMeta: translationMeta,
             );
             await newProducerMethod(
               optionsNewPipeProducer,

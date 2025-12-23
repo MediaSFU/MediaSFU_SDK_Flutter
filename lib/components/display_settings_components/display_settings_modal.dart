@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../types/types.dart' show ModifyDisplaySettingsOptions;
+import '../../types/types.dart'
+    show
+        ModifyDisplaySettingsOptions,
+        TranslationMeta,
+        ListenerTranslationPreferences,
+        Participant;
+import '../../types/modal_style_options.dart' show ModalRenderMode;
 import '../../methods/utils/get_modal_position.dart'
     show getModalPosition, GetModalPositionOptions;
 import '../../methods/display_settings_methods/modify_display_settings.dart'
@@ -15,6 +21,21 @@ abstract class DisplaySettingsModalParameters
   bool get forceFullDisplay;
   bool get meetingVideoOptimized;
 
+  // Translation properties
+  ListenerTranslationPreferences? get listenerTranslationPreferences;
+  Map<String, String>? get listenerTranslationOverrides;
+  Map<String, TranslationMeta>? get translationProducerMap;
+  Map<String, dynamic>? get speakerTranslationStates;
+  Function(ListenerTranslationPreferences)?
+      get updateListenerTranslationPreferences;
+  Function(Map<String, String>)? get updateListenerTranslationOverrides;
+  Function(Map<String, TranslationMeta>)? get updateTranslationProducerMap;
+  Function(Map<String, dynamic>)? get updateSpeakerTranslationStates;
+  String get member;
+  String get islevel;
+  String get roomName;
+  List<Participant> get participants;
+
   // dynamic operator [](String key);
   // void operator []=(String key, dynamic value);
 }
@@ -25,6 +46,8 @@ abstract class DisplaySettingsModalParameters
 /// * **parameters** - Must expose `meetingDisplayType` (current selection: `'video'`, `'media'`, or `'all'`), `autoWave`, `forceFullDisplay`, `meetingVideoOptimized`.
 /// * **position** - Modal placement via `getModalPosition` (e.g., 'topRight').
 /// * **backgroundColor** - Background color for modal container.
+///
+/// Compatible with [ModernDisplaySettingsModalOptions] from the modern component.
 ///
 /// ### Usage
 /// 1. "Display Option" dropdown: `'video'` = video-only participants, `'media'` = only those with active audio/video, `'all'` = everyone including listeners.
@@ -40,6 +63,21 @@ class DisplaySettingsModalOptions {
   final DisplaySettingsModalParameters parameters;
   final String position;
   final Color backgroundColor;
+  final VoidCallback? onShowTranslationSettings;
+
+  /// Dark mode toggle for modern styling.
+  /// Note: Pending modern implementation - placeholder for future glassmorphic UI.
+  final bool isDarkMode;
+
+  /// Enable glassmorphism effects for modern styling.
+  /// Note: Pending modern implementation - placeholder for future glassmorphic UI.
+  final bool enableGlassmorphism;
+
+  /// Render mode for embedding in different contexts.
+  /// - `modal`: Full modal with overlay, positioning, visibility wrapper (default)
+  /// - `sidebar`: Content only, for embedding in sidebar panel
+  /// - `inline`: Content only, no visibility check
+  final ModalRenderMode renderMode;
 
   DisplaySettingsModalOptions({
     required this.isVisible,
@@ -48,6 +86,10 @@ class DisplaySettingsModalOptions {
     required this.parameters,
     this.position = 'topRight',
     this.backgroundColor = const Color(0xFF83C0E9),
+    this.onShowTranslationSettings,
+    this.isDarkMode = false,
+    this.enableGlassmorphism = false,
+    this.renderMode = ModalRenderMode.modal,
   });
 }
 
@@ -114,8 +156,88 @@ class _DisplaySettingsModalState extends State<DisplaySettingsModal> {
     _meetingVideoOptimized = widget.options.parameters.meetingVideoOptimized;
   }
 
+  /// Builds the core content of the modal without visibility/positioning wrapper.
+  Widget _buildContent(BuildContext context, {bool showCloseButton = true}) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: widget.options.backgroundColor,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Display Settings',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+              if (showCloseButton)
+                IconButton(
+                  onPressed: widget.options.onClose,
+                  icon: const Icon(Icons.close),
+                  color: Colors.black,
+                ),
+            ],
+          ),
+          const Divider(color: Colors.black),
+          _buildDropdownSetting(
+            label: 'Display Option:',
+            value: _meetingDisplayType,
+            options: const ['video', 'media', 'all'],
+            onChanged: (value) => setState(() => _meetingDisplayType = value),
+          ),
+          _buildSwitchSetting(
+            label: 'Display Audiographs',
+            value: _autoWave,
+            onChanged: (value) => setState(() => _autoWave = value),
+          ),
+          _buildSwitchSetting(
+            label: 'Force Full Display',
+            value: _forceFullDisplay,
+            onChanged: (value) => setState(() => _forceFullDisplay = value),
+          ),
+          _buildSwitchSetting(
+            label: 'Force Video Participants',
+            value: _meetingVideoOptimized,
+            onChanged: (value) =>
+                setState(() => _meetingVideoOptimized = value),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () {
+              widget.options.parameters
+                  .updateMeetingDisplayType(_meetingDisplayType);
+              widget.options.parameters.updateAutoWave(_autoWave);
+              widget.options.parameters
+                  .updateForceFullDisplay(_forceFullDisplay);
+              _forceFullDisplay;
+              widget.options.parameters
+                  .updateMeetingVideoOptimized(_meetingVideoOptimized);
+              _meetingVideoOptimized;
+              final optionsModify = ModifyDisplaySettingsOptions(
+                  parameters: widget.options.parameters);
+              widget.options.onModifySettings(
+                optionsModify,
+              );
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Full modal mode with visibility, positioning, and overlay
     final double screenWidth = MediaQuery.of(context).size.width;
     double modalWidth = 0.8 * screenWidth;
     if (modalWidth > 400) {
@@ -141,82 +263,10 @@ class _DisplaySettingsModalState extends State<DisplaySettingsModal> {
                 modalHeight: modalHeight,
                 context: context))['right'],
             child: Center(
-              child: Container(
+              child: SizedBox(
                 width: modalWidth,
                 height: modalHeight,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: widget.options.backgroundColor,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Display Settings',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: widget.options.onClose,
-                          icon: const Icon(Icons.close),
-                          color: Colors.black,
-                        ),
-                      ],
-                    ),
-                    const Divider(color: Colors.black),
-                    _buildDropdownSetting(
-                      label: 'Display Option:',
-                      value: _meetingDisplayType,
-                      options: const ['video', 'media', 'all'],
-                      onChanged: (value) =>
-                          setState(() => _meetingDisplayType = value),
-                    ),
-                    _buildSwitchSetting(
-                      label: 'Display Audiographs',
-                      value: _autoWave,
-                      onChanged: (value) => setState(() => _autoWave = value),
-                    ),
-                    _buildSwitchSetting(
-                      label: 'Force Full Display',
-                      value: _forceFullDisplay,
-                      onChanged: (value) =>
-                          setState(() => _forceFullDisplay = value),
-                    ),
-                    _buildSwitchSetting(
-                      label: 'Force Video Participants',
-                      value: _meetingVideoOptimized,
-                      onChanged: (value) =>
-                          setState(() => _meetingVideoOptimized = value),
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: () {
-                        widget.options.parameters
-                            .updateMeetingDisplayType(_meetingDisplayType);
-                        widget.options.parameters.updateAutoWave(_autoWave);
-                        widget.options.parameters
-                            .updateForceFullDisplay(_forceFullDisplay);
-                        _forceFullDisplay;
-                        widget.options.parameters.updateMeetingVideoOptimized(
-                            _meetingVideoOptimized);
-                        _meetingVideoOptimized;
-                        final optionsModify = ModifyDisplaySettingsOptions(
-                            parameters: widget.options.parameters);
-                        widget.options.onModifySettings(
-                          optionsModify,
-                        );
-                      },
-                      child: const Text('Save'),
-                    ),
-                  ],
-                ),
+                child: _buildContent(context, showCloseButton: true),
               ),
             ),
           ),

@@ -1,16 +1,21 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import '../methods/permissions_methods/update_permission_config.dart';
 
 /// Options for checking permission based on specific settings.
 ///
 /// Contains settings for audio, video, screenshare, and chat, as well as the type of permission to check.
+/// Optionally supports per-level permission configuration via [permissionConfig] and [participantLevel].
 class CheckPermissionOptions {
   final String audioSetting;
   final String videoSetting;
   final String screenshareSetting;
   final String chatSetting;
   final String permissionType;
+  // Optional: per-level permission configuration
+  final PermissionConfig? permissionConfig;
+  final String? participantLevel; // "0", "1", or "2"
 
   CheckPermissionOptions({
     required this.audioSetting,
@@ -18,6 +23,8 @@ class CheckPermissionOptions {
     required this.screenshareSetting,
     required this.chatSetting,
     required this.permissionType,
+    this.permissionConfig,
+    this.participantLevel,
   });
 }
 
@@ -28,6 +35,10 @@ typedef CheckPermissionType = Future<int> Function(
     CheckPermissionOptions options);
 
 /// Checks the permission based on the provided settings.
+///
+/// If [permissionConfig] and [participantLevel] are provided, uses the per-level
+/// configuration to determine permissions. Otherwise falls back to room-wide
+/// eventSettings (audioSetting, videoSetting, etc.).
 ///
 /// ### Parameters:
 /// - `options` (CheckPermissionOptions): The options containing permission settings.
@@ -46,6 +57,9 @@ typedef CheckPermissionType = Future<int> Function(
 ///   videoSetting: 'approval',
 ///   screenshareSetting: 'approval',
 ///   chatSetting: 'allow',
+///   // Optional: per-level config override
+///   permissionConfig: PermissionConfig(...),
+///   participantLevel: "0",
 /// );
 ///
 /// checkPermission(options).then((result) {
@@ -56,7 +70,87 @@ typedef CheckPermissionType = Future<int> Function(
 /// ```
 Future<int> checkPermission(CheckPermissionOptions options) async {
   try {
-    // Determine the permission type and corresponding setting
+    // Debug logging
+    if (kDebugMode) {
+      print('=== checkPermission DEBUG ===');
+      print('permissionType: ${options.permissionType}');
+      print('participantLevel: ${options.participantLevel}');
+      print('permissionConfig: ${options.permissionConfig}');
+      if (options.permissionConfig != null) {
+        print(
+            'level0.useCamera: ${options.permissionConfig!.level0.useCamera}');
+        print('level0.useMic: ${options.permissionConfig!.level0.useMic}');
+        print(
+            'level1.useCamera: ${options.permissionConfig!.level1.useCamera}');
+        print('level1.useMic: ${options.permissionConfig!.level1.useMic}');
+      }
+      print('audioSetting: ${options.audioSetting}');
+      print('videoSetting: ${options.videoSetting}');
+    }
+
+    // Map permission types to permissionConfig capability names
+    const permissionTypeToCapability = {
+      'audioSetting': 'useMic',
+      'videoSetting': 'useCamera',
+      'screenshareSetting': 'useScreen',
+      'chatSetting': 'useChat',
+    };
+
+    // If permissionConfig is provided and participant has a valid level (not host)
+    if (options.permissionConfig != null &&
+        options.participantLevel != null &&
+        options.participantLevel != '2') {
+      final levelConfig = options.participantLevel == '0'
+          ? options.permissionConfig!.level0
+          : options.permissionConfig!.level1;
+
+      if (kDebugMode) {
+        print('Using permissionConfig for level ${options.participantLevel}');
+        print('levelConfig: $levelConfig');
+      }
+
+      final capability = permissionTypeToCapability[options.permissionType];
+      if (capability != null) {
+        String? configValue;
+        switch (capability) {
+          case 'useMic':
+            configValue = levelConfig.useMic;
+            break;
+          case 'useCamera':
+            configValue = levelConfig.useCamera;
+            break;
+          case 'useScreen':
+            configValue = levelConfig.useScreen;
+            break;
+          case 'useChat':
+            configValue = levelConfig.useChat;
+            break;
+        }
+
+        if (kDebugMode) {
+          print('capability: $capability, configValue: $configValue');
+        }
+
+        if (configValue != null) {
+          final result =
+              configValue == 'allow' ? 0 : (configValue == 'approval' ? 1 : 2);
+          if (kDebugMode) {
+            print('Returning result: $result (from permissionConfig)');
+          }
+          return result;
+        }
+      }
+    } else {
+      if (kDebugMode) {
+        print(
+            'NOT using permissionConfig - permissionConfig: ${options.permissionConfig}, participantLevel: ${options.participantLevel}');
+      }
+    }
+
+    // Fallback to room-wide eventSettings
+    if (kDebugMode) {
+      print('Falling back to room-wide eventSettings');
+    }
     switch (options.permissionType) {
       case 'audioSetting':
         if (options.audioSetting == 'allow') return 0;

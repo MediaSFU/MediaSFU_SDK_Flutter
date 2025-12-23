@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
+import '../components/background_components/virtual_background_types.dart'
+    show VirtualBackground, BackgroundType;
 import '../types/types.dart'
     show
         ConnectSendTransportVideoParameters,
@@ -51,6 +53,8 @@ abstract class StreamSuccessVideoParameters
   bool get keepBackground;
   bool get appliedBackground;
   Producer? get videoProducer;
+  VirtualBackground? get selectedBackground;
+  Future<void> Function(VirtualBackground)? get onBackgroundApply;
 
   // Update functions as abstract getters
   void Function(bool created) get updateTransportCreatedVideo;
@@ -305,7 +309,18 @@ Future<void> streamSuccessVideo(
       videoParams = params;
       updateVideoParams(videoParams);
 
-      // Create or connect transport
+      // Check if we should apply a saved background (like React)
+      // Per documentation: Create transport FIRST, then apply background AFTER
+      final keepBackground = parameters.keepBackground;
+      final appliedBackground = parameters.appliedBackground;
+      final selectedBackground = parameters.selectedBackground;
+      final onBackgroundApply = parameters.onBackgroundApply;
+      final shouldAutoApplyBackground = keepBackground &&
+          appliedBackground &&
+          selectedBackground != null &&
+          selectedBackground.type != BackgroundType.none;
+
+      // ALWAYS create/connect transport first (normal flow)
       if (!transportCreated) {
         parameters.updateVideoParams(videoParams);
         final optionsCreate = CreateSendTransportOptions(
@@ -333,6 +348,33 @@ Future<void> streamSuccessVideo(
         await connectSendTransportVideo(
           optionsConnect,
         );
+      }
+
+      // NOW apply saved background AFTER transport is created and videoAlreadyOn is set
+      // This matches the documentation: "After video is set up, check for auto-apply"
+      if (shouldAutoApplyBackground && onBackgroundApply != null) {
+        // Set videoAlreadyOn to true first (like React does)
+        parameters.updateVideoAlreadyOn(true);
+
+        // Set backgroundHasChanged to true so the apply callback processes it
+        final updateBackgroundHasChanged =
+            (parameters as dynamic).updateBackgroundHasChanged;
+        if (updateBackgroundHasChanged != null) {
+          updateBackgroundHasChanged(true);
+        }
+
+        // Small delay to ensure state is propagated
+        await sleep(SleepOptions(ms: 100));
+
+        // Now apply the background - videoAlreadyOn is true so handleBackgroundApply will work
+        try {
+          await onBackgroundApply(selectedBackground);
+        } catch (e) {
+          // Don't fail the whole video setup if background application fails
+          if (kDebugMode) {
+            print('MediaSFU - Auto-apply background failed: $e');
+          }
+        }
       }
     } catch (error) {
       showAlert!(

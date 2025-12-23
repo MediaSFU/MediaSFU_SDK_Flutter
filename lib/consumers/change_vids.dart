@@ -56,6 +56,9 @@ abstract class ChangeVidsParameters implements DispStreamsParameters {
   MediaStream? get virtualStream;
   int get mainRoomsLength;
   int get memberRoom;
+  // Panelist-related parameters
+  List<Participant> get panelists;
+  bool get panelistsFocused;
 
   // Update functions as abstract methods
   void Function(List<String> names) get updatePActiveNames;
@@ -341,6 +344,9 @@ Future<void> changeVids(ChangeVidsOptions options) async {
     MediaStream? virtualStream = parameters.virtualStream;
     int mainRoomsLength = parameters.mainRoomsLength;
     int memberRoom = parameters.memberRoom;
+    // Panelist-related variables
+    List<Participant> panelists = List.from(parameters.panelists);
+    bool panelistsFocused = parameters.panelistsFocused;
 
     // Initialize temporary variables
     Stream? streame;
@@ -639,6 +645,61 @@ Future<void> changeVids(ChangeVidsOptions options) async {
         // Implement media recording handling if needed
       } else if (recordingDisplayType == 'all') {
         // Implement all recording handling if needed
+      }
+    }
+
+    // Apply panelist filtering (skip if in breakout room)
+    if (!breakOutRoomStarted || breakOutRoomEnded) {
+      if (panelistsFocused && panelists.isNotEmpty) {
+        // When focused: show ONLY panelists + host
+        final panelistIds = panelists.map((p) => p.id).toSet();
+        allStreamsPaged = allStreamsPaged.where((stream) {
+          // Always keep "youyou" / "youyouyou" (self)
+          if (stream.producerId == 'youyou' ||
+              stream.producerId == 'youyouyou') {
+            return true;
+          }
+          // Find matching participant
+          final participant = refParticipants.firstWhereOrNull(
+            (p) =>
+                p.videoID == stream.producerId ||
+                p.audioID == stream.producerId ||
+                p.name == stream.name,
+          );
+          if (participant == null) return false;
+          // Keep host (islevel "2")
+          if (participant.islevel == '2') return true;
+          // Keep panelists
+          return panelistIds.contains(participant.id);
+        }).toList();
+      } else if (panelists.isNotEmpty) {
+        // When not focused but panelists exist: panelists first, then others
+        final panelistIds = panelists.map((p) => p.id).toSet();
+        final List<Stream> panelistStreams = [];
+        final List<Stream> otherStreams = [];
+
+        for (final stream in allStreamsPaged) {
+          // Always keep "youyou" / "youyouyou" at front
+          if (stream.producerId == 'youyou' ||
+              stream.producerId == 'youyouyou') {
+            panelistStreams.insert(0, stream);
+            continue;
+          }
+          final participant = refParticipants.firstWhereOrNull(
+            (p) =>
+                p.videoID == stream.producerId ||
+                p.audioID == stream.producerId ||
+                p.name == stream.name,
+          );
+          if (participant != null &&
+              (panelistIds.contains(participant.id) ||
+                  participant.islevel == '2')) {
+            panelistStreams.add(stream);
+          } else {
+            otherStreams.add(stream);
+          }
+        }
+        allStreamsPaged = [...panelistStreams, ...otherStreams];
       }
     }
 

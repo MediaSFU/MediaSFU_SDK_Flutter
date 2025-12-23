@@ -2,8 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../components/display_components/alert_component.dart'
     show AlertComponentOptions;
-import '../components/display_components/audio_grid.dart'
-    show AudioGridOptions;
+import '../components/display_components/audio_grid.dart' show AudioGridOptions;
 import '../components/display_components/control_buttons_component.dart'
     show ControlButtonsComponentOptions;
 import '../components/display_components/control_buttons_alt_component.dart'
@@ -67,10 +66,19 @@ import '../components/exit_components/confirm_exit_modal.dart'
     show ConfirmExitModalOptions;
 import '../components/breakout_components/breakout_rooms_modal.dart'
     show BreakoutRoomsModalOptions;
+import '../components/whiteboard_components/whiteboard.dart'
+    show WhiteboardOptions;
+import '../components/whiteboard_components/configure_whiteboard_modal.dart'
+    show ConfigureWhiteboardModalOptions;
+import '../components/whiteboard_components/screenboard_modal.dart'
+    show ScreenboardModalOptions;
+import '../components/whiteboard_components/screenboard.dart'
+    show ScreenboardOptions;
+import '../components/background_components/background_modal.dart'
+    show BackgroundModalOptions;
 import '../consumers/add_videos_grid.dart' show AddVideosGridType;
 import '../consumers/consumer_resume.dart' show ConsumerResumeType;
-import '../consumers/prepopulate_user_media.dart'
-  show PrepopulateUserMediaType;
+import '../consumers/prepopulate_user_media.dart' show PrepopulateUserMediaType;
 import '../methods/utils/mini_audio_player/mini_audio_player.dart'
     show MiniAudioPlayerOptions;
 
@@ -211,6 +219,12 @@ class MediasfuUICustomOverrides {
   final ComponentOverride<RecordingModalOptions>? recordingModal;
   final ComponentOverride<PollModalOptions>? pollModal;
   final ComponentOverride<BreakoutRoomsModalOptions>? breakoutRoomsModal;
+  final ComponentOverride<ConfigureWhiteboardModalOptions>?
+      configureWhiteboardModal;
+  final ComponentOverride<ScreenboardModalOptions>? screenboardModal;
+  final ComponentOverride<WhiteboardOptions>? whiteboard;
+  final ComponentOverride<ScreenboardOptions>? screenboard;
+  final ComponentOverride<BackgroundModalOptions>? backgroundModal;
   final ComponentOverride<PreJoinPageOptions>? preJoinPage;
   final ComponentOverride<WelcomePageOptions>? welcomePage;
 
@@ -254,6 +268,11 @@ class MediasfuUICustomOverrides {
     this.recordingModal,
     this.pollModal,
     this.breakoutRoomsModal,
+    this.configureWhiteboardModal,
+    this.screenboardModal,
+    this.whiteboard,
+    this.screenboard,
+    this.backgroundModal,
     this.preJoinPage,
     this.welcomePage,
     this.consumerResume,
@@ -261,6 +280,5 @@ class MediasfuUICustomOverrides {
     this.prepopulateUserMedia,
   });
 
-  const MediasfuUICustomOverrides.empty()
-      : this();
+  const MediasfuUICustomOverrides.empty() : this();
 }

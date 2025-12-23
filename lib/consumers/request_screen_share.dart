@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../types/types.dart'
     show
@@ -28,9 +29,12 @@ abstract class RequestScreenShareParameters
 // Define RequestScreenShareOptions class
 class RequestScreenShareOptions {
   final RequestScreenShareParameters parameters;
+  final BuildContext?
+      context; // Required for desktop platforms to show screen picker
 
   RequestScreenShareOptions({
     required this.parameters,
+    this.context,
   });
 }
 
@@ -99,6 +103,7 @@ Future<void> requestScreenShare(
         parameters: parameters,
         targetWidth: targetWidth,
         targetHeight: targetHeight,
+        context: options.context,
       );
       await startShareScreen(optionsStartShareScreen);
       return;
@@ -122,6 +127,7 @@ Future<void> requestScreenShare(
           parameters: updatedParams,
           targetWidth: targetWidth,
           targetHeight: targetHeight,
+          context: options.context,
         );
         await startShareScreen(optionsStartShareScreen);
       }

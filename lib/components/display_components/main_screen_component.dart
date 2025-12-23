@@ -181,14 +181,18 @@ class MainScreenComponent extends StatelessWidget {
     final mediaQuery = MediaQuery.of(context);
     final safeAreaInsets = mediaQuery.padding + mediaQuery.systemGestureInsets;
 
-    final parentWidth =
-        mediaQuery.size.width * options.containerWidthFraction;
+    final parentWidth = mediaQuery.size.width * options.containerWidthFraction;
+
+    // Always subtract safe area insets since we're wrapped in SafeArea
+    // The safe area (status bar, notch) is removed from the layout, so we need
+    // to calculate based on actual available height
+    final availableHeight =
+        mediaQuery.size.height - safeAreaInsets.top - safeAreaInsets.bottom;
     final parentHeight = options.showControls
-        ? mediaQuery.size.height *
+        ? availableHeight *
             options.containerHeightFraction *
             options.defaultFraction
-        : mediaQuery.size.height * options.containerHeightFraction -
-            safeAreaInsets.top;
+        : availableHeight * options.containerHeightFraction;
 
     bool isWideScreen = parentWidth > 768;
 

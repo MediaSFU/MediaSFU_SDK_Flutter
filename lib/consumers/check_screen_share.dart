@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import '../types/types.dart'
     show
         ShowAlert,
@@ -33,8 +34,10 @@ abstract class CheckScreenShareParameters
 /// Holds the parameters needed for checking and managing screen sharing.
 class CheckScreenShareOptions {
   final CheckScreenShareParameters parameters;
+  final BuildContext?
+      context; // Required for desktop platforms to show screen picker
 
-  CheckScreenShareOptions({required this.parameters});
+  CheckScreenShareOptions({required this.parameters, this.context});
 }
 
 /// Type definition for the `checkScreenShare` function.
@@ -119,7 +122,10 @@ Future<void> checkScreenShare(CheckScreenShareOptions options) async {
         );
         return;
       }
-      final optionsRequest = RequestScreenShareOptions(parameters: parameters);
+      final optionsRequest = RequestScreenShareOptions(
+        parameters: parameters,
+        context: options.context,
+      );
       await requestScreenShare(optionsRequest);
     }
   } catch (error) {

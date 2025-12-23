@@ -5,7 +5,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart'
-  show Consumer;
+    show Consumer;
 import '../../../types/types.dart'
     show
         AudioDecibels,
@@ -18,8 +18,7 @@ import '../../../types/types.dart'
         UpdateParticipantAudioDecibelsOptions,
         UpdateParticipantAudioDecibelsType;
 
-typedef MiniAudioPlayerType = Widget Function(
-    MiniAudioPlayerOptions options);
+typedef MiniAudioPlayerType = Widget Function(MiniAudioPlayerOptions options);
 
 /// Parameters for `MiniAudioPlayer`.
 abstract class MiniAudioPlayerParameters implements ReUpdateInterParameters {
@@ -28,6 +27,7 @@ abstract class MiniAudioPlayerParameters implements ReUpdateInterParameters {
   bool get breakOutRoomEnded;
   List<BreakoutParticipant> get limitedBreakRoom;
   bool get autoWave;
+  bool get validated;
 
   ReUpdateInterType get reUpdateInter;
   UpdateParticipantAudioDecibelsType get updateParticipantAudioDecibels;
@@ -152,6 +152,21 @@ class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
     if (widget.options.stream != null) {
       double averageLoudness = 127.75;
       _timer = Timer.periodic(const Duration(seconds: 2), (timer) async {
+        // Retrieve updated parameters
+        final parameters = widget.options.parameters.getUpdatedAllParams();
+
+        // Check if meeting has ended - cancel timer if so
+        if (!parameters.validated) {
+          timer.cancel();
+          if (mounted) {
+            setState(() {
+              showWaveModal = false;
+              isMuted = true;
+            });
+          }
+          return;
+        }
+
         try {
           // Get stats for the RTP Receiver
           final receiver = widget.options.consumer.rtpReceiver;
@@ -168,9 +183,6 @@ class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
         } catch (_) {
           // Do nothing
         }
-
-        // Retrieve updated parameters
-        final parameters = widget.options.parameters.getUpdatedAllParams();
 
         // Destructure parameters
         final String meetingDisplayType = parameters.meetingDisplayType;

@@ -3,26 +3,26 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../../methods/utils/get_modal_position.dart'
-  show getModalPosition, GetModalPositionOptions;
+    show getModalPosition, GetModalPositionOptions;
 import '../../methods/waiting_methods/respond_to_waiting.dart'
-  show respondToWaiting, RespondToWaitingOptions;
+    show respondToWaiting, RespondToWaitingOptions;
 import '../../types/modal_style_options.dart'
-  show WaitingRoomModalStyleOptions;
+    show WaitingRoomModalStyleOptions, ModalRenderMode;
 import '../../types/types.dart'
-  show WaitingRoomParticipant, RespondToWaitingType;
+    show WaitingRoomParticipant, RespondToWaitingType;
 
 typedef WaitingRoomModalHeaderBuilder = Widget Function(
-  WaitingRoomModalHeaderContext context);
+    WaitingRoomModalHeaderContext context);
 typedef WaitingRoomModalSearchBuilder = Widget Function(
-  WaitingRoomModalSearchContext context);
+    WaitingRoomModalSearchContext context);
 typedef WaitingRoomModalListBuilder = Widget Function(
-  WaitingRoomModalListContext context);
+    WaitingRoomModalListContext context);
 typedef WaitingRoomModalItemBuilder = Widget Function(
-  WaitingRoomModalItemContext context);
+    WaitingRoomModalItemContext context);
 typedef WaitingRoomModalBodyBuilder = Widget Function(
-  WaitingRoomModalBodyContext context);
+    WaitingRoomModalBodyContext context);
 typedef WaitingRoomModalContentBuilder = Widget Function(
-  WaitingRoomModalContentContext context);
+    WaitingRoomModalContentContext context);
 
 /// Additional parameters for the WaitingRoomModal.
 abstract class WaitingRoomModalParameters {
@@ -55,6 +55,8 @@ abstract class WaitingRoomModalParameters {
 /// * **title** / **emptyState** - Custom widgets for header and empty list placeholder.
 /// * **headerBuilder** / **searchBuilder** / **listBuilder** / **itemBuilder** / **bodyBuilder** / **contentBuilder** - Builder hooks for granular customization.
 ///
+/// Compatible with [ModernWaitingRoomModalOptions] from the modern component.
+///
 /// ### Usage
 /// 1. Modal displays header with "Waiting Room" title and counter badge.
 /// 2. Search input filters `waitingRoomList` by participant name.
@@ -86,6 +88,20 @@ class WaitingRoomModalOptions {
   final WaitingRoomModalBodyBuilder? bodyBuilder;
   final WaitingRoomModalContentBuilder? contentBuilder;
 
+  /// Dark mode toggle for modern styling.
+  /// Note: Pending modern implementation - placeholder for future glassmorphic UI.
+  final bool isDarkMode;
+
+  /// Enable glassmorphism effects for modern styling.
+  /// Note: Pending modern implementation - placeholder for future glassmorphic UI.
+  final bool enableGlassmorphism;
+
+  /// Render mode for embedding in different contexts.
+  /// - `modal`: Full modal with overlay, positioning, visibility wrapper (default)
+  /// - `sidebar`: Content only, for embedding in sidebar panel
+  /// - `inline`: Content only, no visibility check
+  final ModalRenderMode renderMode;
+
   WaitingRoomModalOptions({
     required this.isWaitingModalVisible,
     required this.onWaitingRoomClose,
@@ -108,6 +124,9 @@ class WaitingRoomModalOptions {
     this.itemBuilder,
     this.bodyBuilder,
     this.contentBuilder,
+    this.isDarkMode = false,
+    this.enableGlassmorphism = false,
+    this.renderMode = ModalRenderMode.modal,
   });
 }
 
@@ -149,6 +168,10 @@ class WaitingRoomModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Note: renderMode is available for API compatibility but sidebar/inline
+    // rendering is handled by modern components. This classic modal always
+    // renders in modal mode.
+
     final styles = options.styles ?? const WaitingRoomModalStyleOptions();
     final mediaSize = MediaQuery.of(context).size;
 
@@ -174,18 +197,18 @@ class WaitingRoomModal extends StatelessWidget {
     );
 
     final params = options.parameters.getUpdatedAllParams();
-  final baseList = params.filteredWaitingRoomList.isNotEmpty
+    final baseList = params.filteredWaitingRoomList.isNotEmpty
         ? params.filteredWaitingRoomList
         : (params.waitingRoomList.isNotEmpty
             ? params.waitingRoomList
             : options.waitingRoomList);
     final waitingList = List<WaitingRoomParticipant>.from(baseList);
-  final fallbackCounter = params.waitingRoomCounter >
-      options.waitingRoomCounter
-    ? params.waitingRoomCounter
-    : options.waitingRoomCounter;
-  final waitingCounter =
-    waitingList.isNotEmpty ? waitingList.length : fallbackCounter;
+    final fallbackCounter =
+        params.waitingRoomCounter > options.waitingRoomCounter
+            ? params.waitingRoomCounter
+            : options.waitingRoomCounter;
+    final waitingCounter =
+        waitingList.isNotEmpty ? waitingList.length : fallbackCounter;
 
     Future<void> handleResponse(
         WaitingRoomParticipant participant, bool accepted) async {
@@ -438,8 +461,7 @@ class WaitingRoomModal extends StatelessWidget {
               child: DecoratedBox(
                 decoration: innerDecoration,
                 child: Padding(
-                  padding:
-                      styles.contentPadding ?? const EdgeInsets.all(16),
+                  padding: styles.contentPadding ?? const EdgeInsets.all(16),
                   child: resolvedContent,
                 ),
               ),

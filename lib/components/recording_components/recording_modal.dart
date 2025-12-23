@@ -22,7 +22,8 @@ import '../../types/types.dart'
         ConfirmRecordingParameters,
         StartRecordingParameters,
         EventType;
-import '../../types/modal_style_options.dart' show ModalStyleOptions;
+import '../../types/modal_style_options.dart'
+    show ModalStyleOptions, ModalRenderMode;
 
 /// Abstract class `RecordingModalParameters` defines recording configuration parameters
 /// and provides abstract getters for settings like video type, display type, background color,
@@ -104,6 +105,15 @@ class RecordingModalOptions {
   final Widget? confirmButtonChild;
   final Widget? startButtonChild;
 
+  /// Modern UI properties - pending full implementation in classic modal.
+  /// These are included for API compatibility with ModernRecordingModalOptions.
+  final bool isDarkMode;
+  final bool enableGlassmorphism;
+
+  /// Render mode for the modal (modal, sidebar, or inline).
+  /// When set to `sidebar` or `inline`, returns content without modal wrapper.
+  final ModalRenderMode renderMode;
+
   RecordingModalOptions({
     required this.isRecordingModalVisible,
     required this.onClose,
@@ -116,6 +126,10 @@ class RecordingModalOptions {
     this.title,
     this.confirmButtonChild,
     this.startButtonChild,
+    // Modern UI properties (pending implementation - included for API compatibility)
+    this.isDarkMode = false,
+    this.enableGlassmorphism = false,
+    this.renderMode = ModalRenderMode.modal,
   });
 }
 
@@ -148,6 +162,10 @@ class RecordingModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Note: renderMode is available for API compatibility but sidebar/inline
+    // rendering is handled by modern components. This classic modal always
+    // renders in modal mode.
+
     final style = options.styles ?? const ModalStyleOptions();
     final mediaSize = MediaQuery.of(context).size;
 

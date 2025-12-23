@@ -458,11 +458,12 @@ class MainGridComponent extends StatelessWidget {
         ({required MeetingProgressTimerOptions options}) =>
             MeetingProgressTimer(options: options);
 
-    final timerOptions = options.timerOptions ?? MeetingProgressTimerOptions(
-      meetingProgressTime: options.meetingProgressTime,
-      initialBackgroundColor: options.timeBackgroundColor,
-      showTimer: options.showTimer,
-    );
+    final timerOptions = options.timerOptions ??
+        MeetingProgressTimerOptions(
+          meetingProgressTime: options.meetingProgressTime,
+          initialBackgroundColor: options.timeBackgroundColor,
+          showTimer: options.showTimer,
+        );
 
     final defaultChildren = <Widget>[...options.children];
     if (timerOptions.showTimer) {
@@ -482,7 +483,18 @@ class MainGridComponent extends StatelessWidget {
     final decoration = options.decoration ??
         BoxDecoration(
           color: options.backgroundColor,
-          border: Border.all(color: Colors.black, width: 4),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: const Color.fromRGBO(255, 255, 255, 0.08),
+            width: 1,
+          ),
+          boxShadow: const [
+            BoxShadow(
+              color: Color.fromRGBO(0, 0, 0, 0.15),
+              blurRadius: 24,
+              offset: Offset(0, 4),
+            ),
+          ],
         );
 
     final defaultContainer = Container(
@@ -490,7 +502,7 @@ class MainGridComponent extends StatelessWidget {
       height: options.height,
       padding: options.padding,
       margin: options.margin,
-      clipBehavior: options.clipBehavior,
+      clipBehavior: Clip.antiAlias,
       decoration: decoration,
       child: childrenWidget,
     );

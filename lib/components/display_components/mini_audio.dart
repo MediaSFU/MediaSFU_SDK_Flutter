@@ -13,21 +13,6 @@ const List<int> _defaultWaveformDurations = [
   487,
 ];
 
-AlignmentGeometry _alignmentFromPosition(String position) {
-  switch (position) {
-    case 'topLeft':
-      return Alignment.topLeft;
-    case 'topRight':
-      return Alignment.topRight;
-    case 'bottomLeft':
-      return Alignment.bottomLeft;
-    case 'bottomRight':
-      return Alignment.bottomRight;
-    default:
-      return Alignment.topRight;
-  }
-}
-
 class MiniAudioWrapperContext {
   final BuildContext buildContext;
   final MiniAudioOptions options;
@@ -318,8 +303,7 @@ class _MiniAudioState extends State<MiniAudio> with TickerProviderStateMixin {
 
     if (widget.options.showWaveform && !oldWidget.options.showWaveform) {
       _startWaveformAnimations();
-    } else if (!widget.options.showWaveform &&
-        oldWidget.options.showWaveform) {
+    } else if (!widget.options.showWaveform && oldWidget.options.showWaveform) {
       _stopWaveformAnimations();
     }
 
@@ -424,65 +408,58 @@ class _MiniAudioState extends State<MiniAudio> with TickerProviderStateMixin {
       return const SizedBox.shrink();
     }
 
-    final barDecoration = widget.options.barDecoration ??
-        BoxDecoration(
-          color: widget.options.barColor,
-          borderRadius:
-              widget.options.barBorderRadius ?? BorderRadius.circular(3),
-        );
+    // Modern pulsing ring animation around avatar using existing animation controllers
+    final List<Widget> rings = [];
 
-    final bars = List<Widget>.generate(_waveformAnimations.length, (index) {
-      final animation = _waveformAnimations[index];
-      return AnimatedBuilder(
-        animation: animation,
-        builder: (context, child) {
-          final percent = animation.value.clamp(0.0, 1.0);
-          final height = (widget.options.barMaxHeight * percent)
-              .clamp(1.0, widget.options.barMaxHeight);
-          return Container(
-            width: widget.options.barWidth,
-            height: height,
-            margin: EdgeInsets.symmetric(
-              horizontal: widget.options.barSpacing / 2,
-            ),
-            decoration: barDecoration,
-          );
-        },
+    // Use first 3 animation controllers for pulsing rings
+    for (int i = 0; i < 3 && i < _waveformAnimations.length; i++) {
+      final animation = _waveformAnimations[i];
+      rings.add(
+        AnimatedBuilder(
+          animation: animation,
+          builder: (context, child) {
+            final scale = 1.0 + (animation.value * 0.3 * (i + 1) / 3);
+            final opacity = (0.6 - animation.value * 0.5).clamp(0.0, 1.0);
+            return Container(
+              width: 60 * scale,
+              height: 60 * scale,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: widget.options.barColor.withOpacity(opacity),
+                  width: 2,
+                ),
+              ),
+            );
+          },
+        ),
       );
-    });
+    }
 
-    final defaultWaveform = Container(
-      padding: widget.options.waveformPadding,
-      decoration: widget.options.waveformDecoration ??
-          const BoxDecoration(
-            color: Color.fromRGBO(0, 0, 0, 0.05),
-          ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: bars,
-      ),
+    return Stack(
+      alignment: Alignment.center,
+      children: rings,
     );
-
-    return widget.options.waveformBuilder?.call(
-          MiniAudioWaveformContext(
-            buildContext: context,
-            options: widget.options,
-            showWaveform: widget.options.showWaveform,
-            animations: _waveformAnimations,
-          ),
-          defaultWaveform,
-        ) ??
-        defaultWaveform;
   }
 
   Widget _buildName(BuildContext context) {
     final defaultName = Container(
       padding: widget.options.nameContainerPadding ??
-          const EdgeInsets.symmetric(vertical: 3),
+          const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
       decoration: widget.options.nameContainerDecoration ??
           const BoxDecoration(
-            color: Color(0x80000000),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.transparent,
+                Color.fromRGBO(0, 0, 0, 0.8),
+              ],
+            ),
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(12),
+              bottomRight: Radius.circular(12),
+            ),
           ),
       child: Text(
         widget.options.name,
@@ -536,13 +513,22 @@ class _MiniAudioState extends State<MiniAudio> with TickerProviderStateMixin {
         ? widget.options.name.substring(0, 2).toUpperCase()
         : '';
     return DecoratedBox(
-      decoration: const BoxDecoration(color: Colors.transparent),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF667eea),
+            Color(0xFF764ba2),
+          ],
+        ),
+      ),
       child: Center(
         child: Text(
           display,
-          style: TextStyle(
-            fontSize: 20,
-            color: widget.options.textColor,
+          style: const TextStyle(
+            fontSize: 18,
+            color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -555,58 +541,78 @@ class _MiniAudioState extends State<MiniAudio> with TickerProviderStateMixin {
       return const SizedBox.shrink();
     }
 
-    final alignment =
-        widget.options.overlayAlignment ??
-            _alignmentFromPosition(widget.options.overlayPosition);
-
     final waveform = _buildWaveform(overlayContext);
-    final overlay = widget.options.overlayBuilder?.call(
-          MiniAudioOverlayContext(
-            buildContext: overlayContext,
-            options: widget.options,
-            alignment: alignment,
-          ),
-          Align(
-            alignment: alignment,
-            child: Container(
-              padding: widget.options.overlayPadding,
-              decoration: widget.options.overlayDecoration,
-              child: waveform,
-            ),
-          ),
-        ) ??
-        Align(
-          alignment: alignment,
-          child: Container(
-            padding: widget.options.overlayPadding,
-            decoration: widget.options.overlayDecoration,
-            child: waveform,
-          ),
-        );
 
-    final borderRadius = widget.options.cardBorderRadius ??
-        BorderRadius.circular(widget.options.roundedImage ? 20 : 0);
+    final borderRadius =
+        widget.options.cardBorderRadius ?? BorderRadius.circular(12);
 
+    // Modern glassmorphic card styling
     final defaultCard = Container(
       padding: widget.options.cardPadding,
       margin: widget.options.cardMargin,
       decoration: widget.options.cardDecoration ??
           widget.options.customStyle ??
           BoxDecoration(
-            color: const Color(0xFF2C678F),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF1a1a2e),
+                Color(0xFF16213e),
+              ],
+            ),
             borderRadius: borderRadius,
+            border: Border.all(
+              color: const Color.fromRGBO(255, 255, 255, 0.1),
+              width: 1,
+            ),
+            boxShadow: const [
+              BoxShadow(
+                color: Color.fromRGBO(0, 0, 0, 0.3),
+                blurRadius: 12,
+                offset: Offset(0, 4),
+              ),
+            ],
           ),
       child: ClipRRect(
         borderRadius: borderRadius,
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Positioned.fill(child: _buildImage(overlayContext)),
-            if (widget.options.showWaveform) overlay,
+            // Centered avatar with pulsing ring animation
+            Center(
+              child: SizedBox(
+                width: 70,
+                height: 70,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Pulsing ring animation (shows when waveform is active)
+                    if (widget.options.showWaveform) waveform,
+                    // Avatar image
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color.fromRGBO(255, 255, 255, 0.2),
+                          width: 2,
+                        ),
+                      ),
+                      child: ClipOval(
+                        child: _buildImage(overlayContext),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // Name at bottom with gradient overlay
             Positioned(
               left: 0,
               right: 0,
-              top: 0,
+              bottom: 0,
               child: _buildName(overlayContext),
             ),
           ],

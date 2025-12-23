@@ -10,6 +10,7 @@ import './render_request_component.dart'
 import '../../methods/utils/get_modal_position.dart'
     show getModalPosition, GetModalPositionOptions;
 import '../../types/types.dart' show Request, RespondToRequestsType;
+import '../../types/modal_style_options.dart' show ModalRenderMode;
 
 abstract class RequestsModalParameters {
   /// Function to get updated parameters.
@@ -31,6 +32,8 @@ abstract class RequestsModalParameters {
 /// * **backgroundColor** - Background color for modal container.
 /// * **renderRequestComponent** - Custom renderer for individual request items; receives `RenderRequestComponentOptions` with `request`, `onRequestItemPress`, `requestList`, `updateRequestList`, `roomName`, `socket`. Defaults to `RenderRequestComponent` widget.
 /// * **parameters** - Must expose `getUpdatedAllParams`.
+///
+/// Compatible with [ModernRequestsModalOptions] from the modern component.
 ///
 /// ### Usage
 /// 1. Modal displays header with "Requests" title and counter badge.
@@ -55,6 +58,20 @@ class RequestsModalOptions {
   RenderRequestComponentType renderRequestComponent;
   final RequestsModalParameters parameters;
 
+  /// Dark mode toggle for modern styling.
+  /// Note: Pending modern implementation - placeholder for future glassmorphic UI.
+  final bool isDarkMode;
+
+  /// Enable glassmorphism effects for modern styling.
+  /// Note: Pending modern implementation - placeholder for future glassmorphic UI.
+  final bool enableGlassmorphism;
+
+  /// Render mode for embedding in different contexts.
+  /// - `modal`: Full modal with overlay, positioning, visibility wrapper (default)
+  /// - `sidebar`: Content only, for embedding in sidebar panel
+  /// - `inline`: Content only, no visibility check
+  final ModalRenderMode renderMode;
+
   RequestsModalOptions({
     required this.isRequestsModalVisible,
     required this.onRequestClose,
@@ -70,6 +87,9 @@ class RequestsModalOptions {
     required this.parameters,
     this.renderRequestComponent =
         _defaultRenderRequestComponent, // Default rendering function
+    this.isDarkMode = false,
+    this.enableGlassmorphism = false,
+    this.renderMode = ModalRenderMode.modal,
   });
 
   // Default rendering function for individual request components.
@@ -114,6 +134,10 @@ class RequestsModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Note: renderMode is available for API compatibility but sidebar/inline
+    // rendering is handled by modern components. This classic modal always
+    // renders in modal mode.
+
     final screenWidth = MediaQuery.of(context).size.width;
     double modalWidth = 0.8 * screenWidth;
     if (modalWidth > 400) modalWidth = 400;

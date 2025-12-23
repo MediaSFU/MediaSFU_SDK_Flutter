@@ -83,6 +83,8 @@ export 'package:mediasfu_sdk/components/mediasfu_components/mediasfu_chat.dart'
 // Display Components (misc)
 export 'package:mediasfu_sdk/components/display_components/meeting_progress_timer.dart'
     show MeetingProgressTimer;
+export 'package:mediasfu_sdk/components/display_components/participants_counter_badge.dart'
+    show ParticipantsCounterBadge, ParticipantsCounterBadgeOptions;
 export 'package:mediasfu_sdk/components/display_components/mini_audio.dart'
     show MiniAudio;
 export 'package:mediasfu_sdk/components/display_components/mini_card.dart'
@@ -91,5 +93,36 @@ export 'package:mediasfu_sdk/components/display_components/audio_card.dart'
     show AudioCard;
 export 'package:mediasfu_sdk/components/display_components/card_video_display.dart'
     show CardVideoDisplay;
+export 'package:mediasfu_sdk/components/display_components/simple_audio_player.dart'
+    show SimpleAudioPlayer;
 export 'package:mediasfu_sdk/methods/utils/mini_audio_player/mini_audio_player.dart'
     show MiniAudioPlayer;
+
+// Whiteboard Components
+export 'package:mediasfu_sdk/components/whiteboard_components/whiteboard_components.dart'
+    show
+        Whiteboard,
+        WhiteboardOptions,
+        WhiteboardToolbar,
+        WhiteboardPainter,
+        WhiteboardShape,
+        WhiteboardShapeType,
+        LineType,
+        WhiteboardMode,
+        ConfigureWhiteboardModal,
+        ConfigureWhiteboardModalOptions,
+        Screenboard,
+        ScreenboardOptions,
+        ScreenboardModal,
+        ScreenboardModalOptions;
+
+// Background Components (Virtual Backgrounds - Mobile Only)
+export 'package:mediasfu_sdk/components/background_components/background_components.dart'
+    show
+        BackgroundModal,
+        BackgroundModalOptions,
+        VirtualBackground,
+        VirtualBackgroundProcessor,
+        BackgroundType,
+        PresetBackgrounds,
+        SegmentationResult;

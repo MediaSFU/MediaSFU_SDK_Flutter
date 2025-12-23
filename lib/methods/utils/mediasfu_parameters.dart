@@ -1,5 +1,6 @@
 // mediasfu_parameters.dart
 
+import 'dart:async' as dart_async;
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -11,6 +12,27 @@ import '../../types/custom_builders.dart'
     show VideoCardType, AudioCardType, MiniCardType;
 import '../../types/ui_overrides.dart'
     show ContainerStyleOptions, MediasfuUICustomOverrides;
+import '../../components/whiteboard_components/whiteboard.dart'
+    show WhiteboardParameters;
+import '../../components/whiteboard_components/whiteboard_shape.dart'
+    show WhiteboardShape;
+import '../../components/whiteboard_components/configure_whiteboard_modal.dart'
+    show ConfigureWhiteboardModalParameters;
+import '../../components/whiteboard_components/screenboard_modal.dart'
+    show ScreenboardModalParameters;
+import '../../components/whiteboard_components/screenboard.dart'
+    show ScreenboardParameters;
+import '../../components/background_components/background_modal.dart'
+    show BackgroundModalParameters;
+import '../../components/background_components/virtual_background_types.dart'
+    show VirtualBackground;
+import '../permissions_methods/update_permission_config.dart'
+    show PermissionConfig;
+
+// Default no-op functions for optional panelist-related callbacks
+void _defaultUpdateBool(bool _) {}
+void _defaultUpdatePanelists(List<Participant> _) {}
+void _defaultUpdatePermissionConfig(PermissionConfig? _) {}
 
 class MediasfuParameters
     implements
@@ -43,7 +65,13 @@ class MediasfuParameters
         WaitingRoomModalParameters,
         ParticipantsModalParameters,
         RequestsModalParameters,
-        GetParticipantMediaParameters {
+        GetParticipantMediaParameters,
+        WhiteboardParameters,
+        ConfigureWhiteboardModalParameters,
+        ScreenboardModalParameters,
+        ScreenboardParameters,
+        BackgroundModalParameters,
+        StartConsumingTranslationParameters {
   // ======== Parameters ========
 
   // ---------------------
@@ -118,7 +146,11 @@ class MediasfuParameters
   bool canRecord;
   bool startReport;
   bool endReport;
-  Timer? recordTimerInterval;
+  dart_async.Timer? _recordTimerInterval;
+  @override
+  dart_async.Timer? get recordTimerInterval => _recordTimerInterval;
+  set recordTimerInterval(dart_async.Timer? value) =>
+      _recordTimerInterval = value;
   int? recordStartTime;
   int recordElapsedTime;
   bool isTimerRunning;
@@ -202,6 +234,7 @@ class MediasfuParameters
   String defAudioID;
   String userDefaultAudioInputDevice;
   String userDefaultAudioOutputDevice;
+  bool isSpeakerphoneOn;
   String prevAudioInputDevice;
   String prevVideoInputDevice;
   bool audioPaused;
@@ -275,6 +308,16 @@ class MediasfuParameters
   String videoSetting;
   String screenshareSetting;
   String chatSetting;
+  PermissionConfig? permissionConfig;
+  List<Participant> panelists;
+  bool panelistFocusChanged;
+  bool panellistFocused;
+  bool muteOthersMic;
+  bool muteOthersCamera;
+
+  // Getter for panelistsFocused that returns panellistFocused (naming alias)
+  bool get panelistsFocused => panellistFocused;
+  set panelistsFocused(bool value) => panellistFocused = value;
 
   // ---------------------
   // Display Settings
@@ -282,6 +325,7 @@ class MediasfuParameters
   bool autoWave;
   bool forceFullDisplay;
   bool prevForceFullDisplay;
+  bool selfViewForceFull; // Controls self-view display mode (cropped vs full)
   String prevMeetingDisplayType;
 
   // ---------------------
@@ -380,13 +424,13 @@ class MediasfuParameters
   VideoCardType? customVideoCard;
   AudioCardType? customAudioCard;
   MiniCardType? customMiniCard;
-    MiniAudioPlayerType miniAudioPlayerComponent;
+  MiniAudioPlayerType miniAudioPlayerComponent;
 
-    // ---------------------
-    // UI Overrides & Container Styling
-    // ---------------------
-    MediasfuUICustomOverrides uiOverrides;
-    ContainerStyleOptions containerStyle;
+  // ---------------------
+  // UI Overrides & Container Styling
+  // ---------------------
+  MediasfuUICustomOverrides uiOverrides;
+  ContainerStyleOptions containerStyle;
 
   // ---------------------
   // Permissions
@@ -581,6 +625,7 @@ class MediasfuParameters
   void Function(String) updateDefAudioID;
   void Function(String) updateUserDefaultAudioInputDevice;
   void Function(String) updateUserDefaultAudioOutputDevice;
+  void Function(bool) updateIsSpeakerphoneOn;
   void Function(String) updatePrevAudioInputDevice;
   void Function(String) updatePrevVideoInputDevice;
   void Function(bool) updateAudioPaused;
@@ -631,6 +676,8 @@ class MediasfuParameters
   void Function(List<Widget>) updateMainGridStream;
   void Function(List<List<Widget>>) updateOtherGridStreams;
   void Function(List<Widget>) updateAudioOnlyStreams;
+  void Function(Widget)? addTranslationStream;
+  void Function(String)? removeTranslationStream;
   void Function(List<MediaDeviceInfo>) updateVideoInputs;
   void Function(List<MediaDeviceInfo>) updateAudioInputs;
   void Function(String) updateMeetingProgressTime;
@@ -644,9 +691,16 @@ class MediasfuParameters
   void Function(String) updateVideoSetting;
   void Function(String) updateScreenshareSetting;
   void Function(String) updateChatSetting;
+  void Function(PermissionConfig?) updatePermissionConfig;
+  void Function(List<Participant>) updatePanelists;
+  void Function(bool) updatePanelistFocusChanged;
+  void Function(bool) updatePanelistsFocused;
+  void Function(bool) updateMuteOthersMic;
+  void Function(bool) updateMuteOthersCamera;
   void Function(bool) updateAutoWave;
   void Function(bool) updateForceFullDisplay;
   void Function(bool) updatePrevForceFullDisplay;
+  void Function(bool) updateSelfViewForceFull;
   void Function(String) updatePrevMeetingDisplayType;
   void Function(String) updateWaitingRoomFilter;
   void Function(List<WaitingRoomParticipant>) updateWaitingRoomList;
@@ -763,6 +817,7 @@ class MediasfuParameters
   final CalculateRowsAndColumnsType calculateRowsAndColumns;
   final AddVideosGridType addVideosGrid;
   final OnScreenChangesType onScreenChanges;
+  final CaptureCanvasStreamType? captureCanvasStream;
   final SleepType sleep;
   final ChangeVidsType changeVids;
   final CompareActiveNamesType compareActiveNames;
@@ -822,6 +877,12 @@ class MediasfuParameters
   bool appliedBackground;
   bool isBackgroundModalVisible;
   bool autoClickBackground;
+  @override
+  VirtualBackground? selectedBackground;
+  @override
+  Future<void> Function(VirtualBackground)? onBackgroundApply;
+  @override
+  Future<void> Function(VirtualBackground)? onBackgroundPreview;
 
   // Update functions
   void Function(String?) updateCustomImage;
@@ -836,10 +897,18 @@ class MediasfuParameters
   void Function(dynamic) updateMainCanvas;
   void Function(bool) updatePrevKeepBackground;
   void Function(bool) updateAppliedBackground;
+  @override
   void Function(bool) updateIsBackgroundModalVisible;
   void Function(bool) updateAutoClickBackground;
+  @override
+  void Function(VirtualBackground?) updateSelectedBackground;
 
-  // Whiteboard-related variables; Not Implemented Yet
+  // Theme support
+  @override
+  bool isDarkModeValue;
+  void Function(bool) updateIsDarkModeValue;
+
+  // Whiteboard-related variables
   List<WhiteboardUser> whiteboardUsers;
   int? currentWhiteboardIndex;
   bool canStartWhiteboard;
@@ -848,14 +917,14 @@ class MediasfuParameters
   int whiteboardLimit;
   bool isWhiteboardModalVisible;
   bool isConfigureWhiteboardModalVisible;
-  List<dynamic> shapes;
+  List<WhiteboardShape> shapes;
   bool useImageBackground;
-  List<dynamic> redoStack;
+  List<WhiteboardShape> redoStack;
   List<String> undoStack;
   MediaStream? canvasStream;
-  dynamic canvasWhiteboard;
+  GlobalKey? canvasWhiteboard;
 
-  // Screenboard-related variables; Not Implemented Yet
+  // Screenboard-related variables
   dynamic canvasScreenboard;
   MediaStream? processedScreenStream;
   bool annotateScreenStream;
@@ -871,17 +940,31 @@ class MediasfuParameters
   void Function(int) updateWhiteboardLimit;
   void Function(bool) updateIsWhiteboardModalVisible;
   void Function(bool) updateIsConfigureWhiteboardModalVisible;
-  void Function(List<dynamic>) updateShapes;
+  void Function(List<WhiteboardShape>) updateShapes;
   void Function(bool) updateUseImageBackground;
-  void Function(List<dynamic>) updateRedoStack;
+  void Function(List<WhiteboardShape>) updateRedoStack;
   void Function(List<String>) updateUndoStack;
   void Function(MediaStream?) updateCanvasStream;
-  void Function(dynamic) updateCanvasWhiteboard;
+  void Function(GlobalKey?) updateCanvasWhiteboard;
   void Function(dynamic) updateCanvasScreenboard;
   void Function(MediaStream?) updateProcessedScreenStream;
   void Function(bool) updateAnnotateScreenStream;
   void Function(dynamic) updateMainScreenCanvas;
   void Function(bool) updateIsScreenboardModalVisible;
+
+  // Translation
+  ListenerTranslationPreferences? listenerTranslationPreferences;
+  Map<String, String>? listenerTranslationOverrides;
+  Map<String, TranslationMeta>? translationProducerMap;
+  Map<String, dynamic>? speakerTranslationStates;
+  Set<String>? activeTranslationProducerIds;
+  Set<String>? translationSubscriptions;
+
+  void Function(ListenerTranslationPreferences)?
+      updateListenerTranslationPreferences;
+  void Function(Map<String, String>)? updateListenerTranslationOverrides;
+  void Function(Map<String, TranslationMeta>)? updateTranslationProducerMap;
+  void Function(Map<String, dynamic>)? updateSpeakerTranslationStates;
 
   // Store property values in a map for dynamic access
   // final Map<String, dynamic> _parametersMap = {};
@@ -908,8 +991,8 @@ class MediasfuParameters
     required this.filteredParticipants,
     required this.participantsCounter,
     required this.participantsFilter,
-        required this.uiOverrides,
-        required this.containerStyle,
+    required this.uiOverrides,
+    required this.containerStyle,
 
     // ---------------------
     // Media Details Initialization
@@ -962,7 +1045,7 @@ class MediasfuParameters
     required this.canRecord,
     required this.startReport,
     required this.endReport,
-    this.recordTimerInterval,
+    Timer? recordTimerInterval,
     this.recordStartTime,
     required this.recordElapsedTime,
     required this.isTimerRunning,
@@ -1046,6 +1129,7 @@ class MediasfuParameters
     required this.defAudioID,
     required this.userDefaultAudioInputDevice,
     required this.userDefaultAudioOutputDevice,
+    this.isSpeakerphoneOn = false,
     required this.prevAudioInputDevice,
     required this.prevVideoInputDevice,
     required this.audioPaused,
@@ -1119,6 +1203,12 @@ class MediasfuParameters
     required this.videoSetting,
     required this.screenshareSetting,
     required this.chatSetting,
+    this.permissionConfig,
+    this.panelists = const [],
+    this.panelistFocusChanged = false,
+    this.panellistFocused = false,
+    this.muteOthersMic = false,
+    this.muteOthersCamera = false,
 
     // ---------------------
     // Display Settings Initialization
@@ -1126,6 +1216,7 @@ class MediasfuParameters
     required this.autoWave,
     required this.forceFullDisplay,
     required this.prevForceFullDisplay,
+    required this.selfViewForceFull,
     required this.prevMeetingDisplayType,
 
     // ---------------------
@@ -1420,6 +1511,7 @@ class MediasfuParameters
     required this.updateDefAudioID,
     required this.updateUserDefaultAudioInputDevice,
     required this.updateUserDefaultAudioOutputDevice,
+    required this.updateIsSpeakerphoneOn,
     required this.updatePrevAudioInputDevice,
     required this.updatePrevVideoInputDevice,
     required this.updateAudioPaused,
@@ -1470,6 +1562,8 @@ class MediasfuParameters
     required this.updateMainGridStream,
     required this.updateOtherGridStreams,
     required this.updateAudioOnlyStreams,
+    this.addTranslationStream,
+    this.removeTranslationStream,
     required this.updateVideoInputs,
     required this.updateAudioInputs,
     required this.updateMeetingProgressTime,
@@ -1483,9 +1577,16 @@ class MediasfuParameters
     required this.updateVideoSetting,
     required this.updateScreenshareSetting,
     required this.updateChatSetting,
+    this.updatePermissionConfig = _defaultUpdatePermissionConfig,
+    this.updatePanelists = _defaultUpdatePanelists,
+    this.updatePanelistFocusChanged = _defaultUpdateBool,
+    this.updatePanelistsFocused = _defaultUpdateBool,
+    this.updateMuteOthersMic = _defaultUpdateBool,
+    this.updateMuteOthersCamera = _defaultUpdateBool,
     required this.updateAutoWave,
     required this.updateForceFullDisplay,
     required this.updatePrevForceFullDisplay,
+    required this.updateSelfViewForceFull,
     required this.updatePrevMeetingDisplayType,
     required this.updateWaitingRoomFilter,
     required this.updateWaitingRoomList,
@@ -1602,6 +1703,7 @@ class MediasfuParameters
     required this.calculateRowsAndColumns,
     required this.addVideosGrid,
     required this.onScreenChanges,
+    this.captureCanvasStream,
     required this.sleep,
     required this.changeVids,
     required this.compareActiveNames,
@@ -1662,6 +1764,9 @@ class MediasfuParameters
     required this.appliedBackground,
     required this.isBackgroundModalVisible,
     required this.autoClickBackground,
+    this.selectedBackground,
+    this.onBackgroundApply,
+    this.onBackgroundPreview,
 
     // Update functions
     required this.updateCustomImage,
@@ -1678,6 +1783,11 @@ class MediasfuParameters
     required this.updateAppliedBackground,
     required this.updateIsBackgroundModalVisible,
     required this.updateAutoClickBackground,
+    required this.updateSelectedBackground,
+
+    // Theme support
+    required this.isDarkModeValue,
+    required this.updateIsDarkModeValue,
 
     // Whiteboard-related variables
     required this.whiteboardUsers,
@@ -1725,8 +1835,21 @@ class MediasfuParameters
     required this.updateMainScreenCanvas,
     required this.updateIsScreenboardModalVisible,
     required this.getUpdatedAllParams,
-  });
 
+    // Translation
+    this.listenerTranslationPreferences,
+    this.listenerTranslationOverrides,
+    this.translationProducerMap,
+    this.speakerTranslationStates,
+    this.activeTranslationProducerIds,
+    this.translationSubscriptions,
+    this.updateListenerTranslationPreferences,
+    this.updateListenerTranslationOverrides,
+    this.updateTranslationProducerMap,
+    this.updateSpeakerTranslationStates,
+  }) : _recordTimerInterval = recordTimerInterval;
+
+  @override
   MediasfuParameters Function() getUpdatedAllParams;
 
   //Convert update functions to map
@@ -1926,6 +2049,8 @@ class MediasfuParameters
         'updateMainGridStream': updateMainGridStream,
         'updateOtherGridStreams': updateOtherGridStreams,
         'updateAudioOnlyStreams': updateAudioOnlyStreams,
+        'addTranslationStream': addTranslationStream,
+        'removeTranslationStream': removeTranslationStream,
         'updateVideoInputs': updateVideoInputs,
         'updateAudioInputs': updateAudioInputs,
         'updateMeetingProgressTime': updateMeetingProgressTime,
@@ -1942,6 +2067,7 @@ class MediasfuParameters
         'updateAutoWave': updateAutoWave,
         'updateForceFullDisplay': updateForceFullDisplay,
         'updatePrevForceFullDisplay': updatePrevForceFullDisplay,
+        'updateSelfViewForceFull': updateSelfViewForceFull,
         'updatePrevMeetingDisplayType': updatePrevMeetingDisplayType,
         'updateWaitingRoomFilter': updateWaitingRoomFilter,
         'updateWaitingRoomList': updateWaitingRoomList,

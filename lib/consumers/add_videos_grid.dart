@@ -1,9 +1,24 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
-import '../components/display_components/mini_card.dart' hide MiniCardType;
-import '../components/display_components/video_card.dart' hide VideoCardType;
-import '../components/display_components/audio_card.dart' hide AudioCardType;
+// Original component imports (commented out for testing Modern versions):
+// import '../components/display_components/mini_card.dart' hide MiniCardType;
+// import '../components/display_components/video_card.dart' hide VideoCardType;
+// import '../components/display_components/audio_card.dart' hide AudioCardType;
+
+// Modern component imports (using same Options types):
+import '../components_modern/display_components/modern_audio_card.dart'
+    show ModernAudioCard;
+import '../components_modern/display_components/modern_mini_card.dart'
+    show ModernMiniCard;
+import '../components_modern/display_components/modern_video_card.dart'
+    show ModernVideoCard;
+// Still need Options from original components:
+import '../components/display_components/audio_card.dart'
+    show AudioCardOptions, AudioCardParameters;
+import '../components/display_components/mini_card.dart' show MiniCardOptions;
+import '../components/display_components/video_card.dart'
+    show VideoCardOptions, VideoCardParameters;
 import '../types/types.dart'
     show
         Participant,
@@ -36,15 +51,20 @@ abstract class AddVideosGridParameters
   bool get keepBackground;
   MediaStream? get virtualStream;
   bool get forceFullDisplay;
+  bool get selfViewForceFull;
   String get member;
   List<List<Widget>> get otherGridStreams;
   UpdateOtherGridStreams get updateOtherGridStreams;
   UpdateMiniCardsGridType get updateMiniCardsGrid;
+  void Function(bool) get updateSelfViewForceFull;
 
   // Custom component builders
   VideoCardType? get customVideoCard;
   AudioCardType? get customAudioCard;
   MiniCardType? get customMiniCard;
+
+  // Theme support
+  bool get isDarkModeValue;
 
   // Method to retrieve updated parameters
   AddVideosGridParameters Function() get getUpdatedAllParams;
@@ -155,6 +175,9 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
     final customAudioCard = parameters.customAudioCard;
     final customMiniCard = parameters.customMiniCard;
 
+    // Extract theme value
+    final isDarkModeValue = parameters.isDarkModeValue;
+
     // Initialize new components
     List<List<Widget>> newComponents = [[], []];
     Stream participant;
@@ -196,16 +219,16 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
               parameters: parameters,
             ));
           } else {
-            newComponents[0].add(AudioCard(
+            newComponents[0].add(ModernAudioCard(
                 options: AudioCardOptions(
               name: participant.name ?? "",
               barColor: Colors.red,
-              textColor: Colors.white,
+              textColor: isDarkModeValue ? Colors.white : Colors.black,
               customStyle: BoxDecoration(
                 color: Colors.transparent,
                 border: Border.all(
                   color: eventType != EventType.broadcast
-                      ? Colors.black
+                      ? (isDarkModeValue ? Colors.white24 : Colors.black)
                       : Colors.transparent,
                   width: eventType != EventType.broadcast ? 2.0 : 0.0,
                 ),
@@ -217,6 +240,7 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
               backgroundColor: Colors.transparent,
               showControls: eventType != EventType.chat,
               participant: actualParticipant,
+              isDarkMode: isDarkModeValue,
             )));
           }
         } else {
@@ -236,19 +260,13 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
             ));
           } else {
             newComponents[0].add(
-              MiniCard(
+              ModernMiniCard(
                   options: MiniCardOptions(
                 initials: participant.name ?? "",
                 fontSize: 20,
-                customStyle: BoxDecoration(
-                  color: Colors.transparent,
-                  border: Border.all(
-                    color: eventType != EventType.broadcast
-                        ? Colors.black
-                        : Colors.transparent,
-                    width: eventType != EventType.broadcast ? 2.0 : 0.0,
-                  ),
-                ),
+                isDarkMode: isDarkModeValue,
+                roundedImage: true,
+                showBorder: eventType != EventType.broadcast,
               )),
             );
           }
@@ -277,19 +295,13 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
               ));
             } else {
               newComponents[0].add(
-                MiniCard(
+                ModernMiniCard(
                     options: MiniCardOptions(
                   initials: name,
                   fontSize: 20,
-                  customStyle: BoxDecoration(
-                    color: Colors.transparent,
-                    border: Border.all(
-                      color: eventType != EventType.broadcast
-                          ? Colors.black
-                          : Colors.transparent,
-                      width: eventType != EventType.broadcast ? 2.0 : 0.0,
-                    ),
-                  ),
+                  isDarkMode: isDarkModeValue,
+                  roundedImage: true,
+                  showBorder: eventType != EventType.broadcast,
                 )),
               );
             }
@@ -326,14 +338,20 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
                 parameters: parameters,
               ));
             } else {
+              // For self-view: use selfViewForceFull to override forceFullDisplay
+              // If selfViewForceFull is true, show full (forceFullDisplay=false)
+              // If selfViewForceFull is false, use normal forceFullDisplay
+              final selfViewForceFullDisplay = parameters.selfViewForceFull
+                  ? false
+                  : (eventType == EventType.webinar ? false : forceFullDisplay);
+
               newComponents[0].add(
-                VideoCard(
+                ModernVideoCard(
                     options: VideoCardOptions(
                   videoStream: participant.stream,
                   remoteProducerId: participant.stream?.id ?? '',
                   eventType: eventType,
-                  forceFullDisplay:
-                      eventType == EventType.webinar ? false : forceFullDisplay,
+                  forceFullDisplay: selfViewForceFullDisplay,
                   participant: actualParticipant,
                   backgroundColor: Colors.transparent,
                   showControls: false,
@@ -341,6 +359,11 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
                   name: participant.name ?? '',
                   doMirror: true,
                   parameters: parameters,
+                  isDarkMode: isDarkModeValue,
+                  onToggleSelfViewFit: () {
+                    parameters
+                        .updateSelfViewForceFull(!parameters.selfViewForceFull);
+                  },
                 )),
               );
             }
@@ -370,7 +393,7 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
                 parameters: parameters,
               ));
             } else {
-              newComponents[0].add(VideoCard(
+              newComponents[0].add(ModernVideoCard(
                 options: VideoCardOptions(
                   videoStream: participant.stream,
                   remoteProducerId: remoteProducerId,
@@ -383,6 +406,7 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
                   name: participant_.name,
                   doMirror: false,
                   parameters: parameters,
+                  isDarkMode: isDarkModeValue,
                 ),
               ));
             }
@@ -440,16 +464,16 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
               ));
             } else {
               newComponents[1].add(
-                AudioCard(
+                ModernAudioCard(
                     options: AudioCardOptions(
                   name: participant.name ?? "",
                   barColor: Colors.red,
-                  textColor: Colors.white,
+                  textColor: isDarkModeValue ? Colors.white : Colors.black,
                   customStyle: BoxDecoration(
                     color: Colors.transparent,
                     border: Border.all(
                       color: eventType != EventType.broadcast
-                          ? Colors.black
+                          ? (isDarkModeValue ? Colors.white24 : Colors.black)
                           : Colors.transparent,
                       width: eventType != EventType.broadcast ? 2.0 : 0.0,
                     ),
@@ -461,6 +485,7 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
                   backgroundColor: Colors.transparent,
                   showControls: eventType != EventType.chat,
                   participant: actualParticipant,
+                  isDarkMode: isDarkModeValue,
                 )),
               );
             }
@@ -481,19 +506,13 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
               ));
             } else {
               newComponents[1].add(
-                MiniCard(
+                ModernMiniCard(
                     options: MiniCardOptions(
                   initials: participant.name ?? "",
                   fontSize: 20,
-                  customStyle: BoxDecoration(
-                    color: Colors.transparent,
-                    border: Border.all(
-                      color: eventType != EventType.broadcast
-                          ? Colors.black
-                          : Colors.transparent,
-                      width: eventType != EventType.broadcast ? 2.0 : 0.0,
-                    ),
-                  ),
+                  isDarkMode: isDarkModeValue,
+                  roundedImage: true,
+                  showBorder: eventType != EventType.broadcast,
                 )),
               );
             }
@@ -524,7 +543,7 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
               ));
             } else {
               newComponents[1].add(
-                VideoCard(
+                ModernVideoCard(
                     options: VideoCardOptions(
                   videoStream: participant.stream,
                   remoteProducerId: remoteProducerId,
@@ -537,6 +556,7 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
                   name: participant_.name,
                   doMirror: false,
                   parameters: parameters,
+                  isDarkMode: isDarkModeValue,
                 )),
               );
             }

@@ -158,6 +158,66 @@ class MiniCardOptions {
   final MiniCardImageBuilder? imageBuilder;
   final MiniCardInitialsBuilder? initialsBuilder;
 
+  /// Size of the mini card.
+  /// Used by modern styling.
+  final double size;
+
+  /// Enable glassmorphism effects.
+  /// Used by modern styling for blur effects.
+  final bool enableGlassmorphism;
+
+  /// Show gradient background.
+  /// Used by modern styling.
+  final bool showGradientBackground;
+
+  /// Optional gradient.
+  /// Used by modern styling.
+  final Gradient? gradient;
+
+  /// Dark mode toggle.
+  /// Used by modern styling for theme.
+  final bool isDarkMode;
+
+  /// Show border.
+  /// Used by modern styling.
+  final bool showBorder;
+
+  /// Border color.
+  /// Used by modern styling.
+  final Color? borderColor;
+
+  /// Border width.
+  /// Used by modern styling.
+  final double borderWidth;
+
+  /// Show shadow.
+  /// Used by modern styling.
+  final bool showShadow;
+
+  /// Custom shadow.
+  /// Used by modern styling.
+  final List<BoxShadow>? customShadow;
+
+  /// Initials background color.
+  /// Used by modern styling.
+  final Color? initialsBackgroundColor;
+
+  /// Enable glow effect.
+  /// Used by modern premium styling.
+  final bool enableGlow;
+
+  /// Glow color.
+  /// Used by modern premium styling.
+  final Color? glowColor;
+
+  /// Glow intensity.
+  /// Used by modern premium styling.
+  final double glowIntensity;
+
+  /// Enable premium border styling.
+  /// Used by modern premium styling.
+  final bool enablePremiumBorder;
+
   const MiniCardOptions({
     required this.initials,
     this.fontSize = 14,
@@ -180,6 +240,21 @@ class MiniCardOptions {
     this.containerBuilder,
     this.imageBuilder,
     this.initialsBuilder,
+    this.size = 40.0,
+    this.enableGlassmorphism = false,
+    this.showGradientBackground = false,
+    this.gradient,
+    this.isDarkMode = false,
+    this.showBorder = false,
+    this.borderColor,
+    this.borderWidth = 1.0,
+    this.showShadow = false,
+    this.customShadow,
+    this.initialsBackgroundColor,
+    this.enableGlow = false,
+    this.glowColor,
+    this.glowIntensity = 0.5,
+    this.enablePremiumBorder = false,
   });
 }
 
@@ -289,7 +364,8 @@ class MiniCard extends StatelessWidget {
       return options.customBuilder!(options: options);
     }
 
-    final hasImage = options.imageSource != null && options.imageSource!.isNotEmpty;
+    final hasImage =
+        options.imageSource != null && options.imageSource!.isNotEmpty;
 
     final imageWidget = hasImage ? _buildImage(context) : null;
     final initialsWidget = _buildInitials(context);
@@ -319,7 +395,8 @@ class MiniCard extends StatelessWidget {
     final borderRadius = options.imageStyle?.borderRadius ??
         BorderRadius.circular(options.roundedImage ? 9999 : 0);
 
-    final decoration = options.imageContainerDecoration ?? const BoxDecoration();
+    final decoration =
+        options.imageContainerDecoration ?? const BoxDecoration();
 
     final image = ClipRRect(
       borderRadius: borderRadius,

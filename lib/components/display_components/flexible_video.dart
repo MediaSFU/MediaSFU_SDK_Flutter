@@ -233,7 +233,8 @@ class FlexibleVideoOptions {
   });
 }
 
-typedef FlexibleVideoType = Widget Function({required FlexibleVideoOptions options});
+typedef FlexibleVideoType = Widget Function(
+    {required FlexibleVideoOptions options});
 
 /// Responsive video-grid widget that powers MediaSFU's main participant layout.
 ///
@@ -348,28 +349,28 @@ class _FlexibleVideoState extends State<FlexibleVideo> {
         final List<Widget> builtRows = [];
         final List<Widget> columnChildren = [];
 
-    final mediaSize = MediaQuery.of(context).size;
-    final double maxWidth = constraints.maxWidth.isFinite
-      ? constraints.maxWidth
-      : mediaSize.width;
-    final double maxHeight = constraints.maxHeight.isFinite
-      ? constraints.maxHeight
-      : (widget.options.customHeight.isFinite
-        ? widget.options.customHeight
-        : mediaSize.height);
+        final mediaSize = MediaQuery.of(context).size;
+        final double maxWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : mediaSize.width;
+        final double maxHeight = constraints.maxHeight.isFinite
+            ? constraints.maxHeight
+            : (widget.options.customHeight.isFinite
+                ? widget.options.customHeight
+                : mediaSize.height);
         final double columnSpacing = options.columnSpacing ?? 0;
         final double totalColumnSpacing =
             columnSpacing * math.max(0, options.columns - 1);
-        final double cellMarginHorizontal =
-            options.cellMargin?.horizontal ?? 0;
+        final double cellMarginHorizontal = options.cellMargin?.horizontal ?? 0;
         final double totalCellMarginWidth =
             cellMarginHorizontal * math.max(0, options.columns);
-        final double availableForCards = (maxWidth - totalColumnSpacing -
-                totalCellMarginWidth)
-            .clamp(0.0, double.infinity);
+        final double availableForCards =
+            (maxWidth - totalColumnSpacing - totalCellMarginWidth)
+                .clamp(0.0, double.infinity);
 
         double cardWidth = _cardWidth;
-        if (options.columns > 0 && availableForCards.isFinite &&
+        if (options.columns > 0 &&
+            availableForCards.isFinite &&
             availableForCards > 0) {
           final double perColumnWidth = availableForCards / options.columns;
           cardWidth = math.min(_cardWidth, perColumnWidth);
@@ -385,25 +386,28 @@ class _FlexibleVideoState extends State<FlexibleVideo> {
         }
 
         final double rowSpacing = options.rowSpacing ?? 0;
-    final double totalRowSpacing = rowSpacing * math.max(0, options.rows - 1);
-    final double cellMarginVertical = options.cellMargin?.vertical ?? 0;
-    final double totalCellMarginHeight =
-      cellMarginVertical * math.max(0, options.rows);
-    final double rowPaddingVertical =
-      options.rowPadding?.vertical ?? 0;
-    final double rowMarginVertical = options.rowMargin?.vertical ?? 0;
+        final double totalRowSpacing =
+            rowSpacing * math.max(0, options.rows - 1);
+        final double cellMarginVertical = options.cellMargin?.vertical ?? 0;
+        final double totalCellMarginHeight =
+            cellMarginVertical * math.max(0, options.rows);
+        final double rowPaddingVertical = options.rowPadding?.vertical ?? 0;
+        final double rowMarginVertical = options.rowMargin?.vertical ?? 0;
 
-    double availableForRows = (maxHeight - totalRowSpacing - totalCellMarginHeight)
-            .clamp(0.0, double.infinity);
+        double availableForRows =
+            (maxHeight - totalRowSpacing - totalCellMarginHeight)
+                .clamp(0.0, double.infinity);
 
-    if (rowPaddingVertical > 0) {
-      availableForRows = (availableForRows - rowPaddingVertical * options.rows)
-        .clamp(0.0, double.infinity);
-    }
-    if (rowMarginVertical > 0) {
-      availableForRows = (availableForRows - rowMarginVertical * options.rows)
-        .clamp(0.0, double.infinity);
-    }
+        if (rowPaddingVertical > 0) {
+          availableForRows =
+              (availableForRows - rowPaddingVertical * options.rows)
+                  .clamp(0.0, double.infinity);
+        }
+        if (rowMarginVertical > 0) {
+          availableForRows =
+              (availableForRows - rowMarginVertical * options.rows)
+                  .clamp(0.0, double.infinity);
+        }
 
         if (options.rows > 0 && availableForRows > 0) {
           final double perRowHeight = availableForRows / options.rows;
@@ -422,11 +426,12 @@ class _FlexibleVideoState extends State<FlexibleVideo> {
           final List<Widget> rowCells = [];
           final List<Widget> rawCells = [];
 
-          for (var columnIndex = 0; columnIndex < options.columns; columnIndex++) {
+          for (var columnIndex = 0;
+              columnIndex < options.columns;
+              columnIndex++) {
             final cellIndex = rowIndex * options.columns + columnIndex;
-            final component = cellIndex < components.length
-                ? components[cellIndex]
-                : null;
+            final component =
+                cellIndex < components.length ? components[cellIndex] : null;
             final hasComponent = component != null;
 
             final cellContext = FlexibleVideoCellContext(
@@ -542,22 +547,21 @@ class _FlexibleVideoState extends State<FlexibleVideo> {
 
         Widget? screenboardNode;
         if (options.screenboard != null) {
+          // Don't wrap in IgnorePointer - the Screenboard handles pointer events internally
+          // The toggle button needs to be tappable even when annotation is off
           Widget? defaultScreenboard = Positioned(
             top: 0,
             left: _canvasLeft + positiveOffset,
-            child: IgnorePointer(
-              ignoring: !options.annotateScreenStream,
-              child: Container(
-                padding: options.screenboardPadding,
-                margin: options.screenboardMargin,
-                decoration: options.screenboardDecoration,
-                clipBehavior: options.screenboardClipBehavior,
-                alignment: options.screenboardAlignment,
-                child: SizedBox(
-                  width: cardSize.width,
-                  height: cardSize.height,
-                  child: options.screenboard,
-                ),
+            child: Container(
+              padding: options.screenboardPadding,
+              margin: options.screenboardMargin,
+              decoration: options.screenboardDecoration,
+              clipBehavior: options.screenboardClipBehavior,
+              alignment: options.screenboardAlignment,
+              child: SizedBox(
+                width: cardSize.width,
+                height: cardSize.height,
+                child: options.screenboard,
               ),
             ),
           );
@@ -607,7 +611,9 @@ class _FlexibleVideoState extends State<FlexibleVideo> {
           canvasLeft: _canvasLeft,
         );
 
-        container = options.containerBuilder?.call(containerContext, container) ?? container;
+        container =
+            options.containerBuilder?.call(containerContext, container) ??
+                container;
 
         return container;
       },

@@ -48,6 +48,7 @@ export 'package:mediasfu_sdk/consumers/process_consumer_transports.dart'
     show processConsumerTransports;
 export 'package:mediasfu_sdk/consumers/resume_pause_streams.dart'
     show resumePauseStreams;
+export 'package:mediasfu_sdk/consumers/translation_consumer_switch.dart';
 export 'package:mediasfu_sdk/consumers/readjust.dart' show readjust;
 export 'package:mediasfu_sdk/consumers/check_grid.dart' show checkGrid;
 export 'package:mediasfu_sdk/consumers/get_estimate.dart' show getEstimate;
@@ -80,6 +81,11 @@ export 'package:mediasfu_sdk/consumers/get_piped_producers_alt.dart'
     show getPipedProducersAlt;
 export 'package:mediasfu_sdk/consumers/signal_new_consumer_transport.dart'
     show signalNewConsumerTransport;
+export 'package:mediasfu_sdk/consumers/start_consuming_translation.dart'
+    show
+        startConsumingTranslation,
+        StartConsumingTranslationOptions,
+        StartConsumingTranslationParameters;
 export 'package:mediasfu_sdk/consumers/connect_recv_transport.dart'
     show connectRecvTransport;
 export 'package:mediasfu_sdk/consumers/re_update_inter.dart' show reUpdateInter;

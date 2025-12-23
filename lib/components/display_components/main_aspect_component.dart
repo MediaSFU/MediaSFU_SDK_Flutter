@@ -433,12 +433,17 @@ class _MainAspectComponentState extends State<MainAspectComponent>
 
     final double parentWidth =
         size.width * widget.options.containerWidthFraction;
+
+    // Always subtract safe area insets since we're wrapped in SafeArea
+    // The safe area (status bar, notch) is removed from the layout, so we need
+    // to calculate based on actual available height
+    final double availableHeight =
+        size.height - safeAreaInsets.top - safeAreaInsets.bottom;
     final double parentHeight = widget.options.showControls == true
-        ? size.height *
+        ? availableHeight *
             widget.options.containerHeightFraction *
             widget.options.defaultFraction
-        : size.height * widget.options.containerHeightFraction -
-            safeAreaInsets.top;
+        : availableHeight * widget.options.containerHeightFraction;
 
     bool isWideScreen = parentWidth > 768;
     bool isMediumScreen = parentWidth > 576 && parentWidth <= 768;
@@ -469,12 +474,17 @@ class _MainAspectComponentState extends State<MainAspectComponent>
 
     final double parentWidth =
         size.width * widget.options.containerWidthFraction;
+
+    // Always subtract safe area insets since we're wrapped in SafeArea
+    // The safe area (status bar, notch) is removed from the layout, so we need
+    // to calculate based on actual available height
+    final double availableHeight =
+        size.height - safeAreaInsets.top - safeAreaInsets.bottom;
     final double parentHeight = widget.options.showControls
-        ? size.height *
+        ? availableHeight *
             widget.options.containerHeightFraction *
             widget.options.defaultFraction
-        : size.height * widget.options.containerHeightFraction -
-            safeAreaInsets.top;
+        : availableHeight * widget.options.containerHeightFraction;
 
     return Container(
       color: widget.options.backgroundColor,

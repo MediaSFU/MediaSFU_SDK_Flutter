@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import '../types/types.dart'
     show
@@ -16,6 +18,23 @@ import '../types/types.dart'
         ReorderStreamsOptions,
         Stream,
         DisconnectSendTransportScreenOptions;
+
+/// Method channel for Android foreground service control
+const _screenCaptureChannel = MethodChannel('com.mediasfu/screen_capture');
+
+/// Stops the foreground service for screen capture on Android.
+Future<void> _stopAndroidForegroundService() async {
+  if (kIsWeb) return;
+  try {
+    if (Platform.isAndroid) {
+      await _screenCaptureChannel.invokeMethod('stopForegroundService');
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      print('Warning: Could not stop foreground service: $e');
+    }
+  }
+}
 
 /// Parameters required for stopping screen sharing.
 /// Extends multiple parameter interfaces from your TypeScript definitions.
@@ -288,6 +307,9 @@ Future<void> stopShareScreen(StopShareScreenOptions options) async {
       print("Error in reorderStreams: $error");
     }
   }
+
+  // Stop Android foreground service now that screen sharing has ended
+  await _stopAndroidForegroundService();
 
   // Reset UI states
   lockScreen = false;

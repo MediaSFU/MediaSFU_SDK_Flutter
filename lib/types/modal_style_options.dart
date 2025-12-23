@@ -1,5 +1,20 @@
 import 'package:flutter/material.dart';
 
+/// Render mode for modal components.
+/// - `modal`: Traditional overlay modal with positioning, header, and close button
+/// - `sidebar`: Inline content for desktop sidebar (no overlay, no header, full width)
+/// - `inline`: Embedded content without modal wrapper (no positioning)
+enum ModalRenderMode {
+  /// Traditional overlay modal with positioning, header, and close button
+  modal,
+
+  /// Inline content for desktop sidebar (no overlay, no header, fills container)
+  sidebar,
+
+  /// Embedded content without modal wrapper (no positioning)
+  inline,
+}
+
 /// Base styling options that can be shared across MediaSFU modal widgets.
 class ModalStyleOptions {
   final BoxDecoration? outerContainerDecoration;

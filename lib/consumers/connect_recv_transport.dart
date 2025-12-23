@@ -20,6 +20,9 @@ abstract class ConnectRecvTransportParameters
   ConsumerResumeType get consumerResume;
   ConnectRecvTransportParameters Function() get getUpdatedAllParams;
 
+  // Translation params
+  Map<String, dynamic>? get speakerTranslationStates;
+
   /// Allows accessing additional dynamic properties.
   // dynamic operator [](String key);
 }
@@ -131,6 +134,24 @@ Future<void> connectRecvTransport(ConnectRecvTransportOptions options) async {
             parameters: parameters,
             nsock: nsock,
           ));
+
+          // Translation logic - moved here to match React flow
+          // Check if we need to pause this consumer because translation is active
+          if (consumer.kind == 'audio') {
+            final speakerTranslationStates =
+                parameters.speakerTranslationStates;
+            if (speakerTranslationStates != null) {
+              for (final state in speakerTranslationStates.values) {
+                if (state['originalProducerId'] == remoteProducerId &&
+                    state['enabled'] == true) {
+                  consumer.pause();
+                  nsock.emit('consumer-pause',
+                      {'serverConsumerId': serverConsumerTransportId});
+                  break;
+                }
+              }
+            }
+          }
         } catch (error) {
           // Handle error
           if (kDebugMode) {

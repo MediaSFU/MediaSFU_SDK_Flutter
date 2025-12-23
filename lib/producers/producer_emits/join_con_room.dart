@@ -73,8 +73,9 @@ Future<ResponseJoinRoom> joinConRoom(JoinConRoomOptions options) async {
 
     // Validate roomName prefix
     if (!(options.roomName.startsWith('s') ||
-        options.roomName.startsWith('p'))) {
-      throw Exception('Invalid roomName, must start with "s" or "p"');
+        options.roomName.startsWith('p') ||
+        options.roomName.startsWith('d'))) {
+      throw Exception('Invalid roomName, must start with "s" or "p" or "d"');
     }
 
     // Additional constraints

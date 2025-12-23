@@ -56,14 +56,14 @@ typedef ModifyCoHostSettingsType = Future<void> Function(
 /// ```
 Future<void> modifyCoHostSettings(ModifyCoHostSettingsOptions options) async {
   // Check if the room is in demo mode
-  if (options.roomName.toLowerCase().startsWith('d')) {
-    options.showAlert?.call(
-      message: 'You cannot add a co-host in demo mode.',
-      type: 'danger',
-      duration: 3000,
-    );
-    return;
-  }
+  // if (options.roomName.toLowerCase().startsWith('d')) {
+  //   options.showAlert?.call(
+  //     message: 'You cannot add a co-host in demo mode.',
+  //     type: 'danger',
+  //     duration: 3000,
+  //   );
+  //   return;
+  // }
 
   String newCoHost = options.coHost;
 

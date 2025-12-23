@@ -29,18 +29,18 @@ import '../../types/types.dart'
         RemoveParticipantsType,
         EventType;
 import '../../types/modal_style_options.dart'
-    show ParticipantsModalStyleOptions;
+    show ParticipantsModalStyleOptions, ModalRenderMode;
 
 typedef ParticipantsModalHeaderBuilder = Widget Function(
-  ParticipantsModalHeaderContext context);
+    ParticipantsModalHeaderContext context);
 typedef ParticipantsModalSearchBuilder = Widget Function(
-  ParticipantsModalSearchContext context);
+    ParticipantsModalSearchContext context);
 typedef ParticipantsModalListsBuilder = Widget Function(
-  ParticipantsModalListsContext context);
+    ParticipantsModalListsContext context);
 typedef ParticipantsModalBodyBuilder = Widget Function(
-  ParticipantsModalBodyContext context);
+    ParticipantsModalBodyContext context);
 typedef ParticipantsModalContentBuilder = Widget Function(
-  ParticipantsModalContentContext context);
+    ParticipantsModalContentContext context);
 
 abstract class ParticipantsModalParameters {
   // Core properties as abstract getters
@@ -91,6 +91,8 @@ abstract class ParticipantsModalParameters {
 ///
 /// Use this options object via `MediasfuUICustomOverrides.participantsModal` to
 /// deliver branded UX, integrate advanced filtering, or add participant notes.
+///
+/// Compatible with [ModernParticipantsModalOptions] from the modern component.
 class ParticipantsModalOptions {
   final bool isParticipantsModalVisible;
   final VoidCallback onParticipantsClose;
@@ -113,6 +115,24 @@ class ParticipantsModalOptions {
   final ParticipantsModalBodyBuilder? bodyBuilder;
   final ParticipantsModalContentBuilder? contentBuilder;
 
+  /// Dark mode toggle for modern styling.
+  /// Note: Pending modern implementation - placeholder for future glassmorphic UI.
+  final bool isDarkMode;
+
+  /// Enable glassmorphism effects for modern styling.
+  /// Note: Pending modern implementation - placeholder for future glassmorphic UI.
+  final bool enableGlassmorphism;
+
+  /// Whether to use the modern participant list component.
+  /// Note: Pending modern implementation - placeholder for future glassmorphic UI.
+  final bool useModernParticipantList;
+
+  /// Render mode for embedding in different contexts.
+  /// - `modal`: Full modal with overlay, positioning, visibility wrapper (default)
+  /// - `sidebar`: Content only, for embedding in sidebar panel
+  /// - `inline`: Content only, no visibility check
+  final ModalRenderMode renderMode;
+
   ParticipantsModalOptions({
     required this.isParticipantsModalVisible,
     required this.onParticipantsClose,
@@ -134,6 +154,10 @@ class ParticipantsModalOptions {
     this.listsBuilder,
     this.bodyBuilder,
     this.contentBuilder,
+    this.isDarkMode = false,
+    this.enableGlassmorphism = false,
+    this.useModernParticipantList = false,
+    this.renderMode = ModalRenderMode.modal,
   });
 
   // Default function for rendering participant list
@@ -174,32 +198,10 @@ class ParticipantsModal extends StatelessWidget {
 
   const ParticipantsModal({super.key, required this.options});
 
-  @override
-  Widget build(BuildContext context) {
+  /// Builds the core content of the modal without visibility/positioning wrapper.
+  /// Used for sidebar and inline render modes.
+  Widget _buildContent(BuildContext context) {
     final styles = options.styles ?? const ParticipantsModalStyleOptions();
-    final mediaSize = MediaQuery.of(context).size;
-
-    final defaultModalWidth = math.min(mediaSize.width * 0.8, 400.0);
-    double modalWidth = styles.width ?? defaultModalWidth;
-    if (styles.maxWidth != null) {
-      modalWidth = math.min(modalWidth, styles.maxWidth!);
-    }
-
-    final defaultModalHeight = mediaSize.height * 0.75;
-    double modalHeight = styles.height ?? defaultModalHeight;
-    if (styles.maxHeight != null) {
-      modalHeight = math.min(modalHeight, styles.maxHeight!);
-    }
-
-    final positionData = getModalPosition(
-      GetModalPositionOptions(
-        position: options.position,
-        modalWidth: modalWidth,
-        modalHeight: modalHeight,
-        context: context,
-      ),
-    );
-
     final params = options.parameters.getUpdatedAllParams();
     final participantsList = params.filteredParticipants.isNotEmpty
         ? params.filteredParticipants
@@ -400,13 +402,37 @@ class ParticipantsModal extends StatelessWidget {
         ) ??
         content;
 
-    final outerDecoration = styles.outerContainerDecoration ??
-        BoxDecoration(
-          color: options.backgroundColor,
-          borderRadius: BorderRadius.circular(10),
-        );
+    return resolvedContent;
+  }
 
-    final innerDecoration = styles.contentDecoration ??
+  @override
+  Widget build(BuildContext context) {
+    // Full modal mode with visibility, positioning, and overlay
+    final styles = options.styles ?? const ParticipantsModalStyleOptions();
+    final mediaSize = MediaQuery.of(context).size;
+
+    final defaultModalWidth = math.min(mediaSize.width * 0.8, 400.0);
+    double modalWidth = styles.width ?? defaultModalWidth;
+    if (styles.maxWidth != null) {
+      modalWidth = math.min(modalWidth, styles.maxWidth!);
+    }
+
+    final defaultModalHeight = mediaSize.height * 0.75;
+    double modalHeight = styles.height ?? defaultModalHeight;
+    if (styles.maxHeight != null) {
+      modalHeight = math.min(modalHeight, styles.maxHeight!);
+    }
+
+    final positionData = getModalPosition(
+      GetModalPositionOptions(
+        position: options.position,
+        modalWidth: modalWidth,
+        modalHeight: modalHeight,
+        context: context,
+      ),
+    );
+
+    final outerDecoration = styles.outerContainerDecoration ??
         BoxDecoration(
           color: options.backgroundColor,
           borderRadius: BorderRadius.circular(10),
@@ -424,14 +450,7 @@ class ParticipantsModal extends StatelessWidget {
               height: modalHeight,
               decoration: outerDecoration,
               padding: styles.outerPadding ?? const EdgeInsets.all(10),
-              child: DecoratedBox(
-                decoration: innerDecoration,
-                child: Padding(
-                  padding:
-                      styles.contentPadding ?? const EdgeInsets.all(16),
-                  child: resolvedContent,
-                ),
-              ),
+              child: _buildContent(context),
             ),
           ),
         ],

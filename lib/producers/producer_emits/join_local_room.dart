@@ -163,9 +163,10 @@ bool _validateInputs(JoinLocalRoomOptions options) {
   // Validate specific conditions for the inputs
   if (!(options.roomName.startsWith('s') ||
       options.roomName.startsWith('p') ||
-      options.roomName.startsWith('m'))) {
+      options.roomName.startsWith('m') ||
+      options.roomName.startsWith('d'))) {
     if (kDebugMode) {
-      print('Invalid roomName, must start with "s" or "p" or "m"');
+      print('Invalid roomName, must start with "s" or "p" or "m" or "d"');
     }
     return false;
   }
@@ -224,7 +225,9 @@ Future<void> checkMediasfuURL(CheckMediasfuURLOptions options) async {
       data.apiKey!.length == 64 &&
       data.apiUserName != null &&
       data.apiUserName!.length > 5 &&
-      (options.roomName.startsWith('s') || options.roomName.startsWith('p'))) {
+      (options.roomName.startsWith('s') ||
+          options.roomName.startsWith('p') ||
+          options.roomName.startsWith('d'))) {
     final payload = JoinMediaSFURoomOptions(
       action: 'join',
       meetingID: options.roomName,

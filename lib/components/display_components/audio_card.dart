@@ -425,6 +425,26 @@ class AudioCardOptions {
   final AudioCardOverlayBuilder? overlayBuilder;
   final AudioCardWaveformBuilder? waveformBuilder;
 
+  /// Border radius for the audio card.
+  /// Used by modern styling for rounded corners.
+  final double borderRadius;
+
+  /// Enable glassmorphism effects.
+  /// Used by modern styling for blur effects.
+  final bool enableGlassmorphism;
+
+  /// Whether to show status indicator.
+  /// Used by modern styling for status overlays.
+  final bool showStatusIndicator;
+
+  /// Dark mode toggle.
+  /// Used by modern styling for theme.
+  final bool isDarkMode;
+
+  /// Optional background gradient.
+  /// Used by modern styling.
+  final Gradient? backgroundGradient;
+
   AudioCardOptions({
     this.controlUserMedia = controlMedia,
     required this.customStyle,
@@ -454,6 +474,11 @@ class AudioCardOptions {
     this.infoBuilder,
     this.overlayBuilder,
     this.waveformBuilder,
+    this.borderRadius = 0.0,
+    this.enableGlassmorphism = false,
+    this.showStatusIndicator = false,
+    this.isDarkMode = false,
+    this.backgroundGradient,
   });
 }
 
@@ -805,25 +830,51 @@ class _AudioCardState extends State<AudioCard> with TickerProviderStateMixin {
     final stackChildren = <Widget>[
       Positioned.fill(child: _buildMiniCard()),
       Positioned(
-        top: widget.options.infoPosition.toLowerCase().contains('top') ? 0 : null,
-        left: widget.options.infoPosition.toLowerCase().contains('left') ? 0 : null,
-        bottom: widget.options.infoPosition.toLowerCase().contains('bottom') ? 0 : null,
-        right: widget.options.infoPosition.toLowerCase().contains('right') ? 0 : null,
-        child: widget.options.showInfo ? _buildInfoOverlay(context) : const SizedBox(),
+        top: widget.options.infoPosition.toLowerCase().contains('top')
+            ? 0
+            : null,
+        left: widget.options.infoPosition.toLowerCase().contains('left')
+            ? 0
+            : null,
+        bottom: widget.options.infoPosition.toLowerCase().contains('bottom')
+            ? 0
+            : null,
+        right: widget.options.infoPosition.toLowerCase().contains('right')
+            ? 0
+            : null,
+        child: widget.options.showInfo
+            ? _buildInfoOverlay(context)
+            : const SizedBox(),
       ),
       Positioned(
-        top: widget.options.controlsPosition.toLowerCase().contains('top') ? 0 : null,
-        left: widget.options.controlsPosition.toLowerCase().contains('left') ? 0 : null,
-        bottom: widget.options.controlsPosition.toLowerCase().contains('bottom') ? 0 : null,
-        right: widget.options.controlsPosition.toLowerCase().contains('right') ? 0 : null,
+        top: widget.options.controlsPosition.toLowerCase().contains('top')
+            ? 0
+            : null,
+        left: widget.options.controlsPosition.toLowerCase().contains('left')
+            ? 0
+            : null,
+        bottom: widget.options.controlsPosition.toLowerCase().contains('bottom')
+            ? 0
+            : null,
+        right: widget.options.controlsPosition.toLowerCase().contains('right')
+            ? 0
+            : null,
         child: renderControls(),
       ),
       if (widget.options.videoInfoComponent != null)
         Positioned(
-          top: widget.options.infoPosition.toLowerCase().contains('top') ? 0 : null,
-          left: widget.options.infoPosition.toLowerCase().contains('left') ? 0 : null,
-          bottom: widget.options.infoPosition.toLowerCase().contains('bottom') ? 0 : null,
-          right: widget.options.infoPosition.toLowerCase().contains('right') ? 0 : null,
+          top: widget.options.infoPosition.toLowerCase().contains('top')
+              ? 0
+              : null,
+          left: widget.options.infoPosition.toLowerCase().contains('left')
+              ? 0
+              : null,
+          bottom: widget.options.infoPosition.toLowerCase().contains('bottom')
+              ? 0
+              : null,
+          right: widget.options.infoPosition.toLowerCase().contains('right')
+              ? 0
+              : null,
           child: widget.options.videoInfoComponent!,
         ),
     ];

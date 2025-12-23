@@ -61,6 +61,8 @@ abstract class AllMembersRestParameters
   String get videoSetting;
   String get screenshareSetting;
   String get chatSetting;
+  String get islevel;
+  String get member;
   Socket? get socket;
 
   // Update functions as abstract getters
@@ -77,6 +79,7 @@ abstract class AllMembersRestParameters
   UpdateSetting get updateVideoSetting;
   UpdateSetting get updateScreenshareSetting;
   UpdateSetting get updateChatSetting;
+  void Function(String) get updateIslevel;
   UpdateSockets get updateConsumeSockets;
   UpdateIPs get updateRoomRecvIPs;
   UpdateBoolean get updateIsLoadingModalVisible;
@@ -225,6 +228,22 @@ Future<void> allMembersRest(
     final deferScreenReceived = parameters.deferScreenReceived;
     final screenId = parameters.screenId;
     final meetingDisplayType = parameters.meetingDisplayType;
+
+    // Sync islevel from server if different (for levels '0' and '1')
+    // Server's islevel is authoritative
+    final currentMember = members.firstWhere(
+      (m) => m.name == parameters.member,
+      orElse: () => Participant(name: '', audioID: '', videoID: ''),
+    );
+    if (currentMember.name.isNotEmpty && currentMember.islevel != null) {
+      final serverLevel = currentMember.islevel!;
+      final localLevel = parameters.islevel;
+      // Only sync for non-host levels ('0' and '1')
+      if ((serverLevel == '0' || serverLevel == '1') &&
+          localLevel != serverLevel) {
+        parameters.updateIslevel(serverLevel);
+      }
+    }
 
     // Processing participants
     participantsAll =

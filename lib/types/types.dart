@@ -1,4 +1,5 @@
 // ignore_for_file: non_constant_identifier_names
+import 'package:flutter/widgets.dart' show GlobalKey;
 import 'package:flutter_webrtc/flutter_webrtc.dart' as flutter_webrtc;
 
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
@@ -47,6 +48,7 @@ export '../consumers/process_consumer_transports_audio.dart';
 export '../consumers/readjust.dart';
 export '../consumers/receive_all_piped_transports.dart';
 export '../consumers/reorder_streams.dart';
+export '../methods/utils/translation_languages.dart';
 export '../consumers/re_port.dart';
 export '../consumers/request_screen_share.dart';
 export '../consumers/resume_pause_audio_streams.dart';
@@ -54,6 +56,7 @@ export '../consumers/resume_pause_streams.dart';
 export '../consumers/resume_send_transport_audio.dart';
 export '../consumers/re_update_inter.dart';
 export '../consumers/signal_new_consumer_transport.dart';
+export '../consumers/start_consuming_translation.dart';
 export '../consumers/start_share_screen.dart';
 export '../consumers/stop_share_screen.dart';
 export '../consumers/stream_success_audio.dart';
@@ -1909,6 +1912,11 @@ class CreateRoomOptions {
   final bool supportSIP; // Whether to support SIP
   final String directionSIP; // 'inbound', 'outbound', or 'both'
   final bool preferPCMA; // Whether to prefer PCMA codec for SIP
+  final bool supportTranslation; // Whether to support translation
+  final String
+      translationConfigNickName; // Nickname for translation configuration
+  final bool supportFlexRoom; // Whether to support flex room capacity features
+  final bool supportMaxRoom; // Whether to support max room capacity features
 
   CreateRoomOptions({
     required this.action,
@@ -1931,6 +1939,10 @@ class CreateRoomOptions {
     required this.supportSIP,
     required this.directionSIP,
     required this.preferPCMA,
+    required this.supportTranslation,
+    required this.translationConfigNickName,
+    required this.supportFlexRoom,
+    required this.supportMaxRoom,
   });
 
   // Convert CreateRoomOptions to a Map
@@ -1956,34 +1968,41 @@ class CreateRoomOptions {
       'supportSIP': supportSIP,
       'directionSIP': directionSIP,
       'preferPCMA': preferPCMA,
+      'supportTranslation': supportTranslation,
+      'translationConfigNickName': translationConfigNickName,
+      'supportFlexRoom': supportFlexRoom,
+      'supportMaxRoom': supportMaxRoom,
     };
   }
 
   // Factory constructor to create an instance from a Map
   factory CreateRoomOptions.fromMap(Map<String, dynamic> map) {
     return CreateRoomOptions(
-      action: map['action'] as String,
-      meetingID: map['meetingID'] as String,
-      duration: map['duration'] as int,
-      capacity: map['capacity'] as int,
-      userName: map['userName'] as String,
-      scheduledDate: map['scheduledDate'] as int,
-      secureCode: map['secureCode'] as String,
-      eventType: EventType.values
-          .firstWhere((e) => e.toString().split('.').last == map['eventType']),
-      recordOnly: map['recordOnly'] as bool,
-      eventStatus: map['eventStatus'] as String,
-      startIndex: map['startIndex'] as int,
-      pageSize: map['pageSize'] as int,
-      safeRoom: map['safeRoom'] as bool,
-      autoStartSafeRoom: map['autoStartSafeRoom'] as bool,
-      safeRoomAction: map['safeRoomAction'] as String,
-      dataBuffer: map['dataBuffer'] as bool,
-      bufferType: map['bufferType'] as String,
-      supportSIP: map['supportSIP'] as bool,
-      directionSIP: map['directionSIP'] as String,
-      preferPCMA: map['preferPCMA'] as bool,
-    );
+        action: map['action'] as String,
+        meetingID: map['meetingID'] as String,
+        duration: map['duration'] as int,
+        capacity: map['capacity'] as int,
+        userName: map['userName'] as String,
+        scheduledDate: map['scheduledDate'] as int,
+        secureCode: map['secureCode'] as String,
+        eventType: EventType.values.firstWhere(
+            (e) => e.toString().split('.').last == map['eventType']),
+        recordOnly: map['recordOnly'] as bool,
+        eventStatus: map['eventStatus'] as String,
+        startIndex: map['startIndex'] as int,
+        pageSize: map['pageSize'] as int,
+        safeRoom: map['safeRoom'] as bool,
+        autoStartSafeRoom: map['autoStartSafeRoom'] as bool,
+        safeRoomAction: map['safeRoomAction'] as String,
+        dataBuffer: map['dataBuffer'] as bool,
+        bufferType: map['bufferType'] as String,
+        supportSIP: map['supportSIP'] as bool,
+        directionSIP: map['directionSIP'] as String,
+        preferPCMA: map['preferPCMA'] as bool,
+        supportTranslation: map['supportTranslation'] as bool,
+        translationConfigNickName: map['translationConfigNickName'] as String,
+        supportFlexRoom: map['supportFlexRoom'] as bool,
+        supportMaxRoom: map['supportMaxRoom'] as bool);
   }
 }
 
@@ -2009,6 +2028,10 @@ class CreateMediaSFURoomOptions {
   bool? supportSIP; // Whether to support SIP
   String? directionSIP; // Direction of SIP ('inbound', 'outbound', or 'both')
   bool? preferPCMA; // Whether to prefer PCMA codec for SIP
+  bool? supportTranslation; // Whether to support translation
+  String? translationConfigNickName; // Nickname for translation configuration
+  bool? supportFlexRoom; // Whether to support flex room capacity features
+  bool? supportMaxRoom; // Whether to support max room capacity features
 
   CreateMediaSFURoomOptions({
     required this.action,
@@ -2029,6 +2052,10 @@ class CreateMediaSFURoomOptions {
     this.supportSIP = false,
     this.directionSIP = "both",
     this.preferPCMA = false,
+    this.supportTranslation = false,
+    this.translationConfigNickName = "",
+    this.supportFlexRoom = false,
+    this.supportMaxRoom = false,
   });
 
   // Convert CreateMediaSFURoomOptions to a Map
@@ -2052,43 +2079,66 @@ class CreateMediaSFURoomOptions {
       'supportSIP': supportSIP,
       'directionSIP': directionSIP,
       'preferPCMA': preferPCMA,
+      'supportTranslation': supportTranslation,
+      'translationConfigNickName': translationConfigNickName,
+      'supportFlexRoom': supportFlexRoom,
+      'supportMaxRoom': supportMaxRoom,
     };
   }
 
   // Factory constructor to create an instance from a Map
   factory CreateMediaSFURoomOptions.fromMap(Map<String, dynamic> map) {
     return CreateMediaSFURoomOptions(
-      action: map['action'] != null ? map['action'] as String : "",
-      duration: map['duration'] != null ? map['duration'] as int : 0,
-      capacity: map['capacity'] != null ? map['capacity'] as int : 0,
-      userName: map['userName'] != null ? map['userName'] as String : "",
-      scheduledDate:
-          map['scheduledDate'] != null ? map['scheduledDate'] as int : null,
-      secureCode: map['secureCode'] != null ? map['secureCode'] as String : "",
-      eventType: map['eventType'] != null
-          ? EventType.values.firstWhere(
-              (e) => e.toString().split('.').last == map['eventType'])
-          : null,
-      meetingRoomParams: map['meetingRoomParams'] != null
-          ? MeetingRoomParams.fromJson(map['meetingRoomParams'])
-          : null,
-      recordingParams: map['recordingParams'] != null
-          ? RecordingParams.fromJson(map['recordingParams'])
-          : null,
-      recordOnly: map['recordOnly'] != null ? map['recordOnly'] as bool : false,
-      safeRoom: map['safeRoom'] != null ? map['safeRoom'] as bool : false,
-      autoStartSafeRoom: map['autoStartSafeRoom'] != null
-          ? map['autoStartSafeRoom'] as bool
-          : false,
-      safeRoomAction:
-          map['safeRoomAction'] != null ? map['safeRoomAction'] as String : "",
-      dataBuffer: map['dataBuffer'] != null ? map['dataBuffer'] as bool : false,
-      bufferType: map['bufferType'] != null ? map['bufferType'] as String : "",
-      supportSIP: map['supportSIP'] != null ? map['supportSIP'] as bool : false,
-      directionSIP:
-          map['directionSIP'] != null ? map['directionSIP'] as String : "both",
-      preferPCMA: map['preferPCMA'] != null ? map['preferPCMA'] as bool : false,
-    );
+        action: map['action'] != null ? map['action'] as String : "",
+        duration: map['duration'] != null ? map['duration'] as int : 0,
+        capacity: map['capacity'] != null ? map['capacity'] as int : 0,
+        userName: map['userName'] != null ? map['userName'] as String : "",
+        scheduledDate:
+            map['scheduledDate'] != null ? map['scheduledDate'] as int : null,
+        secureCode:
+            map['secureCode'] != null ? map['secureCode'] as String : "",
+        eventType: map['eventType'] != null
+            ? EventType.values.firstWhere(
+                (e) => e.toString().split('.').last == map['eventType'])
+            : null,
+        meetingRoomParams: map['meetingRoomParams'] != null
+            ? MeetingRoomParams.fromJson(map['meetingRoomParams'])
+            : null,
+        recordingParams: map['recordingParams'] != null
+            ? RecordingParams.fromJson(map['recordingParams'])
+            : null,
+        recordOnly:
+            map['recordOnly'] != null ? map['recordOnly'] as bool : false,
+        safeRoom: map['safeRoom'] != null ? map['safeRoom'] as bool : false,
+        autoStartSafeRoom: map['autoStartSafeRoom'] != null
+            ? map['autoStartSafeRoom'] as bool
+            : false,
+        safeRoomAction: map['safeRoomAction'] != null
+            ? map['safeRoomAction'] as String
+            : "",
+        dataBuffer:
+            map['dataBuffer'] != null ? map['dataBuffer'] as bool : false,
+        bufferType:
+            map['bufferType'] != null ? map['bufferType'] as String : "",
+        supportSIP:
+            map['supportSIP'] != null ? map['supportSIP'] as bool : false,
+        directionSIP: map['directionSIP'] != null
+            ? map['directionSIP'] as String
+            : "both",
+        preferPCMA:
+            map['preferPCMA'] != null ? map['preferPCMA'] as bool : false,
+        supportTranslation: map['supportTranslation'] != null
+            ? map['supportTranslation'] as bool
+            : false,
+        translationConfigNickName: map['translationConfigNickName'] != null
+            ? map['translationConfigNickName'] as String
+            : "",
+        supportFlexRoom: map['supportFlexRoom'] != null
+            ? map['supportFlexRoom'] as bool
+            : false,
+        supportMaxRoom: map['supportMaxRoom'] != null
+            ? map['supportMaxRoom'] as bool
+            : false);
   }
 }
 
@@ -3044,37 +3094,58 @@ class CreateWebRTCTransportResponse {
 
 typedef MediaStream = flutter_webrtc.MediaStream;
 
-// Whiteboard Methods
-class LaunchConfigureWhiteboardOptions {
-  // Map to hold dynamic properties
-  final Map<String, dynamic> _extraProperties = {};
+// Whiteboard Methods - Note: LaunchConfigureWhiteboardOptions is defined in
+// lib/methods/whiteboard_methods/launch_configure_whiteboard.dart
 
-  LaunchConfigureWhiteboardOptions();
-
-  // Operator to access properties like a dictionary
-  dynamic operator [](String key) => _extraProperties[key];
-  void operator []=(String key, dynamic value) => _extraProperties[key] = value;
-}
-
-typedef LaunchConfigureWhiteboardType = void Function(
-    LaunchConfigureWhiteboardOptions options);
-
+/// Options for capturing the canvas stream.
+///
+/// This class contains the parameters needed to start or stop the canvas stream
+/// capture for whiteboard recording purposes.
 class CaptureCanvasStreamOptions {
-  // Map to hold dynamic properties
-  // final Map<String, dynamic> _extraProperties = {};
+  /// The parameters required for capturing and managing the canvas stream.
+  final CaptureCanvasStreamParameters parameters;
 
-  CaptureCanvasStreamOptions();
+  /// Whether to start (true) or stop (false) the canvas stream capture.
+  /// Defaults to true.
+  final bool start;
 
-  // Operator to access properties like a dictionary
-  // dynamic operator [](String key) => _extraProperties[key];
-  // void operator []=(String key, dynamic value) => _extraProperties[key] = value;
+  CaptureCanvasStreamOptions({
+    required this.parameters,
+    this.start = true,
+  });
 }
 
-typedef CaptureCanvasStreamType = void Function(
+/// Function type for capturing the canvas stream.
+typedef CaptureCanvasStreamType = Future<void> Function(
     CaptureCanvasStreamOptions options);
 
+/// Parameters interface for canvas stream capture.
+///
+/// This abstract class defines the required parameters for capturing
+/// and managing the whiteboard canvas stream for recording.
 abstract class CaptureCanvasStreamParameters {
-  // dynamic operator [](String key);
+  // Canvas and stream properties
+  GlobalKey? get canvasWhiteboard;
+  MediaStream? get canvasStream;
+  void Function(MediaStream?) get updateCanvasStream;
+
+  // Screen producer properties
+  Producer? get screenProducer;
+  Producer? get localScreenProducer;
+  bool get transportCreated;
+  bool? get localTransportCreated;
+  Socket? get localSocket;
+  void Function(Producer?) get updateScreenProducer;
+  void Function(Producer?)? get updateLocalScreenProducer;
+
+  // Mediasfu functions
+  Function get sleep;
+  Function get createSendTransport;
+  Function get connectSendTransportScreen;
+  Function get disconnectSendTransportScreen;
+
+  // Get updated parameters
+  CaptureCanvasStreamParameters Function() get getUpdatedAllParams;
 }
 
 // Background Methods
@@ -3090,3 +3161,61 @@ class LaunchBackgroundOptions {
 }
 
 typedef LaunchBackgroundType = void Function(LaunchBackgroundOptions options);
+
+/// Metadata for translation producers.
+class TranslationMeta {
+  final String speakerId;
+  final String language;
+  final String originalProducerId;
+  final bool? isSpeakerControlled;
+
+  TranslationMeta({
+    required this.speakerId,
+    required this.language,
+    required this.originalProducerId,
+    this.isSpeakerControlled,
+  });
+
+  factory TranslationMeta.fromMap(Map<String, dynamic> map) {
+    return TranslationMeta(
+      speakerId: map['speakerId'] ?? '',
+      language: map['language'] ?? '',
+      originalProducerId: map['originalProducerId'] ?? '',
+      isSpeakerControlled: map['isSpeakerControlled'],
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'speakerId': speakerId,
+      'language': language,
+      'originalProducerId': originalProducerId,
+      'isSpeakerControlled': isSpeakerControlled,
+    };
+  }
+}
+
+/// Listener's translation preferences.
+class ListenerTranslationPreferences {
+  Map<String, String> perSpeaker;
+  String? globalLanguage;
+
+  ListenerTranslationPreferences({
+    required this.perSpeaker,
+    this.globalLanguage,
+  });
+
+  factory ListenerTranslationPreferences.fromMap(Map<String, dynamic> map) {
+    return ListenerTranslationPreferences(
+      perSpeaker: Map<String, String>.from(map['perSpeaker'] ?? {}),
+      globalLanguage: map['globalLanguage'],
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'perSpeaker': perSpeaker,
+      'globalLanguage': globalLanguage,
+    };
+  }
+}

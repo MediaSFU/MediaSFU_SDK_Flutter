@@ -9,23 +9,24 @@ import '../menu_components/meeting_passcode_component.dart'
     show MeetingPasscodeComponent, MeetingPasscodeComponentOptions;
 import '../menu_components/meeting_id_component.dart'
     show MeetingIdComponent, MeetingIdComponentOptions;
-import '../../types/modal_style_options.dart' show ShareEventModalStyleOptions;
+import '../../types/modal_style_options.dart'
+    show ShareEventModalStyleOptions, ModalRenderMode;
 import '../../types/types.dart' show EventType;
 
 typedef ShareEventModalHeaderBuilder = Widget Function(
-  ShareEventModalHeaderContext context);
+    ShareEventModalHeaderContext context);
 typedef ShareEventModalPasscodeBuilder = Widget Function(
-  ShareEventModalPasscodeContext context);
+    ShareEventModalPasscodeContext context);
 typedef ShareEventModalMeetingIdBuilder = Widget Function(
-  ShareEventModalMeetingIdContext context);
+    ShareEventModalMeetingIdContext context);
 typedef ShareEventModalShareButtonsBuilder = Widget Function(
-  ShareEventModalShareButtonsContext context);
+    ShareEventModalShareButtonsContext context);
 typedef ShareEventModalBodyBuilder = Widget Function(
-  ShareEventModalBodyContext context);
+    ShareEventModalBodyContext context);
 typedef ShareEventModalContentBuilder = Widget Function(
-  ShareEventModalContentContext context);
+    ShareEventModalContentContext context);
 typedef ShareEventModalContainerBuilder = Widget Function(
-  ShareEventModalContainerContext context);
+    ShareEventModalContainerContext context);
 
 /// Configuration for the share-event modal displaying meeting ID, passcode (admin-only), and social sharing.
 ///
@@ -72,6 +73,10 @@ class ShareEventModalOptions {
   final ShareEventModalContentBuilder? contentBuilder;
   final ShareEventModalContainerBuilder? containerBuilder;
 
+  /// Render mode for the modal (modal, sidebar, or inline).
+  /// When set to `sidebar` or `inline`, returns content without modal wrapper.
+  final ModalRenderMode renderMode;
+
   ShareEventModalOptions({
     this.backgroundColor = const Color.fromRGBO(131, 192, 233, 0.25),
     required this.isShareEventModalVisible,
@@ -95,6 +100,7 @@ class ShareEventModalOptions {
     this.bodyBuilder,
     this.contentBuilder,
     this.containerBuilder,
+    this.renderMode = ModalRenderMode.modal,
   });
 }
 
@@ -259,13 +265,76 @@ class ShareEventModal extends StatelessWidget {
       ),
     );
 
+    final resolvedContent = _buildContent(context, showCloseButton: true);
+
+    final contentDecoration = styles.contentDecoration ??
+        BoxDecoration(
+          color: options.backgroundColor,
+          borderRadius: BorderRadius.circular(10),
+        );
+
+    final contentPadding = styles.contentPadding ?? const EdgeInsets.all(10);
+
+    final contentContainer = Container(
+      padding: contentPadding,
+      decoration: contentDecoration,
+      child: resolvedContent,
+    );
+
+    Widget sizedContent = SizedBox(
+      width: modalWidth,
+      height: modalHeight,
+      child: contentContainer,
+    );
+
+    if (styles.outerPadding != null ||
+        styles.outerContainerDecoration != null) {
+      sizedContent = Container(
+        padding: styles.outerPadding,
+        decoration: styles.outerContainerDecoration,
+        child: sizedContent,
+      );
+    }
+
+    final resolvedContainer = options.containerBuilder?.call(
+          ShareEventModalContainerContext(
+            defaultContainer: sizedContent,
+            modalWidth: modalWidth,
+            modalHeight: modalHeight,
+            position: positionData,
+            options: options,
+            styles: styles,
+            context: context,
+          ),
+        ) ??
+        sizedContent;
+
+    return Visibility(
+      visible: options.isShareEventModalVisible,
+      child: Stack(
+        children: [
+          Positioned(
+            top: positionData['top'],
+            right: positionData['right'],
+            child: resolvedContainer,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Builds the content for sidebar/inline rendering or modal content.
+  Widget _buildContent(BuildContext context, {bool showCloseButton = true}) {
+    final styles = options.styles ?? const ShareEventModalStyleOptions();
     final sectionSpacing = styles.sectionSpacing ?? 20.0;
 
-    final closeButton = IconButton(
-      onPressed: options.onShareEventClose,
-      icon: styles.closeIcon ?? const Icon(Icons.close),
-      style: styles.closeButtonStyle,
-    );
+    final closeButton = showCloseButton
+        ? IconButton(
+            onPressed: options.onShareEventClose,
+            icon: styles.closeIcon ?? const Icon(Icons.close),
+            style: styles.closeButtonStyle,
+          )
+        : const SizedBox.shrink();
 
     final titleWidget = options.title ??
         (styles.titleTextStyle != null
@@ -274,17 +343,19 @@ class ShareEventModal extends StatelessWidget {
 
     Widget defaultHeader;
     if (titleWidget is SizedBox) {
-      defaultHeader = Align(
-        alignment: Alignment.centerRight,
-        child: closeButton,
-      );
+      defaultHeader = showCloseButton
+          ? Align(
+              alignment: Alignment.centerRight,
+              child: closeButton,
+            )
+          : const SizedBox.shrink();
     } else {
       defaultHeader = Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Flexible(child: titleWidget),
-          closeButton,
+          if (showCloseButton) closeButton,
         ],
       );
     }
@@ -446,7 +517,20 @@ class ShareEventModal extends StatelessWidget {
       ],
     );
 
-    final resolvedContent = options.contentBuilder?.call(
+    final mediaSize = MediaQuery.of(context).size;
+    final defaultWidth = math.min(mediaSize.width * 0.8, 400.0);
+    double modalWidth = styles.width ?? defaultWidth;
+    if (styles.maxWidth != null) {
+      modalWidth = math.min(modalWidth, styles.maxWidth!);
+    }
+
+    final defaultHeight = mediaSize.height * 0.6;
+    double modalHeight = styles.height ?? defaultHeight;
+    if (styles.maxHeight != null) {
+      modalHeight = math.min(modalHeight, styles.maxHeight!);
+    }
+
+    return options.contentBuilder?.call(
           ShareEventModalContentContext(
             defaultContent: defaultContent,
             header: resolvedHeader,
@@ -456,59 +540,5 @@ class ShareEventModal extends StatelessWidget {
           ),
         ) ??
         defaultContent;
-
-    final contentDecoration = styles.contentDecoration ??
-        BoxDecoration(
-          color: options.backgroundColor,
-          borderRadius: BorderRadius.circular(10),
-        );
-
-    final contentPadding = styles.contentPadding ?? const EdgeInsets.all(10);
-
-    final contentContainer = Container(
-      padding: contentPadding,
-      decoration: contentDecoration,
-      child: resolvedContent,
-    );
-
-    Widget sizedContent = SizedBox(
-      width: modalWidth,
-      height: modalHeight,
-      child: contentContainer,
-    );
-
-    if (styles.outerPadding != null || styles.outerContainerDecoration != null) {
-      sizedContent = Container(
-        padding: styles.outerPadding,
-        decoration: styles.outerContainerDecoration,
-        child: sizedContent,
-      );
-    }
-
-    final resolvedContainer = options.containerBuilder?.call(
-          ShareEventModalContainerContext(
-            defaultContainer: sizedContent,
-            modalWidth: modalWidth,
-            modalHeight: modalHeight,
-            position: positionData,
-            options: options,
-            styles: styles,
-            context: context,
-          ),
-        ) ??
-        sizedContent;
-
-    return Visibility(
-      visible: options.isShareEventModalVisible,
-      child: Stack(
-        children: [
-          Positioned(
-            top: positionData['top'],
-            right: positionData['right'],
-            child: resolvedContainer,
-          ),
-        ],
-      ),
-    );
   }
 }

@@ -112,9 +112,11 @@ bool _validateInputs(JoinRoomOptions options) {
   }
 
   // Validate specific conditions for the inputs
-  if (!(options.roomName.startsWith('s') || options.roomName.startsWith('p'))) {
+  if (!(options.roomName.startsWith('s') ||
+      options.roomName.startsWith('p') ||
+      options.roomName.startsWith('d'))) {
     if (kDebugMode) {
-      print('Invalid roomName, must start with "s" or "p"');
+      print('Invalid roomName, must start with "s" or "p" or "d"');
     }
     return false;
   }

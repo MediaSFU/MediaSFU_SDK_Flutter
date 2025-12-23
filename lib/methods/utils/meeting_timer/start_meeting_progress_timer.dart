@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 
 /// Type definition for updating the meeting progress time in HH:MM:SS format.
 typedef UpdateMeetingProgressTime = void Function(String formattedTime);
@@ -83,18 +84,35 @@ void startMeetingProgressTimer({
   // ignore: unused_local_variable
   late Timer timer;
   timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-    elapsedTime++;
-    final formattedTime = formatTime(elapsedTime);
-    parameters.updateMeetingProgressTime(formattedTime);
+    try {
+      elapsedTime++;
+      final formattedTime = formatTime(elapsedTime);
 
-    // Get updated parameters
-    final updatedParams = parameters.getUpdatedAllParams();
-    final validated = updatedParams.validated;
-    final roomName = updatedParams.roomName;
+      // Directly update the meeting progress time
+      // The ValueNotifier in the parent widget will handle UI updates
+      try {
+        parameters.updateMeetingProgressTime(formattedTime);
+        if (kDebugMode) {
+          // Uncomment to debug timer updates
+          // debugPrint('Timer update: $formattedTime');
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('Timer update error: $e');
+        }
+      }
 
-    // Stop the timer if the meeting is invalidated or room name is missing
-    if (!validated || roomName.isEmpty) {
-      timer.cancel();
+      // Get updated parameters
+      final updatedParams = parameters.getUpdatedAllParams();
+      final validated = updatedParams.validated;
+      final roomName = updatedParams.roomName;
+
+      // Stop the timer if the meeting is invalidated or room name is missing
+      if (!validated || roomName.isEmpty) {
+        timer.cancel();
+      }
+    } catch (e) {
+      // Ignore errors
     }
   });
 }

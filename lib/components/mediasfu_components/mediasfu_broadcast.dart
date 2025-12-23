@@ -108,12 +108,15 @@ import '../../consumers/start_share_screen.dart' show startShareScreen;
 import '../../consumers/request_screen_share.dart' show requestScreenShare;
 import '../../consumers/reorder_streams.dart' show reorderStreams;
 import '../../consumers/prepopulate_user_media.dart'
-  show prepopulateUserMedia, PrepopulateUserMediaOptions, PrepopulateUserMediaType;
+    show
+        prepopulateUserMedia,
+        PrepopulateUserMediaOptions,
+        PrepopulateUserMediaType;
 import '../../consumers/get_videos.dart' show getVideos;
 import '../../consumers/re_port.dart' show rePort;
 import '../../consumers/trigger.dart' show trigger;
 import '../../consumers/consumer_resume.dart'
-  show consumerResume, ConsumerResumeType;
+    show consumerResume, ConsumerResumeType;
 import '../../consumers/connect_send_transport_audio.dart'
     show connectSendTransportAudio;
 import '../../consumers/connect_send_transport_video.dart'
@@ -129,7 +132,7 @@ import '../../consumers/get_estimate.dart' show getEstimate;
 import '../../consumers/calculate_rows_and_columns.dart'
     show calculateRowsAndColumns;
 import '../../consumers/add_videos_grid.dart'
-  show addVideosGrid, AddVideosGridType;
+    show addVideosGrid, AddVideosGridType;
 import '../../consumers/on_screen_changes.dart'
     show onScreenChanges, OnScreenChangesOptions;
 import '../../methods/utils/sleep.dart' show sleep;
@@ -150,7 +153,7 @@ import '../../consumers/disconnect_send_transport_screen.dart'
 import '../../consumers/connect_send_transport.dart' show connectSendTransport;
 import '../../consumers/get_piped_producers_alt.dart' show getPipedProducersAlt;
 import '../../methods/utils/mini_audio_player/mini_audio_player.dart'
-  show MiniAudioPlayer, MiniAudioPlayerOptions, MiniAudioPlayerType;
+    show MiniAudioPlayer, MiniAudioPlayerOptions, MiniAudioPlayerType;
 import '../../consumers/signal_new_consumer_transport.dart'
     show signalNewConsumerTransport;
 import '../../consumers/connect_recv_transport.dart' show connectRecvTransport;
@@ -272,23 +275,24 @@ import '../../types/types.dart'
         JoinMediaSFURoomOptions,
         JoinRoomOnMediaSFUType,
         CreateRoomOnMediaSFUType;
+import '../whiteboard_components/whiteboard_shape.dart' show WhiteboardShape;
 import '../../methods/utils/create_response_join_room.dart'
     show createResponseJoinRoom, CreateResponseJoinRoomOptions;
 import '../../methods/utils/mediasfu_parameters.dart' show MediasfuParameters;
 import '../../types/custom_builders.dart'
-  show
-    VideoCardType,
-    AudioCardType,
-    MiniCardType,
-    CustomComponentType,
-    CustomWorkspaceBuilder;
+    show
+        VideoCardType,
+        AudioCardType,
+        MiniCardType,
+        CustomComponentType,
+        CustomWorkspaceBuilder;
 import '../../types/ui_overrides.dart'
-  show
-    ContainerStyleOptions,
-    DefaultComponentBuilder,
-    MediasfuUICustomOverrides,
-    withFunctionOverride,
-    withOverride;
+    show
+        ContainerStyleOptions,
+        DefaultComponentBuilder,
+        MediasfuUICustomOverrides,
+        withFunctionOverride,
+        withOverride;
 
 class MediasfuBroadcastOptions {
   PreJoinPageType? preJoinPageWidget;
@@ -403,30 +407,27 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
   late PrepopulateUserMediaType _prepopulateUserMediaHandler;
   late MiniAudioPlayerType _miniAudioPlayerHandler;
   late DefaultComponentBuilder<MainContainerComponentOptions>
-    _mainContainerBuilder;
-  late DefaultComponentBuilder<MainAspectComponentOptions>
-    _mainAspectBuilder;
-  late DefaultComponentBuilder<MainScreenComponentOptions>
-    _mainScreenBuilder;
+      _mainContainerBuilder;
+  late DefaultComponentBuilder<MainAspectComponentOptions> _mainAspectBuilder;
+  late DefaultComponentBuilder<MainScreenComponentOptions> _mainScreenBuilder;
   late DefaultComponentBuilder<MainGridComponentOptions> _mainGridBuilder;
   late DefaultComponentBuilder<FlexibleVideoOptions> _flexibleVideoBuilder;
   late DefaultComponentBuilder<ControlButtonsComponentTouchOptions>
-    _controlButtonsTouchBuilder;
+      _controlButtonsTouchBuilder;
   late DefaultComponentBuilder<AudioGridOptions> _audioGridBuilder;
   late DefaultComponentBuilder<MeetingProgressTimerOptions>
-    _meetingProgressTimerBuilder;
+      _meetingProgressTimerBuilder;
   late DefaultComponentBuilder<WelcomePageOptions> _welcomePageBuilder;
   late DefaultComponentBuilder<PreJoinPageOptions> _preJoinPageBuilder;
-  late DefaultComponentBuilder<ShareEventModalOptions>
-    _shareEventModalBuilder;
+  late DefaultComponentBuilder<ShareEventModalOptions> _shareEventModalBuilder;
   late DefaultComponentBuilder<RecordingModalOptions> _recordingModalBuilder;
   late DefaultComponentBuilder<ParticipantsModalOptions>
-    _participantsModalBuilder;
+      _participantsModalBuilder;
   late DefaultComponentBuilder<MessagesModalOptions> _messagesModalBuilder;
   late DefaultComponentBuilder<ConfirmExitModalOptions>
-    _confirmExitModalBuilder;
+      _confirmExitModalBuilder;
   late DefaultComponentBuilder<ConfirmHereModalOptions>
-    _confirmHereModalBuilder;
+      _confirmHereModalBuilder;
   late DefaultComponentBuilder<AlertComponentOptions> _alertComponentBuilder;
   late DefaultComponentBuilder<LoadingModalOptions> _loadingModalBuilder;
 
@@ -462,23 +463,19 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
     );
     _mainAspectBuilder = withOverride<MainAspectComponentOptions>(
       override: _uiOverrides.mainAspect,
-      baseBuilder: (context, options) =>
-          MainAspectComponent(options: options),
+      baseBuilder: (context, options) => MainAspectComponent(options: options),
     );
     _mainScreenBuilder = withOverride<MainScreenComponentOptions>(
       override: _uiOverrides.mainScreen,
-      baseBuilder: (context, options) =>
-          MainScreenComponent(options: options),
+      baseBuilder: (context, options) => MainScreenComponent(options: options),
     );
     _mainGridBuilder = withOverride<MainGridComponentOptions>(
       override: _uiOverrides.mainGrid,
-      baseBuilder: (context, options) =>
-          MainGridComponent(options: options),
+      baseBuilder: (context, options) => MainGridComponent(options: options),
     );
     _flexibleVideoBuilder = withOverride<FlexibleVideoOptions>(
       override: _uiOverrides.flexibleVideo,
-      baseBuilder: (context, options) =>
-          FlexibleVideo(options: options),
+      baseBuilder: (context, options) => FlexibleVideo(options: options),
     );
     _controlButtonsTouchBuilder =
         withOverride<ControlButtonsComponentTouchOptions>(
@@ -492,8 +489,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
     );
     _meetingProgressTimerBuilder = withOverride<MeetingProgressTimerOptions>(
       override: _uiOverrides.meetingProgressTimer,
-      baseBuilder: (context, options) =>
-          MeetingProgressTimer(options: options),
+      baseBuilder: (context, options) => MeetingProgressTimer(options: options),
     );
     _welcomePageBuilder = withOverride<WelcomePageOptions>(
       override: _uiOverrides.welcomePage,
@@ -505,33 +501,27 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
     );
     _shareEventModalBuilder = withOverride<ShareEventModalOptions>(
       override: _uiOverrides.shareEventModal,
-      baseBuilder: (context, options) =>
-          ShareEventModal(options: options),
+      baseBuilder: (context, options) => ShareEventModal(options: options),
     );
     _recordingModalBuilder = withOverride<RecordingModalOptions>(
       override: _uiOverrides.recordingModal,
-      baseBuilder: (context, options) =>
-          RecordingModal(options: options),
+      baseBuilder: (context, options) => RecordingModal(options: options),
     );
     _participantsModalBuilder = withOverride<ParticipantsModalOptions>(
       override: _uiOverrides.participantsModal,
-      baseBuilder: (context, options) =>
-          ParticipantsModal(options: options),
+      baseBuilder: (context, options) => ParticipantsModal(options: options),
     );
     _messagesModalBuilder = withOverride<MessagesModalOptions>(
       override: _uiOverrides.messagesModal,
-      baseBuilder: (context, options) =>
-          MessagesModal(options: options),
+      baseBuilder: (context, options) => MessagesModal(options: options),
     );
     _confirmExitModalBuilder = withOverride<ConfirmExitModalOptions>(
       override: _uiOverrides.confirmExitModal,
-      baseBuilder: (context, options) =>
-          ConfirmExitModal(options: options),
+      baseBuilder: (context, options) => ConfirmExitModal(options: options),
     );
     _confirmHereModalBuilder = withOverride<ConfirmHereModalOptions>(
       override: _uiOverrides.confirmHereModal,
-      baseBuilder: (context, options) =>
-          ConfirmHereModal(options: options),
+      baseBuilder: (context, options) => ConfirmHereModal(options: options),
     );
     _alertComponentBuilder = withOverride<AlertComponentOptions>(
       override: _uiOverrides.alert,
@@ -886,6 +876,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
   final ValueNotifier<String> defAudioID = ValueNotifier('');
   final ValueNotifier<String> userDefaultAudioInputDevice = ValueNotifier('');
   final ValueNotifier<String> userDefaultAudioOutputDevice = ValueNotifier('');
+  final ValueNotifier<bool> isSpeakerphoneOn = ValueNotifier(false);
   final ValueNotifier<String> prevAudioInputDevice = ValueNotifier('');
   final ValueNotifier<String> prevVideoInputDevice = ValueNotifier('');
   final ValueNotifier<bool> audioPaused = ValueNotifier(false);
@@ -981,6 +972,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
   final ValueNotifier<bool> autoWave = ValueNotifier(true);
   final ValueNotifier<bool> forceFullDisplay = ValueNotifier(true);
   final ValueNotifier<bool> prevForceFullDisplay = ValueNotifier(false);
+  final ValueNotifier<bool> selfViewForceFull = ValueNotifier(false);
   final ValueNotifier<String> prevMeetingDisplayType = ValueNotifier('video');
 
   // Waiting room
@@ -1066,12 +1058,14 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
   ValueNotifier<bool> isWhiteboardModalVisible = ValueNotifier<bool>(false);
   ValueNotifier<bool> isConfigureWhiteboardModalVisible =
       ValueNotifier<bool>(false);
-  ValueNotifier<List<dynamic>> shapes = ValueNotifier<List<dynamic>>([]);
+  ValueNotifier<List<WhiteboardShape>> shapes =
+      ValueNotifier<List<WhiteboardShape>>([]);
   ValueNotifier<bool> useImageBackground = ValueNotifier<bool>(true);
-  ValueNotifier<List<dynamic>> redoStack = ValueNotifier<List<dynamic>>([]);
+  ValueNotifier<List<WhiteboardShape>> redoStack =
+      ValueNotifier<List<WhiteboardShape>>([]);
   ValueNotifier<List<String>> undoStack = ValueNotifier<List<String>>([]);
   ValueNotifier<MediaStream?> canvasStream = ValueNotifier<MediaStream?>(null);
-  ValueNotifier<dynamic> canvasWhiteboard = ValueNotifier<dynamic>(null);
+  ValueNotifier<GlobalKey?> canvasWhiteboard = ValueNotifier<GlobalKey?>(null);
 
 // Screenboard-related variables
   ValueNotifier<dynamic> canvasScreenboard = ValueNotifier<dynamic>(null);
@@ -2173,6 +2167,13 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
         widget.options.sourceParameters, 'userDefaultAudioOutputDevice', value);
   }
 
+  void updateIsSpeakerphoneOn(bool value) {
+    isSpeakerphoneOn.value = value;
+    mediasfuParameters.isSpeakerphoneOn = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'isSpeakerphoneOn', value);
+  }
+
   void updatePrevAudioInputDevice(String value) {
     prevAudioInputDevice.value = value;
     mediasfuParameters.prevAudioInputDevice = value;
@@ -2653,6 +2654,18 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
     mediasfuParameters.prevForceFullDisplay = value;
     updateSpecificState(
         widget.options.sourceParameters, 'prevForceFullDisplay', value);
+  }
+
+  void updateSelfViewForceFull(bool value) {
+    selfViewForceFull.value = value;
+    mediasfuParameters.selfViewForceFull = value;
+    updateSpecificState(
+        widget.options.sourceParameters, 'selfViewForceFull', value);
+    // Trigger screen refresh to apply the self-view display change
+    onScreenChanges(OnScreenChangesOptions(
+      changed: true,
+      parameters: mediasfuParameters,
+    ));
   }
 
   void updatePrevMeetingDisplayType(String value) {
@@ -3584,7 +3597,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
         'isConfigureWhiteboardModalVisible', value);
   }
 
-  void updateShapes(List<dynamic> value) {
+  void updateShapes(List<WhiteboardShape> value) {
     shapes.value = value;
     mediasfuParameters.shapes = value;
     updateSpecificState(widget.options.sourceParameters, 'shapes', value);
@@ -3597,7 +3610,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
         widget.options.sourceParameters, 'useImageBackground', value);
   }
 
-  void updateRedoStack(List<dynamic> value) {
+  void updateRedoStack(List<WhiteboardShape> value) {
     redoStack.value = value;
     mediasfuParameters.redoStack = value;
     updateSpecificState(widget.options.sourceParameters, 'redoStack', value);
@@ -3615,7 +3628,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
     updateSpecificState(widget.options.sourceParameters, 'canvasStream', value);
   }
 
-  void updateCanvasWhiteboard(dynamic value) {
+  void updateCanvasWhiteboard(GlobalKey? value) {
     canvasWhiteboard.value = value;
     mediasfuParameters.canvasWhiteboard = value;
     updateSpecificState(
@@ -4242,6 +4255,10 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
         updateIsConfirmExitModalVisible(false);
         updateIsPollModalVisible(false);
         updateIsBreakoutRoomsModalVisible(false);
+        // Close whiteboard/screenboard modals
+        updateIsWhiteboardModalVisible(false);
+        updateIsConfigureWhiteboardModalVisible(false);
+        updateIsScreenboardModalVisible(false);
       } catch (e) {}
 
       try {
@@ -4817,11 +4834,11 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
         startShareScreen: startShareScreen,
         requestScreenShare: requestScreenShare,
         reorderStreams: reorderStreams,
-  prepopulateUserMedia: _prepopulateUserMediaHandler,
+        prepopulateUserMedia: _prepopulateUserMediaHandler,
         getVideos: getVideos,
-  rePort: rePort,
-  trigger: trigger,
-  consumerResume: _consumerResumeHandler,
+        rePort: rePort,
+        trigger: trigger,
+        consumerResume: _consumerResumeHandler,
         connectSendTransport: connectSendTransport,
         connectSendTransportAudio: connectSendTransportAudio,
         connectSendTransportVideo: connectSendTransportVideo,
@@ -4830,9 +4847,9 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
         resumePauseStreams: resumePauseStreams,
         readjust: readjust,
         checkGrid: checkGrid,
-  getEstimate: getEstimate,
-  calculateRowsAndColumns: calculateRowsAndColumns,
-  addVideosGrid: _addVideosGridHandler,
+        getEstimate: getEstimate,
+        calculateRowsAndColumns: calculateRowsAndColumns,
+        addVideosGrid: _addVideosGridHandler,
         onScreenChanges: onScreenChanges,
         sleep: sleep,
         changeVids: changeVids,
@@ -4894,8 +4911,8 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
         filteredParticipants: filteredParticipants.value,
         participantsCounter: participantsCounter.value,
         participantsFilter: participantsFilter.value,
-  uiOverrides: _uiOverrides,
-  containerStyle: _containerStyle,
+        uiOverrides: _uiOverrides,
+        containerStyle: _containerStyle,
 
         // More room details - media
         consumeSockets: consumeSockets.value,
@@ -5026,6 +5043,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
         defAudioID: defAudioID.value,
         userDefaultAudioInputDevice: userDefaultAudioInputDevice.value,
         userDefaultAudioOutputDevice: userDefaultAudioOutputDevice.value,
+        isSpeakerphoneOn: isSpeakerphoneOn.value,
         prevAudioInputDevice: prevAudioInputDevice.value,
         prevVideoInputDevice: prevVideoInputDevice.value,
         audioPaused: audioPaused.value,
@@ -5096,6 +5114,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
         autoWave: autoWave.value,
         forceFullDisplay: forceFullDisplay.value,
         prevForceFullDisplay: prevForceFullDisplay.value,
+        selfViewForceFull: selfViewForceFull.value,
         prevMeetingDisplayType: prevMeetingDisplayType.value,
         waitingRoomFilter: waitingRoomFilter.value,
         waitingRoomList: waitingRoomList.value,
@@ -5346,6 +5365,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
         updateDefAudioID: updateDefAudioID,
         updateUserDefaultAudioInputDevice: updateUserDefaultAudioInputDevice,
         updateUserDefaultAudioOutputDevice: updateUserDefaultAudioOutputDevice,
+        updateIsSpeakerphoneOn: updateIsSpeakerphoneOn,
         updatePrevAudioInputDevice: updatePrevAudioInputDevice,
         updatePrevVideoInputDevice: updatePrevVideoInputDevice,
         updateAudioPaused: updateAudioPaused,
@@ -5418,6 +5438,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
         updateAutoWave: updateAutoWave,
         updateForceFullDisplay: updateForceFullDisplay,
         updatePrevForceFullDisplay: updatePrevForceFullDisplay,
+        updateSelfViewForceFull: updateSelfViewForceFull,
         updatePrevMeetingDisplayType: updatePrevMeetingDisplayType,
 
         // Waiting room
@@ -5539,6 +5560,8 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
         appliedBackground: appliedBackground.value,
         isBackgroundModalVisible: isBackgroundModalVisible.value,
         autoClickBackground: autoClickBackground.value,
+        selectedBackground: null,
+        onBackgroundApply: null,
 
         // Update functions
         updateCustomImage: updateCustomImage,
@@ -5555,6 +5578,11 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
         updateAppliedBackground: updateAppliedBackground,
         updateIsBackgroundModalVisible: updateIsBackgroundModalVisible,
         updateAutoClickBackground: updateAutoClickBackground,
+        updateSelectedBackground: (value) {},
+
+        // Theme support (original components use light theme by default)
+        isDarkModeValue: false,
+        updateIsDarkModeValue: (_) {},
 
         // Whiteboard-related variables
         whiteboardUsers: whiteboardUsers.value,
@@ -5606,7 +5634,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
         customVideoCard: widget.options.customVideoCard,
         customAudioCard: widget.options.customAudioCard,
         customMiniCard: widget.options.customMiniCard,
-  miniAudioPlayerComponent: _miniAudioPlayerHandler,
+        miniAudioPlayerComponent: _miniAudioPlayerHandler,
 
         // Custom builder update functions
         updateCustomVideoCard: updateCustomVideoCard,
@@ -5854,8 +5882,7 @@ class _MediasfuBroadcastState extends State<MediasfuBroadcast> {
                                                       meetingProgressTime:
                                                           meetingProgressTime,
                                                       initialBackgroundColor:
-                                                          recordState ==
-                                                                  'green'
+                                                          recordState == 'green'
                                                               ? Colors.green
                                                               : recordState ==
                                                                       'yellow'

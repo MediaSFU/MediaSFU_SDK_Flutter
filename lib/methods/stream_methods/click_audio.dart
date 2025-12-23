@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
+import '../permissions_methods/update_permission_config.dart'
+    show PermissionConfig;
 import '../../types/types.dart'
     show
         CheckPermissionType,
@@ -53,10 +55,17 @@ abstract class ClickAudioParameters
   String get videoSetting;
   String get screenshareSetting;
   String get chatSetting;
+  PermissionConfig? get permissionConfig;
   int get updateRequestIntervalSeconds;
   List<Participant> get participants;
   bool get transportCreated;
   bool get transportCreatedAudio;
+
+  // Panelist focus mode properties
+  bool get panellistFocused;
+  bool get muteOthersMic;
+  bool get muteOthersCamera;
+  List<Participant> get panelists;
 
   // Callback functions as abstract getters
   void Function(bool) get updateAudioAlreadyOn;
@@ -227,6 +236,24 @@ Future<void> clickAudio(ClickAudioOptions options) async {
         return;
       }
 
+      // Check panelist focus mode - block non-panelists from unmuting if muteOthersMic is true
+      final panellistFocused = parameters.panellistFocused;
+      final muteOthersMic = parameters.muteOthersMic;
+      final panelists_ = parameters.panelists;
+
+      if (panellistFocused && muteOthersMic && islevel != '2') {
+        // Check if current user is a panelist
+        final isPanelist = panelists_.any((p) => p.name == member);
+        if (!isPanelist) {
+          showAlert?.call(
+              message:
+                  "You cannot turn on your microphone. Only panelists can unmute while focus mode is active.",
+              type: "danger",
+              duration: 3000);
+          return;
+        }
+      }
+
       int response = 2;
 
       if (!micAction && islevel != '2' && !youAreCoHost) {
@@ -236,6 +263,8 @@ Future<void> clickAudio(ClickAudioOptions options) async {
           videoSetting: videoSetting,
           screenshareSetting: screenshareSetting,
           chatSetting: chatSetting,
+          permissionConfig: parameters.permissionConfig,
+          participantLevel: islevel,
         );
         response = await checkPermission(optionsCheck);
       } else {

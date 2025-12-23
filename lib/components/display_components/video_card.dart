@@ -2,19 +2,19 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart'
-  show MediaStream;
+    show MediaStream;
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import './card_video_display.dart'
-  show CardVideoDisplay, CardVideoDisplayOptions;
+    show CardVideoDisplay, CardVideoDisplayOptions;
 import './audio_decibel_check.dart'
-  show
-    AudioDecibelCheck,
-    AudioDecibelCheckOptions,
-    AudioDecibelCheckParameters;
+    show
+        AudioDecibelCheck,
+        AudioDecibelCheckOptions,
+        AudioDecibelCheckParameters;
 import '../../consumers/control_media.dart'
-  show controlMedia, ControlMediaOptions, ControlMediaType;
+    show controlMedia, ControlMediaOptions, ControlMediaType;
 import '../../types/types.dart'
-  show AudioDecibels, Participant, CoHostResponsibility, ShowAlert, EventType;
+    show AudioDecibels, Participant, CoHostResponsibility, ShowAlert, EventType;
 
 class VideoCardWrapperContext {
   final BuildContext buildContext;
@@ -125,6 +125,12 @@ abstract class VideoCardParameters implements AudioDecibelCheckParameters {
   String get member;
   String get islevel;
   List<AudioDecibels> get audioDecibels;
+
+  /// Whether a virtual background has been applied
+  bool get appliedBackground;
+
+  /// The local video stream (needed for BackgroundVideoDisplay)
+  MediaStream? get localStreamVideo;
 
   VideoCardParameters Function() get getUpdatedAllParams;
 
@@ -359,6 +365,27 @@ class VideoCardOptions {
   final VideoCardOverlayBuilder? overlayBuilder;
   final VideoCardWaveformBuilder? waveformBuilder;
 
+  /// Border radius for the video card.
+  /// Used by modern styling for rounded corners.
+  final double borderRadius;
+
+  /// Enable glassmorphism effects.
+  /// Used by modern styling for blur effects.
+  final bool enableGlassmorphism;
+
+  /// Whether to show status indicator.
+  /// Used by modern styling for status overlays.
+  final bool showStatusIndicator;
+
+  /// Dark mode toggle.
+  /// Used by modern styling for theme.
+  final bool isDarkMode;
+
+  /// Optional callback to toggle self-view display mode.
+  /// When provided, allows user to switch between cropped (fill) and full view
+  /// for their own video preview only.
+  final VoidCallback? onToggleSelfViewFit;
+
   VideoCardOptions({
     required this.parameters,
     required this.name,
@@ -396,6 +423,11 @@ class VideoCardOptions {
     this.infoBuilder,
     this.overlayBuilder,
     this.waveformBuilder,
+    this.borderRadius = 0.0,
+    this.enableGlassmorphism = false,
+    this.showStatusIndicator = false,
+    this.isDarkMode = false,
+    this.onToggleSelfViewFit,
   });
 }
 
@@ -872,9 +904,8 @@ class _VideoCardState extends State<VideoCard> with TickerProviderStateMixin {
 
         Widget defaultOverlay = info;
 
-        final hasOverlayStyling =
-            widget.options.overlayDecoration != null ||
-                widget.options.overlayPadding != null;
+        final hasOverlayStyling = widget.options.overlayDecoration != null ||
+            widget.options.overlayPadding != null;
 
         if (hasOverlayStyling) {
           defaultOverlay = Container(
@@ -931,7 +962,8 @@ class _VideoCardState extends State<VideoCard> with TickerProviderStateMixin {
       borderRadius: BorderRadius.circular(0),
     );
 
-    final decoration = widget.options.nameContainerDecoration ?? defaultDecoration;
+    final decoration =
+        widget.options.nameContainerDecoration ?? defaultDecoration;
     final padding = widget.options.nameContainerPadding ??
         const EdgeInsets.symmetric(horizontal: 2, vertical: 3);
     final textStyle = widget.options.nameTextStyle ??

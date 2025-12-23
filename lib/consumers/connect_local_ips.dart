@@ -15,7 +15,8 @@ import '../types/types.dart'
         ReceiveAllPipedTransportsParameters,
         ReceiveAllPipedTransportsType,
         ReorderStreamsParameters,
-        ReorderStreamsType;
+        ReorderStreamsType,
+        TranslationMeta;
 
 /// Parameters interface for connecting local IPs and managing socket connections.
 abstract class ConnectLocalIpsParameters
@@ -105,11 +106,16 @@ Future<void> connectLocalIps(ConnectLocalIpsOptions options) async {
 
     // Handle 'new-producer' event
     socket.on('new-producer', (data) async {
+      TranslationMeta? translationMeta;
+      if (data['translationMeta'] != null) {
+        translationMeta = TranslationMeta.fromMap(data['translationMeta']);
+      }
       final optionsNewPipeProducer = NewPipeProducerOptions(
         producerId: data['producerId'],
         islevel: data['islevel'],
         nsock: socket,
         parameters: parameters,
+        translationMeta: translationMeta,
       );
       await newProducerMethod(
         optionsNewPipeProducer,

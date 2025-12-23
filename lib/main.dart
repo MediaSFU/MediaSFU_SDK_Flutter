@@ -204,9 +204,10 @@ class _MyAppState extends State<MyApp> {
       apiKey:
           'yourDevApiKey1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef', // 64 chars
     );
-    const localLink = ''; // Leave empty if not using your own server
+    const localLink =
+        'http://localhost:3000'; // Leave empty if not using your own server
     const connectMediaSFU =
-        true; // Set to true if using MediaSFU Cloud since localLink is empty
+        false; // Set to true if using MediaSFU Cloud since localLink is empty
 
     // =========================================================
     //                    UI RENDERING OPTIONS
@@ -620,7 +621,7 @@ class _MyAppState extends State<MyApp> {
  *       return res.status(401).json({ error: "Invalid credentials" });
  *     }
  * 
- *     const response = await fetch("https://mediasfu.com/v1/rooms/join", {
+ *     const response = await fetch("https://mediasfu.com/v1/rooms", {
  *       method: "POST",
  *       headers: {
  *         "Content-Type": "application/json",
@@ -691,7 +692,7 @@ class _MyAppState extends State<MyApp> {
  *     final payload = options.payload;
  *     final apiUserName = options.apiUserName;
  *     final apiKey = options.apiKey;
- *     String endpoint = 'https://mediasfu.com/v1/rooms/join';
+ *     String endpoint = 'https://mediasfu.com/v1/rooms';
  * 
  *     if (options.localLink.isNotEmpty) {
  *       endpoint = '${options.localLink}/joinRoom';

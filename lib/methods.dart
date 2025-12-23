@@ -37,6 +37,8 @@ export 'package:mediasfu_sdk/methods/breakout_rooms_methods/launch_breakout_room
     show launchBreakoutRooms;
 export 'package:mediasfu_sdk/methods/stream_methods/switch_video_alt.dart'
     show switchVideoAlt;
+export 'package:mediasfu_sdk/methods/stream_methods/switch_audio_output.dart'
+    show switchAudioOutput, SwitchAudioOutputOptions, SwitchAudioOutputType;
 export 'package:mediasfu_sdk/methods/stream_methods/click_video.dart'
     show clickVideo;
 export 'package:mediasfu_sdk/methods/stream_methods/click_audio.dart'
@@ -67,6 +69,9 @@ export 'package:mediasfu_sdk/methods/polls_methods/handle_end_poll.dart'
 export 'package:mediasfu_sdk/methods/breakout_rooms_methods/breakout_room_updated.dart'
     show breakoutRoomUpdated;
 
+export 'package:mediasfu_sdk/methods/whiteboard_methods/launch_configure_whiteboard.dart'
+    show launchConfigureWhiteboard, LaunchConfigureWhiteboardOptions;
+
 export 'package:mediasfu_sdk/methods/utils/meeting_timer/start_meeting_progress_timer.dart'
     show startMeetingProgressTimer;
 export 'package:mediasfu_sdk/methods/recording_methods/update_recording.dart'
@@ -94,3 +99,7 @@ export 'package:mediasfu_sdk/methods/utils/join_room_on_media_sfu.dart'
     show joinRoomOnMediaSFU;
 export 'package:mediasfu_sdk/methods/utils/create_room_on_media_sfu.dart'
     show createRoomOnMediaSFU;
+
+// Platform feature support utility
+export 'package:mediasfu_sdk/methods/utils/platform_feature_support.dart'
+    show PlatformFeatureSupport, MediasfuFeature;

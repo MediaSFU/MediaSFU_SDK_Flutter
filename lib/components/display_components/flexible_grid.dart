@@ -266,7 +266,7 @@ class FlexibleGrid extends StatelessWidget {
                   totalCellMarginWidth)
               .clamp(0.0, double.infinity);
           if (options.columns > 0 && usableWidth > 0) {
-            computedWidth = usableWidth / options.columns;
+            computedWidth = (usableWidth / options.columns).floorToDouble();
           }
         }
 
@@ -290,7 +290,7 @@ class FlexibleGrid extends StatelessWidget {
                   totalRowMarginHeight)
               .clamp(0.0, double.infinity);
           if (options.rows > 0 && usableHeight > 0) {
-            computedHeight = usableHeight / options.rows;
+            computedHeight = (usableHeight / options.rows).floorToDouble();
           }
         }
 
@@ -359,11 +359,15 @@ class FlexibleGrid extends StatelessWidget {
               cellWidgets.add(SizedBox(width: columnSpacing));
             }
 
-            cellWidgets.add(defaultCell);
+            // Use Flexible to allow cells to share space evenly and prevent overflow
+            cellWidgets.add(Flexible(
+              flex: 1,
+              child: defaultCell,
+            ));
           }
 
           Widget row = Row(
-            mainAxisSize: options.rowMainAxisSize,
+            mainAxisSize: MainAxisSize.max,
             mainAxisAlignment:
                 options.rowMainAxisAlignment ?? MainAxisAlignment.start,
             crossAxisAlignment:
@@ -399,11 +403,15 @@ class FlexibleGrid extends StatelessWidget {
             rowWidgets.add(SizedBox(height: rowSpacing));
           }
 
-          rowWidgets.add(row);
+          // Use Flexible to allow rows to share vertical space evenly and prevent overflow
+          rowWidgets.add(Flexible(
+            flex: 1,
+            child: row,
+          ));
         }
 
         Widget gridColumn = Column(
-          mainAxisSize: options.gridMainAxisSize,
+          mainAxisSize: MainAxisSize.max,
           mainAxisAlignment:
               options.gridMainAxisAlignment ?? MainAxisAlignment.start,
           crossAxisAlignment:

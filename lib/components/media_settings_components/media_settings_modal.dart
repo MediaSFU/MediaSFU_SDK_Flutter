@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import '../../methods/utils/get_modal_position.dart'
     show getModalPosition, GetModalPositionOptions;
+import '../../types/modal_style_options.dart' show ModalRenderMode;
 import '../../methods/stream_methods/switch_video.dart'
     show
         switchVideo,
@@ -20,6 +23,8 @@ import '../../methods/stream_methods/switch_video_alt.dart'
         SwitchVideoAltOptions,
         SwitchVideoAltParameters,
         SwitchVideoAltType;
+import '../../methods/stream_methods/switch_audio_output.dart'
+    show switchAudioOutput, SwitchAudioOutputOptions;
 
 class MediaSettingsModalWrapperContext {
   final BuildContext buildContext;
@@ -196,6 +201,18 @@ abstract class MediaSettingsModalParameters
   bool get isMediaSettingsModalVisible;
   void Function(bool) get updateIsMediaSettingsModalVisible;
 
+  /// Whether speakerphone is currently enabled (mobile only).
+  bool get isSpeakerphoneOn;
+
+  /// Callback to toggle speakerphone on/off.
+  void Function(bool) get updateIsSpeakerphoneOn;
+
+  /// Background modal visibility state for virtual backgrounds.
+  bool get isBackgroundModalVisible;
+
+  /// Callback to toggle the background modal visibility.
+  void Function(bool) get updateIsBackgroundModalVisible;
+
   MediaSettingsModalParameters Function() get getUpdatedAllParams;
 
   // dynamic operator [](String key);
@@ -219,6 +236,8 @@ abstract class MediaSettingsModalParameters
 /// * **containerPadding** / **containerMargin** / **containerAlignment** / **containerDecoration** - Fine-tune modal container styling.
 /// * **titleTextStyle** / **labelTextStyle** - Typography overrides for title and section labels.
 /// * **switchButtonStyle** / **switchButtonChild** - Customize "Switch Camera" button appearance.
+///
+/// Compatible with [ModernMediaSettingsModalOptions] from the modern component.
 ///
 /// ### Usage
 /// 1. Modal populates dropdowns from `parameters.videoInputs` and `parameters.audioInputs` (list of `MediaDeviceInfo`).
@@ -251,6 +270,18 @@ class MediaSettingsModalOptions {
   final ButtonStyle? switchButtonStyle;
   final Widget? switchButtonChild;
 
+  /// Dark mode toggle for modern styling.
+  /// Note: Pending modern implementation - placeholder for future glassmorphic UI.
+  final bool isDarkMode;
+
+  /// Enable glassmorphism effects for modern styling.
+  /// Note: Pending modern implementation - placeholder for future glassmorphic UI.
+  final bool enableGlassmorphism;
+
+  /// Render mode for the modal (modal, sidebar, or inline).
+  /// When set to `sidebar` or `inline`, returns content without modal wrapper.
+  final ModalRenderMode renderMode;
+
   MediaSettingsModalOptions({
     required this.isVisible,
     required this.onClose,
@@ -275,6 +306,9 @@ class MediaSettingsModalOptions {
     this.labelTextStyle,
     this.switchButtonStyle,
     this.switchButtonChild,
+    this.isDarkMode = false,
+    this.enableGlassmorphism = false,
+    this.renderMode = ModalRenderMode.modal,
   });
 }
 
@@ -476,8 +510,10 @@ class MediaSettingsModal extends StatelessWidget {
     required List<MediaDeviceInfo> audioInputs,
     required String? selectedVideoInput,
     required String? selectedAudioInput,
+    bool showCloseButton = true,
   }) {
-    final header = _buildHeader(context, parameters);
+    final header =
+        _buildHeader(context, parameters, showCloseButton: showCloseButton);
     final cameraSection = _buildDeviceSection(
       context: context,
       parameters: parameters,
@@ -529,6 +565,16 @@ class MediaSettingsModal extends StatelessWidget {
       parameters,
     );
 
+    final speakerToggle = _buildSpeakerToggle(
+      context,
+      parameters,
+    );
+
+    final virtualBackgroundButton = _buildVirtualBackgroundButton(
+      context,
+      parameters,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -539,15 +585,20 @@ class MediaSettingsModal extends StatelessWidget {
         const SizedBox(height: 20),
         microphoneSection,
         const SizedBox(height: 20),
+        speakerToggle,
+        const SizedBox(height: 20),
         switchButton,
+        const Divider(height: 20, thickness: 1, color: Colors.black),
+        virtualBackgroundButton,
       ],
     );
   }
 
   Widget _buildHeader(
     BuildContext context,
-    MediaSettingsModalParameters parameters,
-  ) {
+    MediaSettingsModalParameters parameters, {
+    bool showCloseButton = true,
+  }) {
     final title = Text(
       'Media Settings',
       style: options.titleTextStyle ??
@@ -558,16 +609,18 @@ class MediaSettingsModal extends StatelessWidget {
           ),
     );
 
-    final closeButton = IconButton(
-      icon: const Icon(Icons.close),
-      onPressed: options.onClose,
-    );
+    final closeButton = showCloseButton
+        ? IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: options.onClose,
+          )
+        : const SizedBox.shrink();
 
     final defaultHeader = Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         title,
-        closeButton,
+        if (showCloseButton) closeButton,
       ],
     );
 
@@ -699,6 +752,121 @@ class MediaSettingsModal extends StatelessWidget {
           ),
         ) ??
         defaultButton;
+  }
+
+  /// Check if speaker toggle is supported on current platform
+  bool get _isSpeakerToggleSupported {
+    if (kIsWeb) return false;
+    return defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS;
+  }
+
+  /// Builds the speaker toggle for switching between earpiece and speaker (mobile only).
+  Widget _buildSpeakerToggle(
+    BuildContext context,
+    MediaSettingsModalParameters parameters,
+  ) {
+    final isSupported = _isSpeakerToggleSupported;
+
+    if (!isSupported) {
+      // Don't show on unsupported platforms
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Speaker Output:',
+          style: options.labelTextStyle ??
+              const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              parameters.isSpeakerphoneOn ? 'Speaker' : 'Earpiece',
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.black87,
+              ),
+            ),
+            Switch(
+              value: parameters.isSpeakerphoneOn,
+              activeTrackColor: options.backgroundColor.withValues(alpha: 0.5),
+              activeThumbColor: options.backgroundColor,
+              onChanged: (bool value) async {
+                final success = await switchAudioOutput(
+                  SwitchAudioOutputOptions(
+                    speakerOn: value,
+                    preferBluetooth: true,
+                  ),
+                );
+                if (success) {
+                  parameters.updateIsSpeakerphoneOn(value);
+                }
+              },
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// Check if virtual background is supported on current platform
+  bool get _isVirtualBackgroundSupported {
+    if (kIsWeb) return false;
+    return defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS;
+  }
+
+  /// Builds the Virtual Background button that toggles the background modal.
+  Widget _buildVirtualBackgroundButton(
+    BuildContext context,
+    MediaSettingsModalParameters parameters,
+  ) {
+    final isSupported = _isVirtualBackgroundSupported;
+
+    void handleVirtualBackgroundPress() {
+      if (isSupported) {
+        final isVisible = parameters.isBackgroundModalVisible;
+        parameters.updateIsBackgroundModalVisible(!isVisible);
+      } else {
+        // Show alert for unsupported platforms
+        parameters.showAlert?.call(
+          message:
+              'Virtual backgrounds are only supported on mobile devices (Android/iOS). '
+              'This feature is not available on ${kIsWeb ? 'web' : defaultTargetPlatform.name}.',
+          type: 'warning',
+          duration: 4000,
+        );
+      }
+    }
+
+    return Opacity(
+      opacity: isSupported ? 1.0 : 0.6,
+      child: ElevatedButton.icon(
+        onPressed: handleVirtualBackgroundPress,
+        icon: const Icon(Icons.photo_library, size: 18),
+        label: Text(isSupported
+            ? 'Virtual Background'
+            : 'Virtual Background (Mobile Only)'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor:
+              isSupported ? options.backgroundColor : Colors.grey.shade300,
+          foregroundColor: isSupported ? Colors.black : Colors.grey.shade600,
+          minimumSize: const Size(double.infinity, 44),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(5),
+          ),
+        ),
+      ),
+    );
   }
 
   VoidCallback _createSwitchCameraHandler(

@@ -1,12 +1,16 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
+import '../permissions_methods/update_permission_config.dart'
+    show PermissionConfig;
 import '../../types/types.dart'
     show
         CheckPermissionType,
         DisconnectSendTransportVideoParameters,
         DisconnectSendTransportVideoType,
+        Participant,
         RequestPermissionCameraType,
         ShowAlert,
         StreamSuccessVideoParameters,
@@ -47,7 +51,14 @@ abstract class ClickVideoParameters
   String get videoSetting;
   String get screenshareSetting;
   String get chatSetting;
+  PermissionConfig? get permissionConfig;
   int get updateRequestIntervalSeconds;
+
+  // Panelist focus mode properties
+  bool get panellistFocused;
+  bool get muteOthersMic;
+  bool get muteOthersCamera;
+  List<Participant> get panelists;
 
   ShowAlert? get showAlert;
   void Function(bool) get updateVideoAlreadyOn;
@@ -213,15 +224,46 @@ Future<void> clickVideo(ClickVideoOptions options) async {
       return;
     }
 
+    // Check panelist focus mode - block non-panelists from enabling camera if muteOthersCamera is true
+    final panellistFocused = parameters.panellistFocused;
+    final muteOthersCamera = parameters.muteOthersCamera;
+    final panelists_ = parameters.panelists;
+
+    if (panellistFocused && muteOthersCamera && islevel != '2') {
+      // Check if current user is a panelist
+      final isPanelist = panelists_.any((p) => p.name == member);
+      if (!isPanelist) {
+        showAlert?.call(
+          message:
+              'You cannot turn on your camera. Only panelists can enable video while focus mode is active.',
+          duration: 3000,
+          type: 'danger',
+        );
+        return;
+      }
+    }
+
     int response = 2;
 
     if (!videoAction && islevel != '2' && !youAreCoHost) {
+      // Debug logging
+      if (kDebugMode) {
+        print('=== clickVideo DEBUG ===');
+        print(
+            'videoAction: $videoAction, islevel: $islevel, youAreCoHost: $youAreCoHost');
+        print(
+            'permissionConfig from parameters: ${parameters.permissionConfig}');
+        print('videoSetting: $videoSetting');
+      }
+
       final optionsCheck = CheckPermissionOptions(
         permissionType: 'videoSetting',
         audioSetting: audioSetting,
         videoSetting: videoSetting,
         screenshareSetting: screenshareSetting,
         chatSetting: chatSetting,
+        permissionConfig: parameters.permissionConfig,
+        participantLevel: islevel,
       );
       response = await checkPermission(
         optionsCheck,
@@ -268,6 +310,7 @@ Future<void> clickVideo(ClickVideoOptions options) async {
         type: 'danger',
         duration: 3000,
       );
+      return;
     } else {
       if (!hasCameraPermission && checkMediaPermission) {
         final statusCamera = await requestPermissionCamera();

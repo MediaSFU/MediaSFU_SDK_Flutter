@@ -1,3 +1,25 @@
+### 2.2.4
+
+* **Documentation Overhaul**:
+  - New lightweight, usage-focused `README.md` following modern SDK patterns.
+  - Moved comprehensive API reference to `README_DETAILED.md`.
+  - Added `PLATFORM_SETUP.md` with detailed platform-specific configuration guides.
+
+* **Modern UI Components**:
+  - Documented `ModernMediasfuGeneric` with theme-aware glassmorphism design.
+  - Added `MediasfuColors` design system documentation.
+
+* **New Features Documented**:
+  - **Panelists Mode**: Dedicated panel for webinar/broadcast presenters.
+  - **Permissions System**: Individual and group-level media/feature permissions.
+  - **Real-time Translation**: 50+ language support with speech-to-text.
+
+* **Dependencies**:
+  - Added `image_picker`, `cached_network_image`, `path_provider` for background/image handling.
+  - Added `path_drawing`, `share_plus` for whiteboard functionality.
+  - Platform-specific deps (`google_mlkit_selfie_segmentation`, `web`, `dart_webrtc`) documented as optional.
+  - Upgraded all dependencies to latest compatible versions.
+
 ### 2.2.3
 
 * Updated to latest mediasfu_mediasoup_client version for Chrome 140 support.

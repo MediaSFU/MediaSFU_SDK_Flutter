@@ -1,6 +1,6 @@
 name: mediasfu_sdk
 description: "MediaSFU SDK for Flutter provides powerful streaming capabilities for creating high-performance cross-platform applications."
-version: 2.2.3
+version: 2.2.4
 homepage: https://www.mediasfu.com
 repository: https://github.com/MediaSFU/MediaSFU_SDK_Flutter
 
@@ -14,16 +14,40 @@ dependencies:
     sdk: flutter
   socket_io_client: ^3.0.2
   url_launcher: ^6.2.5
-  clipboard: ^2.0.2
+  clipboard: ^3.0.8
   flutter_colorpicker: ^1.0.3
-  mediasfu_mediasoup_client: ^0.1.0 
+  mediasfu_mediasoup_client: ^0.1.1 
   http: ^1.2.1
   intl: ^0.20.0
   font_awesome_flutter: ^10.7.0
   shared_preferences: ^2.2.3
-  flutter_webrtc: ^1.2.0
+  flutter_webrtc: ^1.2.1
   audioplayers: ^6.1.0
   collection: ^1.18.0
+  # Background modal & image handling (cross-platform)
+  image_picker: ^1.0.7
+  cached_network_image: ^3.3.1
+  path_provider: ^2.1.2
+  # Whiteboard dependencies (cross-platform)
+  path_drawing: ^1.0.1
+  share_plus: ^12.0.1
+  
+  # ============================================================
+  # PLATFORM-SPECIFIC DEPENDENCIES
+  # These are active in the GitHub version for full functionality.
+  # When publishing to pub.dev, run: dart scripts/prepare_publish.dart
+  # This comments them out so pub.dev shows all platform support.
+  # Users add them back based on their target platforms.
+  # ============================================================
+  
+  # Virtual Backgrounds (Android/iOS only)
+  # Enables ML Kit selfie segmentation for blur/image backgrounds
+  # google_mlkit_selfie_segmentation: ^0.10.0  # COMMENTED FOR PUB.DEV - See README for optional deps
+  
+  # Web Platform Enhancements (Web only)
+  # Required for whiteboard canvas capture on web
+  # web: ^1.1.1  # COMMENTED FOR PUB.DEV - See README for optional deps
+  # dart_webrtc: ^1.4.6  # COMMENTED FOR PUB.DEV - See README for optional deps
 
 
 dev_dependencies:

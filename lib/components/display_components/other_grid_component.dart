@@ -165,15 +165,28 @@ class OtherGridComponent extends StatelessWidget {
             ) ??
             Stack(children: defaultChildren);
 
-        final BoxDecoration fallbackDecoration =
-            BoxDecoration(color: options.backgroundColor);
+        final BoxDecoration fallbackDecoration = BoxDecoration(
+          color: options.backgroundColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: const Color.fromRGBO(255, 255, 255, 0.08),
+            width: 1,
+          ),
+          boxShadow: const [
+            BoxShadow(
+              color: Color.fromRGBO(0, 0, 0, 0.15),
+              blurRadius: 24,
+              offset: Offset(0, 4),
+            ),
+          ],
+        );
 
         final containerChild = Container(
           width: displayWidth.isFinite ? displayWidth : null,
           height: displayHeight.isFinite ? displayHeight : null,
           padding: options.padding,
           margin: options.margin,
-          clipBehavior: options.clipBehavior,
+          clipBehavior: Clip.antiAlias,
           decoration: options.decoration ?? fallbackDecoration,
           child: childrenWidget,
         );

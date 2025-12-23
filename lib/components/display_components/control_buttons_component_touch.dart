@@ -843,13 +843,15 @@ class ControlButtonsComponentTouch extends StatelessWidget {
       );
     }
 
-    final alignment = options.containerAlignment ?? Alignment(
-      _alignmentValueFromPosition(options.position),
-      _alignmentValueFromLocation(options.location),
-    );
+    final alignment = options.containerAlignment ??
+        Alignment(
+          _alignmentValueFromPosition(options.position),
+          _alignmentValueFromLocation(options.location),
+        );
 
     Widget container = Container(
-      padding: options.containerPadding ?? const EdgeInsets.symmetric(vertical: 10),
+      padding:
+          options.containerPadding ?? const EdgeInsets.symmetric(vertical: 10),
       margin: options.containerMargin,
       decoration: options.containerDecoration,
       clipBehavior: options.containerClipBehavior,
@@ -882,10 +884,8 @@ class ControlButtonsComponentTouch extends StatelessWidget {
     Axis direction,
   ) {
     final isActive = button.active;
-    final iconSize = button.iconSize ??
-        options.iconSize ??
-        button.size?.toDouble() ??
-        20.0;
+    final iconSize =
+        button.iconSize ?? options.iconSize ?? button.size?.toDouble() ?? 20.0;
 
     final inactiveIconColor = button.inActiveColor ??
         options.inactiveIconColor ??
@@ -1004,9 +1004,8 @@ class ControlButtonsComponentTouch extends StatelessWidget {
       content = options.buttonContentBuilder!(contentContext, content);
     }
 
-    final padding = button.padding ??
-        options.buttonPadding ??
-        const EdgeInsets.all(8);
+    final padding =
+        button.padding ?? options.buttonPadding ?? const EdgeInsets.all(8);
     final margin = button.margin ??
         options.buttonMargin ??
         const EdgeInsets.symmetric(horizontal: 4, vertical: 4);
@@ -1081,7 +1080,8 @@ class ControlButtonsComponentTouch extends StatelessWidget {
     }
     if (label != null) {
       if (children.isNotEmpty) {
-        final gap = button.contentGap ?? options.contentGap ??
+        final gap = button.contentGap ??
+            options.contentGap ??
             (direction == Axis.vertical ? 6.0 : 8.0);
         children.add(direction == Axis.vertical
             ? SizedBox(height: gap)

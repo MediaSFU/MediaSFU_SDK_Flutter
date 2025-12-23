@@ -9,6 +9,7 @@ import '../../methods/co_host_methods/modify_co_host_settings.dart'
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../../types/types.dart'
     show Participant, CoHostResponsibility, ShowAlert;
+import '../../types/modal_style_options.dart' show ModalRenderMode;
 
 /// Configuration options for the `CoHostModal` widget.
 ///
@@ -73,6 +74,12 @@ class CoHostModalOptions {
   /// Socket instance for real-time communication.
   final io.Socket? socket;
 
+  /// Render mode for embedding in different contexts.
+  /// - `modal`: Full modal with overlay, positioning, visibility wrapper (default)
+  /// - `sidebar`: Content only, for embedding in sidebar panel
+  /// - `inline`: Content only, no visibility check
+  final ModalRenderMode renderMode;
+
   CoHostModalOptions({
     required this.isCoHostModalVisible,
     required this.onCoHostClose,
@@ -88,6 +95,7 @@ class CoHostModalOptions {
     required this.updateCoHost,
     required this.updateIsCoHostModalVisible,
     this.socket,
+    this.renderMode = ModalRenderMode.modal,
   });
 }
 
@@ -220,9 +228,8 @@ class _CoHostModalState extends State<CoHostModal> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    // Calculate modal size
+  /// Builds the core content of the modal without visibility/positioning wrapper.
+  Widget _buildContent(BuildContext context, {bool showCloseButton = true}) {
     final screenWidth = MediaQuery.of(context).size.width;
     final modalWidth = screenWidth > 450 ? 450.0 : 0.85 * screenWidth;
     final modalHeight = MediaQuery.of(context).size.height * 0.75;
@@ -238,6 +245,191 @@ class _CoHostModalState extends State<CoHostModal> {
         .isEmpty) {
       selectedCohost = 'No coHost';
     }
+
+    return Container(
+      width: modalWidth,
+      height: modalHeight,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: widget.options.backgroundColor,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Manage Co-Host',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+              if (showCloseButton)
+                IconButton(
+                  onPressed: widget.options.onCoHostClose,
+                  icon: const Icon(Icons.close),
+                  color: Colors.black,
+                ),
+            ],
+          ),
+          const Divider(
+            color: Colors.black,
+            thickness: 1,
+            height: 20,
+          ),
+          // Co-Host Selection
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DropdownButton<String>(
+              value: selectedCohost,
+              onChanged: (String? newValue) {
+                if (!mounted) return;
+                setState(() {
+                  selectedCohost = newValue!;
+                });
+              },
+              items: [
+                const DropdownMenuItem<String>(
+                  value: 'No coHost',
+                  child: Text('No Co-Host'),
+                ),
+                ...filteredParticipants.toSet().map<DropdownMenuItem<String>>(
+                  (participant) {
+                    return DropdownMenuItem<String>(
+                      value: participant.name,
+                      child: Text(participant.name),
+                    );
+                  },
+                ),
+              ],
+              hint: const Text('Select Co-Host'),
+            ),
+          ),
+          const Divider(
+            color: Colors.black,
+            thickness: 1,
+            height: 20,
+          ),
+          // Responsibilities Header
+          const Row(
+            children: [
+              Expanded(
+                flex: 6,
+                child: Text(
+                  'Responsibility',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 3,
+                child: Text(
+                  'Select',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 3,
+                child: Text(
+                  'Dedicated',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const Divider(
+            color: Colors.black,
+            thickness: 1,
+            height: 20,
+          ),
+          // Responsibilities List
+          Expanded(
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: coHostResponsibilityCopy.length,
+              itemBuilder: (context, index) {
+                final responsibility = coHostResponsibilityCopy[index];
+                final capitalizedName = _capitalize(responsibility.name);
+                final manageKey = 'manage$capitalizedName';
+                final dedicateKey = 'dedicateToManage$capitalizedName';
+
+                return Row(
+                  children: [
+                    // Responsibility Label
+                    Expanded(
+                      flex: 6,
+                      child: Text(
+                        _formatResponsibilityLabel(responsibility.name),
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                    // Manage Switch
+                    Expanded(
+                      flex: 3,
+                      child: Switch(
+                        value: responsibilities[manageKey] ?? false,
+                        onChanged: (value) {
+                          handleToggleSwitch(manageKey);
+                        },
+                      ),
+                    ),
+                    // Dedicate Switch
+                    Expanded(
+                      flex: 3,
+                      child: Switch(
+                        value: responsibilities[dedicateKey] ?? false,
+                        onChanged: (value) {
+                          if (responsibilities[manageKey] == true) {
+                            handleToggleSwitch(dedicateKey);
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          const Divider(
+            color: Colors.black,
+            thickness: 0,
+            height: 10,
+          ),
+          const SizedBox(height: 10),
+          // Save Button
+          ElevatedButton(
+            onPressed: _saveCoHostSettings,
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Full modal mode with visibility, positioning, and overlay
+    // Calculate modal size
+    final screenWidth = MediaQuery.of(context).size.width;
+    final modalWidth = screenWidth > 450 ? 450.0 : 0.85 * screenWidth;
+    final modalHeight = MediaQuery.of(context).size.height * 0.75;
 
     return Visibility(
       visible: widget.options.isCoHostModalVisible,
@@ -272,189 +464,7 @@ class _CoHostModalState extends State<CoHostModal> {
                   backgroundColor: Colors.transparent,
                   body: Center(
                     child: SingleChildScrollView(
-                      child: Container(
-                        width: modalWidth,
-                        height: modalHeight,
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: widget.options.backgroundColor,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // Header
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'Manage Co-Host',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed: widget.options.onCoHostClose,
-                                  icon: const Icon(Icons.close),
-                                  color: Colors.black,
-                                ),
-                              ],
-                            ),
-                            const Divider(
-                              color: Colors.black,
-                              thickness: 1,
-                              height: 20,
-                            ),
-                            // Co-Host Selection
-                            SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: DropdownButton<String>(
-                                value: selectedCohost,
-                                onChanged: (String? newValue) {
-                                  if (!mounted) return;
-                                  setState(() {
-                                    selectedCohost = newValue!;
-                                  });
-                                },
-                                items: [
-                                  const DropdownMenuItem<String>(
-                                    value: 'No coHost',
-                                    child: Text('No Co-Host'),
-                                  ),
-                                  ...filteredParticipants
-                                      .toSet()
-                                      .map<DropdownMenuItem<String>>(
-                                    (participant) {
-                                      return DropdownMenuItem<String>(
-                                        value: participant.name,
-                                        child: Text(participant.name),
-                                      );
-                                    },
-                                  ),
-                                ],
-                                hint: const Text('Select Co-Host'),
-                              ),
-                            ),
-                            const Divider(
-                              color: Colors.black,
-                              thickness: 1,
-                              height: 20,
-                            ),
-                            // Responsibilities Header
-                            const Row(
-                              children: [
-                                Expanded(
-                                  flex: 6,
-                                  child: Text(
-                                    'Responsibility',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  flex: 3,
-                                  child: Text(
-                                    'Select',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  flex: 3,
-                                  child: Text(
-                                    'Dedicated',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const Divider(
-                              color: Colors.black,
-                              thickness: 1,
-                              height: 20,
-                            ),
-                            // Responsibilities List
-                            Expanded(
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                itemCount: coHostResponsibilityCopy.length,
-                                itemBuilder: (context, index) {
-                                  final responsibility =
-                                      coHostResponsibilityCopy[index];
-                                  final capitalizedName =
-                                      _capitalize(responsibility.name);
-                                  final manageKey = 'manage$capitalizedName';
-                                  final dedicateKey =
-                                      'dedicateToManage$capitalizedName';
-
-                                  return Row(
-                                    children: [
-                                      // Responsibility Label
-                                      Expanded(
-                                        flex: 6,
-                                        child: Text(
-                                          _formatResponsibilityLabel(
-                                              responsibility.name),
-                                          style: const TextStyle(fontSize: 16),
-                                        ),
-                                      ),
-                                      // Manage Switch
-                                      Expanded(
-                                        flex: 3,
-                                        child: Switch(
-                                          value: responsibilities[manageKey] ??
-                                              false,
-                                          onChanged: (value) {
-                                            handleToggleSwitch(manageKey);
-                                          },
-                                        ),
-                                      ),
-                                      // Dedicate Switch
-                                      Expanded(
-                                        flex: 3,
-                                        child: Switch(
-                                          value:
-                                              responsibilities[dedicateKey] ??
-                                                  false,
-                                          onChanged: (value) {
-                                            if (responsibilities[manageKey] ==
-                                                true) {
-                                              handleToggleSwitch(dedicateKey);
-                                            }
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ),
-                            ),
-                            const Divider(
-                              color: Colors.black,
-                              thickness: 0,
-                              height: 10,
-                            ),
-                            const SizedBox(height: 10),
-                            // Save Button
-                            ElevatedButton(
-                              onPressed: _saveCoHostSettings,
-                              child: const Text('Save'),
-                            ),
-                          ],
-                        ),
-                      ),
+                      child: _buildContent(context, showCloseButton: true),
                     ),
                   ),
                 ),

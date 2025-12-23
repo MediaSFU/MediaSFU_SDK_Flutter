@@ -8,6 +8,7 @@ import '../../methods/message_methods/send_message.dart'
     show sendMessage, SendMessageType;
 import '../../types/types.dart'
     show CoHostResponsibility, EventType, Message, Participant, ShowAlert;
+import '../../types/modal_style_options.dart' show ModalRenderMode;
 
 /// Configuration for the messages modal enabling direct-message and group-chat workflows.
 ///
@@ -26,6 +27,8 @@ import '../../types/types.dart'
 /// * **socket** - Socket.IO client for real-time `sendMessage` emissions.
 /// * **chatSetting** - Permission string: `'disallow'` blocks sends; `'allow'` permits all; role-based checks apply otherwise.
 /// * **showAlert** - Optional `ShowAlert` callback for validation/error messages.
+///
+/// Compatible with [ModernMessagesModalOptions] from the modern component.
 ///
 /// ### Usage
 /// 1. `_populateMessages` splits `messages` into `directMessages` and `groupMessages` based on sender/receiver logic and `eventType`.
@@ -54,6 +57,20 @@ class MessagesModalOptions {
   final String chatSetting;
   final ShowAlert? showAlert;
 
+  /// Dark mode toggle for modern styling.
+  /// Note: Pending modern implementation - placeholder for future glassmorphic UI.
+  final bool isDarkMode;
+
+  /// Enable glassmorphism effects for modern styling.
+  /// Note: Pending modern implementation - placeholder for future glassmorphic UI.
+  final bool enableGlassmorphism;
+
+  /// Render mode for embedding in different contexts.
+  /// - `modal`: Full modal with overlay, positioning, visibility wrapper (default)
+  /// - `sidebar`: Content only, for embedding in sidebar panel
+  /// - `inline`: Content only, no visibility check
+  final ModalRenderMode renderMode;
+
   MessagesModalOptions({
     required this.isMessagesModalVisible,
     required this.onMessagesClose,
@@ -75,6 +92,9 @@ class MessagesModalOptions {
     this.socket,
     required this.chatSetting,
     this.showAlert,
+    this.isDarkMode = false,
+    this.enableGlassmorphism = false,
+    this.renderMode = ModalRenderMode.modal,
   });
 }
 
@@ -155,8 +175,37 @@ class _MessagesModalState extends State<MessagesModal> {
         widget.options.messages.where((message) => message.group).toList();
   }
 
+  /// Builds the core content of the modal without visibility/positioning wrapper.
+  Widget _buildContent(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final modalWidth = screenWidth * 0.8 > 400 ? 400.0 : screenWidth * 0.8;
+
+    final modalHeight = kIsWeb
+        ? MediaQuery.of(context).size.height * 0.7
+        : MediaQuery.of(context).size.height * 0.5;
+
+    return Container(
+      padding: const EdgeInsets.all(10),
+      width: modalWidth,
+      height: modalHeight,
+      decoration: BoxDecoration(
+        color: widget.options.backgroundColor,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildHeader(showCloseButton: true),
+          const Divider(),
+          Expanded(child: _buildTabContent()),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Full modal mode with visibility, positioning, and overlay
     final screenWidth = MediaQuery.of(context).size.width;
     final modalWidth = screenWidth * 0.8 > 400 ? 400.0 : screenWidth * 0.8;
     final modalHeight = kIsWeb
@@ -184,23 +233,7 @@ class _MessagesModalState extends State<MessagesModal> {
               color: Colors.black.withAlpha((0.5 * 255).toInt()),
               child: Align(
                 alignment: Alignment.topRight,
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  width: modalWidth,
-                  height: modalHeight,
-                  decoration: BoxDecoration(
-                    color: widget.options.backgroundColor,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildHeader(),
-                      const Divider(),
-                      Expanded(child: _buildTabContent()),
-                    ],
-                  ),
-                ),
+                child: _buildContent(context),
               ),
             ),
           )
@@ -209,7 +242,7 @@ class _MessagesModalState extends State<MessagesModal> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader({bool showCloseButton = true}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -218,10 +251,11 @@ class _MessagesModalState extends State<MessagesModal> {
           _buildTabButton('Direct', 'direct'),
           _buildTabButton('Group', 'group'),
         ],
-        IconButton(
-          onPressed: widget.options.onMessagesClose,
-          icon: const Icon(Icons.close),
-        ),
+        if (showCloseButton)
+          IconButton(
+            onPressed: widget.options.onMessagesClose,
+            icon: const Icon(Icons.close),
+          ),
       ],
     );
   }

@@ -1,11 +1,15 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
+import '../permissions_methods/update_permission_config.dart'
+    show PermissionConfig;
 import '../../types/types.dart'
     show
         CheckPermissionType,
         CheckScreenShareParameters,
         CheckScreenShareType,
+        Participant,
         ShowAlert,
         StopShareScreenParameters,
         StopShareScreenType,
@@ -27,6 +31,7 @@ abstract class ClickScreenShareParameters
   String get videoSetting;
   String get screenshareSetting;
   String get chatSetting;
+  PermissionConfig? get permissionConfig;
   bool get screenAction;
   bool get screenAlreadyOn;
   String? get screenRequestState;
@@ -34,6 +39,12 @@ abstract class ClickScreenShareParameters
   bool get audioOnlyRoom;
   int get updateRequestIntervalSeconds;
   bool get transportCreated;
+
+  // Panelist focus mode properties
+  bool get panellistFocused;
+  bool get muteOthersMic;
+  bool get muteOthersCamera;
+  List<Participant> get panelists;
 
   // Update functions as abstract getters
   void Function(String?) get updateScreenRequestState;
@@ -51,8 +62,10 @@ abstract class ClickScreenShareParameters
 /// Options for handling screen share actions.
 class ClickScreenShareOptions {
   final ClickScreenShareParameters parameters;
+  final BuildContext?
+      context; // Required for desktop platforms to show screen picker
 
-  ClickScreenShareOptions({required this.parameters});
+  ClickScreenShareOptions({required this.parameters, this.context});
 }
 
 /// Type definition for the clickScreenShare function.
@@ -143,14 +156,14 @@ Future<void> clickScreenShare(ClickScreenShareOptions options) async {
     }
 
     // Check if the room is a demo room
-    if (roomName.toLowerCase().startsWith('d')) {
-      showAlert?.call(
-        message: "You cannot start screen share in a demo room.",
-        type: "danger",
-        duration: 3000,
-      );
-      return;
-    }
+    // if (roomName.toLowerCase().startsWith('d')) {
+    //   showAlert?.call(
+    //     message: "You cannot start screen share in a demo room.",
+    //     type: "danger",
+    //     duration: 3000,
+    //   );
+    //   return;
+    // }
 
     // Toggle screen sharing based on current status
     if (screenAlreadyOn) {
@@ -180,6 +193,8 @@ Future<void> clickScreenShare(ClickScreenShareOptions options) async {
           videoSetting: videoSetting,
           screenshareSetting: screenshareSetting,
           chatSetting: chatSetting,
+          permissionConfig: parameters.permissionConfig,
+          participantLevel: islevel,
         );
         response = await checkPermission(
           optionsCheck,
@@ -203,6 +218,7 @@ Future<void> clickScreenShare(ClickScreenShareOptions options) async {
           }
           final optionsCheck = CheckScreenShareOptions(
             parameters: parameters,
+            context: options.context,
           );
           checkScreenShare(optionsCheck);
           break;

@@ -64,6 +64,7 @@ abstract class AllMembersParameters
   bool get hostFirstSwitch;
   List<WaitingRoomParticipant> get waitingRoomList;
   String get islevel;
+  String get member;
   Socket? get socket;
 
   // Update functions as abstract getters
@@ -81,6 +82,7 @@ abstract class AllMembersParameters
   UpdateBoolean get updateIsLoadingModalVisible;
   UpdateTotalReqWait get updateTotalReqWait;
   UpdateHostFirstSwitch get updateHostFirstSwitch;
+  void Function(String) get updateIslevel;
 
   // Mediasfu functions as abstract getters
   OnScreenChangesType get onScreenChanges;
@@ -193,6 +195,22 @@ typedef AllMembersType = Future<void> Function(AllMembersOptions options);
 ///   connections with `connectIps`, updating relevant states in the UI.
 Future<void> allMembers(AllMembersOptions options) async {
   final params = options.parameters;
+
+  // Sync islevel from server if different (for levels '0' and '1')
+  // Server's islevel is authoritative
+  final currentMember = options.members.firstWhere(
+    (m) => m.name == params.member,
+    orElse: () => Participant(name: '', audioID: '', videoID: ''),
+  );
+  if (currentMember.name.isNotEmpty && currentMember.islevel != null) {
+    final serverLevel = currentMember.islevel!;
+    final localLevel = params.islevel;
+    // Only sync for non-host levels ('0' and '1')
+    if ((serverLevel == '0' || serverLevel == '1') &&
+        localLevel != serverLevel) {
+      params.updateIslevel(serverLevel);
+    }
+  }
 
   params.updateParticipantsAll(
     options.members

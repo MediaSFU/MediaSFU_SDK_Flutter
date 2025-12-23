@@ -5,6 +5,7 @@ import '../../methods/utils/get_modal_position.dart'
 import '../../methods/settings_methods/modify_settings.dart'
     show modifySettings, ModifySettingsType, ModifySettingsOptions;
 import '../../types/types.dart' show ShowAlert;
+import '../../types/modal_style_options.dart' show ModalRenderMode;
 
 class EventSettingsModalWrapperContext {
   final BuildContext buildContext;
@@ -147,6 +148,8 @@ class EventSettingsModalButtonContext {
 /// * **titleTextStyle** / **labelTextStyle** - Typography overrides for title and section labels.
 /// * **saveButtonStyle** / **saveButtonChild** - Customize save button appearance.
 ///
+/// Compatible with [ModernEventSettingsModalOptions] from the modern component.
+///
 /// ### Usage
 /// 1. Modal displays four dropdowns: "Participants Audio" (`audioSetting`), "Participants Video" (`videoSetting`), "Participants Screenshare" (`screenshareSetting`), "Chat" (`chatSetting`).
 /// 2. Each dropdown offers three options: "Disallow", "Allow", "Approval".
@@ -186,6 +189,20 @@ class EventSettingsModalOptions {
   final ButtonStyle? saveButtonStyle;
   final Widget? saveButtonChild;
 
+  /// Dark mode toggle for modern styling.
+  /// Note: Pending modern implementation - placeholder for future glassmorphic UI.
+  final bool isDarkMode;
+
+  /// Enable glassmorphism effects for modern styling.
+  /// Note: Pending modern implementation - placeholder for future glassmorphic UI.
+  final bool enableGlassmorphism;
+
+  /// Render mode for embedding in different contexts.
+  /// - `modal`: Full modal with overlay, positioning, visibility wrapper (default)
+  /// - `sidebar`: Content only, for embedding in sidebar panel
+  /// - `inline`: Content only, no visibility check
+  final ModalRenderMode renderMode;
+
   EventSettingsModalOptions({
     required this.isVisible,
     required this.onClose,
@@ -219,6 +236,9 @@ class EventSettingsModalOptions {
     this.labelTextStyle,
     this.saveButtonStyle,
     this.saveButtonChild,
+    this.isDarkMode = false,
+    this.enableGlassmorphism = false,
+    this.renderMode = ModalRenderMode.modal,
   });
 }
 
@@ -343,8 +363,8 @@ class _EventSettingsModalState extends State<EventSettingsModal> {
       return const SizedBox.shrink();
     }
 
-  final screenWidth = MediaQuery.of(context).size.width;
-  final modalWidth = screenWidth * 0.8 > 400 ? 400.0 : screenWidth * 0.8;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final modalWidth = screenWidth * 0.8 > 400 ? 400.0 : screenWidth * 0.8;
     final modalHeight = MediaQuery.of(context).size.height * 0.6;
 
     final positionValues = getModalPosition(
@@ -398,7 +418,7 @@ class _EventSettingsModalState extends State<EventSettingsModal> {
     double modalWidth,
     double modalHeight,
   ) {
-    final content = _buildContent(context);
+    final content = _buildContent(context, showCloseButton: true);
 
     final decoration = widget.options.containerDecoration ??
         BoxDecoration(color: widget.options.backgroundColor);
@@ -438,8 +458,8 @@ class _EventSettingsModalState extends State<EventSettingsModal> {
         defaultContainer;
   }
 
-  Widget _buildContent(BuildContext context) {
-    final header = _buildHeader(context);
+  Widget _buildContent(BuildContext context, {bool showCloseButton = true}) {
+    final header = _buildHeader(context, showCloseButton: showCloseButton);
     final audioSection = _buildSettingSection(
       context: context,
       label: 'User audio:',
@@ -493,7 +513,7 @@ class _EventSettingsModalState extends State<EventSettingsModal> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, {bool showCloseButton = true}) {
     final title = Text(
       'Event Settings',
       style: widget.options.titleTextStyle ??
@@ -514,7 +534,7 @@ class _EventSettingsModalState extends State<EventSettingsModal> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         title,
-        closeButton,
+        if (showCloseButton) closeButton,
       ],
     );
 

@@ -11,6 +11,7 @@
 migrate_working_dir/
 .flutter-plugins
 .flutter-plugins-dependencies
+/scripts/*
 
 # IntelliJ related
 *.iml

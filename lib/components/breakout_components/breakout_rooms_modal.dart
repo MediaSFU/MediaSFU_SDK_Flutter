@@ -6,6 +6,7 @@ import '../../methods/utils/get_modal_position.dart'
     show getModalPosition, GetModalPositionOptions;
 import '../../types/types.dart'
     show BreakoutParticipant, Participant, ShowAlert;
+import '../../types/modal_style_options.dart' show ModalRenderMode;
 
 typedef BreakoutRoom = List<BreakoutParticipant>;
 
@@ -159,12 +160,17 @@ class BreakoutRoomsModalOptions {
   /// Background color of the modal.
   final Color backgroundColor;
 
+  /// Render mode for the modal (modal, sidebar, or inline).
+  /// When set to `sidebar` or `inline`, returns content without modal wrapper.
+  final ModalRenderMode renderMode;
+
   BreakoutRoomsModalOptions({
     required this.isVisible,
     required this.onBreakoutRoomsClose,
     required this.parameters,
     this.position = 'topRight',
     this.backgroundColor = const Color(0xFF83C0E9),
+    this.renderMode = ModalRenderMode.modal,
   });
 }
 
@@ -872,248 +878,237 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
                 color: widget.options.backgroundColor,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Dialog(
-                insetPadding: const EdgeInsets.all(20),
-                child: Container(
-                  width: MediaQuery.of(context).size.width * 0.9,
-                  height: MediaQuery.of(context).size.height * 0.8,
-                  decoration: BoxDecoration(
-                    color: widget.options.backgroundColor,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header
-                      ListTile(
-                        title: const Text(
-                          'Breakout Rooms',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        trailing: IconButton(
-                          icon: const FaIcon(FontAwesomeIcons.xmark),
-                          onPressed: widget.options.onBreakoutRoomsClose,
-                          tooltip: 'Close',
-                        ),
-                      ),
-                      const Divider(),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10.0, vertical: 5.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // Number of Rooms Input
-                                    const Text(
-                                      'Number of Rooms',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black87,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 5),
-                                    TextField(
-                                      controller: numRoomsController,
-                                      decoration: const InputDecoration(
-                                        border: OutlineInputBorder(),
-                                        hintText: 'Enter number of rooms',
-                                      ),
-                                      keyboardType: TextInputType.number,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 5),
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  child: Row(
-                                    children: [
-                                      ElevatedButton(
-                                        onPressed: handleRandomAssign,
-                                        child: const Row(
-                                          children: [
-                                            Icon(FontAwesomeIcons.shuffle),
-                                            SizedBox(width: 2),
-                                            Text('Random'),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(width: 5),
-                                      ElevatedButton(
-                                        onPressed: handleManualAssign,
-                                        child: const Row(
-                                          children: [
-                                            Icon(FontAwesomeIcons.handPointer),
-                                            SizedBox(width: 5),
-                                            Text('Manual'),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(width: 5),
-                                      ElevatedButton(
-                                        onPressed: handleAddRoom,
-                                        child: const Row(
-                                          children: [
-                                            Icon(FontAwesomeIcons.plus),
-                                            SizedBox(width: 2),
-                                            Text('Add Room'),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(width: 5),
-                                      ElevatedButton(
-                                        onPressed: handleSaveRooms,
-                                        child: const Row(
-                                          children: [
-                                            Icon(FontAwesomeIcons.floppyDisk),
-                                            SizedBox(width: 2),
-                                            Text('Save Rooms'),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 20.0, vertical: 10.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'New Participant Action',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black87,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 5),
-                                    DropdownButton<String>(
-                                      value: newParticipantAction,
-                                      onChanged: (String? newValue) {
-                                        if (!mounted) return;
-                                        setState(() {
-                                          newParticipantAction = newValue!;
-                                        });
-                                      },
-                                      items: const [
-                                        DropdownMenuItem(
-                                          value: 'autoAssignNewRoom',
-                                          child: Text('Add to new room'),
-                                        ),
-                                        DropdownMenuItem(
-                                          value: 'autoAssignAvailableRoom',
-                                          child: Text('Add to open room'),
-                                        ),
-                                        DropdownMenuItem(
-                                          value: 'manualAssign',
-                                          child: Text('No action'),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              const Divider(),
-                              EditRoomModal(
-                                  options: EditRoomModalOptions(
-                                editRoomModalVisible: editRoomModalVisible,
-                                updateEditRoomModalVisible:
-                                    updateEditRoomModalVisible,
-                                currentRoom: currentRoom,
-                                participantsRef: participants,
-                                handleAddParticipant: handleAddParticipant,
-                                handleRemoveParticipant:
-                                    handleRemoveParticipant,
-                                currentRoomIndex: currentRoomIndex,
-                              )),
-                              const SizedBox(height: 10),
-                              // Room List
-
-                              RoomList(
-                                  options: RoomOptions(
-                                rooms: breakoutRooms,
-                                handleEditRoom: handleEditRoom,
-                                handleDeleteRoom: handleDeleteRoom,
-                                handleRemoveParticipant:
-                                    handleRemoveParticipant,
-                              )),
-
-                              // Control Buttons
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 20, vertical: 10),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    if ((!breakOutRoomStarted ||
-                                            breakOutRoomEnded) &&
-                                        canStartBreakout)
-                                      ElevatedButton(
-                                        onPressed: handleStartBreakout,
-                                        child: const Row(
-                                          children: [
-                                            Icon(FontAwesomeIcons.play),
-                                            SizedBox(width: 5),
-                                            Text('Start Breakout'),
-                                          ],
-                                        ),
-                                      ),
-                                    if (breakOutRoomStarted &&
-                                        !breakOutRoomEnded &&
-                                        canStartBreakout)
-                                      ElevatedButton(
-                                        onPressed: handleStartBreakout,
-                                        child: const Row(
-                                          children: [
-                                            Icon(FontAwesomeIcons.arrowsRotate),
-                                            SizedBox(width: 5),
-                                            Text('Update Breakout'),
-                                          ],
-                                        ),
-                                      ),
-                                    if (breakOutRoomStarted &&
-                                        !breakOutRoomEnded)
-                                      ElevatedButton(
-                                        onPressed: handleStopBreakout,
-                                        child: const Row(
-                                          children: [
-                                            Icon(FontAwesomeIcons.stop),
-                                            SizedBox(width: 5),
-                                            Text('Stop Breakout'),
-                                          ],
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              child: _buildContent(context, showCloseButton: true),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  /// Builds the content for sidebar/inline rendering or modal content.
+  Widget _buildContent(BuildContext context, {bool showCloseButton = true}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header
+        ListTile(
+          title: const Text(
+            'Breakout Rooms',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          trailing: showCloseButton
+              ? IconButton(
+                  icon: const FaIcon(FontAwesomeIcons.xmark),
+                  onPressed: widget.options.onBreakoutRoomsClose,
+                  tooltip: 'Close',
+                )
+              : null,
+        ),
+        const Divider(),
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10.0, vertical: 5.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Number of Rooms Input
+                      const Text(
+                        'Number of Rooms',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      TextField(
+                        controller: numRoomsController,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          hintText: 'Enter number of rooms',
+                        ),
+                        keyboardType: TextInputType.number,
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        ElevatedButton(
+                          onPressed: handleRandomAssign,
+                          child: const Row(
+                            children: [
+                              Icon(FontAwesomeIcons.shuffle),
+                              SizedBox(width: 2),
+                              Text('Random'),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        ElevatedButton(
+                          onPressed: handleManualAssign,
+                          child: const Row(
+                            children: [
+                              Icon(FontAwesomeIcons.handPointer),
+                              SizedBox(width: 5),
+                              Text('Manual'),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        ElevatedButton(
+                          onPressed: handleAddRoom,
+                          child: const Row(
+                            children: [
+                              Icon(FontAwesomeIcons.plus),
+                              SizedBox(width: 2),
+                              Text('Add Room'),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        ElevatedButton(
+                          onPressed: handleSaveRooms,
+                          child: const Row(
+                            children: [
+                              Icon(FontAwesomeIcons.floppyDisk),
+                              SizedBox(width: 2),
+                              Text('Save Rooms'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 20.0, vertical: 10.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'New Participant Action',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      DropdownButton<String>(
+                        value: newParticipantAction,
+                        onChanged: (String? newValue) {
+                          if (!mounted) return;
+                          setState(() {
+                            newParticipantAction = newValue!;
+                          });
+                        },
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'autoAssignNewRoom',
+                            child: Text('Add to new room'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'autoAssignAvailableRoom',
+                            child: Text('Add to open room'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'manualAssign',
+                            child: Text('No action'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Divider(),
+                EditRoomModal(
+                    options: EditRoomModalOptions(
+                  editRoomModalVisible: editRoomModalVisible,
+                  updateEditRoomModalVisible: updateEditRoomModalVisible,
+                  currentRoom: currentRoom,
+                  participantsRef: participants,
+                  handleAddParticipant: handleAddParticipant,
+                  handleRemoveParticipant: handleRemoveParticipant,
+                  currentRoomIndex: currentRoomIndex,
+                )),
+                const SizedBox(height: 10),
+                // Room List
+
+                RoomList(
+                    options: RoomOptions(
+                  rooms: breakoutRooms,
+                  handleEditRoom: handleEditRoom,
+                  handleDeleteRoom: handleDeleteRoom,
+                  handleRemoveParticipant: handleRemoveParticipant,
+                )),
+
+                // Control Buttons
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      if ((!breakOutRoomStarted || breakOutRoomEnded) &&
+                          canStartBreakout)
+                        ElevatedButton(
+                          onPressed: handleStartBreakout,
+                          child: const Row(
+                            children: [
+                              Icon(FontAwesomeIcons.play),
+                              SizedBox(width: 5),
+                              Text('Start Breakout'),
+                            ],
+                          ),
+                        ),
+                      if (breakOutRoomStarted &&
+                          !breakOutRoomEnded &&
+                          canStartBreakout)
+                        ElevatedButton(
+                          onPressed: handleStartBreakout,
+                          child: const Row(
+                            children: [
+                              Icon(FontAwesomeIcons.arrowsRotate),
+                              SizedBox(width: 5),
+                              Text('Update Breakout'),
+                            ],
+                          ),
+                        ),
+                      if (breakOutRoomStarted && !breakOutRoomEnded)
+                        ElevatedButton(
+                          onPressed: handleStopBreakout,
+                          child: const Row(
+                            children: [
+                              Icon(FontAwesomeIcons.stop),
+                              SizedBox(width: 5),
+                              Text('Stop Breakout'),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
