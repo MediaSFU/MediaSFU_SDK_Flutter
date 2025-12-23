@@ -1,0 +1,19 @@
+# Files to exclude from pub.dev publishing
+# (but keep in git repository)
+
+# Build outputs
+build/
+example/build/
+
+# Generated documentation (too large for pub.dev, available on GitHub)
+doc/
+
+# IDE files
+*.iml
+.idea/
+
+# Scripts (not needed by package users)
+scripts/
+
+# Backup files from publish workflow
+*.github_full

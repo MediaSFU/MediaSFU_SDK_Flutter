@@ -8,6 +8,7 @@
 /// - controlMedia: When media is controlled (mute) due to focus mode
 library;
 
+import 'package:flutter/foundation.dart';
 import '../../types/types.dart' show Participant, ShowAlert;
 
 /// Panelist data received from socket.
@@ -374,6 +375,6 @@ Future<void> removedFromPanelists(RemovedFromPanelistsOptions options) async {
       duration: 3000,
     );
   } catch (e) {
-    print('Error handling removedFromPanelists: $e');
+    debugPrint('Error handling removedFromPanelists: $e');
   }
 }

@@ -5,6 +5,7 @@
 /// - permissionConfigUpdated: When the room's permission configuration changes
 library;
 
+import 'package:flutter/foundation.dart';
 import '../../types/types.dart' show ShowAlert;
 import '../../methods/permissions_methods/update_permission_config.dart';
 
@@ -99,7 +100,7 @@ Future<void> permissionUpdated(PermissionUpdatedOptions options) async {
       );
     }
   } catch (e) {
-    print('Error handling permissionUpdated: $e');
+    debugPrint('Error handling permissionUpdated: $e');
   }
 }
 
@@ -123,6 +124,6 @@ Future<void> permissionConfigUpdated(
     // Update local permission config
     options.updatePermissionConfig?.call(data.config);
   } catch (e) {
-    print('Error handling permissionConfigUpdated: $e');
+    debugPrint('Error handling permissionConfigUpdated: $e');
   }
 }

@@ -42,12 +42,12 @@ dependencies:
   
   # Virtual Backgrounds (Android/iOS only)
   # Enables ML Kit selfie segmentation for blur/image backgrounds
-  # google_mlkit_selfie_segmentation: ^0.10.0  # COMMENTED FOR PUB.DEV - See README for optional deps
+  # google_mlkit_selfie_segmentation: ^0.10.0  # COMMENTED FOR PUB.DEV
   
   # Web Platform Enhancements (Web only)
   # Required for whiteboard canvas capture on web
-  # web: ^1.1.1  # COMMENTED FOR PUB.DEV - See README for optional deps
-  # dart_webrtc: ^1.4.6  # COMMENTED FOR PUB.DEV - See README for optional deps
+  # web: ^1.1.1  # COMMENTED FOR PUB.DEV
+  # dart_webrtc: ^1.4.6  # COMMENTED FOR PUB.DEV
 
 
 dev_dependencies:
