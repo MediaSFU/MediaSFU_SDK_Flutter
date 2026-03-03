@@ -8,6 +8,7 @@
 /// - controlMedia: When media is controlled (mute) due to focus mode
 library;
 
+import 'package:flutter/foundation.dart';
 import '../../types/types.dart' show Participant, ShowAlert;
 
 /// Panelist data received from socket.
@@ -245,7 +246,7 @@ Future<void> panelistsUpdated(PanelistsUpdatedOptions options) async {
       options.updatePanelists!(participantPanelists);
     }
   } catch (e) {
-    print('Error handling panelistsUpdated: $e');
+    debugPrint('Error handling panelistsUpdated: $e');
   }
 }
 
@@ -297,7 +298,7 @@ Future<void> panelistFocusChanged(PanelistFocusChangedOptions options) async {
       await options.onScreenChanges!();
     }
   } catch (e) {
-    print('Error handling panelistFocusChanged: $e');
+    debugPrint('Error handling panelistFocusChanged: $e');
   }
 }
 
@@ -342,7 +343,7 @@ Future<void> controlMedia(ControlMediaOptions options) async {
       }
     }
   } catch (e) {
-    print('Error handling controlMedia: $e');
+    debugPrint('Error handling controlMedia: $e');
   }
 }
 
@@ -358,7 +359,7 @@ Future<void> addedAsPanelist(AddedAsPanelistOptions options) async {
       duration: 3000,
     );
   } catch (e) {
-    print('Error handling addedAsPanelist: $e');
+    debugPrint('Error handling addedAsPanelist: $e');
   }
 }
 
@@ -374,6 +375,6 @@ Future<void> removedFromPanelists(RemovedFromPanelistsOptions options) async {
       duration: 3000,
     );
   } catch (e) {
-    print('Error handling removedFromPanelists: $e');
+    debugPrint('Error handling removedFromPanelists: $e');
   }
 }

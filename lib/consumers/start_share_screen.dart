@@ -510,6 +510,7 @@ Future<DesktopCapturerSource?> _showScreenPickerDialog(
 
   // Show the enhanced picker dialog
   return showDialog<DesktopCapturerSource>(
+    // ignore: use_build_context_synchronously
     context: context,
     barrierDismissible: false,
     builder: (BuildContext context) {
@@ -612,6 +613,7 @@ Future<void> startShareScreen(StartShareScreenOptions options) async {
           });
         } else {
           // Show screen picker dialog
+          // ignore: use_build_context_synchronously
           final selectedSource = await _showScreenPickerDialog(context);
           if (selectedSource == null) {
             // User cancelled

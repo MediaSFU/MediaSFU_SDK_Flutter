@@ -1308,7 +1308,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   /// Whether to show subtitles on participant video cards
   final ValueNotifier<bool> showSubtitlesOnCards = ValueNotifier<bool>(false);
 
-  /// Per-speaker live subtitle data: Map<speakerId, LiveSubtitle>
+  /// Per-speaker live subtitle data: `Map<speakerId, LiveSubtitle>`
   final ValueNotifier<Map<String, LiveSubtitle>> liveSubtitles =
       ValueNotifier<Map<String, LiveSubtitle>>({});
 
@@ -9181,6 +9181,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     // Get safe area padding for manual handling
     final mediaQuery = MediaQuery.of(context);
     final topPadding = mediaQuery.padding.top;
+    // ignore: unused_local_variable
     final bottomPadding = mediaQuery.padding.bottom;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(

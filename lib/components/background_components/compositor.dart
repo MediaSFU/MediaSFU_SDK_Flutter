@@ -116,6 +116,7 @@ class Compositor {
       ProcessedFrame frame, double intensity) async {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
+    // ignore: unused_local_variable
     final size = Size(frame.width.toDouble(), frame.height.toDouble());
 
     // Step 1: Draw blurred background
@@ -269,7 +270,9 @@ class Compositor {
     final rgbaData = Uint8List(width * height * 4);
 
     // Debug: check mask statistics
+    // ignore: unused_local_variable
     int personPixels = 0;
+    // ignore: unused_local_variable
     int bgPixels = 0;
 
     for (int i = 0; i < maskData.length && i < width * height; i++) {

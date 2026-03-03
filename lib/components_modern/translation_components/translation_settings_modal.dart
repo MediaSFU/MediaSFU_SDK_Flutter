@@ -602,6 +602,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
   late bool _localShowSubtitles;
 
   // Rate limiting
+  // ignore: constant_identifier_names
   static const int RATE_LIMIT_MS = 30000;
   int _lastSpokenChange = 0;
   int _lastListenChange = 0;
@@ -1909,7 +1910,9 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
           ),
 
         // Manual entry toggle (hidden for now)
+        // ignore: dead_code
         if (false)
+          // ignore: dead_code
           InkWell(
             onTap: () =>
                 setState(() => _showManualCloneEntry = !_showManualCloneEntry),
@@ -1942,6 +1945,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
           ),
 
         // Manual clone entry form (hidden for now)
+        // ignore: dead_code
         if (false && _showManualCloneEntry) ...[
           SizedBox(height: MediasfuSpacing.sm),
 

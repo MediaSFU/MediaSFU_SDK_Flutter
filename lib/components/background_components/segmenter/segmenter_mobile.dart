@@ -17,7 +17,6 @@
 library;
 
 import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../virtual_background_types.dart';
@@ -26,6 +25,7 @@ import 'segmenter_interface.dart';
 /// Mobile/Desktop segmenter - Native MediaPipe on iOS, Vision on macOS, ONNX on Windows, stub on Android
 class MobileSegmenter implements BackgroundSegmenterBase {
   bool _isReady = false;
+  // ignore: unused_field
   SegmenterConfig _config = const SegmenterConfig();
   bool _nativeInitialized = false;
 

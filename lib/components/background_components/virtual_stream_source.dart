@@ -18,13 +18,16 @@ class VirtualStreamSource {
 
   /// Video source for frame injection
   /// Note: This may require platform-specific implementation
+  // ignore: unused_field
   RTCVideoRenderer? _renderer;
 
   /// Whether the source is initialized
   bool _isInitialized = false;
 
   /// Target frame dimensions
+  // ignore: unused_field
   int _width = 640;
+  // ignore: unused_field
   int _height = 480;
   int _fps = 15;
 

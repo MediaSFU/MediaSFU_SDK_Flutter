@@ -31,6 +31,9 @@ dependencies:
   # Whiteboard dependencies (cross-platform)
   path_drawing: ^1.0.1
   share_plus: ^12.0.1
+  # Web whiteboard canvas capture (transitive deps made explicit)
+  web: ^1.1.1
+  dart_webrtc: ^1.4.6
   
   # ============================================================
   # PLATFORM-SPECIFIC DEPENDENCIES
@@ -43,11 +46,6 @@ dependencies:
   # Virtual Backgrounds (Android/iOS only)
   # Enables ML Kit selfie segmentation for blur/image backgrounds
   # google_mlkit_selfie_segmentation: ^0.10.0  # COMMENTED FOR PUB.DEV
-  
-  # Web Platform Enhancements (Web only)
-  # Required for whiteboard canvas capture on web
-  # web: ^1.1.1  # COMMENTED FOR PUB.DEV
-  # dart_webrtc: ^1.4.6  # COMMENTED FOR PUB.DEV
 
 
 dev_dependencies:

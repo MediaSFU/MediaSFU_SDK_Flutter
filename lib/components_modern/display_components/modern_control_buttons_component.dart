@@ -178,6 +178,7 @@ class _PremiumControlButtonState extends State<_PremiumControlButton>
         (isDark ? MediasfuColors.primaryDark : MediasfuColors.primary);
 
     // Determine hover/active background
+    // ignore: unused_local_variable
     final Color activeHoverColor =
         isActive ? activeColor : (isDark ? Colors.white : Colors.black);
 

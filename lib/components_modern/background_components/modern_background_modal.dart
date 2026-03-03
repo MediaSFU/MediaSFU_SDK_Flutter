@@ -136,18 +136,22 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
         if (vidCons != null) {
           if (vidCons is Map<String, dynamic>) {
             // Add width/height from map
-            if (vidCons['width'] != null)
+            if (vidCons['width'] != null) {
               mandatoryConstraints['width'] = vidCons['width'];
-            if (vidCons['height'] != null)
+            }
+            if (vidCons['height'] != null) {
               mandatoryConstraints['height'] = vidCons['height'];
+            }
           } else {
             try {
               final consMap = (vidCons as dynamic).toMap();
               if (consMap is Map<String, dynamic>) {
-                if (consMap['width'] != null)
+                if (consMap['width'] != null) {
                   mandatoryConstraints['width'] = consMap['width'];
-                if (consMap['height'] != null)
+                }
+                if (consMap['height'] != null) {
                   mandatoryConstraints['height'] = consMap['height'];
+                }
               }
             } catch (_) {}
           }

@@ -33,6 +33,7 @@ class _ModernVideoCardState extends State<ModernVideoCard>
   late List<AnimationController> waveformAnimations;
   late AnimationController _pulseController;
   late AnimationController _hoverController;
+  // ignore: unused_field
   late Animation<double> _pulseAnimation;
   late Animation<double> _hoverAnimation;
   ValueNotifier<bool> showWaveform = ValueNotifier<bool>(false);

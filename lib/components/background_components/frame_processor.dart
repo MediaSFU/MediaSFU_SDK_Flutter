@@ -346,9 +346,11 @@ class FrameProcessor {
         final maskWidth = result.maskWidth ?? _lastWidth;
         final maskHeight = result.maskHeight ?? _lastHeight;
 
-        if (shouldLog) debugPrint('FrameProcessor: Segmentation successful - '
+        if (shouldLog) {
+          debugPrint('FrameProcessor: Segmentation successful - '
             'frame=${_lastWidth}x$_lastHeight, mask=${maskWidth}x$maskHeight, '
             'maskBytes=${result.mask!.length}');
+        }
 
         final processedFrame = ProcessedFrame(
           originalBytes: frameData,

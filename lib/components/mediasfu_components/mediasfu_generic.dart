@@ -193,7 +193,7 @@ import '../../consumers/consumer_resume.dart'
 import '../../consumers/connect_send_transport_audio.dart'
     show connectSendTransportAudio;
 import '../../consumers/connect_send_transport_video.dart'
-    show connectSendTransportVideo, ConnectSendTransportVideoOptions;
+    show connectSendTransportVideo;
 import '../../consumers/connect_send_transport_screen.dart'
     show connectSendTransportScreen;
 import '../../consumers/process_consumer_transports.dart'
@@ -213,13 +213,13 @@ import '../../consumers/change_vids.dart' show changeVids;
 import '../../consumers/compare_active_names.dart' show compareActiveNames;
 import '../../consumers/compare_screen_states.dart' show compareScreenStates;
 import '../../consumers/create_send_transport.dart'
-    show createSendTransport, CreateSendTransportOptions;
+    show createSendTransport;
 import '../../consumers/resume_send_transport_audio.dart'
     show resumeSendTransportAudio;
 import '../../consumers/receive_all_piped_transports.dart'
     show receiveAllPipedTransports;
 import '../../consumers/disconnect_send_transport_video.dart'
-    show disconnectSendTransportVideo, DisconnectSendTransportVideoOptions;
+    show disconnectSendTransportVideo;
 import '../../consumers/disconnect_send_transport_audio.dart'
     show disconnectSendTransportAudio;
 import '../../consumers/disconnect_send_transport_screen.dart'
