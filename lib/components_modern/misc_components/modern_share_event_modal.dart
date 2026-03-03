@@ -66,8 +66,8 @@ class _ModernShareEventModalState extends State<ModernShareEventModal>
           fontSize: 13,
           fontWeight: FontWeight.w600,
           color: isDarkMode
-              ? Colors.white.withValues(alpha: 0.75)
-              : Colors.black.withValues(alpha: 0.7),
+              ? Colors.white.withOpacity(0.75)
+              : Colors.black.withOpacity(0.7),
         ),
       ),
     );
@@ -106,11 +106,11 @@ class _ModernShareEventModalState extends State<ModernShareEventModal>
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = useHighTransparency
         ? (isDarkMode
-            ? Colors.black.withValues(alpha: 0.05)
-            : Colors.white.withValues(alpha: 0.08))
+            ? Colors.black.withOpacity(0.05)
+            : Colors.white.withOpacity(0.08))
         : (isDarkMode
-            ? Colors.black.withValues(alpha: 0.35)
-            : Colors.white.withValues(alpha: 0.45));
+            ? Colors.black.withOpacity(0.7)
+            : Colors.white.withOpacity(0.9));
 
     return Visibility(
       visible: widget.options.isShareEventModalVisible,
@@ -125,7 +125,7 @@ class _ModernShareEventModalState extends State<ModernShareEventModal>
                 child: FadeTransition(
                   opacity: _fadeAnimation,
                   child: Container(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Colors.black.withOpacity(0.05),
                   ),
                 ),
               ),
@@ -164,19 +164,19 @@ class _ModernShareEventModalState extends State<ModernShareEventModal>
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: isDarkMode
-                                ? Colors.white.withValues(
-                                    alpha: useHighTransparency ? 0.08 : 0.1)
-                                : Colors.black.withValues(
-                                    alpha: useHighTransparency ? 0.05 : 0.1),
+                                ? Colors.white.withOpacity(
+                                    useHighTransparency ? 0.08 : 0.1)
+                                : Colors.black.withOpacity(
+                                    useHighTransparency ? 0.05 : 0.1),
                           ),
                           boxShadow: useHighTransparency
                               ? []
                               : [
                                   BoxShadow(
-                                    color: MediasfuColors.secondary
-                                        .withValues(alpha: 0.2),
-                                    blurRadius: 40,
-                                    spreadRadius: 8,
+                                    color: Colors.black.withOpacity(0.2),
+                                    blurRadius: 30,
+                                    spreadRadius: 0,
+                                    offset: const Offset(0, 8),
                                   ),
                                 ],
                         ),
@@ -227,8 +227,8 @@ class _ModernShareEventModalState extends State<ModernShareEventModal>
         border: Border(
           bottom: BorderSide(
             color: isDarkMode
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.1),
+                ? Colors.white.withOpacity(0.1)
+                : Colors.black.withOpacity(0.1),
           ),
         ),
       ),
@@ -240,15 +240,15 @@ class _ModernShareEventModalState extends State<ModernShareEventModal>
               gradient: LinearGradient(
                 colors: [
                   MediasfuColors.secondary,
-                  MediasfuColors.secondary.withValues(alpha: 0.7),
+                  MediasfuColors.secondary.withOpacity(0.7),
                 ],
               ),
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: MediasfuColors.secondary.withValues(alpha: 0.5),
-                  blurRadius: 12,
-                  spreadRadius: 2,
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
@@ -271,12 +271,13 @@ class _ModernShareEventModalState extends State<ModernShareEventModal>
           ),
           IconButton(
             onPressed: _handleClose,
+            tooltip: 'Close share event',
             icon: Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
                 color: isDarkMode
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.05),
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.black.withOpacity(0.05),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -294,21 +295,20 @@ class _ModernShareEventModalState extends State<ModernShareEventModal>
   Widget _buildMeetingIdSection(bool isDarkMode) {
     final themeTextColor = isDarkMode ? Colors.white : Colors.black87;
     final themeLabelColor = isDarkMode ? Colors.white70 : Colors.black54;
-    final themeInputBg = isDarkMode
-        ? Colors.white.withValues(alpha: 0.08)
-        : const Color(0xFFF0F0F0);
+    final themeInputBg =
+        isDarkMode ? Colors.white.withOpacity(0.08) : const Color(0xFFF0F0F0);
 
     return Container(
       padding: const EdgeInsets.all(MediasfuSpacing.sm),
       decoration: BoxDecoration(
         color: isDarkMode
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.black.withValues(alpha: 0.03),
+            ? Colors.white.withOpacity(0.05)
+            : Colors.black.withOpacity(0.03),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDarkMode
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.black.withValues(alpha: 0.05),
+              ? Colors.white.withOpacity(0.1)
+              : Colors.black.withOpacity(0.05),
         ),
       ),
       child: Column(
@@ -322,8 +322,8 @@ class _ModernShareEventModalState extends State<ModernShareEventModal>
             ),
             decoration: BoxDecoration(
               color: isDarkMode
-                  ? Colors.white.withValues(alpha: 0.04)
-                  : Colors.black.withValues(alpha: 0.02),
+                  ? Colors.white.withOpacity(0.04)
+                  : Colors.black.withOpacity(0.02),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: MediasfuColors.glassBorder(darkMode: isDarkMode),
@@ -365,21 +365,20 @@ class _ModernShareEventModalState extends State<ModernShareEventModal>
   Widget _buildPasscodeSection(bool isDarkMode) {
     final themeTextColor = isDarkMode ? Colors.white : Colors.black87;
     final themeLabelColor = isDarkMode ? Colors.white70 : Colors.black54;
-    final themeInputBg = isDarkMode
-        ? Colors.white.withValues(alpha: 0.08)
-        : const Color(0xFFF0F0F0);
+    final themeInputBg =
+        isDarkMode ? Colors.white.withOpacity(0.08) : const Color(0xFFF0F0F0);
 
     return Container(
       padding: const EdgeInsets.all(MediasfuSpacing.sm),
       decoration: BoxDecoration(
         color: isDarkMode
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.black.withValues(alpha: 0.03),
+            ? Colors.white.withOpacity(0.05)
+            : Colors.black.withOpacity(0.03),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDarkMode
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.black.withValues(alpha: 0.05),
+              ? Colors.white.withOpacity(0.1)
+              : Colors.black.withOpacity(0.05),
         ),
       ),
       child: Column(
@@ -393,8 +392,8 @@ class _ModernShareEventModalState extends State<ModernShareEventModal>
             ),
             decoration: BoxDecoration(
               color: isDarkMode
-                  ? Colors.white.withValues(alpha: 0.04)
-                  : Colors.black.withValues(alpha: 0.02),
+                  ? Colors.white.withOpacity(0.04)
+                  : Colors.black.withOpacity(0.02),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: MediasfuColors.glassBorder(darkMode: isDarkMode),
@@ -439,13 +438,13 @@ class _ModernShareEventModalState extends State<ModernShareEventModal>
       padding: const EdgeInsets.all(MediasfuSpacing.sm),
       decoration: BoxDecoration(
         color: isDarkMode
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.black.withValues(alpha: 0.03),
+            ? Colors.white.withOpacity(0.05)
+            : Colors.black.withOpacity(0.03),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDarkMode
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.black.withValues(alpha: 0.05),
+              ? Colors.white.withOpacity(0.1)
+              : Colors.black.withOpacity(0.05),
         ),
       ),
       child: Column(
@@ -459,8 +458,8 @@ class _ModernShareEventModalState extends State<ModernShareEventModal>
             ),
             decoration: BoxDecoration(
               color: isDarkMode
-                  ? Colors.white.withValues(alpha: 0.04)
-                  : Colors.black.withValues(alpha: 0.02),
+                  ? Colors.white.withOpacity(0.04)
+                  : Colors.black.withOpacity(0.02),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: MediasfuColors.glassBorder(darkMode: isDarkMode),
@@ -509,8 +508,8 @@ class _ModernShareEventModalState extends State<ModernShareEventModal>
               border: Border(
                 bottom: BorderSide(
                   color: isDarkMode
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : Colors.black.withValues(alpha: 0.1),
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.black.withOpacity(0.1),
                 ),
               ),
             ),

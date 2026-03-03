@@ -160,7 +160,7 @@ class _MainUniqueAppState extends State<MainUniqueApp> {
                         final child = defaultBuilder(context, options);
                         return Container(
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.82),
+                            color: Colors.white.withOpacity(0.82),
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: const [
                               BoxShadow(
@@ -422,7 +422,7 @@ class _MainUniqueAppState extends State<MainUniqueApp> {
                       Text(
                         active ? 'Microphone live' : 'Muted',
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.75),
+                          color: Colors.white.withOpacity(0.75),
                           fontSize: 12,
                         ),
                       ),
@@ -526,7 +526,7 @@ class _MainUniqueAppState extends State<MainUniqueApp> {
                 constraints: const BoxConstraints(maxWidth: 420),
                 padding: const EdgeInsets.all(28),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.08),
+                  color: Colors.white.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: Colors.white24),
                 ),
@@ -993,7 +993,7 @@ class _MainUniqueAppState extends State<MainUniqueApp> {
                         Expanded(
                           child: DecoratedBox(
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.08),
+                              color: Colors.white.withOpacity(0.08),
                               borderRadius: BorderRadius.circular(18),
                             ),
                             child: ListView(

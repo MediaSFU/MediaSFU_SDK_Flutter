@@ -141,12 +141,18 @@ Future<void> connectSendTransportScreen(
     ProducerOptionsType producerParams = screenParams!;
 
     // Find VP9 codec in device capabilities
-    RtpCodecCapability? codec = device?.rtpCapabilities.codecs
-        .firstWhere((codec) => codec.mimeType.toLowerCase() == 'video/vp9');
+    RtpCodecCapability? codec;
+    try {
+      codec = device?.rtpCapabilities.codecs
+          .firstWhere((codec) => codec.mimeType.toLowerCase() == 'video/vp9');
+    } catch (_) {
+      codec = null;
+    }
 
     // If no VP9 codec is found, get the first video codec
     codec ??= device?.rtpCapabilities.codecs.firstWhere(
-        (codec) => codec.kind == RTCRtpMediaType.RTCRtpMediaTypeVideo);
+        (codec) => codec.kind == RTCRtpMediaType.RTCRtpMediaTypeVideo,
+        orElse: () => device.rtpCapabilities.codecs.first);
 
     // Produce screen share video using the transport and codec
     if (targetOption == 'remote' || targetOption == 'all') {
@@ -173,15 +179,10 @@ Future<void> connectSendTransportScreen(
           parameters: parameters,
         );
       } catch (localError) {
-        if (kDebugMode) {
-          print('Error connecting local screen transport: $localError');
-        }
+        // Silently handle local transport errors
       }
     }
   } catch (error) {
-    if (kDebugMode) {
-      print('connectSendTransportScreen error: $error');
-    }
-    // throw error;
+    // Silently handle errors
   }
 }

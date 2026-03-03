@@ -379,7 +379,7 @@ class _ConfigureWhiteboardModalState extends State<ConfigureWhiteboardModal> {
           child: GestureDetector(
             onTap: widget.options.onClose,
             child: Container(
-              color: Colors.black.withValues(alpha: 0.6),
+              color: Colors.black.withOpacity(0.6),
             ),
           ),
         ),
@@ -400,7 +400,7 @@ class _ConfigureWhiteboardModalState extends State<ConfigureWhiteboardModal> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.25),
+                    color: Colors.black.withOpacity(0.25),
                     blurRadius: 30,
                     offset: const Offset(0, 10),
                   ),
@@ -451,7 +451,7 @@ class _ConfigureWhiteboardModalState extends State<ConfigureWhiteboardModal> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
+              color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const FaIcon(
@@ -478,7 +478,7 @@ class _ConfigureWhiteboardModalState extends State<ConfigureWhiteboardModal> {
                   isActive ? 'Session active' : 'Manage participant access',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.white.withValues(alpha: 0.85),
+                    color: Colors.white.withOpacity(0.85),
                   ),
                 ),
               ],
@@ -488,7 +488,7 @@ class _ConfigureWhiteboardModalState extends State<ConfigureWhiteboardModal> {
             icon: Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: Colors.white.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(Icons.close, color: Colors.white, size: 18),
@@ -504,10 +504,10 @@ class _ConfigureWhiteboardModalState extends State<ConfigureWhiteboardModal> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF10B981).withValues(alpha: 0.1),
+        color: const Color(0xFF10B981).withOpacity(0.1),
         border: Border(
           bottom: BorderSide(
-            color: const Color(0xFF10B981).withValues(alpha: 0.3),
+            color: const Color(0xFF10B981).withOpacity(0.3),
           ),
         ),
       ),
@@ -666,7 +666,7 @@ class _ConfigureWhiteboardModalState extends State<ConfigureWhiteboardModal> {
                       boxShadow: _selectedParticipantTab == 0
                           ? [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05),
+                                color: Colors.black.withOpacity(0.05),
                                 blurRadius: 4,
                               )
                             ]
@@ -713,7 +713,7 @@ class _ConfigureWhiteboardModalState extends State<ConfigureWhiteboardModal> {
                       boxShadow: _selectedParticipantTab == 1
                           ? [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05),
+                                color: Colors.black.withOpacity(0.05),
                                 blurRadius: 4,
                               )
                             ]
@@ -811,7 +811,7 @@ class _ConfigureWhiteboardModalState extends State<ConfigureWhiteboardModal> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withOpacity(0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -833,7 +833,7 @@ class _ConfigureWhiteboardModalState extends State<ConfigureWhiteboardModal> {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: iconColor.withValues(alpha: 0.15),
+                    color: iconColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: FaIcon(icon, size: 12, color: iconColor),
@@ -864,7 +864,7 @@ class _ConfigureWhiteboardModalState extends State<ConfigureWhiteboardModal> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: iconColor.withValues(alpha: 0.15),
+                    color: iconColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -1119,7 +1119,7 @@ class _ConfigureWhiteboardModalState extends State<ConfigureWhiteboardModal> {
           gradient: isDisabled
               ? null
               : LinearGradient(
-                  colors: [color, color.withValues(alpha: 0.85)],
+                  colors: [color, color.withOpacity(0.85)],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
@@ -1129,7 +1129,7 @@ class _ConfigureWhiteboardModalState extends State<ConfigureWhiteboardModal> {
               ? null
               : [
                   BoxShadow(
-                    color: color.withValues(alpha: 0.3),
+                    color: color.withOpacity(0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),

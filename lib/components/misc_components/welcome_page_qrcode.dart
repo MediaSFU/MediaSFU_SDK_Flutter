@@ -188,7 +188,7 @@
 //                   child: const CircleAvatar(
 //                     radius: 50,
 //                     backgroundImage:
-//                         NetworkImage('https://mediasfu.com/images/logo192.png'),
+//                         NetworkImage(kDefaultMediaSFULogo),
 //                   ),
 //                 ),
 //                 // Input Fields

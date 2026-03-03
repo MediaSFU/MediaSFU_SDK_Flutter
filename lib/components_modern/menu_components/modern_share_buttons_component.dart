@@ -334,23 +334,23 @@ class _ModernShareButtonState extends State<_ModernShareButton>
                       colors: [
                         _isPressed
                             ? data.backgroundColor
-                            : data.backgroundColor.withValues(alpha: 0.9),
+                            : data.backgroundColor.withOpacity(0.9),
                         _isPressed
-                            ? data.backgroundColor.withValues(alpha: 0.9)
-                            : data.backgroundColor.withValues(alpha: 0.7),
+                            ? data.backgroundColor.withOpacity(0.9)
+                            : data.backgroundColor.withOpacity(0.7),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(widget.buttonSize / 4),
                     border: Border.all(
                       color: _isPressed
-                          ? Colors.white.withValues(alpha: 0.4)
-                          : Colors.white.withValues(alpha: 0.2),
+                          ? Colors.white.withOpacity(0.4)
+                          : Colors.white.withOpacity(0.2),
                       width: 1,
                     ),
                     boxShadow: [
                       BoxShadow(
                         color: data.backgroundColor
-                            .withValues(alpha: _isPressed ? 0.6 : 0.3),
+                            .withOpacity(_isPressed ? 0.6 : 0.3),
                         blurRadius: _isPressed ? 16 : 8,
                         spreadRadius: _isPressed ? 2 : 0,
                         offset: const Offset(0, 4),

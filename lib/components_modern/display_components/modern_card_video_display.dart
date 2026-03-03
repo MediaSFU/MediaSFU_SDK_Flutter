@@ -303,17 +303,17 @@ class _ModernCardVideoDisplayState extends State<ModernCardVideoDisplay>
               end: Alignment.bottomRight,
               colors: options.isDarkMode
                   ? [
-                      const Color(0xFF2D2D44),
-                      const Color(0xFF1A1A2E),
+                      const Color(0xFF1a1d2e),
+                      const Color(0xFF151827),
                     ]
                   : [
-                      const Color(0xFFF5F5F5),
-                      const Color(0xFFE0E0E0),
+                      const Color(0xFFF8F9FA),
+                      const Color(0xFFE9ECEF),
                     ],
             ),
             border: Border.all(
               color: (options.isDarkMode ? Colors.white : Colors.black)
-                  .withValues(alpha: 0.1),
+                  .withOpacity(0.06),
             ),
           ),
           child: Center(
@@ -336,7 +336,7 @@ class _ModernCardVideoDisplayState extends State<ModernCardVideoDisplay>
                     'Connecting...',
                     style: TextStyle(
                       color: (options.isDarkMode ? Colors.white : Colors.black)
-                          .withValues(alpha: 0.7),
+                          .withOpacity(0.7),
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -400,7 +400,7 @@ class _ModernCardVideoDisplayState extends State<ModernCardVideoDisplay>
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-                        Colors.black.withValues(alpha: 0.3),
+                        Colors.black.withOpacity(0.3),
                       ],
                       stops: const [0.6, 1.0],
                     ),
@@ -434,11 +434,11 @@ class _ModernCardVideoDisplayState extends State<ModernCardVideoDisplay>
           borderRadius: BorderRadius.circular(options.borderRadius),
           border: Border.all(
             color: (options.isDarkMode ? Colors.white : Colors.black)
-                .withValues(alpha: 0.08),
+                .withOpacity(0.08),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
+              color: Colors.black.withOpacity(0.2),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),

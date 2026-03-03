@@ -1,5 +1,8 @@
 // ignore_for_file: empty_catches, non_constant_identifier_names
+import '../../utils/image_utils.dart';
 import 'package:flutter/material.dart';
+import '../core/theme/mediasfu_theme.dart';
+import '../core/theme/mediasfu_animations.dart';
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
 
 import '../../components/misc_components/prejoin_page.dart';
@@ -17,7 +20,7 @@ import '../../methods/utils/initial_values.dart' show initialValuesState;
 
 //import components for display (samples)
 import '../../components/display_components/meeting_progress_timer.dart'
-    show MeetingProgressTimerOptions;
+    show MeetingProgressTimerOptions, MeetingProgressTimerPositionOverride;
 import '../display_components/modern_meeting_progress_timer.dart'
     show ModernMeetingProgressTimer;
 import '../../components/display_components/participants_counter_badge.dart'
@@ -112,6 +115,8 @@ import '../../components/background_components/background_processor_service.dart
     show BackgroundProcessorService;
 import '../../components/background_components/native_virtual_background.dart'
     show NativeVirtualBackground;
+import '../../components/background_components/screen_wake_lock.dart'
+    show ScreenWakeLock;
 
 // Pagination and display of media (samples)
 import '../../components/display_components/pagination.dart'
@@ -509,7 +514,8 @@ import '../../types/types.dart'
         CreateMediaSFURoomOptions,
         JoinMediaSFURoomOptions,
         JoinRoomOnMediaSFUType,
-        CreateRoomOnMediaSFUType;
+        CreateRoomOnMediaSFUType,
+        LiveSubtitle;
 import '../../methods/utils/create_response_join_room.dart'
     show createResponseJoinRoom, CreateResponseJoinRoomOptions;
 import '../../methods/utils/mediasfu_parameters.dart' show MediasfuParameters;
@@ -578,6 +584,53 @@ class ModernMediasfuGenericOptions {
   ContainerStyleOptions? containerStyle;
   MediasfuUICustomOverrides? uiOverrides;
 
+  /// Whether to use fixed link (stagerooms.mediasfu.com) instead of dynamic URL selection
+  /// When true, always connects to stagerooms.mediasfu.com
+  /// When false, URL is selected based on meeting ID prefix (d=demos, s=sandbox, p=production)
+  bool? useFixedLink;
+
+  /// App key for Flutter app authentication in socket handshake (X-App-Key)
+  /// Used when connecting to local backend via localLink
+  String? localAppKey;
+
+  /// API username for backend authentication in socket handshake
+  /// Used when connecting to local backend via localLink
+  String? localApiUserName;
+
+  /// API key for backend authentication in socket handshake
+  /// Used when connecting to local backend via localLink
+  String? localApiKey;
+
+  /// Sub-username for organization/team member identification
+  /// Used for subuser accounts within an organization
+  String? localSubUserName;
+
+  /// Initial meeting ID to pre-fill in the prejoin page
+  /// Used for deep links like /meeting/:roomId
+  String? initialMeetingId;
+
+  /// Whether the user can use personal translation (billed to their account)
+  /// When true and the room doesn't support translation, a personal translation
+  /// request is automatically sent to the server
+  bool canUsePersonalTranslation;
+
+  /// Username for personal translation billing
+  /// Required when canUsePersonalTranslation is true
+  String? personalTranslationUsername;
+
+  /// User's voice clones from their account, passed to the translation modal.
+  /// Each clone is a map with keys: id, voiceId, name, provider, isDefault.
+  List<Map<String, dynamic>>? userVoiceClones;
+
+  /// When true, keeps the urn:3gpp:video-orientation RTP header extension
+  /// so recorded video has correct orientation metadata.
+  bool optimizeVideoRecord;
+
+  /// Optional callback for navigating back from the prejoin/setup page.
+  /// When provided, the setup page back button will call this instead of
+  /// using Navigator.maybePop. Useful for apps using GoRouter or custom routing.
+  VoidCallback? onBack;
+
   ModernMediasfuGenericOptions({
     this.preJoinPageWidget,
     this.localLink = '',
@@ -600,6 +653,17 @@ class ModernMediasfuGenericOptions {
     this.customComponent,
     this.containerStyle,
     this.uiOverrides,
+    this.useFixedLink,
+    this.localAppKey,
+    this.localApiUserName,
+    this.localApiKey,
+    this.localSubUserName,
+    this.initialMeetingId,
+    this.canUsePersonalTranslation = false,
+    this.personalTranslationUsername,
+    this.userVoiceClones,
+    this.optimizeVideoRecord = false,
+    this.onBack,
     CustomWorkspaceBuilder? customWorkspaceBuilder,
   }) {
     applyCustomWorkspaceBuilder(customWorkspaceBuilder);
@@ -817,7 +881,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         useGlassmorphism: true,
         showIcon: true,
         showPulse: false, // Disabled - pulse effect on recording state
-        animateOnChange: true,
+        animateOnChange: false, // Disabled - was causing blink every second
         recordingState: options.initialBackgroundColor == Colors.red
             ? 'red'
             : options.initialBackgroundColor == Colors.yellow
@@ -1043,8 +1107,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           eventType.value == EventType.conference)) {
         // Handle landscape orientation for webinar and conference event types
         final mediaQuery = MediaQuery.of(context);
-        final safeAreaInsets =
-            mediaQuery.padding + mediaQuery.systemGestureInsets;
+        final safeAreaInsets = mediaQuery.padding;
         // Use available height after safe area is subtracted
         final availableHeight =
             mediaQuery.size.height - safeAreaInsets.top - safeAreaInsets.bottom;
@@ -1095,6 +1158,27 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
 
   void updateIsDarkMode(bool value) {
     isDarkMode.value = value;
+    mediasfuParameters.isDarkModeValue = value;
+
+    // Refresh grid to update MiniCard/VideoCard theme colors
+    if (validated) {
+      try {
+        onScreenChanges(
+          OnScreenChangesOptions(
+            changed: true,
+            parameters: mediasfuParameters,
+          ),
+        );
+      } catch (_) {}
+      try {
+        _prepopulateUserMediaHandler(
+          PrepopulateUserMediaOptions(
+            name: hostLabel.value,
+            parameters: mediasfuParameters,
+          ),
+        );
+      } catch (_) {}
+    }
   }
 
   // Meeting active state - for responsive updates
@@ -1213,9 +1297,20 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   Map<String, Map<String, dynamic>> availableTranslationChannels = {};
   List<TranslationTranscriptData> transcripts = [];
   Set<String> activeTranslationProducerIds = {};
+  final Set<String> translationFirstRenderForced =
+      {}; // Track speakers whose translation audio has been "nudged" (first transcript re-render)
   Set<String> translationSubscriptions = {};
   TranslationRoomConfig? translationConfig;
   final ValueNotifier<bool> translationSupported = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> isPersonalTranslation = ValueNotifier<bool>(false);
+
+  // Live Subtitles on Video Cards
+  /// Whether to show subtitles on participant video cards
+  final ValueNotifier<bool> showSubtitlesOnCards = ValueNotifier<bool>(false);
+
+  /// Per-speaker live subtitle data: Map<speakerId, LiveSubtitle>
+  final ValueNotifier<Map<String, LiveSubtitle>> liveSubtitles =
+      ValueNotifier<Map<String, LiveSubtitle>>({});
 
   // Room Details
   final ValueNotifier<String> roomName = ValueNotifier('');
@@ -1234,7 +1329,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   final ValueNotifier<bool> youAreCoHost = ValueNotifier(false);
   final ValueNotifier<bool> youAreHost = ValueNotifier(false);
   final ValueNotifier<bool> confirmedToRecord = ValueNotifier(false);
-  final ValueNotifier<String> meetingDisplayType = ValueNotifier('media');
+  final ValueNotifier<String> meetingDisplayType = ValueNotifier('all');
   final ValueNotifier<bool> meetingVideoOptimized = ValueNotifier(false);
   final ValueNotifier<EventType> eventType = ValueNotifier(EventType.webinar);
   final ValueNotifier<List<Participant>> participants =
@@ -1652,6 +1747,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   final ValueNotifier<bool> isMessagesModalVisible = ValueNotifier(false);
   final ValueNotifier<bool> isConfirmExitModalVisible = ValueNotifier(false);
   final ValueNotifier<bool> isConfirmHereModalVisible = ValueNotifier(false);
+  bool _suppressConfirmHere =
+      false; // Session-level suppress for "Are you still here?" modal
   final ValueNotifier<bool> isShareEventModalVisible = ValueNotifier(false);
   final ValueNotifier<bool> isLoadingModalVisible = ValueNotifier(false);
 
@@ -1784,6 +1881,36 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     translationSupported.value = value;
   }
 
+  // Live Subtitle update methods
+  void updateShowSubtitlesOnCards(bool value) {
+    if (!mounted) return;
+    showSubtitlesOnCards.value = value;
+  }
+
+  void updateLiveSubtitles(Map<String, LiveSubtitle> value) {
+    if (!mounted) return;
+    liveSubtitles.value = value;
+  }
+
+  /// Updates or adds a live subtitle for a specific speaker
+  void updateLiveSubtitleForSpeaker(String speakerId, LiveSubtitle subtitle) {
+    if (!mounted) return;
+    final updated = Map<String, LiveSubtitle>.from(liveSubtitles.value);
+    updated[speakerId] = subtitle;
+    liveSubtitles.value = updated;
+  }
+
+  /// Removes expired subtitles from the map
+  void cleanupExpiredSubtitles() {
+    if (!mounted) return;
+    final now = DateTime.now();
+    final updated = Map<String, LiveSubtitle>.from(liveSubtitles.value);
+    updated.removeWhere((_, subtitle) => now.isAfter(subtitle.expiresAt));
+    if (updated.length != liveSubtitles.value.length) {
+      liveSubtitles.value = updated;
+    }
+  }
+
   void updateAvailableTranslationChannels(
       String speakerId, List<String> languages, String originalProducerId) {
     if (!mounted) return;
@@ -1803,7 +1930,6 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     // Get the target socket (main socket for now)
     final targetSocket = socket.value;
     if (targetSocket == null) {
-      debugPrint('[Translation] No socket available for consuming translation');
       return;
     }
 
@@ -1822,9 +1948,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       if (originalProducerId.isNotEmpty) {
         await pauseOriginalProducer(originalProducerId, speakerId);
       }
-    } catch (e) {
-      debugPrint('[Translation] Error signaling consumer transport: $e');
-    }
+    } catch (_) {}
   }
 
   Future<void> stopConsumingTranslation(
@@ -1917,9 +2041,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       final transport = consumerTransports.value[transportIndex];
       try {
         transport.consumer.pause();
-      } catch (e) {
-        debugPrint('[Translation] Error pausing original producer: $e');
-      }
+
+        // Notify server to stop sending original audio data
+        transport.socket_.emit('consumer-pause', {
+          'serverConsumerId': transport.consumer.id,
+        });
+      } catch (_) {}
     }
   }
 
@@ -1934,9 +2061,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       final transport = consumerTransports.value[transportIndex];
       try {
         transport.consumer.resume();
-      } catch (e) {
-        debugPrint('[Translation] Error resuming original producer: $e');
-      }
+      } catch (_) {}
     }
   }
 
@@ -1996,8 +2121,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     if (!value) {
       closeSidebar();
       updateIsMeetingActive(false);
+      // Disable screen wake lock when leaving meeting
+      ScreenWakeLock.disable().catchError((_) => false);
     } else {
       updateIsMeetingActive(true);
+      // Enable screen wake lock to keep screen on during meeting
+      ScreenWakeLock.enable().catchError((_) => false);
     }
 
     if (validated) {
@@ -2090,8 +2219,22 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             mainWidth: mainHeightWidth,
             otherWidth: componentSizes.value.otherWidth));
       }
+      // For conference mode without screen sharing, mainHeightWidth should be 0
+      // so the participant grid fills the entire screen
+      if (value == EventType.conference &&
+          !shareScreenStarted.value &&
+          !shared.value &&
+          !(whiteboardStarted.value && !whiteboardEnded.value) &&
+          mainHeightWidth != 0) {
+        mainHeightWidth = 0;
+        mediasfuParameters.mainHeightWidth = 0;
+        updateSpecificState(
+            widget.options.sourceParameters, 'mainHeightWidth', 0.0);
+      }
     });
-    if (value == EventType.chat) {
+    if (value == EventType.chat ||
+        value == EventType.conference ||
+        value == EventType.webinar) {
       updateMeetingDisplayType('all');
     }
   }
@@ -4620,15 +4763,23 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         // Update the selected background
         updateSelectedBackground(background);
 
-        // Try native processing first (Android), fall back to local-only processing
+        // Try native processing first, fall back to local-only processing
         bool useNative = false;
 
         if (NativeVirtualBackground.isSupported) {
           useNative = await _applyNativeVirtualBackground(background);
+
+          // If native VB succeeded, stop any fallback processor
+          if (useNative) {
+            try {
+              await Future.delayed(const Duration(milliseconds: 100));
+              final processorService = BackgroundProcessorService();
+              await processorService.stop();
+            } catch (_) {}
+          }
         }
 
         if (!useNative) {
-          // Fallback: Start or stop the BackgroundProcessorService (local display only)
           await _applyLocalVirtualBackground(background);
         }
 
@@ -4673,10 +4824,14 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     updateIsBackgroundModalVisible(false);
   }
 
-  /// Native virtual background instance (Android only)
+  /// Native virtual background instance
   NativeVirtualBackground? _nativeVirtualBackground;
 
-  /// Apply virtual background using native frame processing (Android).
+  /// Apply virtual background using native frame processing.
+  ///
+  /// **Android/iOS/macOS:** Uses NativeVirtualBackground.
+  /// Windows is not supported (libwebrtc has no PushFrame API).
+  ///
   /// Returns true if native processing was successfully enabled.
   Future<bool> _applyNativeVirtualBackground(
       VirtualBackground background) async {
@@ -4708,26 +4863,28 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           return false;
         }
 
-        // Enable native virtual background
+        // Enable native virtual background (loads ONNX model + sets BG image)
         final success = await native.enable(
           trackId: trackId,
           backgroundImage: imageBytes,
           confidence: 0.7,
         );
 
-        if (success) {
-          updateAppliedBackground(true);
-          return true;
-        } else {
+        if (!success) {
           return false;
         }
+
+        updateAppliedBackground(true);
+        return true;
       } else {
+        // ----- Disable -----
+
         // Disable native virtual background
         await native.disable();
         updateAppliedBackground(false);
         return true;
       }
-    } catch (e) {
+    } catch (_) {
       return false;
     }
   }
@@ -4745,7 +4902,14 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         await processorService.initialize();
         processorService.setBackground(background);
         if (localStreamVideo.value != null) {
-          await processorService.start(localStreamVideo.value!);
+          // Use vidCons dimensions so processing runs at the meeting's
+          // resolution rather than the camera's native resolution.
+          final vCons = vidCons.value;
+          await processorService.start(
+            localStreamVideo.value!,
+            targetWidth: vCons.width.ideal,
+            targetHeight: vCons.height.ideal,
+          );
         }
       } catch (e) {
         // Ignore processor errors
@@ -5283,8 +5447,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         customComponent: Container(
           decoration: BoxDecoration(
             color: isDarkMode.value
-                ? Colors.black.withValues(alpha: 0.35)
-                : Colors.white.withValues(alpha: 0.35),
+                ? Colors.black.withOpacity(0.35)
+                : Colors.white.withOpacity(0.35),
             borderRadius: BorderRadius.circular(12),
           ),
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
@@ -5300,8 +5464,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                     fontSize: 9,
                     fontWeight: FontWeight.w500,
                     color: isDarkMode.value
-                        ? Colors.white.withValues(alpha: 0.6)
-                        : Colors.black.withValues(alpha: 0.5),
+                        ? Colors.white.withOpacity(0.6)
+                        : Colors.black.withOpacity(0.5),
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -6221,7 +6385,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                   clipBehavior: Clip.none,
                   children: [
                     Icon(Icons.front_hand_outlined,
-                        size: 20,
+                        size: 16,
                         color:
                             MediasfuColors.themedIcon(darkMode: isDarkModeVal)),
                     if (requestCounter.value > 0)
@@ -6234,24 +6398,24 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 4, vertical: 1),
+                              horizontal: 3, vertical: 1),
                           child: Text(
                             requestCounter.value.toString(),
                             style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 10,
+                                fontSize: 9,
                                 fontWeight: FontWeight.bold),
                           ),
                         ),
                       ),
                   ],
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
                 Text(
                   'Requests',
                   style: TextStyle(
                     color: MediasfuColors.themedText(darkMode: isDarkModeVal),
-                    fontSize: 12,
+                    fontSize: 10,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -6312,14 +6476,41 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   void dispose() {
     isPortrait.removeListener(_handleOrientationChange);
     activeSidebarContent.removeListener(_handleSidebarVisibilityChange);
+
+    // Safety net: clean up sockets if not already cleaned via closeAndReset
+    try {
+      if (socket.value != null) {
+        socket.value!.clearListeners();
+        socket.value!.disconnect();
+        socket.value!.close();
+        socket.value!.dispose();
+      }
+    } catch (_) {}
+    try {
+      if (localSocket.value != null) {
+        localSocket.value!.clearListeners();
+        localSocket.value!.disconnect();
+        localSocket.value!.close();
+        localSocket.value!.dispose();
+      }
+    } catch (_) {}
+    try {
+      for (final socketMap in consumeSockets.value) {
+        final s = socketMap.values.first;
+        s.clearListeners();
+        s.disconnect();
+        s.close();
+        s.dispose();
+      }
+    } catch (_) {}
+
     super.dispose();
   }
 
   void _handleOrientationChange({bool immediate = false}) {
     try {
       final mediaQuery = MediaQuery.of(context);
-      final safeAreaInsets =
-          mediaQuery.padding + mediaQuery.systemGestureInsets;
+      final safeAreaInsets = mediaQuery.padding;
 
       // Calculate available height after safe area is removed (since we're in SafeArea)
       final availableHeight =
@@ -6412,8 +6603,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             sec: sec,
             apiUserName: apiUserName,
             parameters: PreJoinPageParameters(
-              imgSrc: widget.options.imgSrc ??
-                  'https://mediasfu.com/images/logo192.png',
+              imgSrc: widget.options.imgSrc ?? kDefaultMediaSFULogo,
               showAlert: showAlert,
               updateIsLoadingModalVisible: updateIsLoadingModalVisible,
               connectSocket: connectSocket,
@@ -6510,6 +6700,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               Device? device_ = await createDeviceClient(
                 options: CreateDeviceClientOptions(
                   rtpCapabilities: data.rtpCapabilities,
+                  optimizeVideoRecord: widget.options.optimizeVideoRecord,
                 ),
               );
 
@@ -6589,8 +6780,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       final ip = socketMap.keys.first;
       final socket = socketMap[ip];
       try {
-        socket!.disconnect();
+        socket!.clearListeners();
+        socket.disconnect();
         socket.close();
+        socket.dispose();
       } catch (error) {
         if (kDebugMode) {
           // print('Error disconnecting socket with IP: $ip: $error');
@@ -6602,6 +6795,11 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   Future<void> joinAndUpdate() async {
     Future<void> closeAndReset() async {
       // Close and clean up all sockets, modals, and reset all states to initial values
+      try {
+        // Disable screen wake lock when leaving the meeting
+        await ScreenWakeLock.disable();
+      } catch (e) {}
+
       try {
         updateIsLoadingModalVisible(true);
 
@@ -6715,6 +6913,27 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         updateRoomRecvIPs([]);
       } catch (e) {}
 
+      // Disconnect and reset main socket and localSocket
+      try {
+        if (socket.value != null) {
+          socket.value!.clearListeners();
+          socket.value!.disconnect();
+          socket.value!.close();
+          socket.value!.dispose();
+          updateSocket(null);
+        }
+      } catch (e) {}
+
+      try {
+        if (localSocket.value != null) {
+          localSocket.value!.clearListeners();
+          localSocket.value!.disconnect();
+          localSocket.value!.close();
+          localSocket.value!.dispose();
+          updateLocalSocket(null);
+        }
+      } catch (e) {}
+
       // Reset translation states (not in initialValuesState)
       try {
         if (mounted) {
@@ -6770,6 +6989,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       updateDevice(null);
       updateRtpCapabilities(null);
 
+      // Show loading overlay during cleanup transition
+      updateIsLoadingModalVisible(true);
+
       // Delay before updating validated
       await Future.delayed(const Duration(milliseconds: 1000));
       updateValidated(false);
@@ -6816,9 +7038,46 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                 updateTranslationConfig: updateTranslationConfig,
                 updateTranslationSupported: updateTranslationSupported,
               ));
-            } catch (e) {
-              debugPrint('[Translation] Error handling roomConfig: $e');
-            }
+
+              // If room doesn't support translation but user has personal translation eligibility,
+              // automatically request personal translation from the server
+              if (configData.config.supportTranslation != true &&
+                  widget.options.canUsePersonalTranslation &&
+                  widget.options.personalTranslationUsername != null &&
+                  widget.options.personalTranslationUsername!.isNotEmpty) {
+                socketDefault.emitWithAck('requestPersonalTranslation', {
+                  'roomName': roomName.value,
+                  'username': widget.options.personalTranslationUsername,
+                }, ack: (response) {
+                  if (response != null && response['success'] == true) {
+                    // Request accepted
+                  } else {
+                    // Request denied
+                  }
+                });
+              }
+            } catch (_) {}
+          });
+
+          // Listen for personal translation config (per-joiner translation)
+          socketDefault.on('personalTranslationConfig', (data) async {
+            try {
+              final configMap = Map<String, dynamic>.from(data);
+              if (configMap['supportTranslation'] == true &&
+                  configMap['translationConfig'] != null) {
+                final personalConfig = TranslationRoomConfig.fromMap(
+                    Map<String, dynamic>.from(configMap['translationConfig']));
+                updateTranslationConfig(personalConfig);
+                isPersonalTranslation.value =
+                    configMap['isPersonalTranslation'] == true;
+                showAlert(
+                  message:
+                      'Personal translation activated with your account credits',
+                  type: 'success',
+                  duration: 3000,
+                );
+              }
+            } catch (_) {}
           });
 
           socketDefault.on('translation:configUpdated', (data) async {
@@ -6830,9 +7089,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                 updateTranslationConfig: updateTranslationConfig,
                 showAlert: showAlert,
               ));
-            } catch (e) {
-              debugPrint('[Translation] Error handling configUpdated: $e');
-            }
+            } catch (_) {}
           });
 
           socketDefault.on('translation:languageSet', (data) async {
@@ -6845,9 +7102,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                 updateMySpokenLanguageEnabled: updateMySpokenLanguageEnabled,
                 showAlert: showAlert,
               ));
-            } catch (e) {
-              debugPrint('[Translation] Error handling languageSet: $e');
-            }
+            } catch (_) {}
           });
 
           socketDefault.on('translation:memberState', (data) async {
@@ -6857,9 +7112,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               await translationMemberState(TranslationMemberStateOptions(
                 data: stateData,
               ));
-            } catch (e) {
-              debugPrint('[Translation] Error handling memberState: $e');
-            }
+            } catch (_) {}
           });
 
           socketDefault.on('translation:error', (data) async {
@@ -6870,9 +7123,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                 data: errorData,
                 showAlert: showAlert,
               ));
-            } catch (e) {
-              debugPrint('[Translation] Error handling error: $e');
-            }
+            } catch (_) {}
           });
 
           socketDefault.on('translation:speakerDisabled', (data) async {
@@ -6905,9 +7156,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                   }
                 });
               }
-            } catch (e) {
-              debugPrint('[Translation] Error handling speakerDisabled: $e');
-            }
+            } catch (_) {}
           });
 
           socketDefault.on('translation:subscribed', (data) async {
@@ -7020,13 +7269,56 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           });
 
           socketDefault.on('translation:transcript', (data) async {
+            final transcriptData = TranslationTranscriptData.fromMap(
+                Map<String, dynamic>.from(data));
             await translationTranscript(
               TranslationTranscriptOptions(
-                data: TranslationTranscriptData.fromMap(
-                    Map<String, dynamic>.from(data)),
+                data: transcriptData,
                 updateTranscripts: updateTranscriptsWrapper,
               ),
             );
+
+            // One-time forced re-render per speaker: when the first transcript
+            // arrives it confirms the translation pipeline is active. Force a
+            // re-notification of translationStreams to ensure the audio widget
+            // is properly mounted and playing.
+            if (transcriptData.speakerId.isNotEmpty &&
+                !translationFirstRenderForced
+                    .contains(transcriptData.speakerId)) {
+              translationFirstRenderForced.add(transcriptData.speakerId);
+              // Force ValueNotifier to re-notify listeners (new list reference)
+              translationStreams.value =
+                  List<Widget>.from(translationStreams.value);
+            }
+
+            // Update live subtitles if enabled
+            if (showSubtitlesOnCards.value) {
+              final subtitle = LiveSubtitle.create(
+                text: transcriptData.translatedText.isNotEmpty
+                    ? transcriptData.translatedText
+                    : transcriptData.originalText,
+                language: transcriptData.language,
+                speakerId: transcriptData.speakerId,
+                speakerName: transcriptData.speakerName,
+              );
+              // Store by BOTH speakerId AND speakerName to ensure matching
+              updateLiveSubtitleForSpeaker(transcriptData.speakerId, subtitle);
+              if (transcriptData.speakerName.isNotEmpty &&
+                  transcriptData.speakerName != transcriptData.speakerId) {
+                updateLiveSubtitleForSpeaker(
+                    transcriptData.speakerName, subtitle);
+              }
+
+              // Schedule cleanup of expired subtitles
+              Future.delayed(
+                  Duration(
+                      milliseconds: subtitle.expiresAt
+                              .difference(DateTime.now())
+                              .inMilliseconds +
+                          100), () {
+                cleanupExpiredSubtitles();
+              });
+            }
           });
 
           socketDefault.on('translation:listenerPreferencesUpdated',
@@ -7042,6 +7334,39 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               // Handle 'allMembers' event
               AllMembersData response = AllMembersData.fromJson(membersData);
               if (membersData != null) {
+                // IMMEDIATELY update speakerTranslationStates before consumers are created
+                // This allows connectRecvTransport to check this state when creating audio consumers
+                for (final participant in response.members) {
+                  // Skip self
+                  if (participant.name == member.value) continue;
+
+                  // Check if this participant has translation enabled with an output language
+                  final translationEnabled = participant['translationEnabled'];
+                  final translationDefaultOutputLanguage =
+                      participant['translationDefaultOutputLanguage'];
+                  final translationOriginalProducerId =
+                      participant['translationOriginalProducerId'];
+                  final translationInputLanguage =
+                      participant['translationInputLanguage'];
+
+                  if (translationEnabled == true &&
+                      translationDefaultOutputLanguage != null &&
+                      translationOriginalProducerId != null) {
+                    if (mounted) {
+                      setState(() {
+                        speakerTranslationStates[participant.name] = {
+                          'speakerId': participant.name,
+                          'speakerName': participant.name,
+                          'inputLanguage': translationInputLanguage ?? 'en',
+                          'outputLanguage': translationDefaultOutputLanguage,
+                          'originalProducerId': translationOriginalProducerId,
+                          'enabled': true,
+                        };
+                      });
+                    }
+                  }
+                }
+
                 await allMembers(
                   AllMembersOptions(
                     apiUserName: apiUserName,
@@ -7056,6 +7381,32 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                     consumeSockets: consumeSockets.value,
                   ),
                 );
+
+                // Fallback: After a delay to ensure consumers are set up,
+                // pause original audio for speakers with active translations
+                Future.delayed(const Duration(seconds: 2), () async {
+                  try {
+                    for (final participant in response.members) {
+                      if (participant.name == member.value) continue;
+
+                      final translationEnabled =
+                          participant['translationEnabled'];
+                      final translationDefaultOutputLanguage =
+                          participant['translationDefaultOutputLanguage'];
+                      final translationOriginalProducerId =
+                          participant['translationOriginalProducerId'];
+
+                      if (translationEnabled == true &&
+                          translationDefaultOutputLanguage != null &&
+                          translationOriginalProducerId != null) {
+                        await pauseOriginalProducer(
+                          translationOriginalProducerId as String,
+                          participant.name,
+                        );
+                      }
+                    }
+                  } catch (_) {}
+                });
               }
             } catch (error) {
               if (kDebugMode) {
@@ -7408,6 +7759,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
 
           socketDefault.on('meetingStillThere', (data) async {
             // Handle 'meetingStillThere' event
+            if (_suppressConfirmHere) return;
             try {
               await meetingStillThere(
                   options: MeetingStillThereOptions(
@@ -7543,7 +7895,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               ));
             } catch (error) {
               if (kDebugMode) {
-                // print('Error handling permissionConfigUpdated event: $error');
+                //print('Error handling permissionConfigUpdated event: $error');
               }
             }
           });
@@ -7796,7 +8148,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         if (!skipSockets && localChanged) {
           // Re-call connectsocket with skipSockets = true
           await connectsocket(apiUserName, token, skipSockets: true);
-          await Future.delayed(const Duration(milliseconds: 1000));
+          await Future.delayed(const Duration(milliseconds: 1500));
           updateIsLoadingModalVisible(false);
           return socketDefault;
         } else {
@@ -7864,6 +8216,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               startTime: DateTime.now().millisecondsSinceEpoch ~/ 1000,
               parameters: mediasfuParameters,
             ));
+            Future.delayed(const Duration(milliseconds: 500));
             updateIsLoadingModalVisible(false);
           }).catchError((error, stackTrace) {
             updateIsLoadingModalVisible(false);
@@ -8734,6 +9087,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         updateListenerTranslationOverrides: updateListenerTranslationOverrides,
         updateTranslationProducerMap: updateTranslationProducerMap,
         updateSpeakerTranslationStates: updateSpeakerTranslationStates,
+
+        // Live subtitles
+        showSubtitlesOnCards: showSubtitlesOnCards.value,
+        showSubtitlesOnCardsNotifier: showSubtitlesOnCards,
+        liveSubtitles: liveSubtitles,
+        updateShowSubtitlesOnCards: updateShowSubtitlesOnCards,
         getUpdatedAllParams: () => mediasfuParameters);
 
     if (widget.options.returnUI != null && widget.options.returnUI == false) {
@@ -8819,25 +9178,42 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      // Top: true adjusts for iOS status bar, ignores for other platforms
-      top: true,
-      child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent, // Makes status bar transparent
-          statusBarIconBrightness:
-              Brightness.light, // Sets status bar icons to light color
-        ),
-        child: OrientationBuilder(
-          builder: (BuildContext context, Orientation orientation) {
-            // Check if the device is in landscape mode
-            isPortrait.value = orientation == Orientation.portrait;
-            return Scaffold(
-              body: _buildRoomInterface(),
-              resizeToAvoidBottomInset: false,
-            );
-          },
-        ),
+    // Get safe area padding for manual handling
+    final mediaQuery = MediaQuery.of(context);
+    final topPadding = mediaQuery.padding.top;
+    final bottomPadding = mediaQuery.padding.bottom;
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent, // Makes status bar transparent
+        statusBarIconBrightness:
+            Brightness.light, // Sets status bar icons to light color
+        statusBarBrightness:
+            Brightness.dark, // iOS: dark background means light icons
+      ),
+      child: OrientationBuilder(
+        builder: (BuildContext context, Orientation orientation) {
+          // Check if the device is in landscape mode
+          isPortrait.value = orientation == Orientation.portrait;
+          return Scaffold(
+            body: Column(
+              children: [
+                // Status bar / notch background overlay (all platforms)
+                if (topPadding > 0)
+                  Container(
+                    height: topPadding,
+                    color: Colors.black
+                        .withOpacity(0.5), // Semi-transparent dark background
+                  ),
+                // Main content - takes remaining space
+                Expanded(
+                  child: _buildRoomInterface(),
+                ),
+              ],
+            ),
+            resizeToAvoidBottomInset: false,
+          );
+        },
       ),
     );
   }
@@ -8854,7 +9230,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         initializeControlBroadcastButtons(isDarkModeVal);
 
         return Theme(
-          data: isDarkModeVal ? ThemeData.dark() : ThemeData.light(),
+          data: isDarkModeVal ? MediasfuTheme.dark() : MediasfuTheme.light(),
           child:
               validated &&
                       widget.options.returnUI != null &&
@@ -9078,7 +9454,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                                                                                 Container(
                                                                               margin: const EdgeInsets.only(bottom: 10),
                                                                               decoration: BoxDecoration(
-                                                                                color: isDarkMode.value ? Colors.black.withValues(alpha: 0.35) : Colors.white.withValues(alpha: 0.35),
+                                                                                color: isDarkMode.value ? Colors.black.withOpacity(0.35) : Colors.white.withOpacity(0.35),
                                                                                 borderRadius: BorderRadius.circular(12),
                                                                               ),
                                                                               padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
@@ -9093,7 +9469,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                                                                                       style: TextStyle(
                                                                                         fontSize: 9,
                                                                                         fontWeight: FontWeight.w500,
-                                                                                        color: isDarkMode.value ? Colors.white.withValues(alpha: 0.6) : Colors.black.withValues(alpha: 0.5),
+                                                                                        color: isDarkMode.value ? Colors.white.withOpacity(0.6) : Colors.black.withOpacity(0.5),
                                                                                         letterSpacing: 0.5,
                                                                                       ),
                                                                                     ),
@@ -9168,17 +9544,19 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                                                                             builder: (context,
                                                                                 meetingProgressTime,
                                                                                 child) {
-                                                                              return _meetingProgressTimerBuilder(
-                                                                                  context,
-                                                                                  MeetingProgressTimerOptions(
-                                                                                    meetingProgressTime: meetingProgressTime,
-                                                                                    initialBackgroundColor: recordState == 'green'
-                                                                                        ? Colors.green
-                                                                                        : recordState == 'yellow'
-                                                                                            ? Colors.yellow
-                                                                                            : Colors.red,
-                                                                                    showTimer: true,
-                                                                                  ));
+                                                                              return RepaintBoundary(
+                                                                                child: _meetingProgressTimerBuilder(
+                                                                                    context,
+                                                                                    MeetingProgressTimerOptions(
+                                                                                      meetingProgressTime: meetingProgressTime,
+                                                                                      initialBackgroundColor: recordState == 'green'
+                                                                                          ? Colors.green
+                                                                                          : recordState == 'yellow'
+                                                                                              ? Colors.yellow
+                                                                                              : Colors.red,
+                                                                                      showTimer: true,
+                                                                                    )),
+                                                                              );
                                                                             }),
                                                                         // Participants counter badge
                                                                         ValueListenableBuilder<
@@ -9243,6 +9621,21 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                                                                         meetingProgressTime
                                                                             .value,
                                                                     children: [
+                                                                      // Translation Streams (Hidden/Audio Only)
+                                                                      ValueListenableBuilder<
+                                                                          List<
+                                                                              Widget>>(
+                                                                        valueListenable:
+                                                                            translationStreams,
+                                                                        builder: (context,
+                                                                            streams,
+                                                                            _) {
+                                                                          return Column(
+                                                                            children:
+                                                                                streams.map((s) => SizedBox(width: 0, height: 0, child: s)).toList(),
+                                                                          );
+                                                                        },
+                                                                      ),
                                                                       _audioGridBuilder(
                                                                           context,
                                                                           AudioGridOptions(
@@ -9317,17 +9710,30 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                                                                           builder: (context,
                                                                               meetingProgressTime,
                                                                               child) {
-                                                                            return _meetingProgressTimerBuilder(
-                                                                                context,
-                                                                                MeetingProgressTimerOptions(
-                                                                                  meetingProgressTime: meetingProgressTime,
-                                                                                  initialBackgroundColor: recordState == 'green'
-                                                                                      ? Colors.green
-                                                                                      : recordState == 'yellow'
-                                                                                          ? Colors.yellow
-                                                                                          : Colors.red,
-                                                                                  showTimer: mainHeightWidth == 0 ? true : false,
-                                                                                ));
+                                                                            final timerTopOffset = doPaginate.value && paginationDirection.value == 'horizontal'
+                                                                                ? paginationHeightWidth.value.toDouble() + 4
+                                                                                : 2.0;
+                                                                            final timerLeftOffset = doPaginate.value && paginationDirection.value == 'vertical'
+                                                                                ? paginationHeightWidth.value.toDouble() + 4
+                                                                                : 2.0;
+                                                                            return RepaintBoundary(
+                                                                              child: _meetingProgressTimerBuilder(
+                                                                                  context,
+                                                                                  MeetingProgressTimerOptions(
+                                                                                    meetingProgressTime: meetingProgressTime,
+                                                                                    initialBackgroundColor: recordState == 'green'
+                                                                                        ? Colors.green
+                                                                                        : recordState == 'yellow'
+                                                                                            ? Colors.yellow
+                                                                                            : Colors.red,
+                                                                                    showTimer: mainHeightWidth == 0 ? true : false,
+                                                                                    position: 'topLeft',
+                                                                                    positionOverride: MeetingProgressTimerPositionOverride(
+                                                                                      top: timerTopOffset,
+                                                                                      left: timerLeftOffset,
+                                                                                    ),
+                                                                                  )),
+                                                                            );
                                                                           }),
                                                                       // Participants counter badge (other grid view)
                                                                       ValueListenableBuilder<
@@ -9432,8 +9838,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                                                 ? [
                                                     BoxShadow(
                                                       color: Colors.black
-                                                          .withValues(
-                                                              alpha: 0.1),
+                                                          .withOpacity(0.1),
                                                       blurRadius: 8,
                                                       offset:
                                                           const Offset(-2, 0),
@@ -9490,6 +9895,19 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                                                   : Colors.black87,
                                               alignment: MainAxisAlignment
                                                   .spaceBetween,
+                                              iconSize: 16,
+                                              textStyle: TextStyle(
+                                                fontSize: 10,
+                                                color: isDarkModeVal
+                                                    ? Colors.white
+                                                    : Colors.black87,
+                                              ),
+                                              buttonPadding:
+                                                  const EdgeInsets.all(4),
+                                              buttonMargin:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 2,
+                                                      vertical: 2),
                                               vertical:
                                                   false, // Set to true for vertical layout
                                               buttonBuilder:
@@ -9532,8 +9950,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     return _welcomePageBuilder(
       context,
       WelcomePageOptions(
-        imgSrc:
-            widget.options.imgSrc ?? 'https://mediasfu.com/images/logo192.png',
+        imgSrc: widget.options.imgSrc ?? kDefaultMediaSFULogo,
         updateIsLoadingModalVisible: updateIsLoadingModalVisible,
         updateValidated: updateValidated,
         updateApiUserName: updateApiUserName,
@@ -9554,8 +9971,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       PreJoinPageOptions(
         // return widget.options.preJoinPageWidget!(
         parameters: PreJoinPageParameters(
-          imgSrc: widget.options.imgSrc ??
-              'https://mediasfu.com/images/logo192.png',
+          imgSrc: widget.options.imgSrc ?? kDefaultMediaSFULogo,
           updateIsLoadingModalVisible: updateIsLoadingModalVisible,
           updateValidated: updateValidated,
           updateApiUserName: updateApiUserName,
@@ -9589,6 +10005,13 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         noUIPreJoinOptionsJoin: widget.options.noUIPreJoinOptionsJoin,
         joinMediaSFURoom: widget.options.joinMediaSFURoom,
         createMediaSFURoom: widget.options.createMediaSFURoom,
+        localAppKey: widget.options.localAppKey,
+        localApiUserName: widget.options.localApiUserName,
+        localApiKey: widget.options.localApiKey,
+        localSubUserName: widget.options.localSubUserName,
+        useFixedLink: widget.options.useFixedLink,
+        initialMeetingId: widget.options.initialMeetingId,
+        onBack: widget.options.onBack,
       ),
     );
   }
@@ -9687,34 +10110,67 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                 child: InkWell(
                   onTap: sidebarNavigateBack,
                   borderRadius: BorderRadius.circular(0),
+                  splashColor: (isDarkModeVal
+                          ? MediasfuColors.primaryDark
+                          : MediasfuColors.primary)
+                      .withOpacity(0.15),
+                  highlightColor: (isDarkModeVal
+                          ? MediasfuColors.primaryDark
+                          : MediasfuColors.primary)
+                      .withOpacity(0.08),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
+                        horizontal: 14, vertical: 14),
                     decoration: BoxDecoration(
+                      color: isDarkModeVal
+                          ? MediasfuColors.primaryDark.withOpacity(0.12)
+                          : MediasfuColors.primary.withOpacity(0.06),
                       border: Border(
                         bottom: BorderSide(
                           color: isDarkModeVal
-                              ? Colors.white.withValues(alpha: 0.06)
-                              : Colors.black.withValues(alpha: 0.06),
+                              ? MediasfuColors.primaryDark.withOpacity(0.25)
+                              : MediasfuColors.primary.withOpacity(0.15),
                           width: 1,
                         ),
                       ),
                     ),
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.arrow_back_ios_rounded,
-                          color: MediasfuColors.primary,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Menu',
-                          style: TextStyle(
-                            color: MediasfuColors.primary,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: isDarkModeVal
+                                ? MediasfuColors.primaryDark.withOpacity(0.18)
+                                : MediasfuColors.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
                           ),
+                          child: Icon(
+                            Icons.arrow_back_ios_rounded,
+                            color: isDarkModeVal
+                                ? MediasfuColors.primaryLightDark
+                                : MediasfuColors.primary,
+                            size: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Back to Menu',
+                          style: TextStyle(
+                            color: isDarkModeVal
+                                ? MediasfuColors.primaryLightDark
+                                : MediasfuColors.primary,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                        const Spacer(),
+                        Icon(
+                          Icons.menu_rounded,
+                          color: isDarkModeVal
+                              ? MediasfuColors.primaryDark.withOpacity(0.5)
+                              : MediasfuColors.primary.withOpacity(0.35),
+                          size: 18,
                         ),
                       ],
                     ),
@@ -9724,7 +10180,22 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             // Main sidebar content - expanded to fill remaining space
             Expanded(
               child: ClipRect(
-                child: _getSidebarWidget(content, isDarkModeVal),
+                child: AnimatedSwitcher(
+                  duration: MediasfuAnimations.normal,
+                  switchInCurve: MediasfuAnimations.snappy,
+                  switchOutCurve: MediasfuAnimations.accelerate,
+                  transitionBuilder:
+                      (Widget child, Animation<double> animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: child,
+                    );
+                  },
+                  child: KeyedSubtree(
+                    key: ValueKey<SidebarContent>(content),
+                    child: _getSidebarWidget(content, isDarkModeVal),
+                  ),
+                ),
               ),
             ),
           ],
@@ -9803,14 +10274,14 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                     onTap: closeSidebar,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      color: Colors.black.withValues(alpha: 0.4),
+                      color: Colors.black.withOpacity(0.4),
                     ),
                   ),
                 ),
-                // Sidebar panel - slides in from right
+                // Sidebar panel - slides in from right with 5% vertical margin
                 Positioned(
-                  top: 0,
-                  bottom: 0,
+                  top: MediaQuery.of(context).size.height * 0.05,
+                  bottom: MediaQuery.of(context).size.height * 0.05,
                   right: 0,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
@@ -9821,26 +10292,28 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                         darkMode: isDarkModeVal,
                         elevation: 2,
                       ),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        bottomLeft: Radius.circular(16),
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.25),
+                          color: Colors.black.withOpacity(0.25),
                           blurRadius: 20,
                           offset: const Offset(-4, 0),
                         ),
                       ],
-                      border: Border(
-                        left: BorderSide(
-                          color: isDarkModeVal
-                              ? Colors.white.withValues(alpha: 0.1)
-                              : Colors.black.withValues(alpha: 0.08),
-                          width: 1,
-                        ),
-                      ),
                     ),
-                    child: SafeArea(
-                      left: false,
-                      child:
-                          _buildSidebarContent(sidebarContent, isDarkModeVal),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        bottomLeft: Radius.circular(16),
+                      ),
+                      child: SafeArea(
+                        left: false,
+                        child:
+                            _buildSidebarContent(sidebarContent, isDarkModeVal),
+                      ),
                     ),
                   ),
                 ),
@@ -10003,7 +10476,6 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               onClose: () {
                 updateIsDisplaySettingsModalVisible(false);
               },
-              onShowTranslationSettings: onShowTranslationSettings,
               parameters: mediasfuParameters,
               isDarkMode: isDarkModeVal,
               enableGlassmorphism: true,
@@ -10021,51 +10493,61 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       builder: (context, isTranslationVisible, child) {
         if (!isTranslationVisible) return const SizedBox.shrink();
 
-        return TranslationSettingsModal(
-          options: TranslationSettingsModalOptions(
-            isVisible: isTranslationVisible,
-            onClose: onCloseTranslationSettings,
-            member: member.value,
-            islevel: islevel.value,
-            participants: participants.value,
-            listenerTranslationPreferences: listenerTranslationPreferences,
-            listenerTranslationOverrides: listenerTranslationOverrides,
-            translationProducerMap: translationProducerMap,
-            speakerTranslationStates: speakerTranslationStates,
-            translationSubscriptions: translationSubscriptions,
-            updateListenerTranslationPreferences:
-                updateListenerTranslationPreferences,
-            updateListenerTranslationOverrides:
-                updateListenerTranslationOverrides,
-            updateTranslationProducerMap: updateTranslationProducerMap,
-            updateSpeakerTranslationStates: updateSpeakerTranslationStates,
-            roomName: roomName.value,
-            socket: socket.value,
-            showAlert: showAlert,
-            audioProducerId: audioProducer.value?.id,
-            mySpokenLanguage: mySpokenLanguage,
-            mySpokenLanguageEnabled: mySpokenLanguageEnabled,
-            myDefaultOutputLanguage: myDefaultOutputLanguage,
-            myDefaultListenLanguage:
-                listenerTranslationPreferences.globalLanguage,
-            listenPreferences: listenerTranslationPreferences.perSpeaker,
-            updateMySpokenLanguage: updateMySpokenLanguage,
-            updateMySpokenLanguageEnabled: updateMySpokenLanguageEnabled,
-            updateMyDefaultOutputLanguage: updateMyDefaultOutputLanguage,
-            updateMyDefaultListenLanguage: (String? lang) {
-              final newPrefs = ListenerTranslationPreferences(
-                  perSpeaker: listenerTranslationPreferences.perSpeaker,
-                  globalLanguage: lang);
-              updateListenerTranslationPreferences(newPrefs);
-            },
-            updateListenPreferences: (Map<String, String> prefs) {
-              final newPrefs = ListenerTranslationPreferences(
-                  perSpeaker: prefs,
-                  globalLanguage:
-                      listenerTranslationPreferences.globalLanguage);
-              updateListenerTranslationPreferences(newPrefs);
-            },
-          ),
+        return ValueListenableBuilder<bool>(
+          valueListenable: isDarkMode,
+          builder: (context, isDarkModeVal, child) {
+            return TranslationSettingsModal(
+              isDarkMode: isDarkModeVal,
+              options: TranslationSettingsModalOptions(
+                isVisible: isTranslationVisible,
+                onClose: onCloseTranslationSettings,
+                member: member.value,
+                islevel: islevel.value,
+                participants: participants.value,
+                listenerTranslationPreferences: listenerTranslationPreferences,
+                listenerTranslationOverrides: listenerTranslationOverrides,
+                translationProducerMap: translationProducerMap,
+                speakerTranslationStates: speakerTranslationStates,
+                translationSubscriptions: translationSubscriptions,
+                updateListenerTranslationPreferences:
+                    updateListenerTranslationPreferences,
+                updateListenerTranslationOverrides:
+                    updateListenerTranslationOverrides,
+                updateTranslationProducerMap: updateTranslationProducerMap,
+                updateSpeakerTranslationStates: updateSpeakerTranslationStates,
+                roomName: roomName.value,
+                socket: socket.value,
+                showAlert: showAlert,
+                audioProducerId: audioProducer.value?.id,
+                mySpokenLanguage: mySpokenLanguage,
+                mySpokenLanguageEnabled: mySpokenLanguageEnabled,
+                myDefaultOutputLanguage: myDefaultOutputLanguage,
+                myDefaultListenLanguage:
+                    listenerTranslationPreferences.globalLanguage,
+                listenPreferences: listenerTranslationPreferences.perSpeaker,
+                updateMySpokenLanguage: updateMySpokenLanguage,
+                updateMySpokenLanguageEnabled: updateMySpokenLanguageEnabled,
+                updateMyDefaultOutputLanguage: updateMyDefaultOutputLanguage,
+                updateMyDefaultListenLanguage: (String? lang) {
+                  final newPrefs = ListenerTranslationPreferences(
+                      perSpeaker: listenerTranslationPreferences.perSpeaker,
+                      globalLanguage: lang);
+                  updateListenerTranslationPreferences(newPrefs);
+                },
+                updateListenPreferences: (Map<String, String> prefs) {
+                  final newPrefs = ListenerTranslationPreferences(
+                      perSpeaker: prefs,
+                      globalLanguage:
+                          listenerTranslationPreferences.globalLanguage);
+                  updateListenerTranslationPreferences(newPrefs);
+                },
+                showSubtitlesOnCards: showSubtitlesOnCards.value,
+                updateShowSubtitlesOnCards: updateShowSubtitlesOnCards,
+                isPersonalTranslation: isPersonalTranslation.value,
+                userVoiceClones: widget.options.userVoiceClones,
+              ),
+            );
+          },
         );
       },
     );
@@ -10270,6 +10752,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               isConfirmHereModalVisible: isConfirmHereModalVisible,
               onConfirmHereClose: () {
                 updateIsConfirmHereModalVisible(false);
+              },
+              onSuppressConfirmHere: () {
+                _suppressConfirmHere = true;
               },
               roomName: roomName.value,
               socket: socket.value,
@@ -10769,7 +11254,6 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       backgroundColor: Colors.transparent,
       isVisible: true,
       onClose: () => updateActiveSidebarContent(SidebarContent.none),
-      onShowTranslationSettings: onShowTranslationSettings,
       parameters: mediasfuParameters,
       isDarkMode: isDarkModeVal,
       enableGlassmorphism: false,
@@ -10978,8 +11462,11 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
 
   Widget _buildTranslationSidebarContent(bool isDarkModeVal) {
     return TranslationSettingsModal(
+      isDarkMode: isDarkModeVal,
+      enableGlassmorphism: false,
       options: TranslationSettingsModalOptions(
         isVisible: true,
+        renderMode: ModalRenderMode.sidebar,
         onClose: () => updateActiveSidebarContent(SidebarContent.none),
         member: member.value,
         islevel: islevel.value,
@@ -11018,6 +11505,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               globalLanguage: listenerTranslationPreferences.globalLanguage);
           updateListenerTranslationPreferences(newPrefs);
         },
+        showSubtitlesOnCards: showSubtitlesOnCards.value,
+        updateShowSubtitlesOnCards: updateShowSubtitlesOnCards,
+        isPersonalTranslation: isPersonalTranslation.value,
+        userVoiceClones: widget.options.userVoiceClones,
       ),
     );
   }

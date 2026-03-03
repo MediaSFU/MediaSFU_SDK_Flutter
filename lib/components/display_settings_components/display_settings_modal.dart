@@ -63,7 +63,6 @@ class DisplaySettingsModalOptions {
   final DisplaySettingsModalParameters parameters;
   final String position;
   final Color backgroundColor;
-  final VoidCallback? onShowTranslationSettings;
 
   /// Dark mode toggle for modern styling.
   /// Note: Pending modern implementation - placeholder for future glassmorphic UI.
@@ -86,7 +85,6 @@ class DisplaySettingsModalOptions {
     required this.parameters,
     this.position = 'topRight',
     this.backgroundColor = const Color(0xFF83C0E9),
-    this.onShowTranslationSettings,
     this.isDarkMode = false,
     this.enableGlassmorphism = false,
     this.renderMode = ModalRenderMode.modal,

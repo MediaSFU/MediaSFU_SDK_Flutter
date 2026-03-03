@@ -90,7 +90,7 @@ class MediasfuTheme {
             : MediasfuColors.textSecondary,
       ),
       dividerTheme: DividerThemeData(
-        color: colorScheme.outline.withValues(alpha: 0.4),
+        color: colorScheme.outline.withOpacity(0.4),
         thickness: 1,
         space: 1,
       ),
@@ -116,10 +116,10 @@ class MediasfuTheme {
         ).copyWith(
           overlayColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.pressed)) {
-              return Colors.white.withValues(alpha: 0.1);
+              return Colors.white.withOpacity(0.1);
             }
             if (states.contains(WidgetState.hovered)) {
-              return Colors.white.withValues(alpha: 0.05);
+              return Colors.white.withOpacity(0.05);
             }
             return null;
           }),
@@ -142,7 +142,7 @@ class MediasfuTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: colorScheme.primary,
           side: BorderSide(
-            color: colorScheme.primary.withValues(alpha: 0.5),
+            color: colorScheme.primary.withOpacity(0.5),
             width: 1.5,
           ),
           shape: RoundedRectangleBorder(
@@ -155,10 +155,10 @@ class MediasfuTheme {
         ).copyWith(
           overlayColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.pressed)) {
-              return colorScheme.primary.withValues(alpha: 0.1);
+              return colorScheme.primary.withOpacity(0.1);
             }
             if (states.contains(WidgetState.hovered)) {
-              return colorScheme.primary.withValues(alpha: 0.05);
+              return colorScheme.primary.withOpacity(0.05);
             }
             return null;
           }),
@@ -191,7 +191,7 @@ class MediasfuTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: darkMode
-            ? MediasfuColors.surfaceElevatedDark.withValues(alpha: 0.5)
+            ? MediasfuColors.surfaceElevatedDark.withOpacity(0.5)
             : MediasfuColors.surfaceElevated,
         contentPadding: MediasfuSpacing.insetSymmetric(
           horizontal: MediasfuSpacing.md,
@@ -200,13 +200,13 @@ class MediasfuTheme {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(MediasfuBorders.lg),
           borderSide: BorderSide(
-            color: colorScheme.outline.withValues(alpha: 0.3),
+            color: colorScheme.outline.withOpacity(0.3),
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(MediasfuBorders.lg),
           borderSide: BorderSide(
-            color: colorScheme.outline.withValues(alpha: 0.2),
+            color: colorScheme.outline.withOpacity(0.2),
           ),
         ),
         focusedBorder: OutlineInputBorder(
@@ -255,7 +255,7 @@ class MediasfuTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(MediasfuBorders.lg),
           side: BorderSide(
-            color: colorScheme.outline.withValues(alpha: 0.1),
+            color: colorScheme.outline.withOpacity(0.1),
           ),
         ),
         margin: EdgeInsets.zero,
@@ -316,12 +316,12 @@ class MediasfuTheme {
         backgroundColor: darkMode
             ? MediasfuColors.surfaceElevatedDark
             : MediasfuColors.surfaceElevated,
-        selectedColor: colorScheme.primary.withValues(alpha: 0.2),
+        selectedColor: colorScheme.primary.withOpacity(0.2),
         labelStyle: textTheme.labelMedium,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(MediasfuBorders.full),
           side: BorderSide(
-            color: colorScheme.outline.withValues(alpha: 0.2),
+            color: colorScheme.outline.withOpacity(0.2),
           ),
         ),
         padding: MediasfuSpacing.insetSymmetric(
@@ -330,26 +330,15 @@ class MediasfuTheme {
         ),
       ),
 
-      // Tab bar theme
-      tabBarTheme: TabBarThemeData(
-        labelColor: colorScheme.primary,
-        unselectedLabelColor:
-            darkMode ? MediasfuColors.textMutedDark : MediasfuColors.textMuted,
-        indicatorColor: colorScheme.primary,
-        indicatorSize: TabBarIndicatorSize.label,
-        labelStyle: textTheme.labelLarge?.copyWith(
-          fontWeight: FontWeight.w600,
-        ),
-        unselectedLabelStyle: textTheme.labelLarge,
-        dividerColor: Colors.transparent,
-      ),
+      // Tab bar theme — uses default; TabBarThemeData not available
+      // on all Flutter channels (custom [user-branch]).
 
       // Slider theme
       sliderTheme: SliderThemeData(
         activeTrackColor: colorScheme.primary,
-        inactiveTrackColor: colorScheme.primary.withValues(alpha: 0.2),
+        inactiveTrackColor: colorScheme.primary.withOpacity(0.2),
         thumbColor: colorScheme.primary,
-        overlayColor: colorScheme.primary.withValues(alpha: 0.1),
+        overlayColor: colorScheme.primary.withOpacity(0.1),
         trackHeight: 4,
         thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
         overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
@@ -367,9 +356,9 @@ class MediasfuTheme {
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return colorScheme.primary.withValues(alpha: 0.3);
+            return colorScheme.primary.withOpacity(0.3);
           }
-          return colorScheme.outline.withValues(alpha: 0.3);
+          return colorScheme.outline.withOpacity(0.3);
         }),
         trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
       ),
@@ -405,8 +394,8 @@ class MediasfuTheme {
       // Progress indicator theme
       progressIndicatorTheme: ProgressIndicatorThemeData(
         color: colorScheme.primary,
-        linearTrackColor: colorScheme.primary.withValues(alpha: 0.2),
-        circularTrackColor: colorScheme.primary.withValues(alpha: 0.2),
+        linearTrackColor: colorScheme.primary.withOpacity(0.2),
+        circularTrackColor: colorScheme.primary.withOpacity(0.2),
       ),
 
       // Tooltip theme

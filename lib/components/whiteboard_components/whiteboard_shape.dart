@@ -211,10 +211,9 @@ class WhiteboardShape {
   /// Converts the shape to a Map for serialization (socket transmission).
   Map<String, dynamic> toMap() {
     // Convert color to hex string (RRGGBB format)
-    // In Dart 3+, color.r/g/b are doubles 0.0-1.0, so multiply by 255
-    final r = (color.r * 255).round();
-    final g = (color.g * 255).round();
-    final b = (color.b * 255).round();
+    final r = color.red;
+    final g = color.green;
+    final b = color.blue;
     final hexColor =
         '#${r.toRadixString(16).padLeft(2, '0')}${g.toRadixString(16).padLeft(2, '0')}${b.toRadixString(16).padLeft(2, '0')}';
 

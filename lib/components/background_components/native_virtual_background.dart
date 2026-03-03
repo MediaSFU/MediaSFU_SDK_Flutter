@@ -62,11 +62,15 @@ class NativeVirtualBackground {
   /// - Android: Has LocalVideoTrack.ExternalVideoFrameProcessing interface + MediaPipe
   /// - iOS: Has VideoProcessingAdapter + Vision framework for segmentation
   /// - macOS: Has VideoProcessingAdapter + Vision framework (requires macOS 12.0+)
-  /// - Windows/Linux: flutter_webrtc C++ layer lacks video processing hooks
+  /// - Windows: Disabled — libwebrtc RTCVideoSource has no PushFrame API
+  ///   and WGC refuses to capture programmatic popup windows.
+  /// - Linux: flutter_webrtc C++ layer lacks video processing hooks
   /// - Web: Would need different approach (not native)
   static bool get isSupported {
     if (kIsWeb) return false;
-    return Platform.isAndroid || Platform.isIOS || Platform.isMacOS;
+    return Platform.isAndroid ||
+        Platform.isIOS ||
+        Platform.isMacOS;
   }
 
   /// Initialize the native virtual background engine.
@@ -195,6 +199,96 @@ class NativeVirtualBackground {
       return result?['enabled'] as bool? ?? false;
     } catch (e) {
       return false;
+    }
+  }
+
+  /// Process a single frame with virtual background applied.
+  ///
+  /// This method takes raw BGRA frame data and returns the processed frame
+  /// with the virtual background composited in.
+  ///
+  /// Use this for:
+  /// - Dart-level frame processing when native WebRTC integration isn't available
+  /// - Preview rendering with virtual background applied
+  /// - Feeding processed frames to a canvas-based video source
+  ///
+  /// [imageData] - Raw BGRA pixel data (4 bytes per pixel)
+  /// [width] - Frame width in pixels
+  /// [height] - Frame height in pixels
+  ///
+  /// Returns a map with:
+  /// - 'success': bool
+  /// - 'processedData': Uint8List (BGRA) if successful
+  /// - 'width': int
+  /// - 'height': int
+  /// - 'error': String if failed
+  Future<Map<String, dynamic>> processFrame({
+    required Uint8List imageData,
+    required int width,
+    required int height,
+  }) async {
+    if (!isSupported) {
+      return {'success': false, 'error': 'Platform not supported'};
+    }
+
+    if (!_isInitialized) {
+      return {'success': false, 'error': 'Not initialized'};
+    }
+
+    if (!_isEnabled) {
+      return {'success': false, 'error': 'Not enabled'};
+    }
+
+    try {
+      final result = await _channel.invokeMethod<Map>('processFrame', {
+        'imageData': imageData,
+        'width': width,
+        'height': height,
+      });
+
+      if (result == null) {
+        return {'success': false, 'error': 'No response from native'};
+      }
+
+      return Map<String, dynamic>.from(result);
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
+  /// Get the platform's virtual background capabilities.
+  ///
+  /// Returns information about what features are supported on this platform:
+  /// - 'nativeWebRTCIntegration': Whether processed frames are sent via WebRTC pipeline
+  /// - 'frameByFrameProcessing': Whether processFrame method is available
+  /// - 'onnxSegmentation': Whether ONNX model is loaded for segmentation
+  /// - 'gpuAcceleration': Whether GPU processing is available
+  ///
+  /// This helps the app decide whether to use native processing or fall back
+  /// to Dart-level processing with replaceTrack().
+  Future<Map<String, dynamic>> getCapabilities() async {
+    if (!isSupported) {
+      return {
+        'success': false,
+        'platform': 'unsupported',
+        'capabilities': <String, dynamic>{},
+      };
+    }
+
+    try {
+      final result = await _channel.invokeMethod<Map>('getCapabilities');
+      if (result == null) {
+        return {
+          'success': false,
+          'error': 'No response from native',
+        };
+      }
+      return Map<String, dynamic>.from(result);
+    } catch (e) {
+      return {
+        'success': false,
+        'error': e.toString(),
+      };
     }
   }
 

@@ -4,6 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+// ignore: implementation_imports
+import 'package:flutter_webrtc/src/native/desktop_capturer_impl.dart'
+    show DesktopCapturerNative, DesktopCapturerSourceNative;
 import '../types/types.dart'
     show
         ShowAlert,
@@ -11,7 +14,7 @@ import '../types/types.dart'
         StreamSuccessScreenParameters,
         StreamSuccessScreenOptions;
 
-/// Method channel for Android foreground service control
+/// Method channel for Android foreground service control and iOS background task
 const _screenCaptureChannel = MethodChannel('com.mediasfu/screen_capture');
 
 /// Starts the foreground service for screen capture on Android.
@@ -24,9 +27,7 @@ Future<void> _startAndroidForegroundService() async {
       await _screenCaptureChannel.invokeMethod('startForegroundService');
     }
   } catch (e) {
-    if (kDebugMode) {
-      print('Warning: Could not start foreground service: $e');
-    }
+    // Silently handle error
   }
 }
 
@@ -38,9 +39,7 @@ Future<void> _stopAndroidForegroundService() async {
       await _screenCaptureChannel.invokeMethod('stopForegroundService');
     }
   } catch (e) {
-    if (kDebugMode) {
-      print('Warning: Could not stop foreground service: $e');
-    }
+    // Silently handle error
   }
 }
 
@@ -87,22 +86,17 @@ typedef StartShareScreenType = Future<void> Function(
 /// - Web (all browsers with getDisplayMedia support)
 /// - Windows, macOS, Linux (desktop)
 /// - Android (via MediaProjection API)
-///
-/// Returns false for:
-/// - iOS (requires Broadcast Upload Extension - complex native setup)
+/// - iOS (via ReplayKit Broadcast Upload Extension — requires native setup)
 bool _isScreenShareSupported() {
   if (kIsWeb) return true;
 
-  // Check platform - Android and desktop support getDisplayMedia
   try {
     if (Platform.isAndroid) return true;
+    if (Platform.isIOS) return false; // Temporarily disabled
     if (Platform.isWindows) return true;
     if (Platform.isMacOS) return true;
     if (Platform.isLinux) return true;
-    // iOS requires Broadcast Upload Extension which needs native setup
-    if (Platform.isIOS) return false;
   } catch (_) {
-    // Platform not available (shouldn't happen)
     return false;
   }
   return false;
@@ -111,14 +105,11 @@ bool _isScreenShareSupported() {
 /// Returns a platform-specific message for unsupported screen sharing.
 String _getUnsupportedMessage() {
   if (kIsWeb) return 'Screen sharing is not supported in this browser';
-
   try {
     if (Platform.isIOS) {
-      return 'Screen sharing on iOS requires additional native setup. '
-          'Please contact the app developer for iOS screen sharing support.';
+      return 'Screen sharing on iOS is coming soon. Stay tuned!';
     }
   } catch (_) {}
-
   return 'Screen sharing is not supported on this platform';
 }
 
@@ -147,6 +138,8 @@ class _ScreenPickerDialog extends StatefulWidget {
 class _ScreenPickerDialogState extends State<_ScreenPickerDialog> {
   int _selectedIndex = 0;
   String _selectedTab = 'screens'; // 'screens' or 'windows'
+  final Map<String, Uint8List?> _thumbnails = {};
+  bool _loadingThumbnails = true;
 
   List<DesktopCapturerSource> get screens =>
       widget.sources.where((s) => s.type == SourceType.Screen).toList();
@@ -156,6 +149,44 @@ class _ScreenPickerDialogState extends State<_ScreenPickerDialog> {
 
   List<DesktopCapturerSource> get currentSources =>
       _selectedTab == 'screens' ? screens : windows;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadThumbnails();
+  }
+
+  /// Fetch thumbnails for all sources using flutter_webrtc's native method
+  Future<void> _loadThumbnails() async {
+    try {
+      final capturer = desktopCapturer as DesktopCapturerNative;
+      for (final source in widget.sources) {
+        if (source is DesktopCapturerSourceNative) {
+          try {
+            // Call getThumbnail - it may throw or return unexpected types
+            final result = await capturer.getThumbnail(source);
+            // Only use if we got valid Uint8List data
+            if (result is Uint8List && mounted) {
+              setState(() {
+                _thumbnails[source.id] = result;
+              });
+            }
+          } catch (_) {
+            // Ignore individual thumbnail errors - the native code may return
+            // error maps or throw exceptions for some sources (expected on macOS)
+          }
+        }
+      }
+    } catch (_) {
+      // Silenced: Expected on macOS where some sources fail to generate thumbnails
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadingThumbnails = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -357,15 +388,7 @@ class _ScreenPickerDialogState extends State<_ScreenPickerDialog> {
                     const BorderRadius.vertical(top: Radius.circular(6)),
                 child: Container(
                   color: const Color(0xFF1A1A1A),
-                  child: source.thumbnail != null
-                      ? Image.memory(
-                          source.thumbnail!,
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return _buildPlaceholder(source);
-                          },
-                        )
-                      : _buildPlaceholder(source),
+                  child: _buildThumbnailImage(source),
                 ),
               ),
             ),
@@ -374,7 +397,7 @@ class _ScreenPickerDialogState extends State<_ScreenPickerDialog> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? const Color(0xFF4285F4).withValues(alpha: 0.2)
+                    ? const Color(0xFF4285F4).withOpacity(0.2)
                     : Colors.transparent,
                 borderRadius:
                     const BorderRadius.vertical(bottom: Radius.circular(6)),
@@ -395,6 +418,61 @@ class _ScreenPickerDialogState extends State<_ScreenPickerDialog> {
         ),
       ),
     );
+  }
+
+  /// Builds the thumbnail image, using fetched thumbnails if available
+  Widget _buildThumbnailImage(DesktopCapturerSource source) {
+    // First check our fetched thumbnails map
+    final fetchedThumbnail = _thumbnails[source.id];
+    if (fetchedThumbnail != null) {
+      return Image.memory(
+        fetchedThumbnail,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildPlaceholder(source);
+        },
+      );
+    }
+
+    // Fall back to source.thumbnail (in case flutter_webrtc provides it)
+    if (source.thumbnail != null) {
+      return Image.memory(
+        source.thumbnail!,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildPlaceholder(source);
+        },
+      );
+    }
+
+    // Show loading indicator while thumbnails are being fetched
+    if (_loadingThumbnails) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white38),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              source.name.length > 15
+                  ? '${source.name.substring(0, 15)}...'
+                  : source.name,
+              style: const TextStyle(color: Colors.white24, fontSize: 10),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return _buildPlaceholder(source);
   }
 
   Widget _buildPlaceholder(DesktopCapturerSource source) {
@@ -492,13 +570,19 @@ Future<void> startShareScreen(StartShareScreenOptions options) async {
       return;
     }
 
-    // On Android, start foreground service BEFORE requesting screen capture
-    // This is REQUIRED on Android 10+ (API 29) and MANDATORY on Android 14+ (API 34)
-    // Without this, the app will crash when trying to start MediaProjection
-    await _startAndroidForegroundService();
+    // Platform-specific preparations BEFORE requesting screen capture
+    if (Platform.isAndroid) {
+      // Android requires a foreground service to be running during screen capture.
+      // This is REQUIRED on Android 10+ (API 29) and MANDATORY on Android 14+ (API 34)
+      // Without this, the app will crash when trying to start MediaProjection
+      await _startAndroidForegroundService();
+    }
+    // iOS: flutter_webrtc handles ReplayKit via getDisplayMedia when
+    // RTCAppGroupIdentifier + RTCScreenSharingExtension are set in Info.plist.
+    // The system broadcast picker appears automatically.
 
     // Request screen capture using getDisplayMedia
-    // This works on Web, Android, Windows, macOS, and Linux
+    // This works on Web, Android, iOS, Windows, macOS, and Linux
     try {
       MediaStream stream;
 
@@ -546,8 +630,35 @@ Future<void> startShareScreen(StartShareScreenOptions options) async {
             'audio': false
           });
         }
+      } else if (kIsWeb) {
+        // Web uses standard getDisplayMedia
+        stream = await navigator.mediaDevices.getDisplayMedia({
+          'video': {
+            'cursor': 'always',
+            'width': targetWidth,
+            'height': targetHeight,
+            'frameRate': 30
+          },
+          'audio': false
+        });
+      } else if (Platform.isIOS) {
+        // iOS uses ReplayKit via flutter_webrtc's native getDisplayMedia.
+        // flutter_webrtc reads RTCAppGroupIdentifier & RTCScreenSharingExtension
+        // from Info.plist and shows the system broadcast picker.
+        // The BroadcastExtension captures frames and sends them over a Unix socket.
+        //
+        // IMPORTANT: deviceId MUST start with "broadcast" to trigger
+        // FlutterBroadcastScreenCapturer instead of FlutterRPScreenRecorder.
+        // Without this, it uses in-app ReplayKit which causes "hall of mirrors".
+        stream = await navigator.mediaDevices.getDisplayMedia({
+          'video': {
+            'deviceId': 'broadcast',
+          },
+          'audio': false,
+        });
       } else {
-        // Web and Android use standard getDisplayMedia with native picker
+        // Android and other platforms use standard getDisplayMedia
+        // flutter_webrtc 1.2.1+ supports these natively
         stream = await navigator.mediaDevices.getDisplayMedia({
           'video': {
             'cursor': 'always',
@@ -559,13 +670,16 @@ Future<void> startShareScreen(StartShareScreenOptions options) async {
         });
       }
 
+      // Produce the track for all platforms
       try {
         final optionsStream = StreamSuccessScreenOptions(
           stream: stream,
           parameters: parameters,
         );
         await streamSuccessScreen(optionsStream);
-      } catch (_) {}
+      } catch (e) {
+        rethrow;
+      }
       shared = true;
     } catch (error) {
       shared = false;
@@ -597,18 +711,11 @@ Future<void> startShareScreen(StartShareScreenOptions options) async {
         type: 'danger',
         duration: 3000,
       );
-
-      if (kDebugMode) {
-        print('Screen share error: $error');
-      }
     }
 
     // Update the shared variable
     updateShared(shared);
   } catch (error) {
-    if (kDebugMode) {
-      print('Error starting screen share: $error');
-    }
     rethrow;
   }
 }

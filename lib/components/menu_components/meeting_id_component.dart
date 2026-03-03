@@ -56,7 +56,7 @@ typedef MeetingIdComponentType = Widget Function({
 ///      ├─ Text("Event ID:", bold, dark gray)
 ///      ├─ SizedBox(height: 5)
 ///      └─ TextFormField
-///         ├─ initialValue: meetingID
+///         ├─ value: meetingID
 ///         ├─ readOnly: true
 ///         ├─ border: OutlineInputBorder(rounded 5px, gray)
 ///         ├─ fillColor: light gray

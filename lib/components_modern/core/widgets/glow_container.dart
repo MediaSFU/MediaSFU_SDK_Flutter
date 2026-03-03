@@ -149,7 +149,7 @@ class _GlowContainerState extends State<GlowContainer>
             borderRadius: BorderRadius.circular(widget.borderRadius),
             boxShadow: shadows,
             border: Border.all(
-              color: color.withValues(alpha: 0.3),
+              color: color.withOpacity(0.3),
               width: 1,
             ),
           ),

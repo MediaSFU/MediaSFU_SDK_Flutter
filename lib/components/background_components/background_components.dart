@@ -40,9 +40,11 @@ export 'frame_processor.dart';
 export 'compositor.dart';
 export 'virtual_stream_source.dart';
 export 'processed_video_renderer.dart';
-export 'virtual_background_channel.dart';
 export 'background_processor_service.dart';
 export 'background_video_display.dart';
 
 // Legacy export for backward compatibility
 export 'mlkit_segmenter_stub.dart';
+
+// Screen wake lock for keeping screen on during calls
+export 'screen_wake_lock.dart';

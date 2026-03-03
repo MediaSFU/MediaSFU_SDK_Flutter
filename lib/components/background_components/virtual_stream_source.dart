@@ -18,16 +18,13 @@ class VirtualStreamSource {
 
   /// Video source for frame injection
   /// Note: This may require platform-specific implementation
-  // ignore: unused_field
   RTCVideoRenderer? _renderer;
 
   /// Whether the source is initialized
   bool _isInitialized = false;
 
   /// Target frame dimensions
-  // ignore: unused_field
   int _width = 640;
-  // ignore: unused_field
   int _height = 480;
   int _fps = 15;
 
@@ -91,9 +88,13 @@ class VirtualStreamSource {
   ///
   /// This is called by the compositor after blending person + background.
   /// The frame will be output at the target FPS.
-  Future<void> pushFrame(ui.Image frame) async {
+  ///
+  /// Returns false if the stream is not initialized (graceful degradation).
+  Future<bool> pushFrame(ui.Image frame) async {
     if (!_isInitialized) {
-      throw StateError('VirtualStreamSource not initialized');
+      // Graceful return instead of throwing - handles race conditions during shutdown
+      debugPrint('VirtualStreamSource: pushFrame called but not initialized');
+      return false;
     }
 
     // Add to buffer
@@ -107,6 +108,8 @@ class VirtualStreamSource {
     // Update current frame immediately for preview
     _currentFrame = frame;
     onFrameAvailable?.call(frame);
+
+    return true;
   }
 
   /// Start outputting frames at the target FPS

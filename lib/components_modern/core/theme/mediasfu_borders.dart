@@ -84,8 +84,8 @@ class MediasfuBorders {
   static Border subtle({bool darkMode = false}) {
     return Border.all(
       color: darkMode
-          ? Colors.white.withValues(alpha: 0.08)
-          : Colors.black.withValues(alpha: 0.06),
+          ? Colors.white.withOpacity(0.08)
+          : Colors.black.withOpacity(0.06),
       width: 1,
     );
   }
@@ -122,7 +122,7 @@ class MediasfuBorders {
       ),
       boxShadow: [
         BoxShadow(
-          color: ringColor.withValues(alpha: 0.3),
+          color: ringColor.withOpacity(0.3),
           blurRadius: 8,
           spreadRadius: 2,
         ),
@@ -268,7 +268,7 @@ class GlowBorderPainter extends CustomPainter {
     // Draw multiple layers for glow effect
     for (int i = 3; i >= 0; i--) {
       final glowPaint = Paint()
-        ..color = color.withValues(alpha: (0.1 + (0.1 * i)) * glowIntensity)
+        ..color = color.withOpacity((0.1 + (0.1 * i)) * glowIntensity)
         ..style = PaintingStyle.stroke
         ..strokeWidth = strokeWidth + (i * 4)
         ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4.0 + (i * 2));

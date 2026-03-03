@@ -9,6 +9,8 @@ import '../../types/modal_style_options.dart' show ModalRenderMode;
 import '../../types/types.dart' show Request, RespondToRequestsOptions;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
+import '../core/widgets/modal_header.dart';
+import '../core/widgets/section_card.dart';
 
 typedef ModernRequestsModalType = Widget Function(
     {required RequestsModalOptions options});
@@ -133,7 +135,7 @@ class _ModernRequestsModalState extends State<ModernRequestsModal>
                 child: FadeTransition(
                   opacity: _fadeAnimation,
                   child: Container(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Colors.black.withOpacity(0.05),
                   ),
                 ),
               ),
@@ -169,25 +171,25 @@ class _ModernRequestsModalState extends State<ModernRequestsModal>
                         decoration: BoxDecoration(
                           color: useHighTransparency
                               ? (widget.options.isDarkMode
-                                  ? Colors.black.withValues(alpha: 0.05)
-                                  : Colors.white.withValues(alpha: 0.08))
+                                  ? Colors.black.withOpacity(0.05)
+                                  : Colors.white.withOpacity(0.08))
                               : (widget.options.isDarkMode
-                                  ? Colors.black.withValues(alpha: 0.7)
-                                  : Colors.white.withValues(alpha: 0.9)),
+                                  ? Colors.black.withOpacity(0.7)
+                                  : Colors.white.withOpacity(0.9)),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: widget.options.isDarkMode
-                                ? Colors.white.withValues(
-                                    alpha: useHighTransparency ? 0.08 : 0.1)
-                                : Colors.black.withValues(
-                                    alpha: useHighTransparency ? 0.05 : 0.1),
+                                ? Colors.white.withOpacity(
+                                    useHighTransparency ? 0.08 : 0.1)
+                                : Colors.black.withOpacity(
+                                    useHighTransparency ? 0.05 : 0.1),
                           ),
                           boxShadow: useHighTransparency
                               ? []
                               : [
                                   BoxShadow(
-                                    color: MediasfuColors.warning
-                                        .withValues(alpha: 0.2),
+                                    color:
+                                        MediasfuColors.warning.withOpacity(0.2),
                                     blurRadius: 40,
                                     spreadRadius: 8,
                                   ),
@@ -224,99 +226,40 @@ class _ModernRequestsModalState extends State<ModernRequestsModal>
   }
 
   Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(MediasfuSpacing.md),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: widget.options.isDarkMode
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.1),
+    return ModalHeader(
+      icon: Icons.front_hand_rounded,
+      title: 'Requests',
+      onClose: _handleClose,
+      isDarkMode: widget.options.isDarkMode,
+      gradientColors: [
+        MediasfuColors.warning,
+        MediasfuColors.warning.withOpacity(0.7),
+      ],
+      trailing: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: MediasfuSpacing.sm,
+          vertical: MediasfuSpacing.xs,
+        ),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              MediasfuColors.warning.withOpacity(0.2),
+              MediasfuColors.warning.withOpacity(0.1),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: MediasfuColors.warning.withOpacity(0.3),
           ),
         ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(MediasfuSpacing.sm),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  MediasfuColors.warning,
-                  MediasfuColors.warning.withValues(alpha: 0.7),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: MediasfuColors.warning.withValues(alpha: 0.5),
-                  blurRadius: 12,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.front_hand_rounded,
-              color: Colors.white,
-              size: 20,
-            ),
+        child: Text(
+          widget.options.requestCounter.toString(),
+          style: TextStyle(
+            color: MediasfuColors.warning,
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
           ),
-          const SizedBox(width: MediasfuSpacing.sm),
-          Text(
-            'Requests',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: widget.options.isDarkMode ? Colors.white : Colors.black87,
-            ),
-          ),
-          const SizedBox(width: MediasfuSpacing.sm),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: MediasfuSpacing.sm,
-              vertical: MediasfuSpacing.xs,
-            ),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  MediasfuColors.warning.withValues(alpha: 0.2),
-                  MediasfuColors.warning.withValues(alpha: 0.1),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: MediasfuColors.warning.withValues(alpha: 0.3),
-              ),
-            ),
-            child: Text(
-              widget.options.requestCounter.toString(),
-              style: TextStyle(
-                color: MediasfuColors.warning,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-              ),
-            ),
-          ),
-          const Spacer(),
-          GestureDetector(
-            onTap: _handleClose,
-            child: Container(
-              padding: const EdgeInsets.all(MediasfuSpacing.sm),
-              decoration: BoxDecoration(
-                color: widget.options.isDarkMode
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                Icons.close_rounded,
-                color:
-                    widget.options.isDarkMode ? Colors.white70 : Colors.black54,
-                size: 20,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -327,18 +270,20 @@ class _ModernRequestsModalState extends State<ModernRequestsModal>
       child: Container(
         decoration: BoxDecoration(
           color: widget.options.isDarkMode
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.black.withValues(alpha: 0.05),
+              ? Colors.white.withOpacity(0.12)
+              : const Color(0xFFEEF2F7),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: widget.options.isDarkMode
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.1),
+                ? Colors.white.withOpacity(0.18)
+                : Colors.black.withOpacity(0.12),
           ),
         ),
         child: TextField(
           controller: _searchController,
           onChanged: widget.options.onRequestFilterChange,
+          cursorColor:
+              widget.options.isDarkMode ? Colors.white : Colors.black87,
           style: TextStyle(
             color: widget.options.isDarkMode ? Colors.white : Colors.black87,
           ),
@@ -346,13 +291,15 @@ class _ModernRequestsModalState extends State<ModernRequestsModal>
             hintText: 'Search requests...',
             hintStyle: TextStyle(
               color:
-                  widget.options.isDarkMode ? Colors.white54 : Colors.black38,
+                  widget.options.isDarkMode ? Colors.white70 : Colors.black45,
             ),
             prefixIcon: Icon(
               Icons.search_rounded,
               color:
-                  widget.options.isDarkMode ? Colors.white54 : Colors.black38,
+                  widget.options.isDarkMode ? Colors.white70 : Colors.black45,
             ),
+            filled: true,
+            fillColor: Colors.transparent,
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: MediasfuSpacing.md,
@@ -407,103 +354,94 @@ class _ModernRequestsModalState extends State<ModernRequestsModal>
 
     return Container(
       margin: const EdgeInsets.only(bottom: MediasfuSpacing.sm),
-      padding: const EdgeInsets.all(MediasfuSpacing.md),
-      decoration: BoxDecoration(
-        color: widget.options.isDarkMode
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.black.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: widget.options.isDarkMode
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.black.withValues(alpha: 0.1),
-        ),
-      ),
-      child: Row(
-        children: [
-          // Icon
-          Container(
-            padding: const EdgeInsets.all(MediasfuSpacing.sm),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(10),
+      child: SectionCard(
+        isDarkMode: widget.options.isDarkMode,
+        child: Row(
+          children: [
+            // Icon
+            Container(
+              padding: const EdgeInsets.all(MediasfuSpacing.sm),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: FaIcon(
+                icon,
+                color: color,
+                size: 18,
+              ),
             ),
-            child: FaIcon(
-              icon,
-              color: color,
-              size: 18,
-            ),
-          ),
-          const SizedBox(width: MediasfuSpacing.md),
+            const SizedBox(width: MediasfuSpacing.md),
 
-          // Name and type
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            // Name and type
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    request.name ?? 'Unknown',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: widget.options.isDarkMode
+                          ? Colors.white
+                          : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Requesting $type',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: widget.options.isDarkMode
+                          ? Colors.white54
+                          : Colors.black45,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Action buttons
+            Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  request.name ?? 'Unknown',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: widget.options.isDarkMode
-                        ? Colors.white
-                        : Colors.black87,
-                  ),
+                _buildActionButton(
+                  icon: Icons.check_rounded,
+                  color: MediasfuColors.success,
+                  onTap: () async {
+                    await widget.options.onRequestItemPress(
+                      RespondToRequestsOptions(
+                        request: request,
+                        updateRequestList: widget.options.updateRequestList,
+                        requestList: widget.options.requestList,
+                        action: 'accepted',
+                        roomName: widget.options.roomName,
+                        socket: widget.options.socket,
+                      ),
+                    );
+                  },
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  'Requesting $type',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: widget.options.isDarkMode
-                        ? Colors.white54
-                        : Colors.black45,
-                  ),
+                const SizedBox(width: MediasfuSpacing.sm),
+                _buildActionButton(
+                  icon: Icons.close_rounded,
+                  color: MediasfuColors.danger,
+                  onTap: () async {
+                    await widget.options.onRequestItemPress(
+                      RespondToRequestsOptions(
+                        request: request,
+                        updateRequestList: widget.options.updateRequestList,
+                        requestList: widget.options.requestList,
+                        action: 'rejected',
+                        roomName: widget.options.roomName,
+                        socket: widget.options.socket,
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
-          ),
-
-          // Action buttons
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildActionButton(
-                icon: Icons.check_rounded,
-                color: MediasfuColors.success,
-                onTap: () async {
-                  await widget.options.onRequestItemPress(
-                    RespondToRequestsOptions(
-                      request: request,
-                      updateRequestList: widget.options.updateRequestList,
-                      requestList: widget.options.requestList,
-                      action: 'accepted',
-                      roomName: widget.options.roomName,
-                      socket: widget.options.socket,
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(width: MediasfuSpacing.sm),
-              _buildActionButton(
-                icon: Icons.close_rounded,
-                color: MediasfuColors.danger,
-                onTap: () async {
-                  await widget.options.onRequestItemPress(
-                    RespondToRequestsOptions(
-                      request: request,
-                      updateRequestList: widget.options.updateRequestList,
-                      requestList: widget.options.requestList,
-                      action: 'rejected',
-                      roomName: widget.options.roomName,
-                      socket: widget.options.socket,
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -518,10 +456,10 @@ class _ModernRequestsModalState extends State<ModernRequestsModal>
       child: Container(
         padding: const EdgeInsets.all(MediasfuSpacing.sm),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.2),
+          color: color.withOpacity(0.2),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: color.withValues(alpha: 0.5),
+            color: color.withOpacity(0.5),
           ),
         ),
         child: Icon(

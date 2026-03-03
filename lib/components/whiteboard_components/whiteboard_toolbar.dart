@@ -346,7 +346,7 @@ class _WhiteboardToolbarState extends State<WhiteboardToolbar> {
         _buildShapeMenuItem(WhiteboardShapeType.pentagon, 'Pentagon',
             FontAwesomeIcons.starOfDavid),
         _buildShapeMenuItem(
-            WhiteboardShapeType.hexagon, 'Hexagon', FontAwesomeIcons.hexagon),
+            WhiteboardShapeType.hexagon, 'Hexagon', FontAwesomeIcons.drawPolygon),
         _buildShapeMenuItem(WhiteboardShapeType.rhombus, 'Rhombus',
             FontAwesomeIcons.diamondTurnRight),
       ],

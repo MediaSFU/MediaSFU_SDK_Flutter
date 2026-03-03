@@ -57,7 +57,7 @@ class _ModernFlexibleVideoState extends State<ModernFlexibleVideo> {
   late double _cardLeft;
   late double _canvasLeft;
 
-  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+  bool get _isDark => widget.isDarkMode;
   BorderRadius get _borderRadius =>
       widget.cellBorderRadius ?? BorderRadius.circular(12);
 
@@ -250,16 +250,12 @@ class _ModernFlexibleVideoState extends State<ModernFlexibleVideo> {
                           borderRadius: _borderRadius,
                           // Use themed surface colors for empty cells
                           color: _isDark
-                              ? MediasfuColors.surfaceDark
-                                  .withValues(alpha: 0.5)
-                              : MediasfuColors.surfaceElevated
-                                  .withValues(alpha: 0.5),
+                              ? MediasfuColors.surfaceDark.withOpacity(0.5)
+                              : MediasfuColors.surfaceElevated.withOpacity(0.5),
                           border: Border.all(
                             color: _isDark
-                                ? MediasfuColors.primaryDark
-                                    .withValues(alpha: 0.1)
-                                : MediasfuColors.primary
-                                    .withValues(alpha: 0.05),
+                                ? MediasfuColors.primaryDark.withOpacity(0.1)
+                                : MediasfuColors.primary.withOpacity(0.05),
                           ),
                         )),
               clipBehavior: Clip.antiAlias,
@@ -459,44 +455,23 @@ class _ModernFlexibleVideoState extends State<ModernFlexibleVideo> {
     );
   }
 
-  /// Modern styled empty cell with gradient icon
+  /// Modern styled empty cell with subtle icon
   Widget _buildEmptyCell(Size cardSize) {
     return Center(
       child: Container(
         padding: const EdgeInsets.all(MediasfuSpacing.md),
         decoration: BoxDecoration(
-          gradient: LinearGradient(colors: [
-            _isDark
-                ? MediasfuColors.primaryDark.withValues(alpha: 0.2)
-                : MediasfuColors.primary.withValues(alpha: 0.1),
-            _isDark
-                ? MediasfuColors.secondaryDarkMode.withValues(alpha: 0.2)
-                : MediasfuColors.secondary.withValues(alpha: 0.1)
-          ]),
+          color: _isDark
+              ? Colors.white.withOpacity(0.04)
+              : Colors.black.withOpacity(0.03),
           shape: BoxShape.circle,
-          boxShadow: _isDark
-              ? [
-                  // Subtle glow in dark mode using brand colors
-                  BoxShadow(
-                    color: MediasfuColors.primaryDark.withValues(alpha: 0.15),
-                    blurRadius: 8,
-                    spreadRadius: 1,
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color: MediasfuColors.primary.withValues(alpha: 0.2),
-                    blurRadius: 12,
-                    spreadRadius: 2,
-                  ),
-                ],
         ),
         child: Icon(
           Icons.videocam_off_rounded,
           size: math.min(cardSize.width, cardSize.height) * 0.15,
           color: _isDark
-              ? MediasfuColors.textSecondaryDark
-              : Colors.black.withValues(alpha: 0.2),
+              ? Colors.white.withOpacity(0.15)
+              : Colors.black.withOpacity(0.15),
         ),
       ),
     );

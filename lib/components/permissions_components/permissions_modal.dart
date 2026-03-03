@@ -365,7 +365,7 @@ class _PermissionsModalState extends State<PermissionsModal>
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.4),
+                color: Colors.black.withOpacity(0.4),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -418,7 +418,7 @@ class _PermissionsModalState extends State<PermissionsModal>
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: Colors.white.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(Icons.close, color: Colors.white, size: 18),
@@ -434,7 +434,7 @@ class _PermissionsModalState extends State<PermissionsModal>
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: Colors.white.withValues(alpha: 0.1),
+            color: Colors.white.withOpacity(0.1),
           ),
         ),
       ),
@@ -443,7 +443,7 @@ class _PermissionsModalState extends State<PermissionsModal>
         onTap: (index) => setState(() {}),
         indicatorColor: const Color(0xFF3b82f6),
         labelColor: const Color(0xFF3b82f6),
-        unselectedLabelColor: Colors.white.withValues(alpha: 0.6),
+        unselectedLabelColor: Colors.white.withOpacity(0.6),
         tabs: const [
           Tab(
             child: Row(
@@ -492,18 +492,18 @@ class _PermissionsModalState extends State<PermissionsModal>
           style: const TextStyle(color: Colors.white, fontSize: 14),
           decoration: InputDecoration(
             hintText: 'Search participants...',
-            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.4)),
+            hintStyle: TextStyle(color: Colors.white.withOpacity(0.4)),
             filled: true,
-            fillColor: Colors.white.withValues(alpha: 0.05),
+            fillColor: Colors.white.withOpacity(0.05),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide:
-                  BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                  BorderSide(color: Colors.white.withOpacity(0.2)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide:
-                  BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                  BorderSide(color: Colors.white.withOpacity(0.2)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
@@ -525,14 +525,14 @@ class _PermissionsModalState extends State<PermissionsModal>
                     _selectedParticipants.length == _filteredParticipants.length
                         ? 'Deselect All'
                         : 'Select All',
-                backgroundColor: Colors.white.withValues(alpha: 0.05),
-                borderColor: Colors.white.withValues(alpha: 0.2),
+                backgroundColor: Colors.white.withOpacity(0.05),
+                borderColor: Colors.white.withOpacity(0.2),
               ),
               if (_selectedParticipants.isNotEmpty) ...[
                 Text(
                   '${_selectedParticipants.length} selected →',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.6),
+                    color: Colors.white.withOpacity(0.6),
                     fontSize: 12,
                   ),
                 ),
@@ -588,7 +588,7 @@ class _PermissionsModalState extends State<PermissionsModal>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.05),
+                color: Colors.white.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -615,7 +615,7 @@ class _PermissionsModalState extends State<PermissionsModal>
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
+                      color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -634,7 +634,7 @@ class _PermissionsModalState extends State<PermissionsModal>
                 child: Text(
                   'No participants at this level',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.4),
+                    color: Colors.white.withOpacity(0.4),
                     fontSize: 13,
                   ),
                 ),
@@ -654,12 +654,12 @@ class _PermissionsModalState extends State<PermissionsModal>
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: isSelected
-            ? const Color(0xFF3b82f6).withValues(alpha: 0.2)
-            : Colors.white.withValues(alpha: 0.03),
+            ? const Color(0xFF3b82f6).withOpacity(0.2)
+            : Colors.white.withOpacity(0.03),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isSelected
-              ? const Color(0xFF3b82f6).withValues(alpha: 0.5)
+              ? const Color(0xFF3b82f6).withOpacity(0.5)
               : Colors.transparent,
         ),
       ),
@@ -670,7 +670,7 @@ class _PermissionsModalState extends State<PermissionsModal>
               value: isSelected,
               onChanged: (_) => _handleParticipantSelect(participant.id ?? ''),
               activeColor: const Color(0xFF3b82f6),
-              side: BorderSide(color: Colors.white.withValues(alpha: 0.4)),
+              side: BorderSide(color: Colors.white.withOpacity(0.4)),
             ),
           Expanded(
             child: Text(
@@ -682,9 +682,9 @@ class _PermissionsModalState extends State<PermissionsModal>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
+                color: Colors.white.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                border: Border.all(color: Colors.white.withOpacity(0.2)),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
@@ -720,7 +720,7 @@ class _PermissionsModalState extends State<PermissionsModal>
           Text(
             'Configure what each permission level can do. Host (level 2) always has full permissions.',
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.6),
+              color: Colors.white.withOpacity(0.6),
               fontSize: 13,
             ),
           ),
@@ -762,7 +762,7 @@ class _PermissionsModalState extends State<PermissionsModal>
     final isExpanded = _expandedLevel == levelKey;
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -776,7 +776,7 @@ class _PermissionsModalState extends State<PermissionsModal>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.05),
+                color: Colors.white.withOpacity(0.05),
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(10),
                   topRight: const Radius.circular(10),
@@ -857,14 +857,14 @@ class _PermissionsModalState extends State<PermissionsModal>
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+          bottom: BorderSide(color: Colors.white.withOpacity(0.05)),
         ),
       ),
       child: Row(
         children: [
           Icon(
             _getCapabilityIcon(capability),
-            color: Colors.white.withValues(alpha: 0.6),
+            color: Colors.white.withOpacity(0.6),
             size: 18,
           ),
           const SizedBox(width: 10),
@@ -878,9 +878,9 @@ class _PermissionsModalState extends State<PermissionsModal>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
+                color: Colors.white.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                border: Border.all(color: Colors.white.withOpacity(0.2)),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
@@ -916,7 +916,7 @@ class _PermissionsModalState extends State<PermissionsModal>
                 Text(
                   value[0].toUpperCase() + value.substring(1),
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.6),
+                    color: Colors.white.withOpacity(0.6),
                     fontSize: 12,
                   ),
                 ),

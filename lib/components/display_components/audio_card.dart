@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:socket_io_client/socket_io_client.dart' as io;
@@ -6,7 +7,13 @@ import './mini_card.dart' show MiniCard, MiniCardOptions;
 import '../../consumers/control_media.dart'
     show controlMedia, ControlMediaType, ControlMediaOptions;
 import '../../types/types.dart'
-    show Participant, ShowAlert, EventType, CoHostResponsibility, AudioDecibels;
+    show
+        Participant,
+        ShowAlert,
+        EventType,
+        CoHostResponsibility,
+        AudioDecibels,
+        LiveSubtitle;
 
 /// A stateful widget displaying audio-only participant card with animated waveform and controls.
 ///
@@ -445,6 +452,18 @@ class AudioCardOptions {
   /// Used by modern styling.
   final Gradient? backgroundGradient;
 
+  /// Live subtitle for displaying translated speech.
+  /// Used by modern styling for subtitle overlays.
+  final ValueListenable<LiveSubtitle?>? liveSubtitle;
+
+  /// Whether to show subtitles on this card (static boolean).
+  /// For reactive updates, use `showSubtitlesNotifier` instead.
+  final bool showSubtitles;
+
+  /// Reactive notifier for whether to show subtitles on this card.
+  /// Takes precedence over `showSubtitles` if provided.
+  final ValueListenable<bool>? showSubtitlesNotifier;
+
   AudioCardOptions({
     this.controlUserMedia = controlMedia,
     required this.customStyle,
@@ -479,6 +498,9 @@ class AudioCardOptions {
     this.showStatusIndicator = false,
     this.isDarkMode = false,
     this.backgroundGradient,
+    this.liveSubtitle,
+    this.showSubtitles = false,
+    this.showSubtitlesNotifier,
   });
 }
 
@@ -877,6 +899,21 @@ class _AudioCardState extends State<AudioCard> with TickerProviderStateMixin {
               : null,
           child: widget.options.videoInfoComponent!,
         ),
+      // Subtitle overlay with reactive support if notifier is available
+      if (widget.options.liveSubtitle != null)
+        widget.options.showSubtitlesNotifier != null
+            ? ValueListenableBuilder<bool>(
+                valueListenable: widget.options.showSubtitlesNotifier!,
+                builder: (context, showSubtitles, _) {
+                  if (showSubtitles) {
+                    return _buildSubtitleOverlay();
+                  }
+                  return const SizedBox.shrink();
+                },
+              )
+            : (widget.options.showSubtitles
+                ? _buildSubtitleOverlay()
+                : const SizedBox.shrink()),
     ];
 
     final defaultWrapper = Stack(children: stackChildren);
@@ -927,6 +964,45 @@ class _AudioCardState extends State<AudioCard> with TickerProviderStateMixin {
         roundedImage: widget.options.roundedImage,
         imageStyle: widget.options.imageStyle,
       ),
+    );
+  }
+
+  Widget _buildSubtitleOverlay() {
+    return ValueListenableBuilder<LiveSubtitle?>(
+      valueListenable: widget.options.liveSubtitle!,
+      builder: (context, subtitle, child) {
+        if (subtitle == null || subtitle.text.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        return Positioned(
+          bottom: 8,
+          left: 8,
+          right: 8,
+          child: IgnorePointer(
+            child: Center(
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withAlpha((0.75 * 255).toInt()),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  subtitle.text,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 

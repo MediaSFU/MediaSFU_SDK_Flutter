@@ -1,3 +1,8 @@
+### 2.2.5
+* **Major Bug Fixes**:
+  - UI stability improvements across all components, especially in no-UI mode.
+  - Resolved edge cases in custom builder implementations to prevent crashes.
+
 ### 2.2.4
 
 * **Documentation Overhaul**:

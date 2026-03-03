@@ -1,5 +1,7 @@
 // import 'dart:io'; // use the welcome_page.qrcode.dart file
 import 'package:flutter/material.dart';
+
+import '../../utils/image_utils.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 // import 'package:permission_handler/permission_handler.dart'; // handle permissions manually
 import 'package:url_launcher/url_launcher.dart';
@@ -23,7 +25,7 @@ class WelcomePageOptions {
   final Function(String) updateMember;
 
   WelcomePageOptions({
-    this.imgSrc = 'https://mediasfu.com/images/logo192.png',
+    this.imgSrc = kDefaultMediaSFULogo,
     required this.showAlert,
     required this.updateIsLoadingModalVisible,
     required this.connectSocket,
@@ -200,11 +202,7 @@ class _WelcomePageState extends State<WelcomePage> {
                 // Brand Logo
                 Container(
                   margin: const EdgeInsets.only(bottom: 10),
-                  child: const CircleAvatar(
-                    radius: 50,
-                    backgroundImage:
-                        NetworkImage('https://mediasfu.com/images/logo192.png'),
-                  ),
+                  child: buildLogoCircle(kDefaultMediaSFULogo, radius: 50),
                 ),
                 // Input Fields
                 Column(

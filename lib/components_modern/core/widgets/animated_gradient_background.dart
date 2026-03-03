@@ -287,16 +287,16 @@ class _MeshGradientBackgroundState extends State<MeshGradientBackground>
     final colors = widget.colors ??
         (isDark
             ? [
-                MediasfuColors.primaryDark.withValues(alpha: 0.6),
-                MediasfuColors.accentDark.withValues(alpha: 0.6),
-                MediasfuColors.secondaryDarkMode.withValues(alpha: 0.6),
-                MediasfuColors.successLight.withValues(alpha: 0.4),
+                MediasfuColors.primaryDark.withOpacity(0.6),
+                MediasfuColors.accentDark.withOpacity(0.6),
+                MediasfuColors.secondaryDarkMode.withOpacity(0.6),
+                MediasfuColors.successLight.withOpacity(0.4),
               ]
             : [
-                MediasfuColors.primary.withValues(alpha: 0.4),
-                MediasfuColors.accent.withValues(alpha: 0.4),
-                MediasfuColors.secondary.withValues(alpha: 0.4),
-                MediasfuColors.success.withValues(alpha: 0.3),
+                MediasfuColors.primary.withOpacity(0.4),
+                MediasfuColors.accent.withOpacity(0.4),
+                MediasfuColors.secondary.withOpacity(0.4),
+                MediasfuColors.success.withOpacity(0.3),
               ]);
 
     return AnimatedBuilder(
@@ -356,7 +356,7 @@ class _MeshGradientPainter extends CustomPainter {
         radius: 0.8,
         colors: [
           colors[i],
-          colors[i].withValues(alpha: 0),
+          colors[i].withOpacity(0),
         ],
       );
 
@@ -403,16 +403,16 @@ class AuroraBackground extends StatelessWidget {
     return AnimatedGradientBackground(
       colors: isDark
           ? [
-              const Color(0xFF10B981).withValues(alpha: 0.6),
-              const Color(0xFF22D3EE).withValues(alpha: 0.6),
-              const Color(0xFF60A5FA).withValues(alpha: 0.6),
-              const Color(0xFF818CF8).withValues(alpha: 0.6),
+              const Color(0xFF10B981).withOpacity(0.6),
+              const Color(0xFF22D3EE).withOpacity(0.6),
+              const Color(0xFF60A5FA).withOpacity(0.6),
+              const Color(0xFF818CF8).withOpacity(0.6),
             ]
           : [
-              const Color(0xFF059669).withValues(alpha: 0.4),
-              const Color(0xFF06B6D4).withValues(alpha: 0.4),
-              const Color(0xFF3B82F6).withValues(alpha: 0.4),
-              const Color(0xFF6366F1).withValues(alpha: 0.4),
+              const Color(0xFF059669).withOpacity(0.4),
+              const Color(0xFF06B6D4).withOpacity(0.4),
+              const Color(0xFF3B82F6).withOpacity(0.4),
+              const Color(0xFF6366F1).withOpacity(0.4),
             ],
       duration: duration,
       animationType: GradientAnimationType.colorShift,

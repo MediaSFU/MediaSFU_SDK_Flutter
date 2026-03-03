@@ -21,7 +21,8 @@ import '../components/display_components/audio_card.dart'
 import '../components/display_components/mini_card.dart' show MiniCardOptions;
 import '../components/display_components/video_card.dart'
     show VideoCardOptions, VideoCardParameters;
-import '../types/types.dart' show Participant, Stream, EventType, MediaStream;
+import '../types/types.dart'
+    show Participant, Stream, EventType, MediaStream, LiveSubtitle;
 import '../types/custom_builders.dart'
     show VideoCardType, AudioCardType, MiniCardType;
 
@@ -62,6 +63,16 @@ abstract class PrepopulateUserMediaParameters
 
   // Theme support
   bool get isDarkModeValue;
+
+  // Live subtitles support
+  /// Whether to show subtitles on video cards
+  bool get showSubtitlesOnCards;
+
+  /// Reactive notifier for whether to show subtitles on cards
+  ValueListenable<bool>? get showSubtitlesOnCardsNotifier;
+
+  /// Per-speaker live subtitle data: Map`&lt;`speakerId, LiveSubtitle`&gt;`
+  ValueListenable<Map<String, LiveSubtitle>> get liveSubtitles;
 
   // Custom builder functions
   VideoCardType? get customVideoCard;
@@ -120,6 +131,28 @@ class PrepopulateUserMediaOptions {
 
 typedef PrepopulateUserMediaType = Future<List<Widget>?> Function(
     PrepopulateUserMediaOptions options);
+
+/// A derived ValueListenable that extracts a specific speaker's subtitle from the main map.
+/// This allows video cards to reactively update when their speaker's subtitle changes.
+class _SpeakerSubtitleNotifier extends ValueNotifier<LiveSubtitle?> {
+  final ValueListenable<Map<String, LiveSubtitle>> _source;
+  final String _speakerId;
+
+  _SpeakerSubtitleNotifier(this._source, this._speakerId) : super(null) {
+    _source.addListener(_update);
+    _update();
+  }
+
+  void _update() {
+    value = _source.value[_speakerId];
+  }
+
+  @override
+  void dispose() {
+    _source.removeListener(_update);
+    super.dispose();
+  }
+}
 
 /// Populates the main media grid with video, audio, or mini-cards based on
 /// the media activity of the participant.
@@ -196,6 +229,10 @@ Future<List<Widget>?> prepopulateUserMedia(
     bool keepBackground = parameters.keepBackground;
     bool annotateScreenStream = parameters.annotateScreenStream;
     bool isDarkModeValue = parameters.isDarkModeValue;
+    bool showSubtitlesOnCards = parameters.showSubtitlesOnCards;
+    final showSubtitlesOnCardsNotifier =
+        parameters.showSubtitlesOnCardsNotifier;
+    final liveSubtitles = parameters.liveSubtitles;
 
     // Update functions
     final void Function(String) updateMainScreenPerson =
@@ -223,11 +260,15 @@ Future<List<Widget>?> prepopulateUserMedia(
     Stream? hostStream;
     List<Widget> newComponent = [];
 
-    // Check if screen sharing is started or shared
-    if (shareScreenStarted || shared) {
+    // Check if screen sharing is started or shared (whiteboard counts as screen share)
+    if (shareScreenStarted ||
+        shared ||
+        (whiteboardStarted && !whiteboardEnded)) {
       // Handle main grid visibility based on the event type
       if (eventType == EventType.conference) {
-        if (shared || shareScreenStarted) {
+        if (shared ||
+            shareScreenStarted ||
+            (whiteboardStarted && !whiteboardEnded)) {
           if (mainHeightWidth == 0) {
             // Add the main grid if not present
             updateMainHeightWidth(84);
@@ -384,6 +425,15 @@ Future<List<Widget>?> prepopulateUserMedia(
                       doMirror: false,
                       parameters: parameters,
                       isDarkMode: isDarkModeValue,
+                      showSubtitles: showSubtitlesOnCards,
+                      showSubtitlesNotifier: showSubtitlesOnCardsNotifier,
+                      liveSubtitle: () {
+                        final h = host!;
+                        final subtitleKey =
+                            h.id?.isNotEmpty == true ? h.id! : h.name;
+                        return _SpeakerSubtitleNotifier(
+                            liveSubtitles, subtitleKey);
+                      }(),
                     ),
                   ),
           );
@@ -440,6 +490,15 @@ Future<List<Widget>?> prepopulateUserMedia(
                     doMirror: true,
                     parameters: parameters,
                     isDarkMode: isDarkModeValue,
+                    showSubtitles: showSubtitlesOnCards,
+                    showSubtitlesNotifier: showSubtitlesOnCardsNotifier,
+                    liveSubtitle: () {
+                      final h = host!;
+                      final subtitleKey =
+                          h.id?.isNotEmpty == true ? h.id! : h.name;
+                      return _SpeakerSubtitleNotifier(
+                          liveSubtitles, subtitleKey);
+                    }(),
                   )),
           );
 
@@ -503,6 +562,15 @@ Future<List<Widget>?> prepopulateUserMedia(
                             ? const Color(0xFF1E1E2E)
                             : Colors.transparent,
                         isDarkMode: isDarkModeValue,
+                        liveSubtitle: () {
+                          final h = host!;
+                          final subtitleKey =
+                              h.id?.isNotEmpty == true ? h.id! : h.name;
+                          return _SpeakerSubtitleNotifier(
+                              liveSubtitles, subtitleKey);
+                        }(),
+                        showSubtitles: showSubtitlesOnCards,
+                        showSubtitlesNotifier: showSubtitlesOnCardsNotifier,
                       )),
               );
 
@@ -538,12 +606,34 @@ Future<List<Widget>?> prepopulateUserMedia(
                             : Colors.transparent,
                         parameters: parameters,
                       )
-                    : ModernMiniCard(
-                        options: MiniCardOptions(
-                          initials: name,
-                          fontSize: 20,
-                          isDarkMode: isDarkModeValue,
-                          roundedImage: true,
+                    : Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: isDarkModeValue
+                                ? [
+                                    const Color(0xFF1a1d2e),
+                                    const Color(0xFF151827)
+                                  ]
+                                : [
+                                    const Color(0xFFF8F9FA),
+                                    const Color(0xFFE9ECEF)
+                                  ],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: ModernMiniCard(
+                            options: MiniCardOptions(
+                              initials: name,
+                              fontSize: 20,
+                              size: 80,
+                              isDarkMode: isDarkModeValue,
+                              roundedImage: true,
+                              showGradientBackground: true,
+                            ),
+                          ),
                         ),
                       ),
               );
@@ -601,6 +691,15 @@ Future<List<Widget>?> prepopulateUserMedia(
                       doMirror: false,
                       parameters: parameters,
                       isDarkMode: isDarkModeValue,
+                      showSubtitles: showSubtitlesOnCards,
+                      showSubtitlesNotifier: showSubtitlesOnCardsNotifier,
+                      liveSubtitle: () {
+                        final h = host!;
+                        final subtitleKey =
+                            h.id?.isNotEmpty == true ? h.id! : h.name;
+                        return _SpeakerSubtitleNotifier(
+                            liveSubtitles, subtitleKey);
+                      }(),
                     )),
             );
 
@@ -675,6 +774,15 @@ Future<List<Widget>?> prepopulateUserMedia(
                         doMirror: member == host.name,
                         parameters: parameters,
                         isDarkMode: isDarkModeValue,
+                        showSubtitles: showSubtitlesOnCards,
+                        showSubtitlesNotifier: showSubtitlesOnCardsNotifier,
+                        liveSubtitle: () {
+                          final h = host!;
+                          final subtitleKey =
+                              h.id?.isNotEmpty == true ? h.id! : h.name;
+                          return _SpeakerSubtitleNotifier(
+                              liveSubtitles, subtitleKey);
+                        }(),
                       )),
               );
 
@@ -698,12 +806,34 @@ Future<List<Widget>?> prepopulateUserMedia(
                             : Colors.transparent,
                         parameters: parameters,
                       )
-                    : ModernMiniCard(
-                        options: MiniCardOptions(
-                          initials: name,
-                          fontSize: 20,
-                          isDarkMode: isDarkModeValue,
-                          roundedImage: true,
+                    : Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: isDarkModeValue
+                                ? [
+                                    const Color(0xFF1a1d2e),
+                                    const Color(0xFF151827)
+                                  ]
+                                : [
+                                    const Color(0xFFF8F9FA),
+                                    const Color(0xFFE9ECEF)
+                                  ],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: ModernMiniCard(
+                            options: MiniCardOptions(
+                              initials: name,
+                              fontSize: 20,
+                              size: 80,
+                              isDarkMode: isDarkModeValue,
+                              roundedImage: true,
+                              showGradientBackground: true,
+                            ),
+                          ),
                         ),
                       ),
               );
@@ -743,12 +873,28 @@ Future<List<Widget>?> prepopulateUserMedia(
                       : Colors.transparent,
                   parameters: parameters,
                 )
-              : ModernMiniCard(
-                  options: MiniCardOptions(
-                    initials: name,
-                    fontSize: 20,
-                    isDarkMode: isDarkModeValue,
-                    roundedImage: true,
+              : Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: isDarkModeValue
+                          ? [const Color(0xFF1a1d2e), const Color(0xFF151827)]
+                          : [const Color(0xFFF8F9FA), const Color(0xFFE9ECEF)],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: ModernMiniCard(
+                      options: MiniCardOptions(
+                        initials: name,
+                        fontSize: 20,
+                        size: 80,
+                        isDarkMode: isDarkModeValue,
+                        roundedImage: true,
+                        showGradientBackground: true,
+                      ),
+                    ),
                   ),
                 ),
         );

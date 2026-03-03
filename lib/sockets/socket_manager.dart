@@ -71,10 +71,25 @@ class ConnectSocketOptions {
 }
 
 /// Options for connecting to a local socket.
+/// Supports optional authentication parameters for backend handshake.
 class ConnectLocalSocketOptions {
   final String link;
 
-  ConnectLocalSocketOptions({required this.link});
+  /// Optional app key for Flutter app authentication (X-App-Key)
+  final String? appKey;
+
+  /// Optional API username for backend authentication
+  final String? apiUserName;
+
+  /// Optional API key for backend authentication
+  final String? apiKey;
+
+  ConnectLocalSocketOptions({
+    required this.link,
+    this.appKey,
+    this.apiUserName,
+    this.apiKey,
+  });
 }
 
 class DisconnectSocketOptions {
@@ -161,13 +176,17 @@ Future<io.Socket> connectSocket(ConnectSocketOptions options) async {
   // Handle connection success
   socket.onConnect((_) {
     if (kDebugMode) print('Connected to $conn socket with ID: ${socket.id}');
-    completer.complete(socket);
+    if (!completer.isCompleted) {
+      completer.complete(socket);
+    }
   });
 
   // Handle connection error
   socket.onConnectError((error) {
-    completer
-        .completeError(Exception('Error connecting to media socket: $error'));
+    if (!completer.isCompleted) {
+      completer.completeError(
+          Exception('Error connecting to media socket: $error'));
+    }
   });
 
   return completer.future;
@@ -193,12 +212,26 @@ Future<io.Socket> connectSocket(ConnectSocketOptions options) async {
 
 /// Connects to a local media socket with the specified options.
 /// Returns a `ResponseLocalConnection` containing the socket and connection data.
+/// Supports optional authentication parameters for backend handshake.
 Future<ResponseLocalConnection> connectLocalSocket(
     ConnectLocalSocketOptions options) async {
   if (options.link.isEmpty) throw Exception('Socket link required.');
 
+  // Build query parameters for handshake authentication
+  final Map<String, dynamic> query = {};
+  if (options.appKey != null && options.appKey!.isNotEmpty) {
+    query['appKey'] = options.appKey;
+  }
+  if (options.apiUserName != null && options.apiUserName!.isNotEmpty) {
+    query['apiUserName'] = options.apiUserName;
+  }
+  if (options.apiKey != null && options.apiKey!.isNotEmpty) {
+    query['apiKey'] = options.apiKey;
+  }
+
   final socket = io.io('${options.link}/media', <String, dynamic>{
     'transports': ['websocket'],
+    if (query.isNotEmpty) 'query': query,
   });
   // final socket = io.io('${options.link}/media', {
   //   'transports': ['websocket'],
@@ -209,16 +242,20 @@ Future<ResponseLocalConnection> connectLocalSocket(
 
   // Handle connection success
   socket.on('connection-success', (data) {
-    final connectionData =
-        ResponseLocalConnectionData.fromMap(Map<String, dynamic>.from(data));
-    completer.complete(
-        ResponseLocalConnection(socket: socket, data: connectionData));
+    if (!completer.isCompleted) {
+      final connectionData =
+          ResponseLocalConnectionData.fromMap(Map<String, dynamic>.from(data));
+      completer.complete(
+          ResponseLocalConnection(socket: socket, data: connectionData));
+    }
   });
 
   // Handle connection error
   socket.onConnectError((error) {
-    completer.completeError(
-        Exception('Error connecting to local media socket: $error'));
+    if (!completer.isCompleted) {
+      completer.completeError(
+          Exception('Error connecting to local media socket: $error'));
+    }
   });
 
   return completer.future;

@@ -264,8 +264,7 @@ class LoadingModal extends StatelessWidget {
     }
 
     final Color overlayColor = options.overlayColor ??
-        options.backgroundColor.withValues(
-          alpha: (0.5 * options.backgroundColor.a).clamp(0.0, 1.0),
+        options.backgroundColor.withOpacity((0.5 * options.backgroundColor.opacity).clamp(0.0, 1.0),
         );
 
     Widget modal = Stack(

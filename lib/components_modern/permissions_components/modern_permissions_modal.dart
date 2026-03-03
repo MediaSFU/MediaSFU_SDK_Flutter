@@ -448,7 +448,7 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
               child: FadeTransition(
                 opacity: _fadeAnimation,
                 child: Container(
-                  color: Colors.black.withValues(alpha: 0.4),
+                  color: Colors.black.withOpacity(0.4),
                 ),
               ),
             ),
@@ -542,7 +542,7 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
             child: Container(
               padding: EdgeInsets.all(MediasfuSpacing.xs),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: Colors.white.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(MediasfuSpacing.xs),
               ),
               child: Icon(Icons.close, color: Colors.white, size: 18),
@@ -583,8 +583,8 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
         decoration: BoxDecoration(
           color: isActive
               ? (isDarkMode
-                  ? Colors.white.withValues(alpha: 0.07)
-                  : Colors.black.withValues(alpha: 0.04))
+                  ? Colors.white.withOpacity(0.07)
+                  : Colors.black.withOpacity(0.04))
               : Colors.transparent,
           border: Border(
             bottom: BorderSide(
@@ -645,13 +645,13 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
         Container(
           decoration: BoxDecoration(
             color: isDarkMode
-                ? Colors.white.withValues(alpha: 0.05)
-                : Colors.black.withValues(alpha: 0.03),
+                ? Colors.white.withOpacity(0.05)
+                : Colors.black.withOpacity(0.03),
             borderRadius: BorderRadius.circular(MediasfuSpacing.sm),
             border: Border.all(
               color: isDarkMode
-                  ? Colors.white.withValues(alpha: 0.12)
-                  : Colors.black.withValues(alpha: 0.12),
+                  ? Colors.white.withOpacity(0.12)
+                  : Colors.black.withOpacity(0.12),
             ),
           ),
           child: TextField(
@@ -758,8 +758,8 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
             border: isOutlined
                 ? Border.all(
                     color: isDarkMode
-                        ? Colors.white.withValues(alpha: 0.2)
-                        : Colors.black.withValues(alpha: 0.2),
+                        ? Colors.white.withOpacity(0.2)
+                        : Colors.black.withOpacity(0.2),
                   )
                 : null,
           ),
@@ -809,8 +809,8 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
         margin: EdgeInsets.only(bottom: MediasfuSpacing.md),
         decoration: BoxDecoration(
           color: isDarkMode
-              ? Colors.white.withValues(alpha: 0.04)
-              : Colors.black.withValues(alpha: 0.02),
+              ? Colors.white.withOpacity(0.04)
+              : Colors.black.withOpacity(0.02),
           borderRadius: BorderRadius.circular(MediasfuSpacing.sm),
           border: Border.all(
             color: MediasfuColors.glassBorder(darkMode: isDarkMode),
@@ -827,8 +827,8 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
               ),
               decoration: BoxDecoration(
                 color: isDarkMode
-                    ? Colors.white.withValues(alpha: 0.05)
-                    : Colors.black.withValues(alpha: 0.03),
+                    ? Colors.white.withOpacity(0.05)
+                    : Colors.black.withOpacity(0.03),
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(MediasfuSpacing.sm),
                   topRight: Radius.circular(MediasfuSpacing.sm),
@@ -860,8 +860,8 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
                     ),
                     decoration: BoxDecoration(
                       color: isDarkMode
-                          ? Colors.white.withValues(alpha: 0.15)
-                          : Colors.black.withValues(alpha: 0.1),
+                          ? Colors.white.withOpacity(0.15)
+                          : Colors.black.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(9999),
                     ),
                     child: Text(
@@ -917,12 +917,12 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
       ),
       decoration: BoxDecoration(
         color: isSelected
-            ? MediasfuColors.primary.withValues(alpha: 0.15)
+            ? MediasfuColors.primary.withOpacity(0.15)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(MediasfuSpacing.xs),
         border: Border.all(
           color: isSelected
-              ? MediasfuColors.primary.withValues(alpha: 0.5)
+              ? MediasfuColors.primary.withOpacity(0.5)
               : Colors.transparent,
         ),
       ),
@@ -935,8 +935,8 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
               activeColor: MediasfuColors.primary,
               side: BorderSide(
                 color: isDarkMode
-                    ? Colors.white.withValues(alpha: 0.4)
-                    : Colors.black.withValues(alpha: 0.4),
+                    ? Colors.white.withOpacity(0.4)
+                    : Colors.black.withOpacity(0.4),
               ),
             ),
           Expanded(
@@ -972,13 +972,13 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
                     ),
                     decoration: BoxDecoration(
                       color: isDarkMode
-                          ? Colors.white.withValues(alpha: 0.1)
-                          : Colors.black.withValues(alpha: 0.05),
+                          ? Colors.white.withOpacity(0.1)
+                          : Colors.black.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(MediasfuSpacing.xs),
                       border: Border.all(
                         color: isDarkMode
-                            ? Colors.white.withValues(alpha: 0.2)
-                            : Colors.black.withValues(alpha: 0.15),
+                            ? Colors.white.withOpacity(0.2)
+                            : Colors.black.withOpacity(0.15),
                       ),
                     ),
                     child: DropdownButtonHideUnderline(
@@ -1093,8 +1093,8 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
               ),
               decoration: BoxDecoration(
                 color: isDarkMode
-                    ? Colors.white.withValues(alpha: 0.05)
-                    : Colors.black.withValues(alpha: 0.03),
+                    ? Colors.white.withOpacity(0.05)
+                    : Colors.black.withOpacity(0.03),
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(MediasfuSpacing.sm),
                   topRight: Radius.circular(MediasfuSpacing.sm),
@@ -1182,8 +1182,8 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
         border: Border(
           bottom: BorderSide(
             color: isDarkMode
-                ? Colors.white.withValues(alpha: 0.05)
-                : Colors.black.withValues(alpha: 0.05),
+                ? Colors.white.withOpacity(0.05)
+                : Colors.black.withOpacity(0.05),
           ),
         ),
       ),
@@ -1211,13 +1211,13 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
               ),
               decoration: BoxDecoration(
                 color: isDarkMode
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.05),
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.black.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(MediasfuSpacing.xs),
                 border: Border.all(
                   color: isDarkMode
-                      ? Colors.white.withValues(alpha: 0.2)
-                      : Colors.black.withValues(alpha: 0.15),
+                      ? Colors.white.withOpacity(0.2)
+                      : Colors.black.withOpacity(0.15),
                 ),
               ),
               child: DropdownButtonHideUnderline(

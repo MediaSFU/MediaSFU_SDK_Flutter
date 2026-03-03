@@ -9,6 +9,10 @@ import '../../methods/settings_methods/modify_settings.dart'
 import '../../types/modal_style_options.dart' show ModalRenderMode;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
+import '../core/widgets/modal_header.dart';
+import '../core/widgets/modal_footer_button.dart';
+import '../core/widgets/section_card.dart';
+import '../core/widgets/animation_widgets.dart' show StaggeredAnimationList;
 
 typedef ModernEventSettingsModalType = Widget Function(
     {required EventSettingsModalOptions options});
@@ -103,7 +107,6 @@ class _ModernEventSettingsModalState extends State<ModernEventSettingsModal>
     }
   }
 
-  // ignore: unused_element
   IconData _getStateIcon(String state) {
     switch (state) {
       case 'allow':
@@ -147,7 +150,7 @@ class _ModernEventSettingsModalState extends State<ModernEventSettingsModal>
                 child: FadeTransition(
                   opacity: _fadeAnimation,
                   child: Container(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Colors.black.withOpacity(0.05),
                   ),
                 ),
               ),
@@ -183,25 +186,25 @@ class _ModernEventSettingsModalState extends State<ModernEventSettingsModal>
                         decoration: BoxDecoration(
                           color: useHighTransparency
                               ? (widget.options.isDarkMode
-                                  ? Colors.black.withValues(alpha: 0.05)
-                                  : Colors.white.withValues(alpha: 0.08))
+                                  ? Colors.black.withOpacity(0.05)
+                                  : Colors.white.withOpacity(0.08))
                               : (widget.options.isDarkMode
-                                  ? Colors.black.withValues(alpha: 0.7)
-                                  : Colors.white.withValues(alpha: 0.9)),
+                                  ? Colors.black.withOpacity(0.7)
+                                  : Colors.white.withOpacity(0.9)),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: widget.options.isDarkMode
-                                ? Colors.white.withValues(
-                                    alpha: useHighTransparency ? 0.08 : 0.1)
-                                : Colors.black.withValues(
-                                    alpha: useHighTransparency ? 0.05 : 0.1),
+                                ? Colors.white.withOpacity(
+                                    useHighTransparency ? 0.08 : 0.1)
+                                : Colors.black.withOpacity(
+                                    useHighTransparency ? 0.05 : 0.1),
                           ),
                           boxShadow: useHighTransparency
                               ? []
                               : [
                                   BoxShadow(
                                     color: MediasfuColors.secondary
-                                        .withValues(alpha: 0.2),
+                                        .withOpacity(0.2),
                                     blurRadius: 40,
                                     spreadRadius: 8,
                                   ),
@@ -214,7 +217,10 @@ class _ModernEventSettingsModalState extends State<ModernEventSettingsModal>
                               child: SingleChildScrollView(
                                 padding:
                                     const EdgeInsets.all(MediasfuSpacing.md),
-                                child: Column(
+                                child: StaggeredAnimationList(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  spacing: MediasfuSpacing.md,
                                   children: [
                                     _buildSettingSection(
                                       icon: Icons.mic_rounded,
@@ -225,7 +231,6 @@ class _ModernEventSettingsModalState extends State<ModernEventSettingsModal>
                                       onChanged: (v) =>
                                           setState(() => _audioState = v),
                                     ),
-                                    const SizedBox(height: MediasfuSpacing.md),
                                     _buildSettingSection(
                                       icon: Icons.videocam_rounded,
                                       label: 'Participants Video',
@@ -235,7 +240,6 @@ class _ModernEventSettingsModalState extends State<ModernEventSettingsModal>
                                       onChanged: (v) =>
                                           setState(() => _videoState = v),
                                     ),
-                                    const SizedBox(height: MediasfuSpacing.md),
                                     _buildSettingSection(
                                       icon: Icons.screen_share_rounded,
                                       label: 'Participants Screenshare',
@@ -245,7 +249,6 @@ class _ModernEventSettingsModalState extends State<ModernEventSettingsModal>
                                       onChanged: (v) =>
                                           setState(() => _screenshareState = v),
                                     ),
-                                    const SizedBox(height: MediasfuSpacing.md),
                                     _buildSettingSection(
                                       icon: Icons.chat_bubble_rounded,
                                       label: 'Chat',
@@ -275,73 +278,15 @@ class _ModernEventSettingsModalState extends State<ModernEventSettingsModal>
   }
 
   Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(MediasfuSpacing.md),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: widget.options.isDarkMode
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.1),
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(MediasfuSpacing.sm),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  MediasfuColors.secondary,
-                  MediasfuColors.secondary.withValues(alpha: 0.7),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: MediasfuColors.secondary.withValues(alpha: 0.5),
-                  blurRadius: 12,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.settings_rounded,
-              color: Colors.white,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: MediasfuSpacing.sm),
-          Text(
-            'Event Settings',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: widget.options.isDarkMode ? Colors.white : Colors.black87,
-            ),
-          ),
-          const Spacer(),
-          GestureDetector(
-            onTap: _handleClose,
-            child: Container(
-              padding: const EdgeInsets.all(MediasfuSpacing.sm),
-              decoration: BoxDecoration(
-                color: widget.options.isDarkMode
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                Icons.close_rounded,
-                color:
-                    widget.options.isDarkMode ? Colors.white70 : Colors.black54,
-                size: 20,
-              ),
-            ),
-          ),
-        ],
-      ),
+    return ModalHeader(
+      icon: Icons.settings_rounded,
+      title: 'Event Settings',
+      onClose: _handleClose,
+      isDarkMode: widget.options.isDarkMode,
+      gradientColors: [
+        MediasfuColors.secondary,
+        MediasfuColors.secondary.withOpacity(0.7),
+      ],
     );
   }
 
@@ -352,19 +297,8 @@ class _ModernEventSettingsModalState extends State<ModernEventSettingsModal>
     required String value,
     required ValueChanged<String> onChanged,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(MediasfuSpacing.md),
-      decoration: BoxDecoration(
-        color: widget.options.isDarkMode
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.black.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: widget.options.isDarkMode
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.black.withValues(alpha: 0.1),
-        ),
-      ),
+    return SectionCard(
+      isDarkMode: widget.options.isDarkMode,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -373,7 +307,7 @@ class _ModernEventSettingsModalState extends State<ModernEventSettingsModal>
               Container(
                 padding: const EdgeInsets.all(MediasfuSpacing.sm),
                 decoration: BoxDecoration(
-                  color: _getStateColor(value).withValues(alpha: 0.2),
+                  color: _getStateColor(value).withOpacity(0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -456,17 +390,17 @@ class _ModernEventSettingsModalState extends State<ModernEventSettingsModal>
           ),
           decoration: BoxDecoration(
             color: isSelected
-                ? color.withValues(alpha: 0.2)
+                ? color.withOpacity(0.2)
                 : (widget.options.isDarkMode
-                    ? Colors.white.withValues(alpha: 0.05)
-                    : Colors.black.withValues(alpha: 0.03)),
+                    ? Colors.white.withOpacity(0.05)
+                    : Colors.black.withOpacity(0.03)),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isSelected
                   ? color
                   : (widget.options.isDarkMode
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : Colors.black.withValues(alpha: 0.1)),
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.black.withOpacity(0.1)),
               width: isSelected ? 2 : 1,
             ),
           ),
@@ -490,50 +424,10 @@ class _ModernEventSettingsModalState extends State<ModernEventSettingsModal>
   }
 
   Widget _buildFooter() {
-    return Container(
-      padding: const EdgeInsets.all(MediasfuSpacing.md),
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(
-            color: widget.options.isDarkMode
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.1),
-          ),
-        ),
-      ),
-      child: GestureDetector(
-        onTap: _handleSave,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: MediasfuSpacing.md),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                MediasfuColors.primary,
-                MediasfuColors.secondary,
-              ],
-            ),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: MediasfuColors.primary.withValues(alpha: 0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: const Center(
-            child: Text(
-              'Save Settings',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-          ),
-        ),
-      ),
+    return ModalFooterButton(
+      label: 'Save Settings',
+      onPressed: _handleSave,
+      isDarkMode: widget.options.isDarkMode,
     );
   }
 
@@ -547,7 +441,9 @@ class _ModernEventSettingsModalState extends State<ModernEventSettingsModal>
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(MediasfuSpacing.md),
-              child: Column(
+              child: StaggeredAnimationList(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: MediasfuSpacing.md,
                 children: [
                   _buildSettingSection(
                     icon: Icons.mic_rounded,
@@ -556,7 +452,6 @@ class _ModernEventSettingsModalState extends State<ModernEventSettingsModal>
                     value: _audioState,
                     onChanged: (v) => setState(() => _audioState = v),
                   ),
-                  const SizedBox(height: MediasfuSpacing.md),
                   _buildSettingSection(
                     icon: Icons.videocam_rounded,
                     label: 'Participants Video',
@@ -564,7 +459,6 @@ class _ModernEventSettingsModalState extends State<ModernEventSettingsModal>
                     value: _videoState,
                     onChanged: (v) => setState(() => _videoState = v),
                   ),
-                  const SizedBox(height: MediasfuSpacing.md),
                   _buildSettingSection(
                     icon: Icons.screen_share_rounded,
                     label: 'Participants Screenshare',
@@ -573,7 +467,6 @@ class _ModernEventSettingsModalState extends State<ModernEventSettingsModal>
                     value: _screenshareState,
                     onChanged: (v) => setState(() => _screenshareState = v),
                   ),
-                  const SizedBox(height: MediasfuSpacing.md),
                   _buildSettingSection(
                     icon: Icons.chat_bubble_rounded,
                     label: 'Chat',

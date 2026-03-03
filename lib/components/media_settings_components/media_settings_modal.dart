@@ -798,8 +798,8 @@ class MediaSettingsModal extends StatelessWidget {
             ),
             Switch(
               value: parameters.isSpeakerphoneOn,
-              activeTrackColor: options.backgroundColor.withValues(alpha: 0.5),
-              activeThumbColor: options.backgroundColor,
+              activeTrackColor: options.backgroundColor.withOpacity(0.5),
+              activeColor: options.backgroundColor,
               onChanged: (bool value) async {
                 final success = await switchAudioOutput(
                   SwitchAudioOutputOptions(
@@ -818,11 +818,16 @@ class MediaSettingsModal extends StatelessWidget {
     );
   }
 
-  /// Check if virtual background is supported on current platform
+  /// Check if virtual background is supported on current platform.
+  /// Virtual backgrounds are supported on Android, iOS, and macOS.
+  /// Windows support is disabled pending a viable frame-injection path
+  /// (libwebrtc's RTCVideoSource has no PushFrame API and WGC refuses
+  /// to capture programmatic popup windows).
   bool get _isVirtualBackgroundSupported {
     if (kIsWeb) return false;
     return defaultTargetPlatform == TargetPlatform.android ||
-        defaultTargetPlatform == TargetPlatform.iOS;
+        defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.macOS;
   }
 
   /// Builds the Virtual Background button that toggles the background modal.
@@ -840,7 +845,7 @@ class MediaSettingsModal extends StatelessWidget {
         // Show alert for unsupported platforms
         parameters.showAlert?.call(
           message:
-              'Virtual backgrounds are only supported on mobile devices (Android/iOS). '
+              'Virtual backgrounds are supported on Android, iOS, and macOS. '
               'This feature is not available on ${kIsWeb ? 'web' : defaultTargetPlatform.name}.',
           type: 'warning',
           duration: 4000,
@@ -853,9 +858,8 @@ class MediaSettingsModal extends StatelessWidget {
       child: ElevatedButton.icon(
         onPressed: handleVirtualBackgroundPress,
         icon: const Icon(Icons.photo_library, size: 18),
-        label: Text(isSupported
-            ? 'Virtual Background'
-            : 'Virtual Background (Mobile Only)'),
+        label: Text(
+            isSupported ? 'Virtual Background' : 'Virtual Background (N/A)'),
         style: ElevatedButton.styleFrom(
           backgroundColor:
               isSupported ? options.backgroundColor : Colors.grey.shade300,

@@ -278,8 +278,7 @@ class _ModernButtonItemState extends State<_ModernButtonItem>
                   boxShadow: button.enableGlow && !isDisabled
                       ? [
                           BoxShadow(
-                            color: gradientStart.withValues(
-                                alpha: _isPressed
+                            color: gradientStart.withOpacity(_isPressed
                                     ? 0.4
                                     : (_isHovered ? 0.3 : 0.15)),
                             blurRadius:
@@ -310,17 +309,17 @@ class _ModernButtonItemState extends State<_ModernButtonItem>
                           colors: [
                             _isPressed
                                 ? gradientStart
-                                : gradientStart.withValues(alpha: 0.9),
+                                : gradientStart.withOpacity(0.9),
                             _isPressed
                                 ? gradientEnd
-                                : gradientEnd.withValues(alpha: 0.8),
+                                : gradientEnd.withOpacity(0.8),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: _isPressed || _isHovered
-                              ? Colors.white.withValues(alpha: 0.3)
-                              : Colors.white.withValues(alpha: 0.15),
+                              ? Colors.white.withOpacity(0.3)
+                              : Colors.white.withOpacity(0.15),
                           width: 1,
                         ),
                       ),
@@ -337,8 +336,7 @@ class _ModernButtonItemState extends State<_ModernButtonItem>
                               duration: MediasfuAnimations.fast,
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(
-                                    alpha: _isPressed ? 0.25 : 0.15),
+                                color: Colors.white.withOpacity(_isPressed ? 0.25 : 0.15),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Icon(
@@ -373,14 +371,14 @@ class _ModernButtonItemState extends State<_ModernButtonItem>
                               padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
                                 color: Colors.white
-                                    .withValues(alpha: _isHovered ? 0.2 : 0.1),
+                                    .withOpacity(_isHovered ? 0.2 : 0.1),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Icon(
                                 Icons.arrow_forward_ios_rounded,
                                 size: 12,
                                 color: Colors.white
-                                    .withValues(alpha: _isHovered ? 0.9 : 0.6),
+                                    .withOpacity(_isHovered ? 0.9 : 0.6),
                               ),
                             ),
                         ],

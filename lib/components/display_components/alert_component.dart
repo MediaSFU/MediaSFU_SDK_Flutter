@@ -430,12 +430,10 @@ class _AlertComponentState extends State<AlertComponent> {
     final double overlayOpacity =
         (options.overlayOpacity.isNaN ? 0.5 : options.overlayOpacity)
             .clamp(0.0, 1.0);
-    final double baseOverlayOpacity = options.overlayColor.a;
+    final double baseOverlayOpacity = options.overlayColor.opacity;
     final double effectiveOverlayOpacity =
         (overlayOpacity * baseOverlayOpacity).clamp(0.0, 1.0);
-    final Color overlayBackgroundColor = options.overlayColor.withValues(
-      alpha: effectiveOverlayOpacity,
-    );
+    final Color overlayBackgroundColor = options.overlayColor.withOpacity(effectiveOverlayOpacity);
 
     final Widget overlayContent = Align(
       alignment: options.overlayAlignment,

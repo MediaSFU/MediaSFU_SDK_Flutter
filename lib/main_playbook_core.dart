@@ -164,7 +164,7 @@ class _CorePlaybookAppState extends State<_CorePlaybookApp> {
                 final child = defaultBuilder(context, options);
                 return Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.92),
+                    color: Colors.white.withOpacity(0.92),
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: const [
                       BoxShadow(
@@ -588,7 +588,7 @@ class _CorePlaybookAppState extends State<_CorePlaybookApp> {
                 Text(
                   active ? 'Microphone live' : 'Muted',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.74),
+                    color: Colors.white.withOpacity(0.74),
                     fontSize: 12,
                   ),
                 ),

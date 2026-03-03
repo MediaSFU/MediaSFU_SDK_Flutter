@@ -3162,6 +3162,61 @@ class LaunchBackgroundOptions {
 
 typedef LaunchBackgroundType = void Function(LaunchBackgroundOptions options);
 
+/// Live subtitle data for displaying real-time captions on video cards.
+/// Used when translation transcript is received and subtitles are enabled.
+class LiveSubtitle {
+  /// The translated or original text to display
+  final String text;
+
+  /// The language code of the text
+  final String language;
+
+  /// When this subtitle was created
+  final DateTime timestamp;
+
+  /// When this subtitle should auto-hide (typically 3-5 seconds after creation)
+  final DateTime expiresAt;
+
+  /// The speaker's ID who spoke this text
+  final String speakerId;
+
+  /// The speaker's display name
+  final String speakerName;
+
+  LiveSubtitle({
+    required this.text,
+    required this.language,
+    required this.timestamp,
+    required this.expiresAt,
+    required this.speakerId,
+    required this.speakerName,
+  });
+
+  /// Check if this subtitle has expired
+  bool get isExpired => DateTime.now().isAfter(expiresAt);
+
+  /// Create a new subtitle with auto-calculated expiration
+  /// Duration is based on text length: min 3 seconds, +50ms per character, max 8 seconds
+  factory LiveSubtitle.create({
+    required String text,
+    required String language,
+    required String speakerId,
+    required String speakerName,
+  }) {
+    final now = DateTime.now();
+    // Calculate display duration: 3s base + 50ms per character, capped at 8s
+    final durationMs = (3000 + (text.length * 50)).clamp(3000, 8000);
+    return LiveSubtitle(
+      text: text,
+      language: language,
+      timestamp: now,
+      expiresAt: now.add(Duration(milliseconds: durationMs)),
+      speakerId: speakerId,
+      speakerName: speakerName,
+    );
+  }
+}
+
 /// Metadata for translation producers.
 class TranslationMeta {
   final String speakerId;

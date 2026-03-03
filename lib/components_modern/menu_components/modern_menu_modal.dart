@@ -18,6 +18,7 @@ import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
 import '../core/theme/mediasfu_typography.dart';
 import '../core/theme/mediasfu_animations.dart';
+import '../core/widgets/modern_switch.dart';
 
 /// Modern redesigned MenuModal with glassmorphic styling, premium animations,
 /// theme selector, and enhanced visual effects.
@@ -126,8 +127,8 @@ class _ModernMenuModalState extends State<ModernMenuModal>
                 builder: (context, child) {
                   return Container(
                     decoration: BoxDecoration(
-                      color: Colors.black
-                          .withValues(alpha: 0.05 * _backdropAnim.value),
+                      color:
+                          Colors.black.withOpacity(0.05 * _backdropAnim.value),
                     ),
                   );
                 },
@@ -158,17 +159,10 @@ class _ModernMenuModalState extends State<ModernMenuModal>
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: (isDark
-                              ? MediasfuColors.primaryDark
-                              : MediasfuColors.primary)
-                          .withValues(alpha: 0.25),
+                      color: Colors.black.withOpacity(0.25),
                       blurRadius: 40,
                       spreadRadius: 0,
-                    ),
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.25),
-                      blurRadius: 25,
-                      offset: const Offset(0, 12),
+                      offset: const Offset(0, 8),
                     ),
                   ],
                 ),
@@ -186,21 +180,19 @@ class _ModernMenuModalState extends State<ModernMenuModal>
                           colors: isDark
                               ? [
                                   MediasfuColors.surfaceElevatedDark
-                                      .withValues(alpha: 0.05),
-                                  MediasfuColors.surfaceDark
-                                      .withValues(alpha: 0.1),
+                                      .withOpacity(0.05),
+                                  MediasfuColors.surfaceDark.withOpacity(0.1),
                                 ]
                               : [
-                                  Colors.white.withValues(alpha: 0.05),
-                                  MediasfuColors.surface.withValues(alpha: 0.1),
+                                  Colors.white.withOpacity(0.05),
+                                  MediasfuColors.surface.withOpacity(0.1),
                                 ],
                         ),
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(
                           color: isDark
-                              ? MediasfuColors.primaryDark
-                                  .withValues(alpha: 0.2)
-                              : MediasfuColors.primary.withValues(alpha: 0.15),
+                              ? MediasfuColors.primaryDark.withOpacity(0.2)
+                              : MediasfuColors.primary.withOpacity(0.15),
                           width: 1.5,
                         ),
                       ),
@@ -412,12 +404,13 @@ class _ModernMenuModalState extends State<ModernMenuModal>
                 decoration: BoxDecoration(
                   gradient: MediasfuColors.brandGradient(darkMode: isDark),
                   borderRadius: BorderRadius.circular(14),
-                  boxShadow: MediasfuColors.glowShadow(
-                    isDark
-                        ? MediasfuColors.primaryDark
-                        : MediasfuColors.primary,
-                    intensity: 0.4,
-                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: const Icon(
                   Icons.dashboard_rounded,
@@ -442,8 +435,8 @@ class _ModernMenuModalState extends State<ModernMenuModal>
                     'Manage your meeting',
                     style: textTheme.bodySmall?.copyWith(
                       color: isDark
-                          ? Colors.white.withValues(alpha: 0.6)
-                          : Colors.black.withValues(alpha: 0.5),
+                          ? Colors.white.withOpacity(0.6)
+                          : Colors.black.withOpacity(0.5),
                     ),
                   ),
                 ],
@@ -465,9 +458,9 @@ class _ModernMenuModalState extends State<ModernMenuModal>
           colors: [
             Colors.transparent,
             (isDark ? MediasfuColors.primaryDark : MediasfuColors.primary)
-                .withValues(alpha: 0.4),
+                .withOpacity(0.4),
             (isDark ? MediasfuColors.secondary : MediasfuColors.accent)
-                .withValues(alpha: 0.3),
+                .withOpacity(0.3),
             Colors.transparent,
           ],
         ),
@@ -496,19 +489,19 @@ class _ModernMenuModalState extends State<ModernMenuModal>
               end: Alignment.bottomRight,
               colors: isDark
                   ? [
-                      Colors.white.withValues(alpha: 0.05),
-                      Colors.white.withValues(alpha: 0.02),
+                      Colors.white.withOpacity(0.05),
+                      Colors.white.withOpacity(0.02),
                     ]
                   : [
-                      MediasfuColors.primary.withValues(alpha: 0.05),
-                      MediasfuColors.secondary.withValues(alpha: 0.03),
+                      MediasfuColors.primary.withOpacity(0.05),
+                      MediasfuColors.secondary.withOpacity(0.03),
                     ],
             ),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isDark
-                  ? Colors.white.withValues(alpha: 0.1)
-                  : MediasfuColors.primary.withValues(alpha: 0.1),
+                  ? Colors.white.withOpacity(0.1)
+                  : MediasfuColors.primary.withOpacity(0.1),
             ),
           ),
           child: Row(
@@ -518,8 +511,8 @@ class _ModernMenuModalState extends State<ModernMenuModal>
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? MediasfuColors.primaryDark.withValues(alpha: 0.2)
-                      : MediasfuColors.primary.withValues(alpha: 0.15),
+                      ? MediasfuColors.primaryDark.withOpacity(0.2)
+                      : MediasfuColors.primary.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -548,8 +541,8 @@ class _ModernMenuModalState extends State<ModernMenuModal>
                         'Tap to switch theme',
                         style: textTheme.bodySmall?.copyWith(
                           color: isDark
-                              ? Colors.white.withValues(alpha: 0.5)
-                              : Colors.black.withValues(alpha: 0.4),
+                              ? Colors.white.withOpacity(0.5)
+                              : Colors.black.withOpacity(0.4),
                           fontSize: 11,
                         ),
                       ),
@@ -558,17 +551,13 @@ class _ModernMenuModalState extends State<ModernMenuModal>
                 ),
               ),
               // Toggle switch
-              Switch.adaptive(
+              ModernSwitch(
                 value: isDark,
                 onChanged: hasToggleCallback
                     ? (value) => widget.options.onToggleTheme!(value)
-                    : null,
-                activeColor: MediasfuColors.primaryDark,
-                activeTrackColor:
-                    MediasfuColors.primaryDark.withValues(alpha: 0.3),
-                inactiveThumbColor: MediasfuColors.primary,
-                inactiveTrackColor:
-                    MediasfuColors.primary.withValues(alpha: 0.3),
+                    : (_) {},
+                isDarkMode: isDark,
+                semanticLabel: 'Dark mode toggle',
               ),
             ],
           ),
@@ -593,12 +582,10 @@ class _ModernMenuModalState extends State<ModernMenuModal>
           child: Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: (isDark ? Colors.white : Colors.black)
-                  .withValues(alpha: 0.08),
+              color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: (isDark ? Colors.white : Colors.black)
-                    .withValues(alpha: 0.1),
+                color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
               ),
             ),
             child: Icon(

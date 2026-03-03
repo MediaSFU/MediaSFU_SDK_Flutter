@@ -349,7 +349,7 @@ class _ModernBreakoutRoomsModalState extends State<ModernBreakoutRoomsModal>
       child: GestureDetector(
         onTap: _handleClose,
         child: Container(
-          color: Colors.black.withValues(alpha: 0.1),
+          color: Colors.black.withOpacity(0.1),
           child: AnimatedBuilder(
             animation: _slideAnimation,
             builder: (context, child) => Transform.translate(
@@ -385,7 +385,7 @@ class _ModernBreakoutRoomsModalState extends State<ModernBreakoutRoomsModal>
                                   ),
                                   BoxShadow(
                                     color: MediasfuColors.primary
-                                        .withValues(alpha: 0.15),
+                                        .withOpacity(0.15),
                                     blurRadius: 50,
                                     spreadRadius: 8,
                                   ),
@@ -456,13 +456,13 @@ class _ModernBreakoutRoomsModalState extends State<ModernBreakoutRoomsModal>
               gradient: LinearGradient(
                 colors: [
                   primaryColor,
-                  primaryColor.withValues(alpha: 0.7),
+                  primaryColor.withOpacity(0.7),
                 ],
               ),
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: primaryColor.withValues(alpha: 0.5),
+                  color: primaryColor.withOpacity(0.5),
                   blurRadius: 12,
                   spreadRadius: 2,
                 ),
@@ -492,14 +492,14 @@ class _ModernBreakoutRoomsModalState extends State<ModernBreakoutRoomsModal>
                         width: 8,
                         height: 8,
                         decoration: BoxDecoration(
-                          color: Colors.green,
+                          color: MediasfuColors.success,
                           shape: BoxShape.circle,
                         ),
                       ),
                       const SizedBox(width: 4),
                       Text('Active',
                           style: TextStyle(
-                              fontSize: 12, color: Colors.green.shade600)),
+                              fontSize: 12, color: MediasfuColors.successDark)),
                     ],
                   ),
               ],
@@ -804,7 +804,7 @@ class _ModernBreakoutRoomsModalState extends State<ModernBreakoutRoomsModal>
                 IconButton(
                   onPressed: () => _handleDeleteRoom(index),
                   icon: Icon(Icons.delete_outline,
-                      size: 18, color: Colors.red.shade400),
+                      size: 18, color: MediasfuColors.danger),
                   splashRadius: 18,
                   tooltip: 'Delete',
                 ),
@@ -884,13 +884,13 @@ class _ModernBreakoutRoomsModalState extends State<ModernBreakoutRoomsModal>
             InkWell(
               onTap: onAdd,
               child: Icon(Icons.add_circle_outline,
-                  size: 18, color: Colors.green.shade600),
+                  size: 18, color: MediasfuColors.successDark),
             ),
           if (onRemove != null)
             InkWell(
               onTap: onRemove,
               child: Icon(Icons.remove_circle_outline,
-                  size: 18, color: Colors.red.shade400),
+                  size: 18, color: MediasfuColors.danger),
             ),
         ],
       ),
@@ -955,7 +955,7 @@ class _ModernBreakoutRoomsModalState extends State<ModernBreakoutRoomsModal>
               icon: const Icon(Icons.stop, size: 18),
               label: const Text('Stop'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red.shade600,
+                backgroundColor: MediasfuColors.dangerDark,
                 foregroundColor: Colors.white,
                 padding:
                     const EdgeInsets.symmetric(vertical: MediasfuSpacing.sm),

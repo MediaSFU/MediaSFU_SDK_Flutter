@@ -304,17 +304,17 @@ class MediasfuColors {
 
   /// Utility for elevation shadow levels (1-5).
   static List<BoxShadow> elevation({int level = 2, bool darkMode = false}) {
-    final baseColor = Colors.black.withValues(alpha: darkMode ? 0.35 : 0.15);
+    final baseColor = Colors.black.withOpacity(darkMode ? 0.35 : 0.15);
     switch (level) {
       case 1:
         return [
           BoxShadow(
-            color: baseColor.withValues(alpha: darkMode ? 0.25 : 0.05),
+            color: baseColor.withOpacity(darkMode ? 0.25 : 0.05),
             blurRadius: 4,
             offset: const Offset(0, 1),
           ),
           BoxShadow(
-            color: baseColor.withValues(alpha: darkMode ? 0.15 : 0.03),
+            color: baseColor.withOpacity(darkMode ? 0.15 : 0.03),
             blurRadius: 2,
             offset: const Offset(0, 1),
           ),
@@ -322,12 +322,12 @@ class MediasfuColors {
       case 2:
         return [
           BoxShadow(
-            color: baseColor.withValues(alpha: darkMode ? 0.3 : 0.07),
+            color: baseColor.withOpacity(darkMode ? 0.3 : 0.07),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
           BoxShadow(
-            color: baseColor.withValues(alpha: darkMode ? 0.15 : 0.04),
+            color: baseColor.withOpacity(darkMode ? 0.15 : 0.04),
             blurRadius: 3,
             offset: const Offset(0, 1),
           ),
@@ -335,12 +335,12 @@ class MediasfuColors {
       case 3:
         return [
           BoxShadow(
-            color: baseColor.withValues(alpha: darkMode ? 0.35 : 0.1),
+            color: baseColor.withOpacity(darkMode ? 0.35 : 0.1),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
           BoxShadow(
-            color: baseColor.withValues(alpha: darkMode ? 0.2 : 0.06),
+            color: baseColor.withOpacity(darkMode ? 0.2 : 0.06),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -348,12 +348,12 @@ class MediasfuColors {
       case 4:
         return [
           BoxShadow(
-            color: baseColor.withValues(alpha: darkMode ? 0.4 : 0.12),
+            color: baseColor.withOpacity(darkMode ? 0.4 : 0.12),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
           BoxShadow(
-            color: baseColor.withValues(alpha: darkMode ? 0.25 : 0.08),
+            color: baseColor.withOpacity(darkMode ? 0.25 : 0.08),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -361,12 +361,12 @@ class MediasfuColors {
       case 5:
         return [
           BoxShadow(
-            color: baseColor.withValues(alpha: darkMode ? 0.45 : 0.15),
+            color: baseColor.withOpacity(darkMode ? 0.45 : 0.15),
             blurRadius: 32,
             offset: const Offset(0, 12),
           ),
           BoxShadow(
-            color: baseColor.withValues(alpha: darkMode ? 0.3 : 0.1),
+            color: baseColor.withOpacity(darkMode ? 0.3 : 0.1),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
@@ -388,7 +388,7 @@ class MediasfuColors {
       case 1:
         return [
           BoxShadow(
-            color: color.withValues(alpha: 0.2),
+            color: color.withOpacity(0.2),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -396,12 +396,12 @@ class MediasfuColors {
       case 2:
         return [
           BoxShadow(
-            color: color.withValues(alpha: 0.25),
+            color: color.withOpacity(0.25),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
           BoxShadow(
-            color: color.withValues(alpha: 0.15),
+            color: color.withOpacity(0.15),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -410,12 +410,12 @@ class MediasfuColors {
       default:
         return [
           BoxShadow(
-            color: color.withValues(alpha: 0.3),
+            color: color.withOpacity(0.3),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
           BoxShadow(
-            color: color.withValues(alpha: 0.2),
+            color: color.withOpacity(0.2),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -433,17 +433,17 @@ class MediasfuColors {
     final clampedIntensity = intensity.clamp(0.0, 1.0);
     return [
       BoxShadow(
-        color: color.withValues(alpha: 0.15 * clampedIntensity),
+        color: color.withOpacity(0.15 * clampedIntensity),
         blurRadius: 32,
         spreadRadius: 4,
       ),
       BoxShadow(
-        color: color.withValues(alpha: 0.25 * clampedIntensity),
+        color: color.withOpacity(0.25 * clampedIntensity),
         blurRadius: 16,
         spreadRadius: 2,
       ),
       BoxShadow(
-        color: color.withValues(alpha: 0.4 * clampedIntensity),
+        color: color.withOpacity(0.4 * clampedIntensity),
         blurRadius: 8,
       ),
     ];
@@ -453,7 +453,7 @@ class MediasfuColors {
   static List<BoxShadow> subtleGlow(Color color, {bool darkMode = false}) {
     return [
       BoxShadow(
-        color: color.withValues(alpha: darkMode ? 0.2 : 0.15),
+        color: color.withOpacity(darkMode ? 0.2 : 0.15),
         blurRadius: 20,
         spreadRadius: 1,
       ),
@@ -466,12 +466,12 @@ class MediasfuColors {
     final intensity = 0.3 + (0.3 * phase);
     return [
       BoxShadow(
-        color: color.withValues(alpha: intensity * 0.5),
+        color: color.withOpacity(intensity * 0.5),
         blurRadius: 24 + (8 * phase),
         spreadRadius: 2 + (2 * phase),
       ),
       BoxShadow(
-        color: color.withValues(alpha: intensity),
+        color: color.withOpacity(intensity),
         blurRadius: 12 + (4 * phase),
       ),
     ];
@@ -481,22 +481,22 @@ class MediasfuColors {
   static List<BoxShadow> neonGlow(Color color) {
     return [
       BoxShadow(
-        color: color.withValues(alpha: 0.1),
+        color: color.withOpacity(0.1),
         blurRadius: 40,
         spreadRadius: 8,
       ),
       BoxShadow(
-        color: color.withValues(alpha: 0.3),
+        color: color.withOpacity(0.3),
         blurRadius: 20,
         spreadRadius: 4,
       ),
       BoxShadow(
-        color: color.withValues(alpha: 0.5),
+        color: color.withOpacity(0.5),
         blurRadius: 10,
         spreadRadius: 1,
       ),
       BoxShadow(
-        color: color.withValues(alpha: 0.8),
+        color: color.withOpacity(0.8),
         blurRadius: 4,
       ),
     ];
@@ -513,24 +513,24 @@ class MediasfuColors {
       return isPressed
           ? [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.5),
+                color: Colors.black.withOpacity(0.5),
                 blurRadius: 4,
                 offset: const Offset(-2, -2),
               ),
               BoxShadow(
-                color: const Color(0xFF2D3A4F).withValues(alpha: 0.3),
+                color: const Color(0xFF2D3A4F).withOpacity(0.3),
                 blurRadius: 4,
                 offset: const Offset(2, 2),
               ),
             ]
           : [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.6),
+                color: Colors.black.withOpacity(0.6),
                 blurRadius: 8,
                 offset: const Offset(4, 4),
               ),
               BoxShadow(
-                color: const Color(0xFF2D3A4F).withValues(alpha: 0.4),
+                color: const Color(0xFF2D3A4F).withOpacity(0.4),
                 blurRadius: 8,
                 offset: const Offset(-4, -4),
               ),
@@ -539,24 +539,24 @@ class MediasfuColors {
       return isPressed
           ? [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
+                color: Colors.black.withOpacity(0.1),
                 blurRadius: 4,
                 offset: const Offset(-2, -2),
               ),
               BoxShadow(
-                color: Colors.white.withValues(alpha: 0.7),
+                color: Colors.white.withOpacity(0.7),
                 blurRadius: 4,
                 offset: const Offset(2, 2),
               ),
             ]
           : [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.12),
+                color: Colors.black.withOpacity(0.12),
                 blurRadius: 8,
                 offset: const Offset(4, 4),
               ),
               BoxShadow(
-                color: Colors.white.withValues(alpha: 0.9),
+                color: Colors.white.withOpacity(0.9),
                 blurRadius: 8,
                 offset: const Offset(-4, -4),
               ),
@@ -572,14 +572,14 @@ class MediasfuColors {
         end: Alignment.bottomRight,
         colors: darkMode
             ? [
-                Colors.black.withValues(alpha: 0.2),
+                Colors.black.withOpacity(0.2),
                 Colors.transparent,
-                const Color(0xFF2D3A4F).withValues(alpha: 0.1),
+                const Color(0xFF2D3A4F).withOpacity(0.1),
               ]
             : [
-                Colors.black.withValues(alpha: 0.08),
+                Colors.black.withOpacity(0.08),
                 Colors.transparent,
-                Colors.white.withValues(alpha: 0.5),
+                Colors.white.withOpacity(0.5),
               ],
         stops: const [0.0, 0.5, 1.0],
       ),
@@ -592,12 +592,12 @@ class MediasfuColors {
 
   /// Glass effect background.
   static Color glassBackground({bool darkMode = false}) {
-    return (darkMode ? Colors.white : Colors.black).withValues(alpha: 0.06);
+    return (darkMode ? Colors.white : Colors.black).withOpacity(0.06);
   }
 
   /// Glass effect border.
   static Color glassBorder({bool darkMode = false}) {
-    return Colors.white.withValues(alpha: darkMode ? 0.08 : 0.35);
+    return Colors.white.withOpacity(darkMode ? 0.08 : 0.35);
   }
 
   /// Premium frosted glass decoration.
@@ -605,18 +605,18 @@ class MediasfuColors {
       {bool darkMode = false, double borderRadius = 20}) {
     return BoxDecoration(
       color: darkMode
-          ? Colors.white.withValues(alpha: 0.06)
-          : Colors.white.withValues(alpha: 0.75),
+          ? Colors.white.withOpacity(0.06)
+          : Colors.white.withOpacity(0.75),
       borderRadius: BorderRadius.circular(borderRadius),
       border: Border.all(
         color: darkMode
-            ? Colors.white.withValues(alpha: 0.12)
-            : Colors.white.withValues(alpha: 0.8),
+            ? Colors.white.withOpacity(0.12)
+            : Colors.white.withOpacity(0.8),
         width: 1.5,
       ),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withValues(alpha: darkMode ? 0.3 : 0.08),
+          color: Colors.black.withOpacity(darkMode ? 0.3 : 0.08),
           blurRadius: 24,
           offset: const Offset(0, 8),
         ),
@@ -634,12 +634,12 @@ class MediasfuColors {
         end: Alignment.bottomRight,
         colors: darkMode
             ? [
-                Colors.white.withValues(alpha: 0.15),
-                Colors.white.withValues(alpha: 0.05),
+                Colors.white.withOpacity(0.15),
+                Colors.white.withOpacity(0.05),
               ]
             : [
-                Colors.white.withValues(alpha: 0.9),
-                Colors.white.withValues(alpha: 0.4),
+                Colors.white.withOpacity(0.9),
+                Colors.white.withOpacity(0.4),
               ],
       ),
     );
@@ -665,14 +665,14 @@ class MediasfuColors {
 
   /// Get disabled color for any base color.
   static Color disabledColor(Color base) {
-    return base.withValues(alpha: 0.4);
+    return base.withOpacity(0.4);
   }
 
   /// Get focus ring color.
   static Color focusRing({bool darkMode = false}) {
     return darkMode
-        ? primaryDark.withValues(alpha: 0.5)
-        : primary.withValues(alpha: 0.4);
+        ? primaryDark.withOpacity(0.5)
+        : primary.withOpacity(0.4);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -682,15 +682,15 @@ class MediasfuColors {
   /// Modal backdrop overlay color.
   static Color modalBackdrop({bool darkMode = false}) {
     return darkMode
-        ? Colors.black.withValues(alpha: 0.7)
-        : Colors.black.withValues(alpha: 0.4);
+        ? Colors.black.withOpacity(0.7)
+        : Colors.black.withOpacity(0.4);
   }
 
   /// Scrim overlay for dimming content.
   static Color scrim({bool darkMode = false, double opacity = 0.5}) {
     return darkMode
-        ? Colors.black.withValues(alpha: opacity)
-        : Colors.black.withValues(alpha: opacity * 0.6);
+        ? Colors.black.withOpacity(opacity)
+        : Colors.black.withOpacity(opacity * 0.6);
   }
 
   /// Shimmer base color for loading states.
@@ -768,15 +768,15 @@ class MediasfuColors {
   /// Dropdown item hover/selected background.
   static Color dropdownItemHover({bool darkMode = false}) {
     return darkMode
-        ? primary.withValues(alpha: 0.15)
-        : primary.withValues(alpha: 0.08);
+        ? primary.withOpacity(0.15)
+        : primary.withOpacity(0.08);
   }
 
   /// Dropdown border color.
   static Color dropdownBorder({bool darkMode = false}) {
     return darkMode
-        ? primary.withValues(alpha: 0.3)
-        : primary.withValues(alpha: 0.2);
+        ? primary.withOpacity(0.3)
+        : primary.withOpacity(0.2);
   }
 
   /// Input/dropdown container decoration with proper theming.
@@ -784,22 +784,22 @@ class MediasfuColors {
       {bool darkMode = false, bool focused = false}) {
     return BoxDecoration(
       color: darkMode
-          ? surfaceElevatedDark.withValues(alpha: 0.8)
-          : Colors.white.withValues(alpha: 0.95),
+          ? surfaceElevatedDark.withOpacity(0.8)
+          : Colors.white.withOpacity(0.95),
       borderRadius: BorderRadius.circular(12),
       border: Border.all(
         color: focused
             ? (darkMode ? primaryDark : primary)
             : (darkMode
-                ? Colors.white.withValues(alpha: 0.15)
-                : Colors.black.withValues(alpha: 0.1)),
+                ? Colors.white.withOpacity(0.15)
+                : Colors.black.withOpacity(0.1)),
         width: focused ? 2 : 1,
       ),
       boxShadow: focused
           ? [
               BoxShadow(
                 color:
-                    (darkMode ? primaryDark : primary).withValues(alpha: 0.2),
+                    (darkMode ? primaryDark : primary).withOpacity(0.2),
                 blurRadius: 8,
                 spreadRadius: 0,
               ),
@@ -839,17 +839,17 @@ class MediasfuColors {
       color: tooltipBackground(darkMode: darkMode),
       borderRadius: BorderRadius.circular(8),
       border: Border.all(
-        color: primary.withValues(alpha: 0.3),
+        color: primary.withOpacity(0.3),
         width: 1,
       ),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withValues(alpha: 0.3),
+          color: Colors.black.withOpacity(0.3),
           blurRadius: 12,
           offset: const Offset(0, 4),
         ),
         BoxShadow(
-          color: primary.withValues(alpha: 0.1),
+          color: primary.withOpacity(0.1),
           blurRadius: 8,
           spreadRadius: 0,
         ),
@@ -864,8 +864,8 @@ class MediasfuColors {
   /// Light/transparent alert backdrop - allows seeing content underneath.
   static Color alertBackdrop({bool darkMode = false}) {
     return darkMode
-        ? Colors.black.withValues(alpha: 0.25) // Very transparent
-        : Colors.black.withValues(alpha: 0.15);
+        ? Colors.black.withOpacity(0.25) // Very transparent
+        : Colors.black.withOpacity(0.15);
   }
 
   /// Get themed surface color based on elevation context.

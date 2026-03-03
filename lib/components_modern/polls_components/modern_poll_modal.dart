@@ -128,24 +128,22 @@ class _ModernPollModalState extends State<ModernPollModal>
         BoxDecoration(
           color: useHighTransparency
               ? (widget.options.isDarkMode
-                  ? Colors.black.withValues(alpha: 0.05)
-                  : Colors.white.withValues(alpha: 0.08))
+                  ? Colors.black.withOpacity(0.05)
+                  : Colors.white.withOpacity(0.08))
               : (widget.options.isDarkMode
-                  ? Colors.black.withValues(alpha: 0.7)
-                  : Colors.white.withValues(alpha: 0.9)),
+                  ? Colors.black.withOpacity(0.7)
+                  : Colors.white.withOpacity(0.9)),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: widget.options.isDarkMode
-                ? Colors.white
-                    .withValues(alpha: useHighTransparency ? 0.08 : 0.1)
-                : Colors.black
-                    .withValues(alpha: useHighTransparency ? 0.05 : 0.1),
+                ? Colors.white.withOpacity(useHighTransparency ? 0.08 : 0.1)
+                : Colors.black.withOpacity(useHighTransparency ? 0.05 : 0.1),
           ),
           boxShadow: useHighTransparency
               ? []
               : [
                   BoxShadow(
-                    color: MediasfuColors.secondary.withValues(alpha: 0.2),
+                    color: MediasfuColors.secondary.withOpacity(0.2),
                     blurRadius: 40,
                     spreadRadius: 8,
                   ),
@@ -165,7 +163,7 @@ class _ModernPollModalState extends State<ModernPollModal>
                 child: FadeTransition(
                   opacity: _fadeAnimation,
                   child: Container(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Colors.black.withOpacity(0.05),
                   ),
                 ),
               ),
@@ -230,8 +228,8 @@ class _ModernPollModalState extends State<ModernPollModal>
         border: Border(
           bottom: BorderSide(
             color: widget.options.isDarkMode
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.1),
+                ? Colors.white.withOpacity(0.1)
+                : Colors.black.withOpacity(0.1),
           ),
         ),
       ),
@@ -249,9 +247,9 @@ class _ModernPollModalState extends State<ModernPollModal>
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: MediasfuColors.secondary.withValues(alpha: 0.5),
-                  blurRadius: 12,
-                  spreadRadius: 2,
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
@@ -280,22 +278,25 @@ class _ModernPollModalState extends State<ModernPollModal>
               onPressed: _handleClose,
             )
           else
-            GestureDetector(
-              onTap: _handleClose,
-              child: Container(
-                padding: const EdgeInsets.all(MediasfuSpacing.sm),
-                decoration: BoxDecoration(
-                  color: widget.options.isDarkMode
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : Colors.black.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.close_rounded,
-                  color: widget.options.isDarkMode
-                      ? Colors.white70
-                      : Colors.black54,
-                  size: 20,
+            Tooltip(
+              message: 'Close polls',
+              child: GestureDetector(
+                onTap: _handleClose,
+                child: Container(
+                  padding: const EdgeInsets.all(MediasfuSpacing.sm),
+                  decoration: BoxDecoration(
+                    color: widget.options.isDarkMode
+                        ? Colors.white.withOpacity(0.1)
+                        : Colors.black.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.close_rounded,
+                    color: widget.options.isDarkMode
+                        ? Colors.white70
+                        : Colors.black54,
+                    size: 20,
+                  ),
                 ),
               ),
             ),
@@ -344,8 +345,8 @@ class _ModernPollModalState extends State<ModernPollModal>
           color: isSelected
               ? null
               : (widget.options.isDarkMode
-                  ? Colors.white.withValues(alpha: 0.1)
-                  : Colors.black.withValues(alpha: 0.05)),
+                  ? Colors.white.withOpacity(0.1)
+                  : Colors.black.withOpacity(0.05)),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Text(
@@ -605,8 +606,8 @@ class _ModernPollModalState extends State<ModernPollModal>
           contentPadding: const EdgeInsets.all(MediasfuSpacing.md),
           filled: true,
           fillColor: widget.options.isDarkMode
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.black.withValues(alpha: 0.05),
+              ? Colors.white.withOpacity(0.1)
+              : Colors.black.withOpacity(0.05),
         );
 
     final decoration = baseDecoration.copyWith(
@@ -652,10 +653,10 @@ class _ModernPollModalState extends State<ModernPollModal>
       child: Container(
         padding: const EdgeInsets.all(MediasfuSpacing.sm),
         decoration: BoxDecoration(
-          color: MediasfuColors.primary.withValues(alpha: 0.1),
+          color: MediasfuColors.primary.withOpacity(0.1),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: MediasfuColors.primary.withValues(alpha: 0.3),
+            color: MediasfuColors.primary.withOpacity(0.3),
           ),
         ),
         child: Row(
@@ -782,13 +783,13 @@ class _ModernPollModalState extends State<ModernPollModal>
       padding: const EdgeInsets.all(MediasfuSpacing.md),
       decoration: BoxDecoration(
         color: widget.options.isDarkMode
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.black.withValues(alpha: 0.03),
+            ? Colors.white.withOpacity(0.05)
+            : Colors.black.withOpacity(0.03),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: widget.options.isDarkMode
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.black.withValues(alpha: 0.1),
+              ? Colors.white.withOpacity(0.1)
+              : Colors.black.withOpacity(0.1),
         ),
       ),
       child: Column(
@@ -803,8 +804,8 @@ class _ModernPollModalState extends State<ModernPollModal>
                 ),
                 decoration: BoxDecoration(
                   color: isCompleted
-                      ? Colors.grey.withValues(alpha: 0.2)
-                      : MediasfuColors.success.withValues(alpha: 0.2),
+                      ? Colors.grey.withOpacity(0.2)
+                      : MediasfuColors.success.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -897,17 +898,17 @@ class _ModernPollModalState extends State<ModernPollModal>
         padding: const EdgeInsets.all(MediasfuSpacing.md),
         decoration: BoxDecoration(
           color: isSelected
-              ? MediasfuColors.primary.withValues(alpha: 0.2)
+              ? MediasfuColors.primary.withOpacity(0.2)
               : (widget.options.isDarkMode
-                  ? Colors.white.withValues(alpha: 0.05)
-                  : Colors.black.withValues(alpha: 0.03)),
+                  ? Colors.white.withOpacity(0.05)
+                  : Colors.black.withOpacity(0.03)),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
                 ? MediasfuColors.primary
                 : (widget.options.isDarkMode
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.1)),
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.black.withOpacity(0.1)),
           ),
         ),
         child: Row(
@@ -1020,9 +1021,7 @@ class _ModernPollModalState extends State<ModernPollModal>
                   ],
                 )
               : null,
-          color: _selectedOption == null
-              ? Colors.grey.withValues(alpha: 0.3)
-              : null,
+          color: _selectedOption == null ? Colors.grey.withOpacity(0.3) : null,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
@@ -1079,10 +1078,10 @@ class _ModernPollModalState extends State<ModernPollModal>
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: MediasfuSpacing.md),
         decoration: BoxDecoration(
-          color: MediasfuColors.danger.withValues(alpha: 0.2),
+          color: MediasfuColors.danger.withOpacity(0.2),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: MediasfuColors.danger.withValues(alpha: 0.5),
+            color: MediasfuColors.danger.withOpacity(0.5),
           ),
         ),
         child: Row(

@@ -14,6 +14,7 @@ abstract class OnScreenChangesParameters implements ReorderStreamsParameters {
   bool get shareScreenStarted;
   bool get shared;
   bool get addForBasic;
+  bool get whiteboardStarted;
   UpdateMainHeightWidth get updateMainHeightWidth;
   UpdateAddForBasic get updateAddForBasic;
   int get itemPageLimit;
@@ -110,7 +111,9 @@ Future<void> onScreenChanges(OnScreenChangesOptions options) async {
       updateMainHeightWidth(
           parameters.eventType == EventType.broadcast ? 100 : 0);
     } else if (parameters.eventType == EventType.conference &&
-        !(parameters.shareScreenStarted || parameters.shared)) {
+        !(parameters.shareScreenStarted ||
+            parameters.shared ||
+            parameters.whiteboardStarted)) {
       updateMainHeightWidth(0);
     }
 

@@ -14,12 +14,15 @@ import '../../methods/utils/get_modal_position.dart'
 import '../../types/modal_style_options.dart' show ModalRenderMode;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
+import '../core/widgets/modal_header.dart';
 
 // Platform check helper that works on all platforms including web
 bool _isMobilePlatform() {
   if (kIsWeb) return false;
   return defaultTargetPlatform == TargetPlatform.android ||
-      defaultTargetPlatform == TargetPlatform.iOS;
+      defaultTargetPlatform == TargetPlatform.iOS ||
+      defaultTargetPlatform == TargetPlatform.macOS ||
+      defaultTargetPlatform == TargetPlatform.windows;
 }
 
 typedef ModernBackgroundModalType = Widget Function({
@@ -121,20 +124,30 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
       });
 
       try {
-        final videoConstraints = <String, dynamic>{
+        // Build mandatory constraints for cross-platform compatibility (iOS needs 'mandatory')
+        final mandatoryConstraints = <String, dynamic>{
           'facingMode': 'user',
-          'frameRate': _params.frameRate > 0 ? _params.frameRate : 15,
+          'frameRate': {
+            'ideal': _params.frameRate > 0 ? _params.frameRate : 15
+          },
         };
 
         final vidCons = _params.vidCons;
         if (vidCons != null) {
           if (vidCons is Map<String, dynamic>) {
-            videoConstraints.addAll(vidCons);
+            // Add width/height from map
+            if (vidCons['width'] != null)
+              mandatoryConstraints['width'] = vidCons['width'];
+            if (vidCons['height'] != null)
+              mandatoryConstraints['height'] = vidCons['height'];
           } else {
             try {
               final consMap = (vidCons as dynamic).toMap();
               if (consMap is Map<String, dynamic>) {
-                videoConstraints.addAll(consMap);
+                if (consMap['width'] != null)
+                  mandatoryConstraints['width'] = consMap['width'];
+                if (consMap['height'] != null)
+                  mandatoryConstraints['height'] = consMap['height'];
               }
             } catch (_) {}
           }
@@ -142,7 +155,9 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
 
         final constraints = <String, dynamic>{
           'audio': false,
-          'video': videoConstraints,
+          'video': {
+            'mandatory': mandatoryConstraints,
+          },
         };
 
         final stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -339,7 +354,7 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
               onTap: _handleClose,
               child: FadeTransition(
                 opacity: _fadeAnimation,
-                child: Container(color: Colors.black.withValues(alpha: 0.05)),
+                child: Container(color: Colors.black.withOpacity(0.05)),
               ),
             ),
           ),
@@ -370,34 +385,27 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
                       decoration: BoxDecoration(
                         color: useHighTransparency
                             ? (widget.options.isDarkMode
-                                ? Colors.black.withValues(alpha: 0.05)
-                                : Colors.white.withValues(alpha: 0.08))
+                                ? Colors.black.withOpacity(0.05)
+                                : Colors.white.withOpacity(0.08))
                             : (widget.options.isDarkMode
-                                ? Colors.black.withValues(alpha: 0.7)
-                                : Colors.white.withValues(alpha: 0.9)),
+                                ? Colors.black.withOpacity(0.7)
+                                : Colors.white.withOpacity(0.9)),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                           color: widget.options.isDarkMode
-                              ? Colors.white.withValues(
-                                  alpha: useHighTransparency ? 0.08 : 0.15)
-                              : Colors.black.withValues(
-                                  alpha: useHighTransparency ? 0.05 : 0.1),
+                              ? Colors.white.withOpacity(
+                                  useHighTransparency ? 0.08 : 0.15)
+                              : Colors.black.withOpacity(
+                                  useHighTransparency ? 0.05 : 0.1),
                         ),
                         boxShadow: useHighTransparency
                             ? []
                             : [
                                 BoxShadow(
-                                  color: MediasfuColors.primary
-                                      .withValues(alpha: 0.3),
+                                  color: Colors.black.withOpacity(0.25),
                                   blurRadius: 40,
-                                  spreadRadius: 8,
-                                ),
-                                BoxShadow(
-                                  color: MediasfuColors.secondary
-                                      .withValues(alpha: 0.15),
-                                  blurRadius: 60,
-                                  spreadRadius: 10,
-                                  offset: const Offset(10, 20),
+                                  spreadRadius: 0,
+                                  offset: const Offset(0, 10),
                                 ),
                               ],
                       ),
@@ -424,8 +432,8 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
   Widget _buildSidebarContent() {
     return Container(
       color: widget.options.isDarkMode
-          ? Colors.black.withValues(alpha: 0.7)
-          : Colors.white.withValues(alpha: 0.9),
+          ? Colors.black.withOpacity(0.7)
+          : Colors.white.withOpacity(0.9),
       child: Column(
         children: [
           _buildHeader(),
@@ -438,68 +446,15 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
   }
 
   Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(MediasfuSpacing.md),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: widget.options.isDarkMode
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.1),
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(MediasfuSpacing.sm),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [
-                MediasfuColors.primary,
-                MediasfuColors.primary.withValues(alpha: 0.7),
-              ]),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: MediasfuColors.primary.withValues(alpha: 0.4),
-                  blurRadius: 12,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: const Icon(Icons.wallpaper_rounded,
-                color: Colors.white, size: 20),
-          ),
-          const SizedBox(width: MediasfuSpacing.sm),
-          Text(
-            'Virtual Background',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: widget.options.isDarkMode ? Colors.white : Colors.black87,
-            ),
-          ),
-          const Spacer(),
-          GestureDetector(
-            onTap: _handleClose,
-            child: Container(
-              padding: const EdgeInsets.all(MediasfuSpacing.sm),
-              decoration: BoxDecoration(
-                color: widget.options.isDarkMode
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                Icons.close_rounded,
-                color:
-                    widget.options.isDarkMode ? Colors.white70 : Colors.black54,
-                size: 20,
-              ),
-            ),
-          ),
-        ],
-      ),
+    return ModalHeader(
+      icon: Icons.wallpaper_rounded,
+      title: 'Virtual Background',
+      onClose: _handleClose,
+      isDarkMode: widget.options.isDarkMode,
+      gradientColors: [
+        MediasfuColors.primary,
+        MediasfuColors.primary.withOpacity(0.7),
+      ],
     );
   }
 
@@ -508,16 +463,16 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
       margin: const EdgeInsets.all(MediasfuSpacing.md),
       padding: const EdgeInsets.all(MediasfuSpacing.md),
       decoration: BoxDecoration(
-        color: Colors.orange.withValues(alpha: 0.15),
+        color: Colors.orange.withOpacity(0.15),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+        border: Border.all(color: Colors.orange.withOpacity(0.3)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(MediasfuSpacing.sm),
             decoration: BoxDecoration(
-              color: Colors.orange.withValues(alpha: 0.2),
+              color: Colors.orange.withOpacity(0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(Icons.warning_amber_rounded,
@@ -526,7 +481,7 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
           const SizedBox(width: MediasfuSpacing.md),
           Expanded(
             child: Text(
-              'Virtual backgrounds are only supported on mobile devices (Android/iOS).',
+              'Virtual backgrounds are supported on Android, iOS, macOS, and Windows.',
               style: TextStyle(
                 color: widget.options.isDarkMode
                     ? Colors.orange[200]
@@ -595,7 +550,7 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
               Container(
                 padding: const EdgeInsets.all(MediasfuSpacing.md),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withValues(alpha: 0.2),
+                  color: Colors.orange.withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.videocam_off,
@@ -649,8 +604,8 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
                 padding: const EdgeInsets.all(MediasfuSpacing.md),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(colors: [
-                    MediasfuColors.primary.withValues(alpha: 0.2),
-                    MediasfuColors.secondary.withValues(alpha: 0.2),
+                    MediasfuColors.primary.withOpacity(0.2),
+                    MediasfuColors.secondary.withOpacity(0.2),
                   ]),
                   shape: BoxShape.circle,
                 ),
@@ -712,8 +667,8 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      Colors.black.withValues(alpha: 0.8),
-                      Colors.grey[900]!.withValues(alpha: 0.8),
+                      Colors.black.withOpacity(0.8),
+                      Colors.grey[900]!.withOpacity(0.8),
                     ],
                   ),
                 ),
@@ -755,8 +710,9 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
                     borderRadius: BorderRadius.circular(6),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.orange.withValues(alpha: 0.4),
-                        blurRadius: 8,
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
@@ -802,7 +758,7 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
           ),
           const SizedBox(height: MediasfuSpacing.xs),
           Text(
-            'Virtual backgrounds require mobile device',
+            'Virtual backgrounds require a supported platform',
             style: TextStyle(
               color:
                   widget.options.isDarkMode ? Colors.white54 : Colors.black45,
@@ -830,8 +786,8 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: widget.options.isDarkMode
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.black.withValues(alpha: 0.1),
+              ? Colors.white.withOpacity(0.1)
+              : Colors.black.withOpacity(0.1),
         ),
       ),
       child: Center(child: child),
@@ -858,9 +814,9 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
           borderRadius: BorderRadius.circular(small ? 8 : 12),
           boxShadow: [
             BoxShadow(
-              color: MediasfuColors.primary.withValues(alpha: 0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -1042,8 +998,7 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
               : Icon(
                   Icons.blur_on,
                   size: 36,
-                  color: Colors.blue
-                      .withValues(alpha: 0.5 + bg.blurIntensity * 0.5),
+                  color: Colors.blue.withOpacity(0.5 + bg.blurIntensity * 0.5),
                 ),
         );
       },
@@ -1105,8 +1060,8 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
                         padding: const EdgeInsets.all(MediasfuSpacing.lg),
                         decoration: BoxDecoration(
                           color: widget.options.isDarkMode
-                              ? Colors.white.withValues(alpha: 0.05)
-                              : Colors.black.withValues(alpha: 0.03),
+                              ? Colors.white.withOpacity(0.05)
+                              : Colors.black.withOpacity(0.03),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -1174,15 +1129,15 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
                 decoration: BoxDecoration(
                   gradient: _isPlatformSupported
                       ? LinearGradient(colors: [
-                          MediasfuColors.primary.withValues(alpha: 0.1),
-                          MediasfuColors.secondary.withValues(alpha: 0.1),
+                          MediasfuColors.primary.withOpacity(0.1),
+                          MediasfuColors.secondary.withOpacity(0.1),
                         ])
                       : null,
                   color: _isPlatformSupported ? null : Colors.grey[300],
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: _isPlatformSupported
-                        ? MediasfuColors.primary.withValues(alpha: 0.3)
+                        ? MediasfuColors.primary.withOpacity(0.3)
                         : Colors.grey,
                   ),
                 ),
@@ -1229,16 +1184,16 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
             color: isSelected
                 ? MediasfuColors.primary
                 : (widget.options.isDarkMode
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.1)),
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.black.withOpacity(0.1)),
             width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: MediasfuColors.primary.withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    spreadRadius: 1,
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 6,
+                    spreadRadius: 0,
                   )
                 ]
               : null,
@@ -1272,7 +1227,7 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: MediasfuColors.primary.withValues(alpha: 0.4),
+                        color: Colors.black.withOpacity(0.15),
                         blurRadius: 4,
                       ),
                     ],
@@ -1292,7 +1247,7 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withValues(alpha: 0.7),
+                      Colors.black.withOpacity(0.7),
                     ],
                   ),
                   borderRadius: const BorderRadius.vertical(
@@ -1326,8 +1281,8 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
         border: Border(
           top: BorderSide(
             color: widget.options.isDarkMode
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.1),
+                ? Colors.white.withOpacity(0.1)
+                : Colors.black.withOpacity(0.1),
           ),
         ),
       ),
@@ -1344,8 +1299,8 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
               ),
               decoration: BoxDecoration(
                 color: widget.options.isDarkMode
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.05),
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.black.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
@@ -1379,8 +1334,8 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: [
                     BoxShadow(
-                      color: MediasfuColors.primary.withValues(alpha: 0.4),
-                      blurRadius: 8,
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
                   ],

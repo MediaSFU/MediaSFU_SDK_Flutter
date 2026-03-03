@@ -8,6 +8,11 @@ import '../../methods/utils/get_modal_position.dart'
     show getModalPosition, GetModalPositionOptions;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
+import '../core/widgets/modal_header.dart';
+import '../core/widgets/modal_footer_button.dart';
+import '../core/widgets/modern_switch.dart';
+import '../core/widgets/section_card.dart';
+import '../core/widgets/animation_widgets.dart' show StaggeredAnimationList;
 
 typedef ModernDisplaySettingsModalType = Widget Function(
     {required DisplaySettingsModalOptions options});
@@ -128,7 +133,7 @@ class _ModernDisplaySettingsModalState extends State<ModernDisplaySettingsModal>
                 child: FadeTransition(
                   opacity: _fadeAnimation,
                   child: Container(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Colors.black.withOpacity(0.05),
                   ),
                 ),
               ),
@@ -164,31 +169,30 @@ class _ModernDisplaySettingsModalState extends State<ModernDisplaySettingsModal>
                         decoration: BoxDecoration(
                           color: useHighTransparency
                               ? (widget.options.isDarkMode
-                                  ? Colors.black.withValues(alpha: 0.05)
-                                  : Colors.white.withValues(alpha: 0.08))
+                                  ? Colors.black.withOpacity(0.05)
+                                  : Colors.white.withOpacity(0.08))
                               : (widget.options.isDarkMode
-                                  ? Colors.black.withValues(alpha: 0.7)
-                                  : Colors.white.withValues(alpha: 0.9)),
+                                  ? Colors.black.withOpacity(0.7)
+                                  : Colors.white.withOpacity(0.9)),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: widget.options.isDarkMode
-                                ? Colors.white.withValues(
-                                    alpha: useHighTransparency ? 0.08 : 0.1)
-                                : Colors.black.withValues(
-                                    alpha: useHighTransparency ? 0.05 : 0.1),
+                                ? Colors.white.withOpacity(
+                                    useHighTransparency ? 0.08 : 0.1)
+                                : Colors.black.withOpacity(
+                                    useHighTransparency ? 0.05 : 0.1),
                           ),
                           boxShadow: useHighTransparency
                               ? []
                               : [
                                   BoxShadow(
-                                    color: MediasfuColors.info
-                                        .withValues(alpha: 0.3),
+                                    color: MediasfuColors.info.withOpacity(0.3),
                                     blurRadius: 40,
                                     spreadRadius: 8,
                                   ),
                                   BoxShadow(
                                     color: MediasfuColors.primary
-                                        .withValues(alpha: 0.15),
+                                        .withOpacity(0.15),
                                     blurRadius: 60,
                                     spreadRadius: 10,
                                     offset: const Offset(10, 20),
@@ -202,11 +206,12 @@ class _ModernDisplaySettingsModalState extends State<ModernDisplaySettingsModal>
                               child: SingleChildScrollView(
                                 padding:
                                     const EdgeInsets.all(MediasfuSpacing.md),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                child: StaggeredAnimationList(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  spacing: MediasfuSpacing.md,
                                   children: [
                                     _buildDropdownSection(),
-                                    const SizedBox(height: MediasfuSpacing.lg),
                                     _buildToggleSection(
                                       icon: Icons.graphic_eq_rounded,
                                       label: 'Display Audiographs',
@@ -216,7 +221,6 @@ class _ModernDisplaySettingsModalState extends State<ModernDisplaySettingsModal>
                                       onChanged: (v) =>
                                           setState(() => _autoWave = v),
                                     ),
-                                    const SizedBox(height: MediasfuSpacing.md),
                                     _buildToggleSection(
                                       icon: Icons.fullscreen_rounded,
                                       label: 'Force Full Display',
@@ -226,7 +230,6 @@ class _ModernDisplaySettingsModalState extends State<ModernDisplaySettingsModal>
                                       onChanged: (v) =>
                                           setState(() => _forceFullDisplay = v),
                                     ),
-                                    const SizedBox(height: MediasfuSpacing.md),
                                     _buildToggleSection(
                                       icon: Icons.video_camera_front_rounded,
                                       label: 'Force Video Participants',
@@ -236,8 +239,6 @@ class _ModernDisplaySettingsModalState extends State<ModernDisplaySettingsModal>
                                       onChanged: (v) => setState(
                                           () => _meetingVideoOptimized = v),
                                     ),
-                                    const SizedBox(height: MediasfuSpacing.md),
-                                    _buildTranslationSettingsButton(),
                                   ],
                                 ),
                               ),
@@ -265,11 +266,11 @@ class _ModernDisplaySettingsModalState extends State<ModernDisplaySettingsModal>
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(MediasfuSpacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: StaggeredAnimationList(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: MediasfuSpacing.md,
               children: [
                 _buildDropdownSection(),
-                const SizedBox(height: MediasfuSpacing.lg),
                 _buildToggleSection(
                   icon: Icons.graphic_eq_rounded,
                   label: 'Display Audiographs',
@@ -278,7 +279,6 @@ class _ModernDisplaySettingsModalState extends State<ModernDisplaySettingsModal>
                   value: _autoWave,
                   onChanged: (v) => setState(() => _autoWave = v),
                 ),
-                const SizedBox(height: MediasfuSpacing.md),
                 _buildToggleSection(
                   icon: Icons.fullscreen_rounded,
                   label: 'Force Full Display',
@@ -287,7 +287,6 @@ class _ModernDisplaySettingsModalState extends State<ModernDisplaySettingsModal>
                   value: _forceFullDisplay,
                   onChanged: (v) => setState(() => _forceFullDisplay = v),
                 ),
-                const SizedBox(height: MediasfuSpacing.md),
                 _buildToggleSection(
                   icon: Icons.video_camera_front_rounded,
                   label: 'Force Video Participants',
@@ -295,8 +294,6 @@ class _ModernDisplaySettingsModalState extends State<ModernDisplaySettingsModal>
                   value: _meetingVideoOptimized,
                   onChanged: (v) => setState(() => _meetingVideoOptimized = v),
                 ),
-                const SizedBox(height: MediasfuSpacing.md),
-                _buildTranslationSettingsButton(),
               ],
             ),
           ),
@@ -307,90 +304,21 @@ class _ModernDisplaySettingsModalState extends State<ModernDisplaySettingsModal>
   }
 
   Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(MediasfuSpacing.md),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: widget.options.isDarkMode
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.1),
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(MediasfuSpacing.sm),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  MediasfuColors.info,
-                  MediasfuColors.info.withValues(alpha: 0.7),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: MediasfuColors.info.withValues(alpha: 0.5),
-                  blurRadius: 12,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.display_settings_rounded,
-              color: Colors.white,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: MediasfuSpacing.sm),
-          Text(
-            'Display Settings',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: widget.options.isDarkMode ? Colors.white : Colors.black87,
-            ),
-          ),
-          const Spacer(),
-          GestureDetector(
-            onTap: _handleClose,
-            child: Container(
-              padding: const EdgeInsets.all(MediasfuSpacing.sm),
-              decoration: BoxDecoration(
-                color: widget.options.isDarkMode
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                Icons.close_rounded,
-                color:
-                    widget.options.isDarkMode ? Colors.white70 : Colors.black54,
-                size: 20,
-              ),
-            ),
-          ),
-        ],
-      ),
+    return ModalHeader(
+      icon: Icons.display_settings_rounded,
+      title: 'Display Settings',
+      onClose: _handleClose,
+      isDarkMode: widget.options.isDarkMode,
+      gradientColors: [
+        MediasfuColors.info,
+        MediasfuColors.info.withOpacity(0.7),
+      ],
     );
   }
 
   Widget _buildDropdownSection() {
-    return Container(
-      padding: const EdgeInsets.all(MediasfuSpacing.md),
-      decoration: BoxDecoration(
-        color: widget.options.isDarkMode
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.black.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: widget.options.isDarkMode
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.black.withValues(alpha: 0.1),
-        ),
-      ),
+    return SectionCard(
+      isDarkMode: widget.options.isDarkMode,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -474,19 +402,8 @@ class _ModernDisplaySettingsModalState extends State<ModernDisplaySettingsModal>
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(MediasfuSpacing.md),
-      decoration: BoxDecoration(
-        color: widget.options.isDarkMode
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.black.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: widget.options.isDarkMode
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.black.withValues(alpha: 0.1),
-        ),
-      ),
+    return SectionCard(
+      isDarkMode: widget.options.isDarkMode,
       child: Row(
         children: [
           Icon(
@@ -521,174 +438,22 @@ class _ModernDisplaySettingsModalState extends State<ModernDisplaySettingsModal>
               ],
             ),
           ),
-          _buildModernSwitch(value, onChanged),
+          ModernSwitch(
+            value: value,
+            onChanged: onChanged,
+            isDarkMode: widget.options.isDarkMode,
+            semanticLabel: '$label toggle',
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildModernSwitch(bool value, ValueChanged<bool> onChanged) {
-    return GestureDetector(
-      onTap: () => onChanged(!value),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: 50,
-        height: 28,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          gradient: value
-              ? LinearGradient(
-                  colors: [
-                    MediasfuColors.primary,
-                    MediasfuColors.secondary,
-                  ],
-                )
-              : null,
-          color: value
-              ? null
-              : (widget.options.isDarkMode
-                  ? Colors.white.withValues(alpha: 0.2)
-                  : Colors.black.withValues(alpha: 0.2)),
-        ),
-        child: Stack(
-          children: [
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeInOut,
-              left: value ? 24 : 2,
-              top: 2,
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTranslationSettingsButton() {
-    return GestureDetector(
-      onTap: widget.options.onShowTranslationSettings,
-      child: Container(
-        padding: const EdgeInsets.all(MediasfuSpacing.sm),
-        decoration: BoxDecoration(
-          color: widget.options.isDarkMode
-              ? Colors.white.withValues(alpha: 0.05)
-              : Colors.black.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(MediasfuSpacing.xs),
-              decoration: BoxDecoration(
-                color: MediasfuColors.primary.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.translate,
-                color: MediasfuColors.primary,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: MediasfuSpacing.sm),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Translation Settings',
-                    style: TextStyle(
-                      color: widget.options.isDarkMode
-                          ? Colors.white
-                          : Colors.black,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Configure real-time translation preferences',
-                    style: TextStyle(
-                      color: widget.options.isDarkMode
-                          ? Colors.white70
-                          : Colors.black54,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              color:
-                  widget.options.isDarkMode ? Colors.white54 : Colors.black45,
-              size: 16,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildFooter() {
-    return Container(
-      padding: const EdgeInsets.all(MediasfuSpacing.md),
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(
-            color: widget.options.isDarkMode
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.1),
-          ),
-        ),
-      ),
-      child: GestureDetector(
-        onTap: _handleSave,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: MediasfuSpacing.md),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                MediasfuColors.primary,
-                MediasfuColors.secondary,
-              ],
-            ),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: MediasfuColors.primary.withValues(alpha: 0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: const Center(
-            child: Text(
-              'Save Settings',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-          ),
-        ),
-      ),
+    return ModalFooterButton(
+      label: 'Save Settings',
+      onPressed: _handleSave,
+      isDarkMode: widget.options.isDarkMode,
     );
   }
 }

@@ -187,7 +187,6 @@ class _WhiteboardState extends State<Whiteboard> {
   // Eraser cursor position (for visual feedback) - use ValueNotifier for efficient updates
   final ValueNotifier<Offset?> _eraserCursorNotifier =
       ValueNotifier<Offset?>(null);
-  // ignore: unused_element
   Offset? get _eraserCursorPosition => _eraserCursorNotifier.value;
   set _eraserCursorPosition(Offset? value) =>
       _eraserCursorNotifier.value = value;
@@ -1740,7 +1739,7 @@ class _EraserCursorPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     // Stroke outline
     final strokePaint = Paint()
-      ..color = Colors.red.withValues(alpha: 0.7)
+      ..color = Colors.red.withOpacity(0.7)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0;
 
@@ -1748,7 +1747,7 @@ class _EraserCursorPainter extends CustomPainter {
 
     // Semi-transparent fill
     final fillPaint = Paint()
-      ..color = Colors.red.withValues(alpha: 0.15)
+      ..color = Colors.red.withOpacity(0.15)
       ..style = PaintingStyle.fill;
 
     canvas.drawCircle(position, radius, fillPaint);

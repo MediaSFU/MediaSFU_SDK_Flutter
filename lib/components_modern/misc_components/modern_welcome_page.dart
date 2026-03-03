@@ -1,4 +1,6 @@
 import 'dart:async';
+
+import '../../utils/image_utils.dart';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -306,18 +308,16 @@ class _ModernWelcomePageState extends State<ModernWelcomePage>
                                 MediasfuColors.brandGradient(darkMode: isDark),
                             boxShadow: [
                               BoxShadow(
-                                color: MediasfuColors.primary
-                                    .withValues(alpha: 0.4),
+                                color: MediasfuColors.primary.withOpacity(0.4),
                                 blurRadius: 20,
                                 spreadRadius: 3,
                               ),
                             ],
                           ),
                           padding: const EdgeInsets.all(3),
-                          child: CircleAvatar(
+                          child: buildLogoCircle(
+                            widget.options.imgSrc,
                             radius: 48,
-                            backgroundImage:
-                                NetworkImage(widget.options.imgSrc),
                           ),
                         ),
                         const SizedBox(height: MediasfuSpacing.lg),
@@ -380,9 +380,9 @@ class _ModernWelcomePageState extends State<ModernWelcomePage>
                                   border: Border.all(
                                     color: isDark
                                         ? MediasfuColors.primaryDark
-                                            .withValues(alpha: 0.5)
+                                            .withOpacity(0.5)
                                         : MediasfuColors.primary
-                                            .withValues(alpha: 0.3),
+                                            .withOpacity(0.3),
                                   ),
                                 ),
                                 child: Material(
@@ -447,7 +447,7 @@ class _ModernWelcomePageState extends State<ModernWelcomePage>
               boxShadow: isFocused
                   ? [
                       BoxShadow(
-                        color: MediasfuColors.primary.withValues(alpha: 0.3),
+                        color: MediasfuColors.primary.withOpacity(0.3),
                         blurRadius: 12,
                         spreadRadius: 1,
                       ),
@@ -464,8 +464,8 @@ class _ModernWelcomePageState extends State<ModernWelcomePage>
                 hintText: hint,
                 filled: true,
                 fillColor: isDark
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : Colors.black.withValues(alpha: 0.04),
+                    ? Colors.white.withOpacity(0.08)
+                    : Colors.black.withOpacity(0.04),
                 labelStyle: TextStyle(
                   color: isFocused
                       ? MediasfuColors.primary
@@ -519,7 +519,7 @@ class _ModernWelcomePageState extends State<ModernWelcomePage>
             borderRadius: BorderRadius.circular(9999),
             boxShadow: [
               BoxShadow(
-                color: MediasfuColors.primary.withValues(alpha: glowValue),
+                color: MediasfuColors.primary.withOpacity(glowValue),
                 blurRadius: 20,
                 spreadRadius: 2,
               ),

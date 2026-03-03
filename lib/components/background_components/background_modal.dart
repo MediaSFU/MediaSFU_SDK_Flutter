@@ -15,7 +15,9 @@ import '../../types/modal_style_options.dart' show ModalRenderMode;
 bool _isMobilePlatform() {
   if (kIsWeb) return false;
   return defaultTargetPlatform == TargetPlatform.android ||
-      defaultTargetPlatform == TargetPlatform.iOS;
+      defaultTargetPlatform == TargetPlatform.iOS ||
+      defaultTargetPlatform == TargetPlatform.macOS ||
+      defaultTargetPlatform == TargetPlatform.windows;
 }
 
 /// Parameters for the BackgroundModal widget.
@@ -225,10 +227,12 @@ class _BackgroundModalState extends State<BackgroundModal>
       });
 
       try {
-        // Build video constraints
-        final videoConstraints = <String, dynamic>{
+        // Build mandatory constraints for cross-platform compatibility (iOS needs 'mandatory')
+        final mandatoryConstraints = <String, dynamic>{
           'facingMode': 'user',
-          'frameRate': _params.frameRate > 0 ? _params.frameRate : 15,
+          'frameRate': {
+            'ideal': _params.frameRate > 0 ? _params.frameRate : 15
+          },
         };
 
         // Merge with custom constraints if provided
@@ -236,13 +240,19 @@ class _BackgroundModalState extends State<BackgroundModal>
         final vidCons = _params.vidCons;
         if (vidCons != null) {
           if (vidCons is Map<String, dynamic>) {
-            videoConstraints.addAll(vidCons);
+            if (vidCons['width'] != null)
+              mandatoryConstraints['width'] = vidCons['width'];
+            if (vidCons['height'] != null)
+              mandatoryConstraints['height'] = vidCons['height'];
           } else {
             // VidCons type - call toMap() method if available
             try {
               final consMap = (vidCons as dynamic).toMap();
               if (consMap is Map<String, dynamic>) {
-                videoConstraints.addAll(consMap);
+                if (consMap['width'] != null)
+                  mandatoryConstraints['width'] = consMap['width'];
+                if (consMap['height'] != null)
+                  mandatoryConstraints['height'] = consMap['height'];
               }
             } catch (_) {}
           }
@@ -250,7 +260,9 @@ class _BackgroundModalState extends State<BackgroundModal>
 
         final constraints = <String, dynamic>{
           'audio': false,
-          'video': videoConstraints,
+          'video': {
+            'mandatory': mandatoryConstraints,
+          },
         };
 
         final stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -471,7 +483,7 @@ class _BackgroundModalState extends State<BackgroundModal>
           child: GestureDetector(
             onTap: widget.options.onClose,
             child: Container(
-              color: Colors.black.withValues(alpha: 0.5),
+              color: Colors.black.withOpacity(0.5),
             ),
           ),
         ),
@@ -492,7 +504,7 @@ class _BackgroundModalState extends State<BackgroundModal>
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.25),
+                    color: Colors.black.withOpacity(0.25),
                     blurRadius: 30,
                     offset: const Offset(0, 10),
                   ),
@@ -578,7 +590,7 @@ class _BackgroundModalState extends State<BackgroundModal>
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Virtual backgrounds are only supported on mobile devices (Android/iOS). '
+              'Virtual backgrounds are supported on Android, iOS, macOS, and Windows. '
               'This feature is not available on ${kIsWeb ? 'web' : defaultTargetPlatform.name}.',
               style: TextStyle(
                 color: Colors.orange.shade800,
@@ -917,7 +929,7 @@ class _BackgroundModalState extends State<BackgroundModal>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withValues(alpha: 0.9),
+                    color: Colors.orange.withOpacity(0.9),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: const Row(
@@ -943,7 +955,7 @@ class _BackgroundModalState extends State<BackgroundModal>
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.5),
+                    color: Colors.black.withOpacity(0.5),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Center(
@@ -988,7 +1000,7 @@ class _BackgroundModalState extends State<BackgroundModal>
             // Platform warning overlay
             Positioned.fill(
               child: Container(
-                color: Colors.black.withValues(alpha: 0.7),
+                color: Colors.black.withOpacity(0.7),
                 child: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -1002,16 +1014,16 @@ class _BackgroundModalState extends State<BackgroundModal>
                       Text(
                         'Live preview not available',
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.9),
+                          color: Colors.white.withOpacity(0.9),
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Virtual backgrounds require mobile device',
+                        'Virtual backgrounds require a supported platform',
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.6),
+                          color: Colors.white.withOpacity(0.6),
                           fontSize: 12,
                         ),
                       ),
@@ -1059,8 +1071,7 @@ class _BackgroundModalState extends State<BackgroundModal>
           child: Icon(
             Icons.blur_on,
             size: 64,
-            color: Colors.blue.withValues(
-                alpha: 0.5 + _selectedBackground!.blurIntensity * 0.5),
+            color: Colors.blue.withOpacity(0.5 + _selectedBackground!.blurIntensity * 0.5),
           ),
         ),
       );
@@ -1115,7 +1126,7 @@ class _BackgroundModalState extends State<BackgroundModal>
                       Icons.blur_on,
                       size: 40,
                       color: Colors.blue
-                          .withValues(alpha: 0.5 + bg.blurIntensity * 0.5),
+                          .withOpacity(0.5 + bg.blurIntensity * 0.5),
                     ),
                   ],
                 ),
@@ -1144,7 +1155,7 @@ class _BackgroundModalState extends State<BackgroundModal>
                       Text(
                         'Tap the + button to add images',
                         style: TextStyle(
-                            color: _secondaryTextColor.withValues(alpha: 0.7),
+                            color: _secondaryTextColor.withOpacity(0.7),
                             fontSize: 13),
                       ),
                     ],
@@ -1296,7 +1307,7 @@ class _BackgroundModalState extends State<BackgroundModal>
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
+                  color: Colors.black.withOpacity(0.6),
                   borderRadius: const BorderRadius.vertical(
                     bottom: Radius.circular(10),
                   ),

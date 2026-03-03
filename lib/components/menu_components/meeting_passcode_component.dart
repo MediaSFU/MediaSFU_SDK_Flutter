@@ -55,7 +55,7 @@ typedef MeetingPasscodeComponentType = Widget Function(
 ///      ├─ Text("Event Passcode (Host):", bold, dark gray)
 ///      ├─ SizedBox(height: 5)
 ///      └─ TextFormField
-///         ├─ initialValue: meetingPasscode
+///         ├─ value: meetingPasscode
 ///         ├─ readOnly: true
 ///         ├─ border: OutlineInputBorder(rounded 5px, gray)
 ///         ├─ fillColor: light gray

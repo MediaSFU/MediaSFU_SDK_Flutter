@@ -14,7 +14,13 @@ import './audio_decibel_check.dart'
 import '../../consumers/control_media.dart'
     show controlMedia, ControlMediaOptions, ControlMediaType;
 import '../../types/types.dart'
-    show AudioDecibels, Participant, CoHostResponsibility, ShowAlert, EventType;
+    show
+        AudioDecibels,
+        Participant,
+        CoHostResponsibility,
+        ShowAlert,
+        EventType,
+        LiveSubtitle;
 
 class VideoCardWrapperContext {
   final BuildContext buildContext;
@@ -386,6 +392,18 @@ class VideoCardOptions {
   /// for their own video preview only.
   final VoidCallback? onToggleSelfViewFit;
 
+  /// Live subtitle to display on this video card.
+  /// When not null and showSubtitles is true, displays the translated/transcribed text.
+  final ValueListenable<LiveSubtitle?>? liveSubtitle;
+
+  /// Whether to show subtitles on this video card (static boolean).
+  /// For reactive updates, use `showSubtitlesNotifier` instead.
+  final bool showSubtitles;
+
+  /// Reactive notifier for whether to show subtitles on this card.
+  /// Takes precedence over `showSubtitles` if provided.
+  final ValueListenable<bool>? showSubtitlesNotifier;
+
   VideoCardOptions({
     required this.parameters,
     required this.name,
@@ -428,6 +446,9 @@ class VideoCardOptions {
     this.showStatusIndicator = false,
     this.isDarkMode = false,
     this.onToggleSelfViewFit,
+    this.liveSubtitle,
+    this.showSubtitles = false,
+    this.showSubtitlesNotifier,
   });
 }
 
@@ -797,11 +818,30 @@ class _VideoCardState extends State<VideoCard> with TickerProviderStateMixin {
 
     animateWaveform();
     try {
+      // Build subtitle overlay with reactive support if notifier is available
+      Widget? subtitleOverlay;
+      if (widget.options.liveSubtitle != null) {
+        if (widget.options.showSubtitlesNotifier != null) {
+          subtitleOverlay = ValueListenableBuilder<bool>(
+            valueListenable: widget.options.showSubtitlesNotifier!,
+            builder: (context, showSubtitles, _) {
+              if (showSubtitles) {
+                return _buildSubtitleOverlay();
+              }
+              return const SizedBox.shrink();
+            },
+          );
+        } else if (widget.options.showSubtitles) {
+          subtitleOverlay = _buildSubtitleOverlay();
+        }
+      }
+
       final stackChildren = <Widget>[
         Positioned.fill(child: _buildVideoDisplay()),
         _buildOverlayPositioned(context),
         if (widget.options.showControls) _buildControlsPositioned(),
         _buildAudioDecibelCheck(),
+        if (subtitleOverlay != null) subtitleOverlay,
       ];
 
       final defaultWrapper = Stack(children: stackChildren);
@@ -892,6 +932,45 @@ class _VideoCardState extends State<VideoCard> with TickerProviderStateMixin {
         parameters: widget.options.parameters,
         onShowWaveformChanged: updateShowWaveform,
       ),
+    );
+  }
+
+  Widget _buildSubtitleOverlay() {
+    return ValueListenableBuilder<LiveSubtitle?>(
+      valueListenable: widget.options.liveSubtitle!,
+      builder: (context, subtitle, child) {
+        if (subtitle == null || subtitle.text.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        return Positioned(
+          bottom: 8,
+          left: 8,
+          right: 8,
+          child: IgnorePointer(
+            child: Center(
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withAlpha((0.75 * 255).toInt()),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  subtitle.text,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 

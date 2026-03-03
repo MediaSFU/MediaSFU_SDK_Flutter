@@ -209,7 +209,7 @@ class _ModernPaginationState extends State<ModernPagination>
                 ? [
                     BoxShadow(
                       color: MediasfuColors.primary
-                          .withValues(alpha: widget.glowIntensity * 0.3),
+                          .withOpacity(widget.glowIntensity * 0.3),
                       blurRadius: 20,
                       spreadRadius: 0,
                     ),
@@ -232,19 +232,19 @@ class _ModernPaginationState extends State<ModernPagination>
                     end: Alignment.bottomRight,
                     colors: widget.isDarkMode
                         ? [
-                            Colors.white.withValues(alpha: 0.08),
-                            Colors.white.withValues(alpha: 0.04),
+                            Colors.white.withOpacity(0.08),
+                            Colors.white.withOpacity(0.04),
                           ]
                         : [
-                            Colors.grey.shade200.withValues(alpha: 0.95),
-                            Colors.grey.shade100.withValues(alpha: 0.90),
+                            Colors.grey.shade200.withOpacity(0.95),
+                            Colors.grey.shade100.withOpacity(0.90),
                           ],
                   ),
                   borderRadius: BorderRadius.circular(28),
                   border: Border.all(
                     color: widget.isDarkMode
-                        ? Colors.white.withValues(alpha: 0.12)
-                        : Colors.black.withValues(alpha: 0.08),
+                        ? Colors.white.withOpacity(0.12)
+                        : Colors.black.withOpacity(0.08),
                     width: 1.5,
                   ),
                 ),
@@ -323,17 +323,17 @@ class _ModernPaginationState extends State<ModernPagination>
             height: 32,
             decoration: BoxDecoration(
               color: isHovered
-                  ? MediasfuColors.primary.withValues(alpha: 0.2)
+                  ? MediasfuColors.primary.withOpacity(0.2)
                   : (widget.isDarkMode
-                      ? Colors.white.withValues(alpha: 0.06)
-                      : Colors.black.withValues(alpha: 0.04)),
+                      ? Colors.white.withOpacity(0.06)
+                      : Colors.black.withOpacity(0.04)),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: isHovered
-                    ? MediasfuColors.primary.withValues(alpha: 0.4)
+                    ? MediasfuColors.primary.withOpacity(0.4)
                     : (widget.isDarkMode
-                        ? Colors.white.withValues(alpha: 0.1)
-                        : Colors.black.withValues(alpha: 0.08)),
+                        ? Colors.white.withOpacity(0.1)
+                        : Colors.black.withOpacity(0.08)),
                 width: 1,
               ),
             ),
@@ -409,38 +409,38 @@ class _ModernPaginationState extends State<ModernPagination>
                   ? MediasfuColors.brandGradient(darkMode: widget.isDarkMode)
                   : (isHovered && !isLocked
                       ? LinearGradient(colors: [
-                          MediasfuColors.primary.withValues(alpha: 0.25),
-                          MediasfuColors.secondary.withValues(alpha: 0.25)
+                          MediasfuColors.primary.withOpacity(0.25),
+                          MediasfuColors.secondary.withOpacity(0.25)
                         ])
                       : null),
               color: isActive || isHovered
                   ? null
                   : (isLocked
-                      ? Colors.grey.withValues(alpha: 0.15)
+                      ? Colors.grey.withOpacity(0.15)
                       : (widget.isDarkMode
-                          ? Colors.white.withValues(alpha: 0.06)
-                          : Colors.black.withValues(alpha: 0.08))),
+                          ? Colors.white.withOpacity(0.06)
+                          : Colors.black.withOpacity(0.08))),
               borderRadius: BorderRadius.circular(18),
               border: isActive
                   ? null
                   : Border.all(
                       color: isHovered
-                          ? MediasfuColors.primary.withValues(alpha: 0.4)
+                          ? MediasfuColors.primary.withOpacity(0.4)
                           : (widget.isDarkMode
-                              ? Colors.white.withValues(alpha: 0.1)
-                              : Colors.black.withValues(alpha: 0.08)),
+                              ? Colors.white.withOpacity(0.1)
+                              : Colors.black.withOpacity(0.08)),
                       width: 1,
                     ),
               boxShadow: isActive
                   ? [
                       BoxShadow(
                         color: MediasfuColors.primary
-                            .withValues(alpha: widget.glowIntensity),
+                            .withOpacity(widget.glowIntensity),
                         blurRadius: 10,
                         spreadRadius: 0,
                       ),
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.15),
+                        color: Colors.black.withOpacity(0.15),
                         blurRadius: 3,
                         offset: const Offset(0, 2),
                       ),
@@ -482,7 +482,7 @@ class _ModernPaginationState extends State<ModernPagination>
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: isActive
-              ? Colors.white.withValues(alpha: 0.2)
+              ? Colors.white.withOpacity(0.2)
               : Colors.transparent,
         ),
         child: Icon(

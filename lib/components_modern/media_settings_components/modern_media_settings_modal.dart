@@ -14,6 +14,9 @@ import '../../methods/stream_methods/switch_video_alt.dart'
 import '../../types/modal_style_options.dart' show ModalRenderMode;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
+import '../core/widgets/modal_header.dart';
+import '../core/widgets/section_card.dart';
+import '../core/widgets/animation_widgets.dart' show StaggeredAnimationList;
 
 typedef ModernMediaSettingsModalType = Widget Function({
   required MediaSettingsModalOptions options,
@@ -113,7 +116,7 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
               onTap: _handleClose,
               child: FadeTransition(
                 opacity: _fadeAnimation,
-                child: Container(color: Colors.black.withValues(alpha: 0.05)),
+                child: Container(color: Colors.black.withOpacity(0.05)),
               ),
             ),
           ),
@@ -146,31 +149,31 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
                       decoration: BoxDecoration(
                         color: useHighTransparency
                             ? (widget.options.isDarkMode
-                                ? Colors.black.withValues(alpha: 0.05)
-                                : Colors.white.withValues(alpha: 0.08))
+                                ? Colors.black.withOpacity(0.05)
+                                : Colors.white.withOpacity(0.08))
                             : (widget.options.isDarkMode
-                                ? Colors.black.withValues(alpha: 0.7)
-                                : Colors.white.withValues(alpha: 0.9)),
+                                ? Colors.black.withOpacity(0.7)
+                                : Colors.white.withOpacity(0.9)),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                           color: widget.options.isDarkMode
-                              ? Colors.white.withValues(
-                                  alpha: useHighTransparency ? 0.08 : 0.15)
-                              : Colors.black.withValues(
-                                  alpha: useHighTransparency ? 0.05 : 0.1),
+                              ? Colors.white.withOpacity(
+                                  useHighTransparency ? 0.08 : 0.15)
+                              : Colors.black.withOpacity(
+                                  useHighTransparency ? 0.05 : 0.1),
                         ),
                         boxShadow: useHighTransparency
                             ? []
                             : [
                                 BoxShadow(
-                                  color: MediasfuColors.primary
-                                      .withValues(alpha: 0.3),
+                                  color:
+                                      MediasfuColors.primary.withOpacity(0.3),
                                   blurRadius: 40,
                                   spreadRadius: 8,
                                 ),
                                 BoxShadow(
                                   color: MediasfuColors.secondary
-                                      .withValues(alpha: 0.15),
+                                      .withOpacity(0.15),
                                   blurRadius: 60,
                                   spreadRadius: 10,
                                   offset: const Offset(10, 20),
@@ -183,8 +186,9 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
                           Expanded(
                             child: SingleChildScrollView(
                               padding: const EdgeInsets.all(MediasfuSpacing.md),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              child: StaggeredAnimationList(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                spacing: MediasfuSpacing.md,
                                 children: [
                                   _buildDeviceSection(
                                     icon: Icons.videocam_rounded,
@@ -201,7 +205,6 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
                                       ));
                                     },
                                   ),
-                                  const SizedBox(height: MediasfuSpacing.md),
                                   _buildDeviceSection(
                                     icon: Icons.mic_rounded,
                                     label: 'Microphone',
@@ -217,11 +220,8 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
                                       ));
                                     },
                                   ),
-                                  if (!kIsWeb) ...[
-                                    const SizedBox(height: MediasfuSpacing.lg),
+                                  if (!kIsWeb)
                                     _buildSwitchCameraButton(parameters),
-                                  ],
-                                  const SizedBox(height: MediasfuSpacing.lg),
                                   _buildVirtualBackgroundButton(parameters),
                                 ],
                               ),
@@ -254,8 +254,9 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(MediasfuSpacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: StaggeredAnimationList(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: MediasfuSpacing.md,
               children: [
                 _buildDeviceSection(
                   icon: Icons.videocam_rounded,
@@ -271,7 +272,6 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
                     ));
                   },
                 ),
-                const SizedBox(height: MediasfuSpacing.md),
                 _buildDeviceSection(
                   icon: Icons.mic_rounded,
                   label: 'Microphone',
@@ -286,11 +286,7 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
                     ));
                   },
                 ),
-                if (!kIsWeb) ...[
-                  const SizedBox(height: MediasfuSpacing.lg),
-                  _buildSwitchCameraButton(parameters),
-                ],
-                const SizedBox(height: MediasfuSpacing.lg),
+                if (!kIsWeb) _buildSwitchCameraButton(parameters),
                 _buildVirtualBackgroundButton(parameters),
               ],
             ),
@@ -301,69 +297,15 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
   }
 
   Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(MediasfuSpacing.md),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: widget.options.isDarkMode
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.1),
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          // Settings icon with glow
-          Container(
-            padding: const EdgeInsets.all(MediasfuSpacing.sm),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [
-                MediasfuColors.primary,
-                MediasfuColors.primary.withValues(alpha: 0.7),
-              ]),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: MediasfuColors.primary.withValues(alpha: 0.4),
-                  blurRadius: 12,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: const Icon(Icons.settings_input_component_rounded,
-                color: Colors.white, size: 20),
-          ),
-          const SizedBox(width: MediasfuSpacing.sm),
-          Text(
-            'Media Settings',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: widget.options.isDarkMode ? Colors.white : Colors.black87,
-            ),
-          ),
-          const Spacer(),
-          GestureDetector(
-            onTap: _handleClose,
-            child: Container(
-              padding: const EdgeInsets.all(MediasfuSpacing.sm),
-              decoration: BoxDecoration(
-                color: widget.options.isDarkMode
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                Icons.close_rounded,
-                color:
-                    widget.options.isDarkMode ? Colors.white70 : Colors.black54,
-                size: 20,
-              ),
-            ),
-          ),
-        ],
-      ),
+    return ModalHeader(
+      icon: Icons.settings_input_component_rounded,
+      title: 'Media Settings',
+      onClose: _handleClose,
+      isDarkMode: widget.options.isDarkMode,
+      gradientColors: [
+        MediasfuColors.primary,
+        MediasfuColors.primary.withOpacity(0.7),
+      ],
     );
   }
 
@@ -374,19 +316,8 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
     required String selectedDevice,
     required Future<void> Function(String) onChanged,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(MediasfuSpacing.md),
-      decoration: BoxDecoration(
-        color: widget.options.isDarkMode
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.black.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: widget.options.isDarkMode
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.black.withValues(alpha: 0.1),
-        ),
-      ),
+    return SectionCard(
+      isDarkMode: widget.options.isDarkMode,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -409,7 +340,7 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
                       horizontal: MediasfuSpacing.sm,
                       vertical: MediasfuSpacing.xs),
                   decoration: BoxDecoration(
-                    color: MediasfuColors.success.withValues(alpha: 0.2),
+                    color: MediasfuColors.success.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -464,7 +395,7 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
                         child: Text(
                           device.label.isNotEmpty
                               ? device.label
-                              : 'Device ${device.deviceId.substring(0, 8)}',
+                              : 'Device ${device.deviceId.length > 8 ? device.deviceId.substring(0, 8) : device.deviceId}',
                           style: TextStyle(
                             color: widget.options.isDarkMode
                                 ? Colors.white
@@ -507,13 +438,13 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
           padding: const EdgeInsets.all(MediasfuSpacing.md),
           decoration: BoxDecoration(
             color: widget.options.isDarkMode
-                ? Colors.white.withValues(alpha: 0.05)
-                : Colors.black.withValues(alpha: 0.03),
+                ? Colors.white.withOpacity(0.05)
+                : Colors.black.withOpacity(0.03),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: widget.options.isDarkMode
-                  ? Colors.white.withValues(alpha: 0.1)
-                  : Colors.black.withValues(alpha: 0.1),
+                  ? Colors.white.withOpacity(0.1)
+                  : Colors.black.withOpacity(0.1),
             ),
           ),
           child: Row(
@@ -523,7 +454,7 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
                 decoration: BoxDecoration(
                   gradient: LinearGradient(colors: [
                     MediasfuColors.secondary,
-                    MediasfuColors.secondary.withValues(alpha: 0.7),
+                    MediasfuColors.secondary.withOpacity(0.7),
                   ]),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -568,11 +499,16 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
     );
   }
 
-  /// Check if virtual background is supported on current platform
+  /// Check if virtual background is supported on current platform.
+  /// Virtual backgrounds are supported on Android, iOS, and macOS.
+  /// Windows support is disabled pending a viable frame-injection path
+  /// (libwebrtc's RTCVideoSource has no PushFrame API and WGC refuses
+  /// to capture programmatic popup windows).
   bool get _isVirtualBackgroundSupported {
     if (kIsWeb) return false;
     return defaultTargetPlatform == TargetPlatform.android ||
-        defaultTargetPlatform == TargetPlatform.iOS;
+        defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.macOS;
   }
 
   Widget _buildVirtualBackgroundButton(dynamic params) {
@@ -587,7 +523,7 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
           // Show alert for unsupported platforms
           params.showAlert?.call(
             message:
-                'Virtual backgrounds are only supported on mobile devices (Android/iOS). '
+                'Virtual backgrounds are supported on Android, iOS, and macOS. '
                 'This feature is not available on ${kIsWeb ? 'web' : defaultTargetPlatform.name}.',
             type: 'warning',
             duration: 4000,
@@ -600,15 +536,13 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
           padding: const EdgeInsets.all(MediasfuSpacing.md),
           decoration: BoxDecoration(
             gradient: LinearGradient(colors: [
-              MediasfuColors.primary
-                  .withValues(alpha: isSupported ? 0.1 : 0.05),
-              MediasfuColors.secondary
-                  .withValues(alpha: isSupported ? 0.1 : 0.05),
+              MediasfuColors.primary.withOpacity(isSupported ? 0.1 : 0.05),
+              MediasfuColors.secondary.withOpacity(isSupported ? 0.1 : 0.05),
             ]),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
                 color: MediasfuColors.primary
-                    .withValues(alpha: isSupported ? 0.3 : 0.15)),
+                    .withOpacity(isSupported ? 0.3 : 0.15)),
           ),
           child: Row(
             children: [
@@ -644,7 +578,7 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
                     Text(
                       isSupported
                           ? 'Change or blur your background'
-                          : 'Mobile only (Android/iOS)',
+                          : 'Not supported on this platform',
                       style: TextStyle(
                         fontSize: 12,
                         color: widget.options.isDarkMode

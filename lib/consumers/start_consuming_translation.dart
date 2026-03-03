@@ -52,7 +52,7 @@ Future<void> startConsumingTranslation(
   final originalProducerId = translationMeta.originalProducerId;
   final translationProducerMap = parameters.translationProducerMap;
 
-  if (originalProducerId.isNotEmpty && translationProducerMap != null) {
+  if (translationProducerMap != null) {
     final producersToRemove = <String>[];
 
     // Iterate over the map to find conflicting translations
@@ -130,19 +130,26 @@ Future<void> startConsumingTranslation(
 
   await signalNewConsumerTransport(optionsSignal);
 
-  // STEP 5: Pause original producer
-  if (originalProducerId.isNotEmpty) {
-    final transportIndex = consumerTransports.indexWhere(
-      (t) => t.producerId == originalProducerId,
-    );
+  // STEP 5: Pause original producer (locally and on server)
+  final freshParams = parameters.getUpdatedAllParams();
+  final freshConsumerTransports = freshParams.consumerTransports;
+  final transportIndex = freshConsumerTransports.indexWhere(
+    (t) => t.producerId == originalProducerId,
+  );
 
-    if (transportIndex != -1) {
-      final transport = consumerTransports[transportIndex];
-      try {
-        transport.consumer.pause();
-      } catch (e) {
-        debugPrint('[Translation] Error pausing original producer: $e');
-      }
+  if (transportIndex != -1) {
+    final transport = freshConsumerTransports[transportIndex];
+    try {
+      transport.consumer.pause();
+
+      // Also notify the server to stop sending original audio data
+      // Use the transport's own socket (it may be a different pipe socket)
+      // and the consumer's actual ID (not serverConsumerTransportId which is the transport ID)
+      transport.socket_.emit('consumer-pause', {
+        'serverConsumerId': transport.consumer.id,
+      });
+    } catch (e) {
+      debugPrint('[Translation] Error pausing original producer: $e');
     }
   }
 }

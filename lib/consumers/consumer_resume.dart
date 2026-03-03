@@ -1,4 +1,5 @@
 // ignore_for_file: unused_local_variable
+import '../utils/image_utils.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -240,10 +241,13 @@ Future<void> consumerResume(ConsumerResumeOptions options) async {
 
     if (kind == 'audio') {
       // Translation check - check if this is a translation producer
+      // Check multiple sources (matching React's triple-check for robustness)
       final activeTranslationProducerIds =
           updatedParams.activeTranslationProducerIds;
       final isTranslationAudio =
-          activeTranslationProducerIds?.contains(remoteProducerId) ?? false;
+          (activeTranslationProducerIds?.contains(remoteProducerId) ?? false) ||
+              consumer.appData['type'] == 'translation' ||
+              consumer.appData['isTranslation'] == true;
 
       if (isTranslationAudio) {
         // It is a translation producer - find the speaker info
@@ -418,7 +422,12 @@ Future<void> consumerResume(ConsumerResumeOptions options) async {
         miniAudioComponent: (props) => MiniAudio(
             options: MiniAudioOptions(
           name: name,
-          showWaveform: true,
+          showWaveform: props['showWaveform'] == true,
+          visible: props['visible'] == true,
+          barColor: Colors.white,
+          textColor: Colors.white,
+          imageSource: kDefaultMediaSFULogo,
+          roundedImage: true,
         )),
         miniAudioProps: {
           'customStyle': const {
@@ -429,7 +438,7 @@ Future<void> consumerResume(ConsumerResumeOptions options) async {
           'overlayPosition': 'topRight',
           'barColor': Colors.white,
           'textColor': Colors.white,
-          'imageSource': 'https://mediasfu.com/images/logo192.png',
+          'imageSource': kDefaultMediaSFULogo,
           'roundedImage': true,
           'imageStyle': const {},
         },
@@ -575,7 +584,7 @@ Future<void> consumerResume(ConsumerResumeOptions options) async {
         updateRemoteScreenStream(remoteScreenStream);
 
         if (eventType == EventType.conference) {
-          if (shareScreenStarted) {
+          if (shareScreenStarted || (whiteboardStarted && !whiteboardEnded)) {
             if (mainHeightWidth == 0) {
               updateMainHeightWidth(84);
             }

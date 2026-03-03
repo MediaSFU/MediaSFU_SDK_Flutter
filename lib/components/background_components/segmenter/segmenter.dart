@@ -36,5 +36,6 @@ library;
 // Re-export interface for type definitions
 export 'segmenter_interface.dart';
 
-// Conditional export: Use MobileSegmenter on Android/iOS, StubSegmenter otherwise
+// Conditionally export platform-specific implementation
+// ML Kit removed to avoid iOS crashes - stub returns original frames
 export 'segmenter_stub.dart' if (dart.library.io) 'segmenter_mobile.dart';

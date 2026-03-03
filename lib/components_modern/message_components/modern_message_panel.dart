@@ -93,6 +93,7 @@ class _ModernMessagePanelState extends State<ModernMessagePanel>
   final ValueNotifier<String?> _senderId = ValueNotifier(null);
   final ValueNotifier<String> _directMessageText = ValueNotifier('');
   final ValueNotifier<String> _groupMessageText = ValueNotifier('');
+  final ValueNotifier<bool> _dmHintDismissed = ValueNotifier(false);
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late AnimationController _fadeController;
@@ -256,6 +257,7 @@ class _ModernMessagePanelState extends State<ModernMessagePanel>
     _senderId.dispose();
     _directMessageText.dispose();
     _groupMessageText.dispose();
+    _dmHintDismissed.dispose();
     _textController.dispose();
     _scrollController.dispose();
     _fadeController.dispose();
@@ -274,6 +276,87 @@ class _ModernMessagePanelState extends State<ModernMessagePanel>
       ),
       child: Column(
         children: [
+          // DM hint when direct messages list is empty and no recipient selected
+          if (widget.options.type == 'direct')
+            ValueListenableBuilder<bool>(
+              valueListenable: _dmHintDismissed,
+              builder: (context, dismissed, _) {
+                return ValueListenableBuilder<String?>(
+                  valueListenable: _senderId,
+                  builder: (context, sender, _) {
+                    if (dismissed ||
+                        widget.options.startDirectMessage ||
+                        sender != null ||
+                        (widget.options.islevel != '2' &&
+                            !widget.options.youAreCoHost)) {
+                      return const SizedBox.shrink();
+                    }
+                    return Container(
+                      margin: const EdgeInsets.fromLTRB(
+                        MediasfuSpacing.md,
+                        MediasfuSpacing.sm,
+                        MediasfuSpacing.md,
+                        0,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: MediasfuSpacing.md,
+                        vertical: MediasfuSpacing.sm,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            MediasfuColors.primary
+                                .withOpacity(isDark ? 0.15 : 0.08),
+                            MediasfuColors.secondary
+                                .withOpacity(isDark ? 0.10 : 0.05),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: MediasfuColors.primary
+                              .withOpacity(isDark ? 0.25 : 0.15),
+                          width: 0.5,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline_rounded,
+                            size: 16,
+                            color: MediasfuColors.primary.withOpacity(0.8),
+                          ),
+                          const SizedBox(width: MediasfuSpacing.sm),
+                          Expanded(
+                            child: Text(
+                              'Reply to existing DMs or start a new one from the Participants list.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isDark
+                                    ? Colors.white.withOpacity(0.7)
+                                    : Colors.black.withOpacity(0.6),
+                                height: 1.3,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: MediasfuSpacing.xs),
+                          GestureDetector(
+                            onTap: () => _dmHintDismissed.value = true,
+                            child: Icon(
+                              Icons.close_rounded,
+                              size: 14,
+                              color: isDark
+                                  ? Colors.white.withOpacity(0.4)
+                                  : Colors.black.withOpacity(0.3),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+
           // Messages List
           Expanded(
             child: ListView.builder(
@@ -327,13 +410,13 @@ class _ModernMessagePanelState extends State<ModernMessagePanel>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            MediasfuColors.primary.withValues(alpha: 0.2),
-            MediasfuColors.secondary.withValues(alpha: 0.2),
+            MediasfuColors.primary.withOpacity(0.2),
+            MediasfuColors.secondary.withOpacity(0.2),
           ],
         ),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: MediasfuColors.primary.withValues(alpha: 0.3),
+          color: MediasfuColors.primary.withOpacity(0.3),
         ),
       ),
       child: Row(
@@ -374,12 +457,11 @@ class _ModernMessagePanelState extends State<ModernMessagePanel>
       padding: const EdgeInsets.all(MediasfuSpacing.md),
       decoration: BoxDecoration(
         color: isDark
-            ? Colors.black.withValues(alpha: 0.3)
-            : Colors.white.withValues(alpha: 0.8),
+            ? Colors.black.withOpacity(0.3)
+            : Colors.white.withOpacity(0.8),
         border: Border(
           top: BorderSide(
-            color:
-                (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+            color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
           ),
         ),
       ),
@@ -406,10 +488,10 @@ class _ModernMessagePanelState extends State<ModernMessagePanel>
   Widget _buildTextField(bool isDark, bool isDirectMessage) {
     return Container(
       decoration: BoxDecoration(
-        color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+        color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+          color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
         ),
       ),
       child: TextField(
@@ -431,8 +513,7 @@ class _ModernMessagePanelState extends State<ModernMessagePanel>
         decoration: InputDecoration(
           hintText: _getHintText(isDirectMessage),
           hintStyle: TextStyle(
-            color:
-                (isDark ? Colors.white : Colors.black).withValues(alpha: 0.5),
+            color: (isDark ? Colors.white : Colors.black).withOpacity(0.5),
             fontSize: 14,
           ),
           border: InputBorder.none,
@@ -467,13 +548,15 @@ class _ModernMessagePanelState extends State<ModernMessagePanel>
         width: 52,
         height: 52,
         decoration: BoxDecoration(
-          gradient:
-              MediasfuColors.brandGradient(darkMode: widget.options.isDarkMode),
+          color: MediasfuColors.primary,
           shape: BoxShape.circle,
-          boxShadow: MediasfuColors.glowShadow(
-            MediasfuColors.primary,
-            intensity: 0.4,
-          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: const Icon(
           Icons.send_rounded,
@@ -543,8 +626,8 @@ class _ModernMessageBubble extends StatelessWidget {
                 : '${message.sender} • ${message.timestamp}',
             style: TextStyle(
               fontSize: 11,
-              color: (isDarkMode ? Colors.white : Colors.black)
-                  .withValues(alpha: 0.5),
+              color:
+                  (isDarkMode ? Colors.white : Colors.black).withOpacity(0.5),
             ),
           )
         else
@@ -560,7 +643,7 @@ class _ModernMessageBubble extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11,
                   color: (isDarkMode ? Colors.white : Colors.black)
-                      .withValues(alpha: 0.5),
+                      .withOpacity(0.5),
                 ),
               ),
               if (showReplyButton) ...[
@@ -570,7 +653,7 @@ class _ModernMessageBubble extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: MediasfuColors.primary.withValues(alpha: 0.2),
+                      color: MediasfuColors.primary.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Icon(
@@ -612,12 +695,16 @@ class _ModernMessageBubble extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         gradient: isSelfMessage
-            ? MediasfuColors.brandGradient(darkMode: isDarkMode)
+            ? LinearGradient(
+                colors: [
+                  MediasfuColors.primary,
+                  MediasfuColors.primary.withOpacity(0.85),
+                ],
+              )
             : null,
         color: isSelfMessage
             ? null
-            : (isDarkMode ? Colors.white : Colors.black)
-                .withValues(alpha: 0.08),
+            : (isDarkMode ? Colors.white : Colors.black).withOpacity(0.08),
         borderRadius: BorderRadius.only(
           topLeft: const Radius.circular(18),
           topRight: const Radius.circular(18),
@@ -627,15 +714,15 @@ class _ModernMessageBubble extends StatelessWidget {
         border: isSelfMessage
             ? null
             : Border.all(
-                color: (isDarkMode ? Colors.white : Colors.black)
-                    .withValues(alpha: 0.1),
+                color:
+                    (isDarkMode ? Colors.white : Colors.black).withOpacity(0.1),
               ),
         boxShadow: isSelfMessage
             ? [
                 BoxShadow(
-                  color: MediasfuColors.primary.withValues(alpha: 0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
               ]
             : null,

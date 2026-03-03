@@ -57,6 +57,17 @@ class _ModernConfirmExitModalState extends State<ModernConfirmExitModal>
   }
 
   @override
+  void didUpdateWidget(covariant ModernConfirmExitModal oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reset loading state when modal is re-opened or room changes
+    if ((!oldWidget.options.isVisible && widget.options.isVisible) ||
+        oldWidget.options.roomName != widget.options.roomName) {
+      _isExiting = false;
+      _animationController.forward(from: 0);
+    }
+  }
+
+  @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
@@ -112,14 +123,14 @@ class _ModernConfirmExitModalState extends State<ModernConfirmExitModal>
     final textColor = isDark ? Colors.white : Colors.black87;
     final subtitleColor =
         isDark ? Colors.white70 : Colors.black87.withOpacity(0.7);
-    final dangerColor = Colors.red.shade600;
+    final dangerColor = MediasfuColors.danger;
 
     return FadeTransition(
       opacity: _fadeAnimation,
       child: GestureDetector(
         onTap: _handleCancel,
         child: Container(
-          color: Colors.black.withValues(alpha: 0.15),
+          color: Colors.black.withOpacity(0.15),
           child: Center(
             child: GestureDetector(
               onTap: () {}, // Prevent dismissal when tapping modal
@@ -147,14 +158,8 @@ class _ModernConfirmExitModalState extends State<ModernConfirmExitModal>
                                   BoxShadow(
                                     color: Colors.black.withOpacity(0.3),
                                     blurRadius: 40,
-                                    spreadRadius: 8,
+                                    spreadRadius: 0,
                                     offset: const Offset(0, 10),
-                                  ),
-                                  BoxShadow(
-                                    color: MediasfuColors.danger
-                                        .withValues(alpha: 0.2),
-                                    blurRadius: 50,
-                                    spreadRadius: 5,
                                   ),
                                 ],
                         ),
@@ -187,14 +192,6 @@ class _ModernConfirmExitModalState extends State<ModernConfirmExitModal>
                                             shape: BoxShape.circle,
                                             color:
                                                 dangerColor.withOpacity(0.15),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: dangerColor.withValues(
-                                                    alpha: 0.4),
-                                                blurRadius: 16,
-                                                spreadRadius: 4,
-                                              ),
-                                            ],
                                           ),
                                           child: Icon(
                                             isHost
@@ -327,7 +324,7 @@ class _ModernConfirmExitModalState extends State<ModernConfirmExitModal>
       color: Colors.transparent,
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(8.0),
+        borderRadius: BorderRadius.circular(12.0),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(
@@ -338,7 +335,7 @@ class _ModernConfirmExitModalState extends State<ModernConfirmExitModal>
             color: onPressed == null
                 ? backgroundColor.withOpacity(0.5)
                 : backgroundColor,
-            borderRadius: BorderRadius.circular(8.0),
+            borderRadius: BorderRadius.circular(12.0),
           ),
           child: Center(
             child: isLoading

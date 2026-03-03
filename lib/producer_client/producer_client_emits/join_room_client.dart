@@ -65,6 +65,9 @@ Future<ResponseJoinRoom> joinRoomClient(JoinRoomClientOptions options) async {
     ResponseJoinRoom data;
 
     if (options.consume) {
+      if (kDebugMode) {
+        print('Joining room with consume');
+      }
       // Use `joinConRoom` for consuming
       final option = JoinConRoomOptions(
         socket: options.socket,
@@ -78,6 +81,9 @@ Future<ResponseJoinRoom> joinRoomClient(JoinRoomClientOptions options) async {
         option,
       );
     } else {
+      if (kDebugMode) {
+        print('Joining room without consume');
+      }
       // Use `joinRoom` for non-consuming
       final option = JoinRoomOptions(
         socket: options.socket,

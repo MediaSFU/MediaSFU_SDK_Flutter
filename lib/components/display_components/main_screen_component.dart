@@ -179,13 +179,13 @@ class MainScreenComponent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
-    final safeAreaInsets = mediaQuery.padding + mediaQuery.systemGestureInsets;
+    final safeAreaInsets = mediaQuery.padding;
 
     final parentWidth = mediaQuery.size.width * options.containerWidthFraction;
 
-    // Always subtract safe area insets since we're wrapped in SafeArea
-    // The safe area (status bar, notch) is removed from the layout, so we need
-    // to calculate based on actual available height
+    // Subtract only safe area padding (status bar, nav bar).
+    // systemGestureInsets is excluded — it affects touch, not layout.
+    // The outer SafeArea zeros out padding for sides it consumes.
     final availableHeight =
         mediaQuery.size.height - safeAreaInsets.top - safeAreaInsets.bottom;
     final parentHeight = options.showControls

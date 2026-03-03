@@ -1,4 +1,5 @@
 // ignore_for_file: empty_catches, non_constant_identifier_names
+import '../../utils/image_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
 import '../misc_components/prejoin_page.dart';
@@ -332,6 +333,7 @@ import '../../types/types.dart'
         DispSpecs,
         EventType,
         GridSizes,
+        LiveSubtitle,
         MainSpecs,
         MeetingRoomParams,
         Message,
@@ -828,8 +830,7 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
           eventType.value == EventType.conference)) {
         // Handle landscape orientation for webinar and conference event types
         final mediaQuery = MediaQuery.of(context);
-        final safeAreaInsets =
-            mediaQuery.padding + mediaQuery.systemGestureInsets;
+        final safeAreaInsets = mediaQuery.padding;
         // Use available height after safe area is subtracted
         final availableHeight =
             mediaQuery.size.height - safeAreaInsets.top - safeAreaInsets.bottom;
@@ -1469,6 +1470,17 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
       eventType.value = value;
       mediasfuParameters.eventType = value;
       updateSpecificState(widget.options.sourceParameters, 'eventType', value);
+      // For conference mode without screen sharing, mainHeightWidth should be 0
+      // so the participant grid fills the entire screen
+      if (value == EventType.conference &&
+          !shareScreenStarted.value &&
+          !shared.value &&
+          mainHeightWidth != 0) {
+        mainHeightWidth = 0;
+        mediasfuParameters.mainHeightWidth = 0;
+        updateSpecificState(
+            widget.options.sourceParameters, 'mainHeightWidth', 0.0);
+      }
     });
     if (value == EventType.chat) {
       updateMeetingDisplayType('all');
@@ -4318,10 +4330,9 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
   void _handleOrientationChange() {
     try {
       final mediaQuery = MediaQuery.of(context);
-      final safeAreaInsets =
-          mediaQuery.padding + mediaQuery.systemGestureInsets;
+      final safeAreaInsets = mediaQuery.padding;
 
-      // Calculate available height after safe area is removed (since we're in SafeArea)
+      // Calculate available height after safe area is removed
       final availableHeight =
           mediaQuery.size.height - safeAreaInsets.top - safeAreaInsets.bottom;
 
@@ -4402,8 +4413,7 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
             sec: sec,
             apiUserName: apiUserName,
             parameters: PreJoinPageParameters(
-              imgSrc: widget.options.imgSrc ??
-                  'https://mediasfu.com/images/logo192.png',
+              imgSrc: widget.options.imgSrc ?? kDefaultMediaSFULogo,
               showAlert: showAlert,
               updateIsLoadingModalVisible: updateIsLoadingModalVisible,
               connectSocket: connectSocket,
@@ -4644,9 +4654,12 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
       updateRecordingProgressTime('00:00:00');
       updateRecordElapsedTime(0);
       updateShowRecordButtons(false);
+      // Show loading overlay during cleanup transition
+      updateIsLoadingModalVisible(true);
       // Delay before updating validated
       await Future.delayed(const Duration(milliseconds: 1000));
       updateValidated(false);
+      updateIsLoadingModalVisible(false);
     }
 
     Future<io.Socket?> connectsocket(String apiUserName, String token,
@@ -6156,6 +6169,11 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
         isDarkModeValue: false,
         updateIsDarkModeValue: (_) {},
 
+        // Live subtitles on video cards (not used in original components)
+        showSubtitlesOnCards: false,
+        liveSubtitles: ValueNotifier<Map<String, LiveSubtitle>>({}),
+        updateShowSubtitlesOnCards: (_) {},
+
         // Whiteboard-related variables
         whiteboardUsers: whiteboardUsers.value,
         currentWhiteboardIndex: currentWhiteboardIndex.value,
@@ -6773,8 +6791,7 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
     return _welcomePageBuilder(
       context,
       WelcomePageOptions(
-        imgSrc:
-            widget.options.imgSrc ?? 'https://mediasfu.com/images/logo192.png',
+        imgSrc: widget.options.imgSrc ?? kDefaultMediaSFULogo,
         updateIsLoadingModalVisible: updateIsLoadingModalVisible,
         updateValidated: updateValidated,
         updateApiUserName: updateApiUserName,
@@ -6794,8 +6811,7 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
       context,
       PreJoinPageOptions(
         parameters: PreJoinPageParameters(
-          imgSrc: widget.options.imgSrc ??
-              'https://mediasfu.com/images/logo192.png',
+          imgSrc: widget.options.imgSrc ?? kDefaultMediaSFULogo,
           updateIsLoadingModalVisible: updateIsLoadingModalVisible,
           updateValidated: updateValidated,
           updateApiUserName: updateApiUserName,

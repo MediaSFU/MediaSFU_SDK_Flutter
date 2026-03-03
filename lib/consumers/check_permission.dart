@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import '../methods/permissions_methods/update_permission_config.dart';
 
 /// Options for checking permission based on specific settings.
@@ -70,24 +69,6 @@ typedef CheckPermissionType = Future<int> Function(
 /// ```
 Future<int> checkPermission(CheckPermissionOptions options) async {
   try {
-    // Debug logging
-    if (kDebugMode) {
-      print('=== checkPermission DEBUG ===');
-      print('permissionType: ${options.permissionType}');
-      print('participantLevel: ${options.participantLevel}');
-      print('permissionConfig: ${options.permissionConfig}');
-      if (options.permissionConfig != null) {
-        print(
-            'level0.useCamera: ${options.permissionConfig!.level0.useCamera}');
-        print('level0.useMic: ${options.permissionConfig!.level0.useMic}');
-        print(
-            'level1.useCamera: ${options.permissionConfig!.level1.useCamera}');
-        print('level1.useMic: ${options.permissionConfig!.level1.useMic}');
-      }
-      print('audioSetting: ${options.audioSetting}');
-      print('videoSetting: ${options.videoSetting}');
-    }
-
     // Map permission types to permissionConfig capability names
     const permissionTypeToCapability = {
       'audioSetting': 'useMic',
@@ -103,11 +84,6 @@ Future<int> checkPermission(CheckPermissionOptions options) async {
       final levelConfig = options.participantLevel == '0'
           ? options.permissionConfig!.level0
           : options.permissionConfig!.level1;
-
-      if (kDebugMode) {
-        print('Using permissionConfig for level ${options.participantLevel}');
-        print('levelConfig: $levelConfig');
-      }
 
       final capability = permissionTypeToCapability[options.permissionType];
       if (capability != null) {
@@ -127,30 +103,15 @@ Future<int> checkPermission(CheckPermissionOptions options) async {
             break;
         }
 
-        if (kDebugMode) {
-          print('capability: $capability, configValue: $configValue');
-        }
-
         if (configValue != null) {
-          final result =
-              configValue == 'allow' ? 0 : (configValue == 'approval' ? 1 : 2);
-          if (kDebugMode) {
-            print('Returning result: $result (from permissionConfig)');
-          }
-          return result;
+          return configValue == 'allow'
+              ? 0
+              : (configValue == 'approval' ? 1 : 2);
         }
-      }
-    } else {
-      if (kDebugMode) {
-        print(
-            'NOT using permissionConfig - permissionConfig: ${options.permissionConfig}, participantLevel: ${options.participantLevel}');
       }
     }
 
     // Fallback to room-wide eventSettings
-    if (kDebugMode) {
-      print('Falling back to room-wide eventSettings');
-    }
     switch (options.permissionType) {
       case 'audioSetting':
         if (options.audioSetting == 'allow') return 0;
@@ -176,10 +137,7 @@ Future<int> checkPermission(CheckPermissionOptions options) async {
         // Return 2 for invalid permission type
         return 2;
     }
-  } catch (error) {
-    if (kDebugMode) {
-      print('checkPermission error: $error');
-    }
+  } catch (_) {
     return 2;
   }
 }

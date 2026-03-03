@@ -4,8 +4,12 @@ import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
 /// Options for creating a mediasoup client device.
 class CreateDeviceClientOptions {
   RtpCapabilities? rtpCapabilities;
+  bool optimizeVideoRecord;
 
-  CreateDeviceClientOptions({required this.rtpCapabilities});
+  CreateDeviceClientOptions({
+    required this.rtpCapabilities,
+    this.optimizeVideoRecord = false,
+  });
 }
 
 typedef CreateDeviceClientType = Future<Device?> Function(
@@ -40,10 +44,12 @@ Future<Device?> createDeviceClient(
     // Initialize the mediasoup client device
     Device device = Device();
 
-    // Remove orientation capabilities if present in rtpCapabilities directly
-    options.rtpCapabilities!.headerExtensions.removeWhere(
-      (ext) => ext.uri == 'urn:3gpp:video-orientation',
-    );
+    // Remove orientation capabilities if present (unless optimizeVideoRecord is true)
+    if (!options.optimizeVideoRecord) {
+      options.rtpCapabilities!.headerExtensions.removeWhere(
+        (ext) => ext.uri == 'urn:3gpp:video-orientation',
+      );
+    }
 
     // Load the provided RTP capabilities into the device
     await device.load(routerRtpCapabilities: options.rtpCapabilities!);

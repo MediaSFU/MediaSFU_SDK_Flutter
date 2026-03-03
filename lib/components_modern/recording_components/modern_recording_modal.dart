@@ -16,6 +16,7 @@ import '../../methods/recording_methods/start_recording.dart'
     show StartRecordingOptions;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
+import '../core/widgets/modal_header.dart';
 
 typedef ModernRecordingModalType = Widget Function(
     {required RecordingModalOptions options});
@@ -109,7 +110,7 @@ class _ModernRecordingModalState extends State<ModernRecordingModal>
                 child: FadeTransition(
                   opacity: _fadeAnimation,
                   child: Container(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Colors.black.withOpacity(0.05),
                   ),
                 ),
               ),
@@ -135,34 +136,27 @@ class _ModernRecordingModalState extends State<ModernRecordingModal>
                         decoration: BoxDecoration(
                           color: useHighTransparency
                               ? (widget.options.isDarkMode
-                                  ? Colors.black.withValues(alpha: 0.05)
-                                  : Colors.white.withValues(alpha: 0.08))
+                                  ? Colors.black.withOpacity(0.05)
+                                  : Colors.white.withOpacity(0.08))
                               : (widget.options.isDarkMode
-                                  ? Colors.black.withValues(alpha: 0.7)
-                                  : Colors.white.withValues(alpha: 0.9)),
+                                  ? Colors.black.withOpacity(0.7)
+                                  : Colors.white.withOpacity(0.9)),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: widget.options.isDarkMode
-                                ? Colors.white.withValues(
-                                    alpha: useHighTransparency ? 0.08 : 0.15)
-                                : Colors.black.withValues(
-                                    alpha: useHighTransparency ? 0.05 : 0.1),
+                                ? Colors.white.withOpacity(
+                                    useHighTransparency ? 0.08 : 0.15)
+                                : Colors.black.withOpacity(
+                                    useHighTransparency ? 0.05 : 0.1),
                           ),
                           boxShadow: useHighTransparency
                               ? []
                               : [
                                   BoxShadow(
-                                    color: MediasfuColors.danger
-                                        .withValues(alpha: 0.35),
+                                    color: Colors.black.withOpacity(0.3),
                                     blurRadius: 40,
-                                    spreadRadius: 8,
-                                  ),
-                                  BoxShadow(
-                                    color: MediasfuColors.primary
-                                        .withValues(alpha: 0.15),
-                                    blurRadius: 60,
-                                    spreadRadius: 10,
-                                    offset: const Offset(10, 20),
+                                    spreadRadius: 0,
+                                    offset: const Offset(0, 10),
                                   ),
                                 ],
                         ),
@@ -199,74 +193,15 @@ class _ModernRecordingModalState extends State<ModernRecordingModal>
   }
 
   Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(MediasfuSpacing.md),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: widget.options.isDarkMode
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.1),
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          // Recording icon with pulsing glow
-          Container(
-            padding: const EdgeInsets.all(MediasfuSpacing.sm),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  MediasfuColors.danger,
-                  MediasfuColors.danger.withValues(alpha: 0.7),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: MediasfuColors.danger.withValues(alpha: 0.5),
-                  blurRadius: 12,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.fiber_manual_record_rounded,
-              color: Colors.white,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: MediasfuSpacing.sm),
-          Text(
-            'Recording Settings',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: widget.options.isDarkMode ? Colors.white : Colors.black87,
-            ),
-          ),
-          const Spacer(),
-          GestureDetector(
-            onTap: _handleClose,
-            child: Container(
-              padding: const EdgeInsets.all(MediasfuSpacing.sm),
-              decoration: BoxDecoration(
-                color: widget.options.isDarkMode
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                Icons.close_rounded,
-                color:
-                    widget.options.isDarkMode ? Colors.white70 : Colors.black54,
-                size: 20,
-              ),
-            ),
-          ),
-        ],
-      ),
+    return ModalHeader(
+      icon: Icons.fiber_manual_record_rounded,
+      title: 'Recording Settings',
+      onClose: _handleClose,
+      isDarkMode: widget.options.isDarkMode,
+      gradientColors: [
+        MediasfuColors.danger,
+        MediasfuColors.danger.withOpacity(0.7),
+      ],
     );
   }
 
@@ -301,15 +236,15 @@ class _ModernRecordingModalState extends State<ModernRecordingModal>
               ? LinearGradient(
                   colors: [
                     MediasfuColors.danger,
-                    MediasfuColors.danger.withValues(alpha: 0.7),
+                    MediasfuColors.danger.withOpacity(0.7),
                   ],
                 )
               : null,
           color: isSelected
               ? null
               : (widget.options.isDarkMode
-                  ? Colors.white.withValues(alpha: 0.1)
-                  : Colors.black.withValues(alpha: 0.05)),
+                  ? Colors.white.withOpacity(0.1)
+                  : Colors.black.withOpacity(0.05)),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Text(
@@ -355,8 +290,8 @@ class _ModernRecordingModalState extends State<ModernRecordingModal>
         border: Border(
           top: BorderSide(
             color: widget.options.isDarkMode
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.1),
+                ? Colors.white.withOpacity(0.1)
+                : Colors.black.withOpacity(0.1),
           ),
         ),
       ),
@@ -421,26 +356,26 @@ class _ModernRecordingModalState extends State<ModernRecordingModal>
               ? LinearGradient(
                   colors: [
                     MediasfuColors.danger,
-                    MediasfuColors.danger.withValues(alpha: 0.7),
+                    MediasfuColors.danger.withOpacity(0.7),
                   ],
                 )
               : (isSuccess
                   ? LinearGradient(
                       colors: [
                         MediasfuColors.success,
-                        MediasfuColors.success.withValues(alpha: 0.8),
+                        MediasfuColors.success.withOpacity(0.8),
                       ],
                     )
                   : null),
           color: !isPrimary && !isSuccess
               ? (widget.options.isDarkMode
-                  ? Colors.white.withValues(alpha: 0.1)
-                  : Colors.black.withValues(alpha: 0.05))
-              : (isEnabled ? null : Colors.grey.withValues(alpha: 0.3)),
+                  ? Colors.white.withOpacity(0.1)
+                  : Colors.black.withOpacity(0.05))
+              : (isEnabled ? null : Colors.grey.withOpacity(0.3)),
           borderRadius: BorderRadius.circular(12),
           border: !isPrimary && !isSuccess
               ? Border.all(
-                  color: MediasfuColors.primary.withValues(alpha: 0.3),
+                  color: MediasfuColors.primary.withOpacity(0.3),
                 )
               : null,
         ),

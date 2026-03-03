@@ -194,8 +194,8 @@ Map<String, dynamic> _buildMediaConstraints({
     final vidConsMap = vidCons.toMap();
     return {
       'video': {
+        'deviceId': videoPreference,
         'mandatory': {
-          'sourceId': videoPreference,
           'minWidth': vidConsMap['width'],
           'minHeight': vidConsMap['height'],
           'maxFrameRate': frameRate,
@@ -206,8 +206,8 @@ Map<String, dynamic> _buildMediaConstraints({
   } else {
     return {
       'video': {
+        'deviceId': videoPreference,
         'mandatory': {
-          'deviceId': {'exact': videoPreference},
           'frameRate': {'ideal': frameRate},
         },
       },

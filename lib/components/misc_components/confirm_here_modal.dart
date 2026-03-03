@@ -5,22 +5,22 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:flutter/material.dart';
 import '../../methods/utils/get_modal_position.dart'
     show getModalPosition, GetModalPositionOptions;
-import '../../types/modal_style_options.dart'
-  show ConfirmHereModalStyleOptions;
+import '../../types/modal_style_options.dart' show ConfirmHereModalStyleOptions;
+
 typedef ConfirmHereModalLoaderBuilder = Widget Function(
-  ConfirmHereModalLoaderContext context);
+    ConfirmHereModalLoaderContext context);
 typedef ConfirmHereModalMessageBuilder = Widget Function(
-  ConfirmHereModalMessageContext context);
+    ConfirmHereModalMessageContext context);
 typedef ConfirmHereModalCountdownBuilder = Widget Function(
-  ConfirmHereModalCountdownContext context);
+    ConfirmHereModalCountdownContext context);
 typedef ConfirmHereModalButtonBuilder = Widget Function(
-  ConfirmHereModalButtonContext context);
+    ConfirmHereModalButtonContext context);
 typedef ConfirmHereModalBodyBuilder = Widget Function(
-  ConfirmHereModalBodyContext context);
+    ConfirmHereModalBodyContext context);
 typedef ConfirmHereModalContentBuilder = Widget Function(
-  ConfirmHereModalContentContext context);
+    ConfirmHereModalContentContext context);
 typedef ConfirmHereModalOverlayBuilder = Widget Function(
-  ConfirmHereModalOverlayContext context);
+    ConfirmHereModalOverlayContext context);
 
 /// Configuration for the presence-confirmation modal with countdown timer and dismissal logic.
 ///
@@ -67,6 +67,9 @@ class ConfirmHereModalOptions {
   final ConfirmHereModalContentBuilder? contentBuilder;
   final ConfirmHereModalOverlayBuilder? overlayBuilder;
 
+  /// Called when user opts out of future confirm-here prompts for this session.
+  final VoidCallback? onSuppressConfirmHere;
+
   ConfirmHereModalOptions({
     required this.isConfirmHereModalVisible,
     required this.onConfirmHereClose,
@@ -91,6 +94,7 @@ class ConfirmHereModalOptions {
     this.bodyBuilder,
     this.contentBuilder,
     this.overlayBuilder,
+    this.onSuppressConfirmHere,
   });
 }
 
@@ -438,8 +442,7 @@ class _ConfirmHereModalState extends State<ConfirmHereModal> {
               child: DecoratedBox(
                 decoration: innerDecoration,
                 child: Padding(
-                  padding:
-                      styles.contentPadding ?? const EdgeInsets.all(16),
+                  padding: styles.contentPadding ?? const EdgeInsets.all(16),
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
                       maxWidth: styles.maxContentWidth ?? double.infinity,

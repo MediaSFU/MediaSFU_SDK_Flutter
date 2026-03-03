@@ -8,6 +8,7 @@ import '../../types/modal_style_options.dart' show ModalRenderMode;
 import '../../types/types.dart' show CoHostResponsibility;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
+import '../core/widgets/modern_switch.dart';
 
 /// Modern glassmorphic co-host management modal.
 ///
@@ -233,7 +234,7 @@ class _ModernCoHostModalState extends State<ModernCoHostModal>
       child: GestureDetector(
         onTap: _handleClose,
         child: Container(
-          color: Colors.black.withValues(alpha: 0.1),
+          color: Colors.black.withOpacity(0.1),
           child: AnimatedBuilder(
             animation: _slideAnimation,
             builder: (context, child) {
@@ -274,7 +275,7 @@ class _ModernCoHostModalState extends State<ModernCoHostModal>
                                   ),
                                   BoxShadow(
                                     color: MediasfuColors.primary
-                                        .withValues(alpha: 0.15),
+                                        .withOpacity(0.15),
                                     blurRadius: 50,
                                     spreadRadius: 8,
                                   ),
@@ -378,13 +379,13 @@ class _ModernCoHostModalState extends State<ModernCoHostModal>
               gradient: LinearGradient(
                 colors: [
                   MediasfuColors.primary,
-                  MediasfuColors.primary.withValues(alpha: 0.7),
+                  MediasfuColors.primary.withOpacity(0.7),
                 ],
               ),
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: MediasfuColors.primary.withValues(alpha: 0.5),
+                  color: MediasfuColors.primary.withOpacity(0.5),
                   blurRadius: 12,
                   spreadRadius: 2,
                 ),
@@ -652,11 +653,12 @@ class _ModernCoHostModalState extends State<ModernCoHostModal>
           Expanded(
             flex: 2,
             child: Center(
-              child: Switch.adaptive(
+              child: ModernSwitch(
                 value: isManageEnabled,
                 onChanged: (_) => _handleToggleSwitch(manageKey),
-                activeColor: primaryColor,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                isDarkMode: Theme.of(context).brightness == Brightness.dark,
+                semanticLabel:
+                    '${_formatResponsibilityLabel(responsibility.name)} manage toggle',
               ),
             ),
           ),
@@ -666,13 +668,14 @@ class _ModernCoHostModalState extends State<ModernCoHostModal>
               child: AnimatedOpacity(
                 duration: const Duration(milliseconds: 200),
                 opacity: isManageEnabled ? 1.0 : 0.3,
-                child: Switch.adaptive(
+                child: ModernSwitch(
                   value: isDedicateEnabled,
                   onChanged: isManageEnabled
                       ? (_) => _handleToggleSwitch(dedicateKey)
-                      : null,
-                  activeColor: Colors.amber.shade600,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      : (_) {},
+                  isDarkMode: Theme.of(context).brightness == Brightness.dark,
+                  semanticLabel:
+                      '${_formatResponsibilityLabel(responsibility.name)} dedicate toggle',
                 ),
               ),
             ),

@@ -87,6 +87,11 @@ class FrameProcessor {
   int _lastWidth = 640;
   int _lastHeight = 480;
 
+  /// Optional target dimensions (vidCons) — if set, frames are decoded
+  /// at these dimensions instead of the camera's native resolution.
+  int? _targetWidth;
+  int? _targetHeight;
+
   /// Frame processing callback - called for each processed frame
   void Function(ProcessedFrame frame)? onFrameProcessed;
 
@@ -132,7 +137,10 @@ class FrameProcessor {
   ///
   /// [stream] - MediaStream from camera
   /// [fps] - Target frames per second (default: 15, max: 10 for stability)
-  Future<void> startProcessing(MediaStream stream, {int fps = 15}) async {
+  /// [targetWidth] - Target width to downscale frames to (vidCons)
+  /// [targetHeight] - Target height to downscale frames to (vidCons)
+  Future<void> startProcessing(MediaStream stream,
+      {int fps = 15, int? targetWidth, int? targetHeight}) async {
     if (!_isInitialized) {
       throw StateError(
           'FrameProcessor not initialized. Call initialize() first.');
@@ -146,6 +154,8 @@ class FrameProcessor {
     _sourceStream = stream;
     // Limit FPS to avoid overwhelming ImageReader buffer
     _targetFps = fps.clamp(1, 10);
+    _targetWidth = targetWidth;
+    _targetHeight = targetHeight;
     _isProcessing = true;
     _frameCounter = 0;
     _consecutiveFailures = 0;
@@ -254,7 +264,7 @@ class FrameProcessor {
       // Reset failure counter on successful capture
       _consecutiveFailures = 0;
 
-      debugPrint('FrameProcessor: Captured ${imageBytes.length} bytes (JPEG)');
+      if (shouldLog) debugPrint('FrameProcessor: Captured ${imageBytes.length} bytes (JPEG)');
 
       // Save JPEG to temp file for ML Kit to process directly
       // This avoids the RGBA/BGRA conversion issues
@@ -262,17 +272,23 @@ class FrameProcessor {
       final tempFile = File('${tempDir.path}/ml_frame.jpg');
       await tempFile.writeAsBytes(imageBytes);
 
-      debugPrint('FrameProcessor: Saved JPEG to ${tempFile.path}');
+      if (shouldLog) debugPrint('FrameProcessor: Saved JPEG to ${tempFile.path}');
 
       // Also decode to get dimensions and RGBA for compositing
-      final ui.Codec codec = await ui.instantiateImageCodec(imageBytes);
+      // Decode JPEG — if vidCons target dimensions are set, decode directly
+      // at that resolution (more efficient than full-res decode + resize)
+      final ui.Codec codec = await ui.instantiateImageCodec(
+        imageBytes,
+        targetWidth: _targetWidth,
+        targetHeight: _targetHeight,
+      );
       final ui.FrameInfo frameInfo = await codec.getNextFrame();
       final ui.Image image = frameInfo.image;
 
       _lastWidth = image.width;
       _lastHeight = image.height;
 
-      debugPrint('FrameProcessor: Decoded image ${_lastWidth}x$_lastHeight');
+      if (shouldLog) debugPrint('FrameProcessor: Decoded image ${_lastWidth}x$_lastHeight');
 
       // Get raw RGBA bytes from the image for compositing later
       final ByteData? byteData =
@@ -287,7 +303,13 @@ class FrameProcessor {
 
       final Uint8List frameData = byteData.buffer.asUint8List();
 
-      debugPrint('FrameProcessor: Running segmentation via file path');
+      // Check if still processing before running segmentation
+      if (!_isProcessing || _segmenter == null) {
+        debugPrint('FrameProcessor: Stopped before segmentation');
+        return;
+      }
+
+      if (shouldLog) debugPrint('FrameProcessor: Running segmentation via file path');
 
       // Run segmentation using file path (more reliable than fromBytes)
       final metadata = SegmenterInputMetadata(
@@ -299,8 +321,13 @@ class FrameProcessor {
       SegmentationResult result;
       try {
         // Use processFile instead of processFrame for better ML Kit compatibility
+        final segmenter = _segmenter;
+        if (segmenter == null) {
+          debugPrint('FrameProcessor: Segmenter disposed during processing');
+          return;
+        }
         result =
-            await _segmenter!.processFile(tempFile.path, frameData, metadata);
+            await segmenter.processFile(tempFile.path, frameData, metadata);
       } catch (segError, segStack) {
         debugPrint('FrameProcessor: Segmenter threw exception: $segError');
         debugPrint('FrameProcessor: Segmenter stack: $segStack');
@@ -308,11 +335,18 @@ class FrameProcessor {
       }
 
       if (result.success && result.mask != null) {
+        // Check if still processing after segmentation completed
+        if (!_isProcessing) {
+          debugPrint(
+              'FrameProcessor: Stopped after segmentation, discarding frame');
+          return;
+        }
+
         // Get mask dimensions - may differ from frame dimensions
         final maskWidth = result.maskWidth ?? _lastWidth;
         final maskHeight = result.maskHeight ?? _lastHeight;
 
-        debugPrint('FrameProcessor: Segmentation successful - '
+        if (shouldLog) debugPrint('FrameProcessor: Segmentation successful - '
             'frame=${_lastWidth}x$_lastHeight, mask=${maskWidth}x$maskHeight, '
             'maskBytes=${result.mask!.length}');
 
@@ -325,7 +359,10 @@ class FrameProcessor {
           maskHeight: maskHeight,
         );
 
-        onFrameProcessed?.call(processedFrame);
+        // Final check before callback
+        if (_isProcessing) {
+          onFrameProcessed?.call(processedFrame);
+        }
       } else {
         // Log the actual error from segmenter
         debugPrint(

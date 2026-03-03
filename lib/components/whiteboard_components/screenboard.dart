@@ -334,7 +334,7 @@ class _ScreenboardState extends State<Screenboard> {
   Map<String, dynamic> _shapeToMap(WhiteboardShape shape) {
     // Convert color to hex string (e.g., #FF0000 for red)
     final colorHex =
-        '#${shape.color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}';
+        '#${shape.color.value.toRadixString(16).padLeft(8, '0').substring(2)}';
 
     return {
       'type': shape.type.name,
@@ -969,7 +969,7 @@ class _EraserCursorPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     // Stroke outline
     final strokePaint = Paint()
-      ..color = Colors.red.withValues(alpha: 0.7)
+      ..color = Colors.red.withOpacity(0.7)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0;
 
@@ -977,7 +977,7 @@ class _EraserCursorPainter extends CustomPainter {
 
     // Semi-transparent fill
     final fillPaint = Paint()
-      ..color = Colors.red.withValues(alpha: 0.15)
+      ..color = Colors.red.withOpacity(0.15)
       ..style = PaintingStyle.fill;
 
     canvas.drawCircle(position, radius, fillPaint);

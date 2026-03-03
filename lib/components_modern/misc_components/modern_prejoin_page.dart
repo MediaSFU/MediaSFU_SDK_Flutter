@@ -1,4 +1,6 @@
 import 'dart:convert';
+
+import '../../utils/image_utils.dart';
 import 'dart:math';
 import 'dart:ui';
 
@@ -142,6 +144,9 @@ class _ModernPreJoinPageState extends State<ModernPreJoinPage>
           await widget.options.parameters.connectLocalSocket?.call(
         ConnectLocalSocketOptions(
           link: widget.options.localLink!,
+          appKey: widget.options.localAppKey,
+          apiUserName: widget.options.localApiUserName,
+          apiKey: widget.options.localApiKey,
         ),
       );
 
@@ -602,6 +607,7 @@ class _ModernPreJoinPageState extends State<ModernPreJoinPage>
 
       if (response.success && response.data is CreateJoinRoomResponse) {
         final data = response.data;
+        widget.options.parameters.updateMember('${name}_2');
         await checkLimitsAndMakeRequest(
           apiUserName: data.roomName,
           apiToken: data.secret,
@@ -880,20 +886,17 @@ class _ModernPreJoinPageState extends State<ModernPreJoinPage>
                                 MediasfuColors.brandGradient(darkMode: isDark),
                             boxShadow: [
                               BoxShadow(
-                                color: MediasfuColors.primary
-                                    .withValues(alpha: 0.4),
+                                color: MediasfuColors.primary.withOpacity(0.4),
                                 blurRadius: 20,
                                 spreadRadius: 3,
                               ),
                             ],
                           ),
                           padding: const EdgeInsets.all(3),
-                          child: CircleAvatar(
+                          child: buildLogoCircle(
+                            widget.options.parameters.imgSrc ??
+                                kDefaultMediaSFULogo,
                             radius: 48,
-                            backgroundImage: NetworkImage(
-                              widget.options.parameters.imgSrc ??
-                                  'https://mediasfu.com/images/logo192.png',
-                            ),
                           ),
                         ),
                         const SizedBox(height: MediasfuSpacing.lg),
@@ -992,9 +995,9 @@ class _ModernPreJoinPageState extends State<ModernPreJoinPage>
                                   border: Border.all(
                                     color: isDark
                                         ? MediasfuColors.primaryDark
-                                            .withValues(alpha: 0.5)
+                                            .withOpacity(0.5)
                                         : MediasfuColors.primary
-                                            .withValues(alpha: 0.3),
+                                            .withOpacity(0.3),
                                   ),
                                 ),
                                 child: Material(
@@ -1078,7 +1081,7 @@ class _ModernTextFieldState extends State<_ModernTextField> {
         boxShadow: _isFocused
             ? [
                 BoxShadow(
-                  color: MediasfuColors.primary.withValues(alpha: 0.3),
+                  color: MediasfuColors.primary.withOpacity(0.3),
                   blurRadius: 12,
                   spreadRadius: 1,
                 ),
@@ -1098,8 +1101,8 @@ class _ModernTextFieldState extends State<_ModernTextField> {
             hintText: widget.hint,
             filled: true,
             fillColor: isDark
-                ? Colors.white.withValues(alpha: 0.08)
-                : Colors.black.withValues(alpha: 0.04),
+                ? Colors.white.withOpacity(0.08)
+                : Colors.black.withOpacity(0.04),
             labelStyle: TextStyle(
               color: _isFocused
                   ? MediasfuColors.primary
@@ -1164,7 +1167,7 @@ class _ModernDropdown extends StatelessWidget {
       child: Container(
         decoration: MediasfuColors.dropdownDecoration(darkMode: isDark),
         child: DropdownButtonFormField<String>(
-          initialValue: value,
+          value: value,
           dropdownColor: MediasfuColors.dropdownBackground(darkMode: isDark),
           style: MediasfuColors.dropdownTextStyle(darkMode: isDark),
           icon: ShaderMask(
@@ -1260,8 +1263,7 @@ class _ModernPrimaryButtonState extends State<_ModernPrimaryButton>
             borderRadius: BorderRadius.circular(9999),
             boxShadow: [
               BoxShadow(
-                color:
-                    MediasfuColors.primary.withValues(alpha: _glowAnim.value),
+                color: MediasfuColors.primary.withOpacity(_glowAnim.value),
                 blurRadius: 20,
                 spreadRadius: 2,
               ),

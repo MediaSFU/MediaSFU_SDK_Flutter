@@ -351,7 +351,7 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
               child: FadeTransition(
                 opacity: _fadeAnimation,
                 child: Container(
-                  color: Colors.black.withValues(alpha: 0.4),
+                  color: Colors.black.withOpacity(0.4),
                 ),
               ),
             ),
@@ -483,7 +483,7 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
             child: Container(
               padding: EdgeInsets.all(MediasfuSpacing.xs),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: Colors.white.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(MediasfuSpacing.xs),
               ),
               child: Icon(Icons.close, color: Colors.white, size: 18),
@@ -589,7 +589,7 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
         children: [
           CircleAvatar(
             radius: 12,
-            backgroundColor: Colors.white.withValues(alpha: 0.3),
+            backgroundColor: Colors.white.withOpacity(0.3),
             child: Text(
               panelist.name.isNotEmpty ? panelist.name[0].toUpperCase() : '?',
               style: TextStyle(
@@ -615,7 +615,7 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
               child: Icon(
                 Icons.close,
                 size: 16,
-                color: Colors.white.withValues(alpha: 0.8),
+                color: Colors.white.withOpacity(0.8),
               ),
             ),
           ],
@@ -627,7 +627,7 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
   Widget _buildFocusOptionsSection() {
     return _buildCard(
       borderColor: _focusEnabledLocal
-          ? MediasfuColors.success.withValues(alpha: 0.5)
+          ? MediasfuColors.success.withOpacity(0.5)
           : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -656,7 +656,7 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
                 onChanged: widget.options.panelists.isNotEmpty
                     ? (_) => _handleToggleFocus()
                     : null,
-                activeThumbColor: MediasfuColors.success,
+                activeColor: MediasfuColors.success,
               ),
             ],
           ),
@@ -704,7 +704,7 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
               margin: EdgeInsets.only(top: MediasfuSpacing.sm),
               padding: EdgeInsets.all(MediasfuSpacing.sm),
               decoration: BoxDecoration(
-                color: MediasfuColors.success.withValues(alpha: 0.1),
+                color: MediasfuColors.success.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(MediasfuSpacing.xs),
               ),
               child: Row(
@@ -739,8 +739,8 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
           activeColor: MediasfuColors.primary,
           side: BorderSide(
             color: isDarkMode
-                ? Colors.white.withValues(alpha: 0.4)
-                : Colors.black.withValues(alpha: 0.4),
+                ? Colors.white.withOpacity(0.4)
+                : Colors.black.withOpacity(0.4),
           ),
         ),
         Text(
@@ -784,13 +784,13 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
           Container(
             decoration: BoxDecoration(
               color: isDarkMode
-                  ? Colors.white.withValues(alpha: 0.05)
-                  : Colors.black.withValues(alpha: 0.03),
+                  ? Colors.white.withOpacity(0.05)
+                  : Colors.black.withOpacity(0.03),
               borderRadius: BorderRadius.circular(MediasfuSpacing.sm),
               border: Border.all(
                 color: isDarkMode
-                    ? Colors.white.withValues(alpha: 0.12)
-                    : Colors.black.withValues(alpha: 0.12),
+                    ? Colors.white.withOpacity(0.12)
+                    : Colors.black.withOpacity(0.12),
               ),
             ),
             child: TextField(
@@ -830,10 +830,10 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
               padding: EdgeInsets.all(MediasfuSpacing.sm),
               margin: EdgeInsets.only(bottom: MediasfuSpacing.sm),
               decoration: BoxDecoration(
-                color: MediasfuColors.warning.withValues(alpha: 0.1),
+                color: MediasfuColors.warning.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(MediasfuSpacing.xs),
                 border: Border.all(
-                  color: MediasfuColors.warning.withValues(alpha: 0.3),
+                  color: MediasfuColors.warning.withOpacity(0.3),
                 ),
               ),
               child: Row(
@@ -899,8 +899,8 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
       ),
       decoration: BoxDecoration(
         color: isDarkMode
-            ? Colors.white.withValues(alpha: 0.03)
-            : Colors.black.withValues(alpha: 0.02),
+            ? Colors.white.withOpacity(0.03)
+            : Colors.black.withOpacity(0.02),
         borderRadius: BorderRadius.circular(MediasfuSpacing.xs),
       ),
       child: Row(
@@ -908,8 +908,8 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
           CircleAvatar(
             radius: 16,
             backgroundColor: isDarkMode
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.1),
+                ? Colors.white.withOpacity(0.1)
+                : Colors.black.withOpacity(0.1),
             child: Text(
               participant.name.isNotEmpty
                   ? participant.name[0].toUpperCase()
@@ -963,8 +963,8 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
       padding: EdgeInsets.all(MediasfuSpacing.md),
       decoration: BoxDecoration(
         color: isDarkMode
-            ? Colors.white.withValues(alpha: 0.04)
-            : Colors.black.withValues(alpha: 0.02),
+            ? Colors.white.withOpacity(0.04)
+            : Colors.black.withOpacity(0.02),
         borderRadius: BorderRadius.circular(MediasfuSpacing.sm),
         border: Border.all(
           color:

@@ -1,4 +1,6 @@
 import 'dart:convert';
+
+import '../../utils/image_utils.dart';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -256,6 +258,36 @@ class PreJoinPageOptions {
   CreateRoomOnMediaSFUType? createMediaSFURoom;
   JoinRoomOnMediaSFUType? joinMediaSFURoom;
 
+  /// App key for Flutter app authentication in socket handshake (X-App-Key)
+  /// Used when connecting to local backend via localLink
+  final String? localAppKey;
+
+  /// API username for backend authentication in socket handshake
+  /// Used when connecting to local backend via localLink
+  final String? localApiUserName;
+
+  /// API key for backend authentication in socket handshake
+  /// Used when connecting to local backend via localLink
+  final String? localApiKey;
+
+  /// Sub-username for organization/team member identification
+  /// Used for subuser accounts within an organization
+  final String? localSubUserName;
+
+  /// Whether to use fixed link (stagerooms.mediasfu.com) instead of dynamic URL selection
+  /// When true, always connects to stagerooms.mediasfu.com
+  /// When false, URL is selected based on meeting ID prefix (d=demos, s=sandbox, p=production)
+  final bool? useFixedLink;
+
+  /// Initial meeting ID to pre-fill in the prejoin form
+  /// Used for deep links like /meeting/:roomId
+  final String? initialMeetingId;
+
+  /// Optional callback for navigating back from the prejoin page.
+  /// When provided, the prejoin page will use this instead of Navigator.maybePop.
+  /// Useful for apps using GoRouter or other routing packages.
+  final VoidCallback? onBack;
+
   PreJoinPageOptions({
     this.localLink,
     this.connectMediaSFU = true,
@@ -267,6 +299,13 @@ class PreJoinPageOptions {
     this.noUIPreJoinOptionsJoin,
     this.createMediaSFURoom = createRoomOnMediaSFU,
     this.joinMediaSFURoom = joinRoomOnMediaSFU,
+    this.localAppKey,
+    this.localApiUserName,
+    this.localApiKey,
+    this.localSubUserName,
+    this.useFixedLink,
+    this.initialMeetingId,
+    this.onBack,
   });
 }
 
@@ -469,6 +508,7 @@ class _PreJoinPageState extends State<PreJoinPage> {
   /// It sends a request to connect to the local socket and handles the response.
   /// If successful, it updates the socket and other parameters.
   /// Otherwise, it displays an error message.
+  /// Passes optional auth parameters (appKey, apiUserName, apiKey) for backend handshake.
 
   Future<void> _connectToLocalSocket() async {
     try {
@@ -476,6 +516,9 @@ class _PreJoinPageState extends State<PreJoinPage> {
           await widget.options.parameters.connectLocalSocket?.call(
         ConnectLocalSocketOptions(
           link: widget.options.localLink!,
+          appKey: widget.options.localAppKey,
+          apiUserName: widget.options.localApiUserName,
+          apiKey: widget.options.localApiKey,
         ),
       );
 
@@ -997,6 +1040,7 @@ class _PreJoinPageState extends State<PreJoinPage> {
 
       if (response.success && response.data is CreateJoinRoomResponse) {
         final data = response.data;
+        widget.options.parameters.updateMember('${name}_2');
 
         // Handle rate limiting and socket connection
         await checkLimitsAndMakeRequest(
@@ -1079,12 +1123,9 @@ class _PreJoinPageState extends State<PreJoinPage> {
             child: Column(
               children: [
                 const SizedBox(height: 20),
-                CircleAvatar(
-                  radius: 50,
-                  backgroundImage: NetworkImage(
-                      widget.options.parameters.imgSrc ??
-                          'https://mediasfu.com/images/logo192.png'),
-                ),
+                buildLogoCircle(
+                    widget.options.parameters.imgSrc ?? kDefaultMediaSFULogo,
+                    radius: 50),
                 const SizedBox(height: 10),
                 _buildInputFields(),
                 if (_error.isNotEmpty)
@@ -1170,7 +1211,7 @@ class _PreJoinPageState extends State<PreJoinPage> {
           fillColor: Colors.white,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
         ),
-        initialValue: _eventType.isEmpty ? null : _eventType,
+        value: _eventType.isEmpty ? null : _eventType,
         hint: const Text('Select Event Type'),
         items: const [
           DropdownMenuItem(value: 'chat', child: Text('Chat')),

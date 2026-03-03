@@ -301,14 +301,12 @@ class _ModernMiniAudioPlayerState extends State<ModernMiniAudioPlayer>
               (breakOutRoomStarted &&
                   !breakOutRoomEnded &&
                   audioActiveInRoom)) {
-            // ignore: dead_code
             final bool shouldShow = false;
 
             if (mounted && showWaveModal != shouldShow) {
               setState(() {
                 showWaveModal = shouldShow;
               });
-              // ignore: dead_code
               if (shouldShow) {
                 _fadeController.forward();
                 if (widget.options.animateWaveform) {
@@ -465,7 +463,7 @@ class _ModernMiniAudioPlayerState extends State<ModernMiniAudioPlayer>
   Widget _buildModernWaveform() {
     final waveColor = widget.options.waveformColor ?? MediasfuColors.primary;
     final bgColor =
-        widget.options.backgroundColor ?? Colors.black.withValues(alpha: 0.3);
+        widget.options.backgroundColor ?? Colors.black.withOpacity(0.3);
 
     if (widget.options.useGlassmorphism) {
       return ClipRRect(
@@ -478,13 +476,13 @@ class _ModernMiniAudioPlayerState extends State<ModernMiniAudioPlayer>
               color: bgColor,
               borderRadius: BorderRadius.circular(MediasfuSpacing.md),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.1),
+                color: Colors.white.withOpacity(0.1),
                 width: 1,
               ),
               boxShadow: widget.options.showGlowEffect
                   ? [
                       BoxShadow(
-                        color: waveColor.withValues(alpha: 0.3),
+                        color: Colors.black.withOpacity(0.18),
                         blurRadius: 16,
                         spreadRadius: 2,
                       ),
@@ -505,7 +503,7 @@ class _ModernMiniAudioPlayerState extends State<ModernMiniAudioPlayer>
         boxShadow: widget.options.showGlowEffect
             ? [
                 BoxShadow(
-                  color: waveColor.withValues(alpha: 0.3),
+                  color: Colors.black.withOpacity(0.15),
                   blurRadius: 12,
                 ),
               ]
@@ -544,7 +542,7 @@ class _ModernMiniAudioPlayerState extends State<ModernMiniAudioPlayer>
                 boxShadow: widget.options.showGlowEffect
                     ? [
                         BoxShadow(
-                          color: color.withValues(alpha: 0.5),
+                          color: Colors.black.withOpacity(0.18),
                           blurRadius: 4,
                         ),
                       ]

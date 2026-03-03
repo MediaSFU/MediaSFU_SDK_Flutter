@@ -52,10 +52,10 @@ class _ModernConfigureWhiteboardModalState
   // Theme colors using MediasfuColors for consistency
   Color get _cardBg => _isDark
       ? (_useGlass
-          ? MediasfuColors.surfaceDark.withValues(alpha: 0.6)
+          ? MediasfuColors.surfaceDark.withOpacity(0.6)
           : MediasfuColors.surfaceDark)
       : (_useGlass
-          ? MediasfuColors.surface.withValues(alpha: 0.85)
+          ? MediasfuColors.surface.withOpacity(0.85)
           : MediasfuColors.surface);
 
   Color get _textPrimary =>
@@ -373,8 +373,7 @@ class _ModernConfigureWhiteboardModalState
                 onTap: widget.options.onClose,
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  color: Colors.black
-                      .withValues(alpha: 0.1 * _fadeAnimation.value),
+                  color: Colors.black.withOpacity(0.1 * _fadeAnimation.value),
                 ),
               ),
             ),
@@ -433,15 +432,14 @@ class _ModernConfigureWhiteboardModalState
             decoration: BoxDecoration(
               color: useHighTransparency
                   ? (_isDark
-                      ? MediasfuColors.backgroundDark.withValues(alpha: 0.05)
-                      : MediasfuColors.surface.withValues(alpha: 0.08))
+                      ? MediasfuColors.backgroundDark.withOpacity(0.05)
+                      : MediasfuColors.surface.withOpacity(0.08))
                   : (_isDark
                       ? (_useGlass
-                          ? MediasfuColors.backgroundDark
-                              .withValues(alpha: 0.85)
+                          ? MediasfuColors.backgroundDark.withOpacity(0.85)
                           : MediasfuColors.backgroundDark)
                       : (_useGlass
-                          ? MediasfuColors.surface.withValues(alpha: 0.9)
+                          ? MediasfuColors.surface.withOpacity(0.9)
                           : MediasfuColors.surface)),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: _borderColor),
@@ -449,7 +447,7 @@ class _ModernConfigureWhiteboardModalState
                   ? []
                   : [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.3),
+                        color: Colors.black.withOpacity(0.3),
                         blurRadius: 40,
                         offset: const Offset(0, 15),
                       ),
@@ -483,7 +481,7 @@ class _ModernConfigureWhiteboardModalState
             border: Border(
               bottom: BorderSide(
                 color: isActive
-                    ? MediasfuColors.success.withValues(alpha: 0.3)
+                    ? MediasfuColors.success.withOpacity(0.3)
                     : MediasfuColors.glassBorder(darkMode: true),
               ),
             ),
@@ -511,9 +509,9 @@ class _ModernConfigureWhiteboardModalState
             decoration: BoxDecoration(
               color: _isDark
                   ? (isActive
-                      ? MediasfuColors.success.withValues(alpha: 0.2)
-                      : MediasfuColors.primary.withValues(alpha: 0.2))
-                  : Colors.white.withValues(alpha: 0.2),
+                      ? MediasfuColors.success.withOpacity(0.2)
+                      : MediasfuColors.primary.withOpacity(0.2))
+                  : Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: FaIcon(
@@ -544,7 +542,7 @@ class _ModernConfigureWhiteboardModalState
                     fontSize: 12,
                     color: _isDark
                         ? Colors.grey[400]
-                        : Colors.white.withValues(alpha: 0.8),
+                        : Colors.white.withOpacity(0.8),
                   ),
                 ),
               ],
@@ -556,8 +554,8 @@ class _ModernConfigureWhiteboardModalState
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: _isDark
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : Colors.white.withValues(alpha: 0.2),
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -577,10 +575,10 @@ class _ModernConfigureWhiteboardModalState
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
-        color: MediasfuColors.success.withValues(alpha: 0.1),
+        color: MediasfuColors.success.withOpacity(0.1),
         border: Border(
           bottom: BorderSide(
-            color: MediasfuColors.success.withValues(alpha: 0.2),
+            color: MediasfuColors.success.withOpacity(0.2),
           ),
         ),
       ),
@@ -594,8 +592,8 @@ class _ModernConfigureWhiteboardModalState
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: MediasfuColors.success.withValues(alpha: 0.5),
-                  blurRadius: 8,
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 4,
                 ),
               ],
             ),
@@ -615,7 +613,7 @@ class _ModernConfigureWhiteboardModalState
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: MediasfuColors.success.withValues(alpha: 0.15),
+              color: MediasfuColors.success.withOpacity(0.15),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -704,7 +702,7 @@ class _ModernConfigureWhiteboardModalState
         Container(
           decoration: BoxDecoration(
             color: _isDark
-                ? MediasfuColors.surfaceDark.withValues(alpha: 0.5)
+                ? MediasfuColors.surfaceDark.withOpacity(0.5)
                 : MediasfuColors.surfaceElevated,
             borderRadius: BorderRadius.circular(10),
           ),
@@ -832,8 +830,8 @@ class _ModernConfigureWhiteboardModalState
         gradient: LinearGradient(
           colors: _isDark
               ? [
-                  MediasfuColors.secondary.withValues(alpha: 0.15),
-                  MediasfuColors.primary.withValues(alpha: 0.1),
+                  MediasfuColors.secondary.withOpacity(0.15),
+                  MediasfuColors.primary.withOpacity(0.1),
                 ]
               : [MediasfuColors.infoBackground, MediasfuColors.infoBackground],
           begin: Alignment.topLeft,
@@ -842,7 +840,7 @@ class _ModernConfigureWhiteboardModalState
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: _isDark
-              ? MediasfuColors.secondary.withValues(alpha: 0.3)
+              ? MediasfuColors.secondary.withOpacity(0.3)
               : MediasfuColors.infoLight,
         ),
       ),
@@ -851,7 +849,7 @@ class _ModernConfigureWhiteboardModalState
           Container(
             padding: const EdgeInsets.all(MediasfuSpacing.sm),
             decoration: BoxDecoration(
-              color: MediasfuColors.secondary.withValues(alpha: 0.2),
+              color: MediasfuColors.secondary.withOpacity(0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -898,7 +896,7 @@ class _ModernConfigureWhiteboardModalState
             ? null
             : [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: Colors.black.withOpacity(0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 2),
                 ),
@@ -910,7 +908,7 @@ class _ModernConfigureWhiteboardModalState
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.1),
+              color: accentColor.withOpacity(0.1),
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(13)),
             ),
@@ -919,7 +917,7 @@ class _ModernConfigureWhiteboardModalState
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: accentColor.withValues(alpha: 0.2),
+                    color: accentColor.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: FaIcon(icon, size: 12, color: accentColor),
@@ -951,7 +949,7 @@ class _ModernConfigureWhiteboardModalState
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: accentColor.withValues(alpha: 0.2),
+                    color: accentColor.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -998,13 +996,13 @@ class _ModernConfigureWhiteboardModalState
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
+              color: color.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: FaIcon(
               FontAwesomeIcons.userSlash,
               size: 22,
-              color: color.withValues(alpha: 0.5),
+              color: color.withOpacity(0.5),
             ),
           ),
           const SizedBox(height: 12),
@@ -1020,7 +1018,7 @@ class _ModernConfigureWhiteboardModalState
             subtitle,
             style: TextStyle(
               fontSize: 12,
-              color: _textSecondary.withValues(alpha: 0.7),
+              color: _textSecondary.withOpacity(0.7),
             ),
           ),
         ],
@@ -1045,7 +1043,7 @@ class _ModernConfigureWhiteboardModalState
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: _isDark
-            ? MediasfuColors.surfaceDark.withValues(alpha: 0.5)
+            ? MediasfuColors.surfaceDark.withOpacity(0.5)
             : MediasfuColors.surfaceElevated,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
@@ -1096,7 +1094,7 @@ class _ModernConfigureWhiteboardModalState
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: actionColor.withValues(alpha: 0.12),
+                color: actionColor.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: FaIcon(
@@ -1120,7 +1118,7 @@ class _ModernConfigureWhiteboardModalState
       padding: const EdgeInsets.all(MediasfuSpacing.md),
       decoration: BoxDecoration(
         color: _isDark
-            ? MediasfuColors.backgroundDark.withValues(alpha: 0.8)
+            ? MediasfuColors.backgroundDark.withOpacity(0.8)
             : MediasfuColors.surfaceElevated,
         borderRadius: widget.options.renderMode == ModalRenderMode.modal
             ? const BorderRadius.vertical(bottom: Radius.circular(20))
@@ -1138,10 +1136,10 @@ class _ModernConfigureWhiteboardModalState
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: MediasfuColors.danger.withValues(alpha: 0.1),
+                color: MediasfuColors.danger.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: MediasfuColors.danger.withValues(alpha: 0.3),
+                  color: MediasfuColors.danger.withOpacity(0.3),
                 ),
               ),
               child: Row(
@@ -1233,7 +1231,7 @@ class _ModernConfigureWhiteboardModalState
           gradient: isDisabled
               ? null
               : LinearGradient(
-                  colors: [color, color.withValues(alpha: 0.8)],
+                  colors: [color, color.withOpacity(0.8)],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
@@ -1245,9 +1243,9 @@ class _ModernConfigureWhiteboardModalState
               ? null
               : [
                   BoxShadow(
-                    color: color.withValues(alpha: 0.35),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
                 ],
         ),

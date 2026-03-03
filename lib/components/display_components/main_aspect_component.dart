@@ -381,7 +381,7 @@ typedef MainAspectComponentType = Widget Function(
 ///
 /// **Implementation Details:**
 /// - Calculates parentWidth/parentHeight fresh on every build (no caching)
-/// - Safe area insets include both padding and systemGestureInsets
+/// - Safe area insets use only MediaQuery.padding (not systemGestureInsets)
 /// - Aspect ratio override (width > 1.5 * height) handles ultra-wide displays
 /// - Checks `mounted` before setState() to prevent errors after dispose
 /// - Container uses calculated dimensions (no intrinsic sizing)
@@ -428,15 +428,14 @@ class _MainAspectComponentState extends State<MainAspectComponent>
   /// Updates aspect styles and invokes callbacks based on current screen size.
   void _updateAspectStyles() {
     final Size size = MediaQuery.of(context).size;
-    final EdgeInsets safeAreaInsets = MediaQuery.of(context).padding +
-        MediaQuery.of(context).systemGestureInsets;
+    final EdgeInsets safeAreaInsets = MediaQuery.of(context).padding;
 
     final double parentWidth =
         size.width * widget.options.containerWidthFraction;
 
-    // Always subtract safe area insets since we're wrapped in SafeArea
-    // The safe area (status bar, notch) is removed from the layout, so we need
-    // to calculate based on actual available height
+    // Subtract only safe area padding (status bar, nav bar).
+    // systemGestureInsets is excluded — it affects touch, not layout.
+    // The outer SafeArea zeros out padding for sides it consumes.
     final double availableHeight =
         size.height - safeAreaInsets.top - safeAreaInsets.bottom;
     final double parentHeight = widget.options.showControls == true
@@ -469,15 +468,14 @@ class _MainAspectComponentState extends State<MainAspectComponent>
   Widget build(BuildContext context) {
     // Calculate dimensions based on current screen size and fractions
     final Size size = MediaQuery.of(context).size;
-    final EdgeInsets safeAreaInsets = MediaQuery.of(context).padding +
-        MediaQuery.of(context).systemGestureInsets;
+    final EdgeInsets safeAreaInsets = MediaQuery.of(context).padding;
 
     final double parentWidth =
         size.width * widget.options.containerWidthFraction;
 
-    // Always subtract safe area insets since we're wrapped in SafeArea
-    // The safe area (status bar, notch) is removed from the layout, so we need
-    // to calculate based on actual available height
+    // Subtract only safe area padding (status bar, nav bar).
+    // systemGestureInsets is excluded — it affects touch, not layout.
+    // The outer SafeArea zeros out padding for sides it consumes.
     final double availableHeight =
         size.height - safeAreaInsets.top - safeAreaInsets.bottom;
     final double parentHeight = widget.options.showControls

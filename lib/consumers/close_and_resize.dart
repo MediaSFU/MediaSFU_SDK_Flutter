@@ -37,6 +37,8 @@ abstract class CloseAndResizeParameters
   List<Stream> get oldAllStreams;
   bool get shareScreenStarted;
   bool get shared;
+  bool get whiteboardStarted;
+  bool get whiteboardEnded;
   String get meetingDisplayType;
   bool get deferReceive;
   bool get lockScreen;
@@ -336,7 +338,8 @@ Future<void> closeAndResize(CloseAndResizeOptions options) async {
         await rePort(optionsRePort);
       }
 
-      if (eventType == EventType.conference) {
+      if (eventType == EventType.conference &&
+          !(parameters.whiteboardStarted && !parameters.whiteboardEnded)) {
         updateMainHeightWidth(0);
       }
 

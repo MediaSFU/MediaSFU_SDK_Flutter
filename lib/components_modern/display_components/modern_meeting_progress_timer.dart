@@ -62,8 +62,8 @@ class ModernMeetingProgressTimer extends StatefulWidget {
     required this.options,
     this.useGlassmorphism = true,
     this.useGradient = false,
-    this.animateOnChange = true,
-    this.showPulse = true,
+    this.animateOnChange = false,
+    this.showPulse = false,
     this.showIcon = true,
     this.recordingState,
   });
@@ -221,7 +221,7 @@ class _ModernMeetingProgressTimerState extends State<ModernMeetingProgressTimer>
           shadows: [
             Shadow(
               blurRadius: 4,
-              color: Colors.black.withValues(alpha: 0.3),
+              color: Colors.black.withOpacity(0.3),
             ),
           ],
         );
@@ -261,12 +261,12 @@ class _ModernMeetingProgressTimerState extends State<ModernMeetingProgressTimer>
                 BoxDecoration(
                   color: widget.useGradient
                       ? null
-                      : effectiveBackgroundColor.withValues(alpha: 0.7),
+                      : effectiveBackgroundColor.withOpacity(0.7),
                   gradient: widget.useGradient
                       ? LinearGradient(
                           colors: [
-                            effectiveBackgroundColor.withValues(alpha: 0.8),
-                            effectiveBackgroundColor.withValues(alpha: 0.6),
+                            effectiveBackgroundColor.withOpacity(0.8),
+                            effectiveBackgroundColor.withOpacity(0.6),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -276,14 +276,15 @@ class _ModernMeetingProgressTimerState extends State<ModernMeetingProgressTimer>
                       (widget.options.badgeBorderRadius as BorderRadius?) ??
                           BorderRadius.circular(MediasfuSpacing.md),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.2),
+                    color: Colors.white.withOpacity(0.2),
                     width: 1,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: effectiveBackgroundColor.withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      spreadRadius: 2,
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 10,
+                      spreadRadius: 0,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
@@ -298,7 +299,7 @@ class _ModernMeetingProgressTimerState extends State<ModernMeetingProgressTimer>
                     shadows: [
                       Shadow(
                         blurRadius: 4,
-                        color: Colors.black.withValues(alpha: 0.3),
+                        color: Colors.black.withOpacity(0.3),
                       ),
                     ],
                   ),
@@ -327,9 +328,10 @@ class _ModernMeetingProgressTimerState extends State<ModernMeetingProgressTimer>
                       BorderRadius.circular(MediasfuSpacing.md),
               boxShadow: [
                 BoxShadow(
-                  color: effectiveBackgroundColor.withValues(alpha: 0.4),
+                  color: Colors.black.withOpacity(0.2),
                   blurRadius: 8,
-                  spreadRadius: 1,
+                  spreadRadius: 0,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),

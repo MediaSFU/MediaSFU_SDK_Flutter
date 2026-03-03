@@ -349,7 +349,7 @@ class _StyledContainerState extends State<StyledContainer>
           : _effectiveStyle.border ??
               Border.all(
                 color: (widget.isDarkMode ? Colors.white : Colors.black)
-                    .withValues(alpha: 0.08),
+                    .withOpacity(0.08),
                 width: 1,
               ),
     );
@@ -366,12 +366,12 @@ class _StyledContainerState extends State<StyledContainer>
     if (isDark) {
       return [
         BoxShadow(
-          color: const Color(0xFF404060).withValues(alpha: 0.3 + (depth * 0.1)),
+          color: const Color(0xFF404060).withOpacity(0.3 + (depth * 0.1)),
           offset: Offset(-baseOffset, -baseOffset),
           blurRadius: baseBlur,
         ),
         BoxShadow(
-          color: const Color(0xFF0A0A12).withValues(alpha: 0.5 + (depth * 0.1)),
+          color: const Color(0xFF0A0A12).withOpacity(0.5 + (depth * 0.1)),
           offset: Offset(baseOffset, baseOffset),
           blurRadius: baseBlur,
         ),
@@ -379,12 +379,12 @@ class _StyledContainerState extends State<StyledContainer>
     } else {
       return [
         BoxShadow(
-          color: Colors.white.withValues(alpha: 0.8),
+          color: Colors.white.withOpacity(0.8),
           offset: Offset(-baseOffset, -baseOffset),
           blurRadius: baseBlur,
         ),
         BoxShadow(
-          color: const Color(0xFFD1D9E6).withValues(alpha: 0.5 + (depth * 0.1)),
+          color: const Color(0xFFD1D9E6).withOpacity(0.5 + (depth * 0.1)),
           offset: Offset(baseOffset, baseOffset),
           blurRadius: baseBlur,
         ),
@@ -556,12 +556,12 @@ class _PulseBorderWrapperState extends State<_PulseBorderWrapper>
           decoration: BoxDecoration(
             borderRadius: widget.borderRadius,
             border: Border.all(
-              color: widget.color.withValues(alpha: _animation.value),
+              color: widget.color.withOpacity(_animation.value),
               width: 2,
             ),
             boxShadow: [
               BoxShadow(
-                color: widget.color.withValues(alpha: _animation.value * 0.3),
+                color: widget.color.withOpacity(_animation.value * 0.3),
                 blurRadius: 8 * _animation.value,
                 spreadRadius: 1 * _animation.value,
               ),

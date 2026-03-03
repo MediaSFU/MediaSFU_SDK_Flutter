@@ -169,6 +169,21 @@ Future<ResponseJoinRoom> joinConsumeRoom(JoinConsumeRoomOptions options) async {
         parameters: parameters,
       );
       await receiveAllPipedTransports(optionsReceive);
+
+      // Retry after 30 seconds to catch any late-arriving piped transports
+      // (e.g., translation producers that may be piped after initial join)
+      Future.delayed(const Duration(seconds: 30), () async {
+        try {
+          final retryOptions = ReceiveAllPipedTransportsOptions(
+            nsock: remoteSock,
+            parameters: parameters.getUpdatedAllParams(),
+          );
+          await receiveAllPipedTransports(retryOptions);
+        } catch (e) {
+          debugPrint(
+              '[joinConsumeRoom] Retry receiveAllPipedTransports error: $e');
+        }
+      });
     }
 
     return data;

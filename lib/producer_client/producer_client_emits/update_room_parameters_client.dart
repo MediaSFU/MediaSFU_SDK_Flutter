@@ -78,6 +78,8 @@ abstract class UpdateRoomParametersClientParameters {
   int get screenPageLimit;
   bool get shareScreenStarted;
   bool get shared;
+  bool get whiteboardStarted;
+  bool get whiteboardEnded;
   String get targetOrientation;
   VidCons get vidCons;
   bool get recordingVideoSupport;
@@ -372,7 +374,9 @@ void updateRoomParametersClient({
     params.updateAudioOnlyRoom(meetingParams?.mediaType != 'video');
 
     if (meetingParams?.type == EventType.conference) {
-      if (params.shared || params.shareScreenStarted) {
+      if (params.shared ||
+          params.shareScreenStarted ||
+          (params.whiteboardStarted && !params.whiteboardEnded)) {
         params.updateMainHeightWidth(100);
       } else {
         params.updateMainHeightWidth(0);

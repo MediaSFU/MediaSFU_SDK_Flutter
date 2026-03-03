@@ -111,11 +111,14 @@ class _ModernLoadingModalState extends State<ModernLoadingModal>
                     height: 56,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: MediasfuColors.brandGradient(darkMode: isDark),
-                      boxShadow: MediasfuColors.glowShadow(
-                        MediasfuColors.primary,
-                        intensity: 0.4,
-                      ),
+                      color: MediasfuColors.primary,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 12,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(4),
@@ -124,7 +127,7 @@ class _ModernLoadingModalState extends State<ModernLoadingModal>
                         valueColor: const AlwaysStoppedAnimation<Color>(
                           Colors.white,
                         ),
-                        backgroundColor: Colors.white.withValues(alpha: 0.2),
+                        backgroundColor: Colors.white.withOpacity(0.2),
                       ),
                     ),
                   ),
@@ -141,19 +144,14 @@ class _ModernLoadingModalState extends State<ModernLoadingModal>
       );
     }
 
-    // Build text with gradient effect
+    // Build text
     Widget text = widget.options.loadingText ??
-        ShaderMask(
-          shaderCallback: (bounds) =>
-              MediasfuColors.brandGradient(darkMode: isDark)
-                  .createShader(bounds),
-          child: Text(
-            'Loading...',
-            style: textTheme.titleMedium?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.5,
-            ),
+        Text(
+          'Loading...',
+          style: textTheme.titleMedium?.copyWith(
+            color: isDark ? Colors.white : Colors.black87,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
           ),
         );
 
@@ -175,15 +173,16 @@ class _ModernLoadingModalState extends State<ModernLoadingModal>
     }
     contentChildren.add(text);
 
-    // Content container with glow
+    // Content container
     Widget content = Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: MediasfuColors.primary.withValues(alpha: 0.2),
-            blurRadius: 30,
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 20,
             spreadRadius: 0,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -234,10 +233,8 @@ class _ModernLoadingModalState extends State<ModernLoadingModal>
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        (isDark ? Colors.black : Colors.black)
-                            .withValues(alpha: 0.5),
-                        (isDark ? Colors.black : Colors.black)
-                            .withValues(alpha: 0.7),
+                        (isDark ? Colors.black : Colors.black).withOpacity(0.5),
+                        (isDark ? Colors.black : Colors.black).withOpacity(0.7),
                       ],
                     ),
                   ),

@@ -52,11 +52,8 @@ class _BackgroundPreviewWidgetState extends State<BackgroundPreviewWidget> {
   String? _error;
 
   // For composited preview
-  // ignore: unused_field
   ui.Image? _currentFrame;
-  // ignore: unused_field
   ui.Image? _backgroundImage;
-  // ignore: unused_field
   Uint8List? _currentMask;
   Timer? _frameTimer;
 
@@ -335,7 +332,7 @@ class _BackgroundPreviewWidgetState extends State<BackgroundPreviewWidget> {
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.8),
+                    color: Colors.green.withOpacity(0.8),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(

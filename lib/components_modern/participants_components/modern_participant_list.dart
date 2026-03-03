@@ -89,7 +89,7 @@ class ModernParticipantList extends StatelessWidget {
       separatorBuilder: (context, index) => options.showDividers
           ? Divider(
               color: (options.isDarkMode ? Colors.white : Colors.black)
-                  .withValues(alpha: 0.1),
+                  .withOpacity(0.1),
               height: 1,
             )
           : const SizedBox(height: MediasfuSpacing.xs),
@@ -157,7 +157,7 @@ class _ModernParticipantListItemState extends State<_ModernParticipantListItem>
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           color: _isHovered
-              ? (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08)
+              ? (isDark ? Colors.white : Colors.black).withOpacity(0.08)
               : Colors.transparent,
         ),
         child: ClipRRect(
@@ -256,17 +256,10 @@ class _ModernParticipantListItemState extends State<_ModernParticipantListItem>
             shape: BoxShape.circle,
             border: Border.all(
               color: isHost
-                  ? MediasfuColors.primary.withValues(alpha: 0.5)
-                  : (isDark ? Colors.white : Colors.black)
-                      .withValues(alpha: 0.1),
-              width: isHost ? 2 : 1.5,
+                  ? MediasfuColors.primary.withOpacity(0.5)
+                  : (isDark ? Colors.white : Colors.black).withOpacity(0.1),
+              width: isHost ? 2 : 1,
             ),
-            boxShadow: isHost
-                ? MediasfuColors.glowShadow(
-                    MediasfuColors.primary,
-                    intensity: 0.25,
-                  )
-                : null,
           ),
           child: Center(
             child: Text(
@@ -281,7 +274,7 @@ class _ModernParticipantListItemState extends State<_ModernParticipantListItem>
             ),
           ),
         ),
-        // Mute status indicator with glow
+        // Mute status indicator
         Positioned(
           right: 0,
           bottom: 0,
@@ -295,15 +288,6 @@ class _ModernParticipantListItemState extends State<_ModernParticipantListItem>
                 color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
                 width: 2.5,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color:
-                      (isMuted ? MediasfuColors.danger : MediasfuColors.success)
-                          .withValues(alpha: 0.4),
-                  blurRadius: 6,
-                  spreadRadius: 0,
-                ),
-              ],
             ),
           ),
         ),
@@ -322,9 +306,9 @@ class _ModernParticipantListItemState extends State<_ModernParticipantListItem>
         borderRadius: BorderRadius.circular(6),
         boxShadow: [
           BoxShadow(
-            color: MediasfuColors.primary.withValues(alpha: 0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 6,
+            offset: const Offset(0, 1),
           ),
         ],
       ),
@@ -347,16 +331,15 @@ class _ModernParticipantListItemState extends State<_ModernParticipantListItem>
           isMuted ? Icons.mic_off_outlined : Icons.mic_outlined,
           size: 14,
           color: isMuted
-              ? Colors.red.withValues(alpha: 0.7)
-              : MediasfuColors.success.withValues(alpha: 0.7),
+              ? MediasfuColors.danger.withOpacity(0.7)
+              : MediasfuColors.success.withOpacity(0.7),
         ),
         const SizedBox(width: 4),
         Text(
           isMuted ? 'Muted' : 'Speaking',
           style: TextStyle(
             fontSize: 12,
-            color:
-                (isDark ? Colors.white : Colors.black).withValues(alpha: 0.5),
+            color: (isDark ? Colors.white : Colors.black).withOpacity(0.5),
           ),
         ),
       ],
@@ -415,7 +398,7 @@ class _ModernParticipantListItemState extends State<_ModernParticipantListItem>
         const SizedBox(width: MediasfuSpacing.xs),
         _buildIconButton(
           icon: Icons.person_remove_rounded,
-          color: Colors.red,
+          color: MediasfuColors.danger,
           isDark: isDark,
           tooltip:
               'Remove ${widget.participant.name} from meeting - They will be disconnected',
@@ -441,7 +424,7 @@ class _ModernParticipantListItemState extends State<_ModernParticipantListItem>
   Widget _buildRemoveButton(bool isDark) {
     return _buildIconButton(
       icon: Icons.person_remove_rounded,
-      color: Colors.red,
+      color: MediasfuColors.danger,
       isDark: isDark,
       tooltip:
           'Remove ${widget.participant.name} from meeting - They will be disconnected',
@@ -482,19 +465,12 @@ class _ModernParticipantListItemState extends State<_ModernParticipantListItem>
           width: 38,
           height: 38,
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(12),
+            color: color.withOpacity(0.10),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: color.withValues(alpha: 0.25),
-              width: 1.5,
+              color: color.withOpacity(0.12),
+              width: 1,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: 0.15),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
           ),
           child: Icon(
             icon,
@@ -550,7 +526,7 @@ class ModernParticipantListOthers extends StatelessWidget {
       separatorBuilder: (context, index) => options.showDividers
           ? Divider(
               color: (options.isDarkMode ? Colors.white : Colors.black)
-                  .withValues(alpha: 0.1),
+                  .withOpacity(0.1),
               height: 1,
             )
           : const SizedBox(height: MediasfuSpacing.xs),
@@ -593,9 +569,9 @@ class _ModernParticipantListOthersItem extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
+        color: (isDark ? Colors.white : Colors.black).withOpacity(0.05),
         border: Border.all(
-          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
+          color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
         ),
       ),
       child: Row(
@@ -638,8 +614,8 @@ class _ModernParticipantListOthersItem extends StatelessWidget {
                       isMuted ? Icons.mic_off_outlined : Icons.mic_outlined,
                       size: 14,
                       color: isMuted
-                          ? Colors.red.withValues(alpha: 0.7)
-                          : MediasfuColors.success.withValues(alpha: 0.7),
+                          ? MediasfuColors.danger.withOpacity(0.7)
+                          : MediasfuColors.success.withOpacity(0.7),
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -647,7 +623,7 @@ class _ModernParticipantListOthersItem extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         color: (isDark ? Colors.white : Colors.black)
-                            .withValues(alpha: 0.5),
+                            .withOpacity(0.5),
                       ),
                     ),
                   ],
@@ -701,7 +677,7 @@ class _ModernParticipantListOthersItem extends StatelessWidget {
             width: 12,
             height: 12,
             decoration: BoxDecoration(
-              color: isMuted ? Colors.red : MediasfuColors.success,
+              color: isMuted ? MediasfuColors.danger : MediasfuColors.success,
               shape: BoxShape.circle,
               border: Border.all(
                 color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
@@ -721,9 +697,9 @@ class _ModernParticipantListOthersItem extends StatelessWidget {
         vertical: 2,
       ),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
+        color: color.withOpacity(0.2),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Text(
         label,

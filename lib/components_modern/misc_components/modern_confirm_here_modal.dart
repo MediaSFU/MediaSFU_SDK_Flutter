@@ -38,6 +38,7 @@ class _ModernConfirmHereModalState extends State<ModernConfirmHereModal>
   // ─────────────────────────────────────────────────────────────────────────
   Timer? countdownTimer;
   late int counter;
+  bool _doNotShowAgain = false;
 
   late AnimationController _pulseController;
   late Animation<double> _pulseAnim;
@@ -132,6 +133,9 @@ class _ModernConfirmHereModalState extends State<ModernConfirmHereModal>
 
   void _confirmAndClose() {
     stopCountdown();
+    if (_doNotShowAgain) {
+      widget.options.onSuppressConfirmHere?.call();
+    }
     widget.options.onConfirmHereClose();
   }
 
@@ -174,7 +178,7 @@ class _ModernConfirmHereModalState extends State<ModernConfirmHereModal>
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: MediasfuColors.primary.withValues(alpha: 0.3 * progress),
+              color: MediasfuColors.primary.withOpacity(0.3 * progress),
               blurRadius: 20,
               spreadRadius: 3,
             ),
@@ -287,7 +291,7 @@ class _ModernConfirmHereModalState extends State<ModernConfirmHereModal>
             gradient: MediasfuColors.brandGradient(darkMode: isDark),
             boxShadow: [
               BoxShadow(
-                color: MediasfuColors.primary.withValues(alpha: 0.5),
+                color: MediasfuColors.primary.withOpacity(0.5),
                 blurRadius: 16,
                 spreadRadius: 2,
               ),
@@ -323,6 +327,43 @@ class _ModernConfirmHereModalState extends State<ModernConfirmHereModal>
         ) ??
         defaultButton;
 
+    // "Don't show again" checkbox
+    final Widget suppressCheckbox = widget.options.onSuppressConfirmHere != null
+        ? GestureDetector(
+            onTap: () => setState(() {
+              _doNotShowAgain = !_doNotShowAgain;
+            }),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: Checkbox(
+                    value: _doNotShowAgain,
+                    onChanged: (v) =>
+                        setState(() => _doNotShowAgain = v ?? false),
+                    activeColor: MediasfuColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    side: BorderSide(
+                      color: isDark ? Colors.white38 : Colors.black38,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  "Don't show again this session",
+                  style: textTheme.bodySmall?.copyWith(
+                    color: isDark ? Colors.white70 : Colors.black54,
+                  ),
+                ),
+              ],
+            ),
+          )
+        : const SizedBox.shrink();
+
     // Body
     final Widget defaultBody = Column(
       mainAxisSize: MainAxisSize.min,
@@ -331,7 +372,9 @@ class _ModernConfirmHereModalState extends State<ModernConfirmHereModal>
         const SizedBox(height: MediasfuSpacing.lg),
         resolvedMessage,
         resolvedCountdown,
-        const SizedBox(height: MediasfuSpacing.lg),
+        const SizedBox(height: MediasfuSpacing.md),
+        suppressCheckbox,
+        const SizedBox(height: MediasfuSpacing.md),
         resolvedButton,
       ],
     );
@@ -371,8 +414,8 @@ class _ModernConfirmHereModalState extends State<ModernConfirmHereModal>
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-              child: overlayBg ??
-                  Container(color: Colors.black.withValues(alpha: 0.05)),
+              child:
+                  overlayBg ?? Container(color: Colors.black.withOpacity(0.05)),
             ),
           ),
           // Modal
@@ -385,11 +428,11 @@ class _ModernConfirmHereModalState extends State<ModernConfirmHereModal>
                   ? LinearGradient(
                       colors: [
                         isDark
-                            ? Colors.black.withValues(alpha: 0.05)
-                            : Colors.white.withValues(alpha: 0.08),
+                            ? Colors.black.withOpacity(0.05)
+                            : Colors.white.withOpacity(0.08),
                         isDark
-                            ? Colors.black.withValues(alpha: 0.05)
-                            : Colors.white.withValues(alpha: 0.08),
+                            ? Colors.black.withOpacity(0.05)
+                            : Colors.white.withOpacity(0.08),
                       ],
                     )
                   : null,

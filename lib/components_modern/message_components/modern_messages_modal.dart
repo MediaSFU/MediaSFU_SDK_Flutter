@@ -132,7 +132,7 @@ class _ModernMessagesModalState extends State<ModernMessagesModal>
                 child: FadeTransition(
                   opacity: _fadeAnimation,
                   child: Container(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Colors.black.withOpacity(0.05),
                   ),
                 ),
               ),
@@ -170,31 +170,31 @@ class _ModernMessagesModalState extends State<ModernMessagesModal>
                           // so users can still see the video feed behind the messages
                           color: useHighTransparency
                               ? (widget.options.isDarkMode
-                                  ? Colors.black.withValues(alpha: 0.05)
-                                  : Colors.white.withValues(alpha: 0.08))
+                                  ? Colors.black.withOpacity(0.05)
+                                  : Colors.white.withOpacity(0.08))
                               : (widget.options.isDarkMode
-                                  ? Colors.black.withValues(alpha: 0.7)
-                                  : Colors.white.withValues(alpha: 0.9)),
+                                  ? Colors.black.withOpacity(0.7)
+                                  : Colors.white.withOpacity(0.9)),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: widget.options.isDarkMode
-                                ? Colors.white.withValues(
-                                    alpha: useHighTransparency ? 0.08 : 0.15)
-                                : Colors.black.withValues(
-                                    alpha: useHighTransparency ? 0.05 : 0.1),
+                                ? Colors.white.withOpacity(
+                                    useHighTransparency ? 0.08 : 0.15)
+                                : Colors.black.withOpacity(
+                                    useHighTransparency ? 0.05 : 0.1),
                           ),
                           boxShadow: useHighTransparency
                               ? [] // No shadow for high transparency mode
                               : [
                                   BoxShadow(
-                                    color: MediasfuColors.primary
-                                        .withValues(alpha: 0.3),
+                                    color:
+                                        MediasfuColors.primary.withOpacity(0.3),
                                     blurRadius: 40,
                                     spreadRadius: 8,
                                   ),
                                   BoxShadow(
                                     color: MediasfuColors.secondary
-                                        .withValues(alpha: 0.15),
+                                        .withOpacity(0.15),
                                     blurRadius: 60,
                                     spreadRadius: 10,
                                     offset: const Offset(10, 20),
@@ -239,8 +239,8 @@ class _ModernMessagesModalState extends State<ModernMessagesModal>
         border: Border(
           bottom: BorderSide(
             color: widget.options.isDarkMode
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.1),
+                ? Colors.white.withOpacity(0.1)
+                : Colors.black.withOpacity(0.1),
           ),
         ),
       ),
@@ -259,7 +259,7 @@ class _ModernMessagesModalState extends State<ModernMessagesModal>
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: MediasfuColors.primary.withValues(alpha: 0.4),
+                  color: MediasfuColors.primary.withOpacity(0.4),
                   blurRadius: 12,
                   spreadRadius: 2,
                 ),
@@ -268,16 +268,20 @@ class _ModernMessagesModalState extends State<ModernMessagesModal>
             child: const Icon(
               Icons.chat_bubble_rounded,
               color: Colors.white,
-              size: 20,
+              size: 16,
             ),
           ),
-          const SizedBox(width: MediasfuSpacing.sm),
-          Text(
-            'Messages',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: widget.options.isDarkMode ? Colors.white : Colors.black87,
+          const SizedBox(width: MediasfuSpacing.xs),
+          Flexible(
+            child: Text(
+              'Messages',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color:
+                    widget.options.isDarkMode ? Colors.white : Colors.black87,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           const Spacer(),
@@ -319,8 +323,8 @@ class _ModernMessagesModalState extends State<ModernMessagesModal>
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(
-                horizontal: MediasfuSpacing.md,
-                vertical: MediasfuSpacing.sm,
+                horizontal: MediasfuSpacing.sm,
+                vertical: MediasfuSpacing.xs,
               ),
               decoration: BoxDecoration(
                 gradient: isActive
@@ -334,15 +338,15 @@ class _ModernMessagesModalState extends State<ModernMessagesModal>
                 color: isActive
                     ? null
                     : (widget.options.isDarkMode
-                        ? Colors.white.withValues(alpha: 0.1)
-                        : Colors.black.withValues(alpha: 0.05)),
+                        ? Colors.white.withOpacity(0.1)
+                        : Colors.black.withOpacity(0.05)),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 text,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  fontSize: 13,
+                  fontSize: 11,
                   color: isActive
                       ? Colors.white
                       : (widget.options.isDarkMode
@@ -376,8 +380,8 @@ class _ModernMessagesModalState extends State<ModernMessagesModal>
           padding: const EdgeInsets.all(MediasfuSpacing.sm),
           decoration: BoxDecoration(
             color: widget.options.isDarkMode
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.05),
+                ? Colors.white.withOpacity(0.1)
+                : Colors.black.withOpacity(0.05),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(

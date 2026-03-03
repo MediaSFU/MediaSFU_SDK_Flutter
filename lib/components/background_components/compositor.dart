@@ -116,7 +116,6 @@ class Compositor {
       ProcessedFrame frame, double intensity) async {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
-    // ignore: unused_local_variable
     final size = Size(frame.width.toDouble(), frame.height.toDouble());
 
     // Step 1: Draw blurred background
@@ -202,8 +201,7 @@ class Compositor {
     final mWidth = maskWidth ?? width;
     final mHeight = maskHeight ?? height;
 
-    debugPrint(
-        'Compositor: Compositing - frame=${width}x$height, mask=${mWidth}x$mHeight, maskBytes=${mask.length}');
+    // Reduce per-frame logging noise (logged in FrameProcessor);
 
     // Create a masked version of the person image
     // This creates an image where only the person (high mask values) is visible
@@ -297,8 +295,7 @@ class Compositor {
       rgbaData[rgbaIndex + 3] = alpha; // A - this is the mask!
     }
 
-    debugPrint(
-        'Compositor: Mask stats - person=$personPixels, bg=$bgPixels, total=${maskData.length}');
+    // Mask stats logging removed to reduce noise
 
     return _createImageFromBytes(rgbaData, width, height);
   }

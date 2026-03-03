@@ -95,7 +95,6 @@ class _ModernParticipantsModalState extends State<ModernParticipantsModal>
 
     // Check if this is a webinar or chat event - these benefit from high transparency
     // so users can still see the video feed behind the modal
-    // ignore: unused_local_variable
     final isLiveEvent = params.eventType == EventType.webinar ||
         params.eventType == EventType.chat;
 
@@ -135,7 +134,7 @@ class _ModernParticipantsModalState extends State<ModernParticipantsModal>
                 child: FadeTransition(
                   opacity: _fadeAnimation,
                   child: Container(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Colors.black.withOpacity(0.05),
                   ),
                 ),
               ),
@@ -163,31 +162,31 @@ class _ModernParticipantsModalState extends State<ModernParticipantsModal>
                           // so users can still see the video feed behind the modal
                           color: useHighTransparency
                               ? (widget.options.isDarkMode
-                                  ? Colors.black.withValues(alpha: 0.05)
-                                  : Colors.white.withValues(alpha: 0.08))
+                                  ? Colors.black.withOpacity(0.05)
+                                  : Colors.white.withOpacity(0.08))
                               : (widget.options.isDarkMode
-                                  ? Colors.black.withValues(alpha: 0.7)
-                                  : Colors.white.withValues(alpha: 0.9)),
+                                  ? Colors.black.withOpacity(0.7)
+                                  : Colors.white.withOpacity(0.9)),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: widget.options.isDarkMode
-                                ? Colors.white.withValues(
-                                    alpha: useHighTransparency ? 0.08 : 0.15)
-                                : Colors.black.withValues(
-                                    alpha: useHighTransparency ? 0.05 : 0.1),
+                                ? Colors.white.withOpacity(
+                                    useHighTransparency ? 0.08 : 0.15)
+                                : Colors.black.withOpacity(
+                                    useHighTransparency ? 0.05 : 0.1),
                           ),
                           boxShadow: useHighTransparency
                               ? [] // No shadow for high transparency mode
                               : [
                                   BoxShadow(
-                                    color: MediasfuColors.primary
-                                        .withValues(alpha: 0.3),
+                                    color:
+                                        MediasfuColors.primary.withOpacity(0.3),
                                     blurRadius: 40,
                                     spreadRadius: 8,
                                   ),
                                   BoxShadow(
                                     color: MediasfuColors.secondary
-                                        .withValues(alpha: 0.15),
+                                        .withOpacity(0.15),
                                     blurRadius: 60,
                                     spreadRadius: 10,
                                     offset: const Offset(10, 20),
@@ -253,8 +252,8 @@ class _ModernParticipantsModalState extends State<ModernParticipantsModal>
         border: Border(
           bottom: BorderSide(
             color: widget.options.isDarkMode
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.1),
+                ? Colors.white.withOpacity(0.1)
+                : Colors.black.withOpacity(0.1),
           ),
         ),
       ),
@@ -273,7 +272,7 @@ class _ModernParticipantsModalState extends State<ModernParticipantsModal>
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: MediasfuColors.primary.withValues(alpha: 0.4),
+                  color: MediasfuColors.primary.withOpacity(0.4),
                   blurRadius: 12,
                   spreadRadius: 2,
                 ),
@@ -307,8 +306,8 @@ class _ModernParticipantsModalState extends State<ModernParticipantsModal>
             ),
             decoration: BoxDecoration(
               color: widget.options.isDarkMode
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.black.withValues(alpha: 0.05),
+                  ? Colors.white.withOpacity(0.08)
+                  : Colors.black.withOpacity(0.05),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
@@ -354,8 +353,8 @@ class _ModernParticipantsModalState extends State<ModernParticipantsModal>
                 padding: const EdgeInsets.all(MediasfuSpacing.sm),
                 decoration: BoxDecoration(
                   color: widget.options.isDarkMode
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : Colors.black.withValues(alpha: 0.05),
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.black.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -379,18 +378,20 @@ class _ModernParticipantsModalState extends State<ModernParticipantsModal>
       child: Container(
         decoration: BoxDecoration(
           color: widget.options.isDarkMode
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.black.withValues(alpha: 0.05),
+              ? Colors.white.withOpacity(0.12)
+              : const Color(0xFFEEF2F7),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: widget.options.isDarkMode
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.1),
+                ? Colors.white.withOpacity(0.18)
+                : Colors.black.withOpacity(0.12),
           ),
         ),
         child: TextField(
           controller: _searchController,
           onChanged: widget.options.onParticipantsFilterChange,
+          cursorColor:
+              widget.options.isDarkMode ? Colors.white : Colors.black87,
           style: TextStyle(
             color: widget.options.isDarkMode ? Colors.white : Colors.black87,
           ),
@@ -398,13 +399,15 @@ class _ModernParticipantsModalState extends State<ModernParticipantsModal>
             hintText: 'Search participants...',
             hintStyle: TextStyle(
               color:
-                  widget.options.isDarkMode ? Colors.white54 : Colors.black38,
+                  widget.options.isDarkMode ? Colors.white70 : Colors.black45,
             ),
             prefixIcon: Icon(
               Icons.search_rounded,
               color:
-                  widget.options.isDarkMode ? Colors.white54 : Colors.black38,
+                  widget.options.isDarkMode ? Colors.white70 : Colors.black45,
             ),
+            filled: true,
+            fillColor: Colors.transparent,
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: MediasfuSpacing.md,

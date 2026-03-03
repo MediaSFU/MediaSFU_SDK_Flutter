@@ -19,7 +19,7 @@ import '../types/types.dart'
         Stream,
         DisconnectSendTransportScreenOptions;
 
-/// Method channel for Android foreground service control
+/// Method channel for Android foreground service control and iOS broadcast control
 const _screenCaptureChannel = MethodChannel('com.mediasfu/screen_capture');
 
 /// Stops the foreground service for screen capture on Android.
@@ -32,6 +32,27 @@ Future<void> _stopAndroidForegroundService() async {
   } catch (e) {
     if (kDebugMode) {
       print('Warning: Could not stop foreground service: $e');
+    }
+  }
+}
+
+/// Stops the iOS broadcast extension.
+/// This signals the broadcast extension to stop via UserDefaults.
+Future<void> _stopiOSBroadcast() async {
+  if (kIsWeb) return;
+  try {
+    if (Platform.isIOS) {
+      if (kDebugMode) {
+        print('[ScreenShare] Stopping iOS broadcast extension...');
+      }
+      await _screenCaptureChannel.invokeMethod('stopScreenShare');
+      if (kDebugMode) {
+        print('[ScreenShare] iOS broadcast stop request sent');
+      }
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      print('Warning: Could not stop iOS broadcast: $e');
     }
   }
 }
@@ -279,8 +300,9 @@ Future<void> stopShareScreen(StopShareScreenOptions options) async {
     updateIsScreenboardModalVisible(false);
   }
 
-  // Update mainHeightWidth if event type is conference
-  if (eventType == EventType.conference) {
+  // Update mainHeightWidth if event type is conference (but not if whiteboard is active)
+  if (eventType == EventType.conference &&
+      !(parameters.whiteboardStarted && !parameters.whiteboardEnded)) {
     updateMainHeightWidth(0);
   }
 
@@ -308,8 +330,9 @@ Future<void> stopShareScreen(StopShareScreenOptions options) async {
     }
   }
 
-  // Stop Android foreground service now that screen sharing has ended
+  // Stop platform-specific services now that screen sharing has ended
   await _stopAndroidForegroundService();
+  await _stopiOSBroadcast();
 
   // Reset UI states
   lockScreen = false;

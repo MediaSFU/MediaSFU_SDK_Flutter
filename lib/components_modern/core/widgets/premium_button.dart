@@ -327,12 +327,12 @@ class _PremiumButtonState extends State<PremiumButton>
       case PremiumButtonVariant.filled:
         return BoxDecoration(
           color:
-              _isEnabled ? _primaryColor : _primaryColor.withValues(alpha: 0.5),
+              _isEnabled ? _primaryColor : _primaryColor.withOpacity(0.5),
           borderRadius: borderRadius,
           boxShadow: widget.elevation > 0
               ? [
                   BoxShadow(
-                    color: _primaryColor.withValues(alpha: 0.3),
+                    color: _primaryColor.withOpacity(0.3),
                     blurRadius: widget.elevation * 2,
                     offset: Offset(0, widget.elevation),
                   ),
@@ -343,15 +343,15 @@ class _PremiumButtonState extends State<PremiumButton>
       case PremiumButtonVariant.outlined:
         return BoxDecoration(
           color: _isPressed
-              ? _primaryColor.withValues(alpha: 0.1)
+              ? _primaryColor.withOpacity(0.1)
               : (_isHovered
-                  ? _primaryColor.withValues(alpha: 0.05)
+                  ? _primaryColor.withOpacity(0.05)
                   : Colors.transparent),
           borderRadius: borderRadius,
           border: Border.all(
             color: _isEnabled
                 ? _primaryColor
-                : _primaryColor.withValues(alpha: 0.5),
+                : _primaryColor.withOpacity(0.5),
             width: 1.5,
           ),
         );
@@ -359,9 +359,9 @@ class _PremiumButtonState extends State<PremiumButton>
       case PremiumButtonVariant.ghost:
         return BoxDecoration(
           color: _isPressed
-              ? _primaryColor.withValues(alpha: 0.15)
+              ? _primaryColor.withOpacity(0.15)
               : (_isHovered
-                  ? _primaryColor.withValues(alpha: 0.08)
+                  ? _primaryColor.withOpacity(0.08)
                   : Colors.transparent),
           borderRadius: borderRadius,
         );
@@ -381,13 +381,13 @@ class _PremiumButtonState extends State<PremiumButton>
               ? gradient
               : LinearGradient(
                   colors: gradient.colors
-                      .map((c) => c.withValues(alpha: 0.5))
+                      .map((c) => c.withOpacity(0.5))
                       .toList(),
                 ),
           borderRadius: borderRadius,
           boxShadow: [
             BoxShadow(
-              color: _primaryColor.withValues(alpha: _isPressed ? 0.4 : 0.25),
+              color: _primaryColor.withOpacity(_isPressed ? 0.4 : 0.25),
               blurRadius: _isPressed ? 12 : 8,
               offset: const Offset(0, 4),
             ),
@@ -397,13 +397,13 @@ class _PremiumButtonState extends State<PremiumButton>
       case PremiumButtonVariant.glass:
         return BoxDecoration(
           color: widget.isDarkMode
-              ? Colors.white.withValues(alpha: _isPressed ? 0.15 : 0.1)
-              : Colors.black.withValues(alpha: _isPressed ? 0.08 : 0.05),
+              ? Colors.white.withOpacity(_isPressed ? 0.15 : 0.1)
+              : Colors.black.withOpacity(_isPressed ? 0.08 : 0.05),
           borderRadius: borderRadius,
           border: Border.all(
             color: widget.isDarkMode
-                ? Colors.white.withValues(alpha: 0.2)
-                : Colors.black.withValues(alpha: 0.1),
+                ? Colors.white.withOpacity(0.2)
+                : Colors.black.withOpacity(0.1),
             width: 1,
           ),
         );
@@ -414,12 +414,12 @@ class _PremiumButtonState extends State<PremiumButton>
           borderRadius: borderRadius,
           boxShadow: [
             BoxShadow(
-              color: _primaryColor.withValues(alpha: _isPressed ? 0.6 : 0.4),
+              color: _primaryColor.withOpacity(_isPressed ? 0.6 : 0.4),
               blurRadius: _isPressed ? 20 : 16,
               spreadRadius: _isPressed ? 2 : 1,
             ),
             BoxShadow(
-              color: _primaryColor.withValues(alpha: 0.3),
+              color: _primaryColor.withOpacity(0.3),
               blurRadius: 8,
             ),
           ],
@@ -454,15 +454,15 @@ class _PremiumButtonState extends State<PremiumButton>
                   // Raised shadows for normal state
                   BoxShadow(
                     color: widget.isDarkMode
-                        ? const Color(0xFF404060).withValues(alpha: 0.4)
-                        : Colors.white.withValues(alpha: 0.8),
+                        ? const Color(0xFF404060).withOpacity(0.4)
+                        : Colors.white.withOpacity(0.8),
                     offset: const Offset(-4, -4),
                     blurRadius: 8,
                   ),
                   BoxShadow(
                     color: widget.isDarkMode
-                        ? const Color(0xFF0A0A12).withValues(alpha: 0.6)
-                        : const Color(0xFFD1D9E6).withValues(alpha: 0.6),
+                        ? const Color(0xFF0A0A12).withOpacity(0.6)
+                        : const Color(0xFFD1D9E6).withOpacity(0.6),
                     offset: const Offset(4, 4),
                     blurRadius: 8,
                   ),
@@ -497,7 +497,7 @@ class _PremiumButtonState extends State<PremiumButton>
   }
 
   Widget _buildContent() {
-    final color = _isEnabled ? _textColor : _textColor.withValues(alpha: 0.5);
+    final color = _isEnabled ? _textColor : _textColor.withOpacity(0.5);
 
     if (widget.isLoading) {
       return SizedBox(
@@ -688,8 +688,8 @@ class _PremiumIconButtonState extends State<PremiumIconButton>
         return Colors.transparent;
       case PremiumButtonVariant.glass:
         return widget.isDarkMode
-            ? Colors.white.withValues(alpha: 0.1)
-            : Colors.black.withValues(alpha: 0.05);
+            ? Colors.white.withOpacity(0.1)
+            : Colors.black.withOpacity(0.05);
       case PremiumButtonVariant.neumorphic:
         return widget.isDarkMode
             ? MediasfuColors.surfaceDark
@@ -743,7 +743,7 @@ class _PremiumIconButtonState extends State<PremiumIconButton>
               height: widget.size,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: _isEnabled ? _bgColor : _bgColor.withValues(alpha: 0.5),
+                color: _isEnabled ? _bgColor : _bgColor.withOpacity(0.5),
                 border: widget.variant == PremiumButtonVariant.outlined
                     ? Border.all(color: MediasfuColors.primary, width: 1.5)
                     : null,
@@ -759,7 +759,7 @@ class _PremiumIconButtonState extends State<PremiumIconButton>
                   widget.icon,
                   size: widget.iconSize ?? widget.size * 0.5,
                   color:
-                      _isEnabled ? _fgColor : _fgColor.withValues(alpha: 0.5),
+                      _isEnabled ? _fgColor : _fgColor.withOpacity(0.5),
                 ),
               ),
             ),

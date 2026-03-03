@@ -149,9 +149,9 @@ class ModernFlexibleGrid extends StatelessWidget {
               borderRadius: cellBorderRadius ?? BorderRadius.circular(8),
               color: hasComponent
                   ? Colors.transparent
-                  : (Theme.of(context).brightness == Brightness.dark
-                      ? Colors.white.withValues(alpha: 0.03)
-                      : Colors.black.withValues(alpha: 0.02)),
+                  : (isDarkMode
+                      ? Colors.white.withOpacity(0.03)
+                      : Colors.black.withOpacity(0.02)),
             );
 
             Widget defaultCell = Container(
@@ -286,14 +286,14 @@ class ModernFlexibleGrid extends StatelessWidget {
   }
 
   Widget _buildEmpty(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = isDarkMode;
     return Center(
       child: Container(
         padding: const EdgeInsets.all(MediasfuSpacing.sm),
         decoration: BoxDecoration(
           gradient: LinearGradient(colors: [
-            MediasfuColors.primary.withValues(alpha: 0.08),
-            MediasfuColors.secondary.withValues(alpha: 0.08)
+            MediasfuColors.primary.withOpacity(0.08),
+            MediasfuColors.secondary.withOpacity(0.08)
           ]),
           shape: BoxShape.circle,
         ),
@@ -301,8 +301,8 @@ class ModernFlexibleGrid extends StatelessWidget {
           Icons.person_outline_rounded,
           size: 20,
           color: isDark
-              ? Colors.white.withValues(alpha: 0.25)
-              : Colors.black.withValues(alpha: 0.15),
+              ? Colors.white.withOpacity(0.25)
+              : Colors.black.withOpacity(0.15),
         ),
       ),
     );

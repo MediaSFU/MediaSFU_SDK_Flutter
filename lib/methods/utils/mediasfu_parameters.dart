@@ -908,6 +908,15 @@ class MediasfuParameters
   bool isDarkModeValue;
   void Function(bool) updateIsDarkModeValue;
 
+  // Live subtitles on video cards
+  @override
+  bool showSubtitlesOnCards;
+  @override
+  ValueNotifier<bool>? showSubtitlesOnCardsNotifier;
+  @override
+  ValueNotifier<Map<String, LiveSubtitle>> liveSubtitles;
+  void Function(bool) updateShowSubtitlesOnCards;
+
   // Whiteboard-related variables
   List<WhiteboardUser> whiteboardUsers;
   int? currentWhiteboardIndex;
@@ -1788,6 +1797,12 @@ class MediasfuParameters
     // Theme support
     required this.isDarkModeValue,
     required this.updateIsDarkModeValue,
+
+    // Live subtitles on video cards
+    required this.showSubtitlesOnCards,
+    this.showSubtitlesOnCardsNotifier,
+    required this.liveSubtitles,
+    required this.updateShowSubtitlesOnCards,
 
     // Whiteboard-related variables
     required this.whiteboardUsers,

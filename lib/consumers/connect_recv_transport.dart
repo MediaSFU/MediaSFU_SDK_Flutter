@@ -138,8 +138,11 @@ Future<void> connectRecvTransport(ConnectRecvTransportOptions options) async {
           // Translation logic - moved here to match React flow
           // Check if we need to pause this consumer because translation is active
           if (consumer.kind == 'audio') {
+            // Re-fetch parameters to get the latest speakerTranslationStates
+            // (it may have been updated after this callback was queued)
+            final freshParams = options.parameters.getUpdatedAllParams();
             final speakerTranslationStates =
-                parameters.speakerTranslationStates;
+                freshParams.speakerTranslationStates;
             if (speakerTranslationStates != null) {
               for (final state in speakerTranslationStates.values) {
                 if (state['originalProducerId'] == remoteProducerId &&

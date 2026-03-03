@@ -35,11 +35,9 @@ class _ModernAlertComponentState extends State<ModernAlertComponent>
 
   late AnimationController _slideController;
   late AnimationController _fadeController;
-  late AnimationController _glowController;
   late Animation<Offset> _slideAnim;
   late Animation<double> _fadeAnim;
   late Animation<double> _scaleAnim;
-  late Animation<double> _glowAnim;
 
   @override
   void initState() {
@@ -55,10 +53,6 @@ class _ModernAlertComponentState extends State<ModernAlertComponent>
       vsync: this,
       duration: const Duration(milliseconds: 150),
     );
-    _glowController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2000),
-    )..repeat(reverse: true);
 
     // Slide from top-right for toast effect (horizontal offset for non-intrusive positioning)
     _slideAnim = Tween<Offset>(
@@ -73,10 +67,6 @@ class _ModernAlertComponentState extends State<ModernAlertComponent>
     );
     _scaleAnim = Tween<double>(begin: 0.95, end: 1.0).animate(
       CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
-    );
-    _glowAnim = Tween<double>(begin: 0.2, end: 0.4).animate(
-      // Subtler glow
-      CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
     );
 
     if (widget.options.visible) {
@@ -157,7 +147,6 @@ class _ModernAlertComponentState extends State<ModernAlertComponent>
     _dismissTimer?.cancel();
     _slideController.dispose();
     _fadeController.dispose();
-    _glowController.dispose();
     super.dispose();
   }
 
@@ -176,57 +165,51 @@ class _ModernAlertComponentState extends State<ModernAlertComponent>
 
     final Color tintColor =
         isDanger ? MediasfuColors.danger : MediasfuColors.success;
-    final Color glowColor = tintColor;
 
     final IconData icon =
         isDanger ? Icons.error_outline : Icons.check_circle_outline;
 
-    // Animated icon with glow
-    final Widget iconWidget = AnimatedBuilder(
-      animation: _glowAnim,
-      builder: (context, child) {
-        return Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: tintColor.withValues(alpha: 0.15),
-            boxShadow: [
-              BoxShadow(
-                color: glowColor.withValues(alpha: _glowAnim.value * 0.5),
-                blurRadius: 12,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-          child: Icon(icon, color: tintColor, size: 24),
-        );
-      },
+    // Static icon with subtle tinted background
+    final Widget iconWidget = Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: tintColor.withOpacity(0.12),
+      ),
+      child: Icon(icon, color: tintColor, size: 24),
     );
 
-    // Message widget with gradient text for success
-    final Widget baseMessage = isDanger
-        ? Text(
-            options.message,
-            style: textTheme.bodyMedium?.copyWith(
-              color: isDark ? Colors.white : Colors.black87,
-              fontWeight: FontWeight.w500,
+    // Message widget with high contrast text for both themes
+    final Color messageTextColor = isDark ? Colors.white : Colors.black87;
+    final Widget baseMessage = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.black.withOpacity(0.5)
+            : Colors.white.withOpacity(0.55),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        options.message,
+        style: textTheme.bodyMedium?.copyWith(
+          color: messageTextColor,
+          fontWeight: FontWeight.w600,
+          shadows: [
+            Shadow(
+              color: isDark
+                  ? Colors.black.withOpacity(0.9)
+                  : Colors.black.withOpacity(0.25),
+              blurRadius: isDark ? 6 : 4,
+              offset: const Offset(0, 1),
             ),
-            textAlign: options.messageAlignment,
-            maxLines: options.messageMaxLines,
-            overflow:
-                options.messageMaxLines != null ? TextOverflow.ellipsis : null,
-          )
-        : Text(
-            options.message,
-            style: textTheme.bodyMedium?.copyWith(
-              color: isDark ? Colors.white : Colors.black87,
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: options.messageAlignment,
-            maxLines: options.messageMaxLines,
-            overflow:
-                options.messageMaxLines != null ? TextOverflow.ellipsis : null,
-          );
+          ],
+        ),
+        textAlign: options.messageAlignment,
+        maxLines: options.messageMaxLines,
+        overflow:
+            options.messageMaxLines != null ? TextOverflow.ellipsis : null,
+      ),
+    );
 
     final Widget messageWidget = options.messageBuilder?.call(
           AlertMessageContext(options: options, defaultMessage: baseMessage),
@@ -269,29 +252,23 @@ class _ModernAlertComponentState extends State<ModernAlertComponent>
     }
 
     // Premium glass container with colored border accent - toast style
-    Widget contentNode = AnimatedBuilder(
-      animation: _glowAnim,
-      builder: (context, child) {
-        return Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: glowColor.withValues(alpha: _glowAnim.value * 0.25),
-                blurRadius: 16,
-                spreadRadius: 0,
-              ),
-              // Subtle drop shadow for depth
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
+    Widget contentNode = Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          // Strong drop shadow for depth and contrast separation
+          BoxShadow(
+            color: Colors.black.withOpacity(0.35),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
           ),
-          child: child,
-        );
-      },
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Stack(
         children: [
           GlassmorphicContainer(
@@ -300,7 +277,21 @@ class _ModernAlertComponentState extends State<ModernAlertComponent>
               vertical: MediasfuSpacing.sm,
             ),
             borderRadius: 14,
-            blur: 12,
+            blur: 22,
+            // Opaque backgrounds in both modes for strong text contrast
+            gradient: LinearGradient(
+              colors: isDark
+                  ? [
+                      Colors.black.withOpacity(0.88),
+                      Colors.black.withOpacity(0.82),
+                    ]
+                  : [
+                      Colors.white.withOpacity(0.92),
+                      Colors.white.withOpacity(0.85),
+                    ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
             child: contentRow,
           ),
           // Colored accent line at left (toast style)
@@ -376,11 +367,11 @@ class _ModernAlertComponentState extends State<ModernAlertComponent>
     );
 
     // Very light/transparent backdrop - allows seeing content underneath
-    // For toast-like alerts, we use minimal backdrop or none
+    // Subtle dim to improve alert readability without blocking interaction
     Widget overlay = Stack(
       clipBehavior: Clip.none,
       children: [
-        // Very subtle/transparent backdrop - almost invisible
+        // Subtle translucent backdrop for better contrast separation
         Positioned.fill(
           child: GestureDetector(
             behavior: HitTestBehavior.translucent,
@@ -389,13 +380,12 @@ class _ModernAlertComponentState extends State<ModernAlertComponent>
               animation: _fadeAnim,
               builder: (context, child) {
                 return Opacity(
-                  opacity: _fadeAnim.value * 0.3, // Even more transparent
+                  opacity: _fadeAnim.value * 0.35,
                   child: child,
                 );
               },
-              // No blur, just very light tint for toast effect
               child: Container(
-                color: Colors.transparent, // Fully transparent backdrop
+                color: Colors.black.withOpacity(0.15),
               ),
             ),
           ),

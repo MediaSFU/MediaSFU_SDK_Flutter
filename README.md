@@ -36,17 +36,53 @@
 
 # MediaSFU Flutter SDK
 
-**Build production-ready video conferencing, webinars, broadcasts, and chat in minutes.**
+**Ship production-ready voice, video, and AI communication in minutes — not months.**
 
-MediaSFU Flutter SDK provides prebuilt, fully-featured event room components with real-time video/audio, screen sharing, recording, chat, polls, whiteboards, and more — ready to drop into your Flutter app.
+MediaSFU gives you prebuilt, fully-featured event room components with real-time video/audio, screen sharing, recording, chat, polls, whiteboards, real-time translation, and more. Drop them into your Flutter app with a few lines of code and go live on **all 6 platforms**.
+
+### Why MediaSFU?
+
+| What you need | Without MediaSFU | With MediaSFU |
+|---------------|------------------|---------------|
+| **Video conferencing** | 6–12 months of WebRTC, TURN/STUN, codec work | `flutter pub add mediasfu_sdk` → done |
+| **Pricing** | $1–5 per 1,000 minutes (Twilio, Vonage, Daily) | **$0.10 per 1,000 minutes** — 10–50x cheaper |
+| **UI components** | Build every modal, card, and control from scratch | Prebuilt components — classic & modern themes |
+| **AI features** | Wire up third-party AI, TTS, vision APIs yourself | Built-in AI agents, voice translation, transcription |
+| **Platform coverage** | Separate codebases per platform | One SDK → Android, iOS, Web, macOS, Windows, Linux |
+| **Time to first call** | Weeks of infrastructure setup | **Under 5 minutes** |
+
+---
+
+## 🔥 What Makes MediaSFU Different
+
+<table>
+<tr>
+<td width="50%">
+
+### Embeddable by Design
+Other platforms give you raw APIs and leave you to build the UI. MediaSFU gives you **finished, production-ready components** — video grids, control bars, modals, chat panels, recording controls — that you drop in and customize.
+
+### AI-Native, Not Bolted On
+AI agents, real-time voice translation (50+ languages), live transcription, and intelligent routing are **built into the platform** — not third-party add-ons you wire up yourself.
+
+</td>
+<td width="50%">
+
+### Pricing That Makes Sense
+**$0.10 per 1,000 minutes.** This isn't a loss-leader — MediaSFU runs its own media infrastructure. No reselling. No hidden fees. Free tier included, no credit card required.
+
+### Full Stack, One Platform
+Voice + video + chat + screen sharing + recording + polls + whiteboards + breakout rooms + AI + translation + SIP. **All included.** Replace 5 communication tools with one SDK.
+
+</td>
+</tr>
+</table>
 
 ---
 
 ## ⚠️ Important: Backend Server Required
 
 **MediaSFU is a frontend SDK that requires a backend media server to function.**
-
-You have two options:
 
 | Option | Description | Best For |
 |--------|-------------|----------|
@@ -63,49 +99,8 @@ cd MediaSFUOpen
 docker-compose up -d
 ```
 
-📖 **[MediaSFU Cloud Documentation →](https://www.mediasfu.com/documentation#rooms)**  
+📖 **[MediaSFU Cloud Documentation →](https://www.mediasfu.com/documentation#rooms)**
 📖 **[MediaSFU Open Repository →](https://github.com/MediaSFU/MediaSFUOpen)**
-
----
-
-## ✨ Platform Features
-
-MediaSFU delivers enterprise-grade real-time communication with these core capabilities:
-
-### 🎥 **Video & Audio**
-- Multi-party video conferencing with adaptive quality
-- Screen sharing with real-time annotation
-- Virtual backgrounds and video effects (Android/iOS)
-- Audio-only participant support
-
-### 🎤 **Real-time Translation** 🌍
-- **Speak in any language** — The system knows what language you're speaking
-- **Listen in any language** — Hear others translated to your preferred language
-- **Live transcription** — Real-time transcripts during meetings
-- **50+ languages supported** — Global communication made seamless
-
-### 👥 **Participant Management**
-- **Panelists Mode** — Designate speakers in webinars with audience Q&A
-- **Individual Permissions** — Granular control per-participant (video/audio/screen/chat)
-- **Group Permissions** — Apply permission templates to participant groups
-- Waiting room with manual admit
-- Co-host delegation with configurable responsibilities
-- Breakout rooms for focused discussions
-
-### 📊 **Engagement Tools**
-- Live polls with real-time results
-- In-meeting chat (direct & group)
-- Collaborative whiteboards
-
-### 🎬 **Recording & Analytics**
-- Cloud recording with track-based customization
-- Watermarks, name tags, custom backgrounds
-- Real-time call analytics
-
-### 🔒 **Security & Control**
-- End-to-end encryption option
-- Managed events with time/capacity limits
-- Abandoned participant handling
 
 ---
 
@@ -113,23 +108,29 @@ MediaSFU delivers enterprise-grade real-time communication with these core capab
 
 - [Quick Start](#-quick-start)
 - [Installation](#-installation)
-- [Platform Setup](#-platform-setup)
+- [Platform Support](#-platform-support)
+- [Platform Features](#-platform-features)
 - [Prebuilt Event Rooms](#-prebuilt-event-rooms)
 - [Modern UI Components](#-modern-ui-components)
 - [Usage Examples](#-usage-examples)
 - [Customization](#-customization)
 - [Self-Hosting / Community Edition](#-self-hosting--community-edition)
 - [Advanced Features](#-advanced-features)
+- [SDKs for Every Framework](#-sdks-for-every-framework)
 - [Detailed Documentation](#-detailed-documentation)
 
 ---
 
 ## 🚀 Quick Start
 
+**Three steps. Under 5 minutes. First video call live.**
+
+**1. Install**
 ```bash
 flutter pub add mediasfu_sdk
 ```
 
+**2. Import & Build**
 ```dart
 import 'package:flutter/material.dart';
 import 'package:mediasfu_sdk/mediasfu_sdk.dart';
@@ -155,7 +156,23 @@ class MyApp extends StatelessWidget {
 }
 ```
 
-**That's it!** You now have a fully-featured video conferencing room.
+**3. Run**
+```bash
+flutter run
+```
+
+**That's it.** You have a fully-featured video conferencing room with screen sharing, chat, recording, and more — running on any platform Flutter supports.
+
+> **Want to try without a server?** Use demo mode:
+> ```dart
+> MediasfuGeneric(
+>   options: MediasfuGenericOptions(
+>     useLocalUIMode: true,
+>     useSeed: true,
+>     seedData: SeedData(member: "DemoUser", eventType: EventType.conference),
+>   ),
+> )
+> ```
 
 ---
 
@@ -170,7 +187,11 @@ flutter pub add mediasfu_sdk
 - **Flutter**: 3.3.3 or higher
 - **Dart**: 3.3.3 or higher
 
-### Platform Support
+---
+
+## 🌍 Platform Support
+
+**One codebase. Six platforms. No compromises.**
 
 | Platform | Supported | Notes |
 |----------|-----------|-------|
@@ -178,31 +199,16 @@ flutter pub add mediasfu_sdk
 | **iOS** | ✅ | iOS 12.0+ |
 | **Web** | ✅ | HTTPS required |
 | **macOS** | ✅ | macOS 10.15+ |
-| **Windows** | ✅ | - |
-| **Linux** | ✅ | - |
-
----
-
-## 🔧 Platform Setup
+| **Windows** | ✅ | Native desktop |
+| **Linux** | ✅ | Native desktop |
 
 Each platform requires specific permissions and configurations. See the **[Platform Setup Guide](./PLATFORM_SETUP.md)** for detailed instructions:
 
-- [Android Setup](./PLATFORM_SETUP.md#android-setup)
-- [iOS Setup](./PLATFORM_SETUP.md#ios-setup)
-- [macOS Setup](./PLATFORM_SETUP.md#macos-setup)
-- [Web Setup](./PLATFORM_SETUP.md#web-setup)
-- [Windows Setup](./PLATFORM_SETUP.md#windows-setup)
-- [Linux Setup](./PLATFORM_SETUP.md#linux-setup)
-
-### Quick Platform Checklist
-
-| Platform | Key Requirements |
-|----------|------------------|
-| **Android** | Camera, microphone, internet permissions in `AndroidManifest.xml` |
-| **iOS** | Camera, microphone usage descriptions in `Info.plist` |
-| **macOS** | Entitlements for camera, microphone, network access |
-| **Web** | HTTPS for production; browser permissions |
-| **Windows/Linux** | Standard Flutter desktop setup |
+- [Android Setup](./PLATFORM_SETUP.md#android-setup) — Camera, microphone, internet permissions
+- [iOS Setup](./PLATFORM_SETUP.md#ios-setup) — Camera, microphone usage descriptions
+- [macOS Setup](./PLATFORM_SETUP.md#macos-setup) — Entitlements for camera, microphone, network
+- [Web Setup](./PLATFORM_SETUP.md#web-setup) — HTTPS for production; browser permissions
+- [Windows / Linux Setup](./PLATFORM_SETUP.md#windows-setup) — Standard Flutter desktop setup
 
 ### Optional Dependencies
 
@@ -228,7 +234,59 @@ dart_webrtc: ^1.4.6
 
 ---
 
+## ✨ Platform Features
+
+Everything you need for enterprise-grade real-time communication — **included at $0.10/1K min**:
+
+### 🎥 Video & Audio
+- Multi-party video conferencing with adaptive quality
+- Screen sharing with real-time annotation
+- Virtual backgrounds and video effects (Android/iOS)
+- Audio-only participant support
+
+### 🎤 Real-time Translation 🌍
+- **Speak in any language** — The system auto-detects what language you're speaking
+- **Listen in any language** — Hear others translated to your preferred language in real time
+- **Live transcription** — See real-time transcripts during meetings
+- **50+ languages supported** — True borderless communication
+- No interpreters. No delay. Works with voice, video, and chat.
+
+### 🤖 AI-Powered Features
+- AI voice agents that answer, resolve, and escalate
+- Multimodal AI with voice + vision capabilities
+- AI-generated meeting summaries and transcription
+- Intelligent call routing and warm handoffs
+- Voice cloning options with custom TTS configurations
+
+### 👥 Participant Management
+- **Panelists Mode** — Designate speakers in webinars with audience Q&A
+- **Individual Permissions** — Granular per-participant control (video/audio/screen/chat)
+- **Group Permissions** — Apply permission templates to participant groups
+- Waiting room with manual admit
+- Co-host delegation with configurable responsibilities
+- Breakout rooms for focused discussions
+
+### 📊 Engagement Tools
+- Live polls with real-time results
+- In-meeting chat (direct & group)
+- Collaborative whiteboards
+
+### 🎬 Recording & Analytics
+- Cloud recording with track-based customization
+- Watermarks, name tags, custom backgrounds
+- Real-time call analytics
+
+### 🔒 Security & Control
+- End-to-end encryption option
+- Domain-locked API keys
+- Managed events with time/capacity limits
+- Abandoned participant handling
+
+---
+
 ## 🏛️ Prebuilt Event Rooms
+
+Choose the room type that fits your use case — or use `MediasfuGeneric` for maximum flexibility:
 
 | Component | Use Case | Description |
 |-----------|----------|-------------|
@@ -267,13 +325,13 @@ MediasfuGenericOptions(
 
 ## 🎨 Modern UI Components
 
-`ModernMediasfuGeneric` is the most advanced, theme-aware variant featuring:
+`ModernMediasfuGeneric` is the premium, theme-aware variant featuring:
 
-- **Premium glassmorphism design** with backdrop blur effects
-- **Dark/Light theme support** built-in with automatic detection
+- **Glassmorphism design** with backdrop blur effects
+- **Dark/Light theme** with automatic system detection
 - **Smooth animations** and micro-interactions
 - **Premium color system** with gradient support
-- **Responsive layouts** for all screen sizes
+- **Responsive layouts** for every screen size
 
 ```dart
 import 'package:mediasfu_sdk/mediasfu_sdk.dart';
@@ -293,7 +351,7 @@ class App extends StatelessWidget {
 
 ### Modern Components Available
 
-| Modern Component | Classic Equivalent | Features |
+| Modern Component | Classic Equivalent | Highlights |
 |-----------------|-------------------|----------|
 | `ModernVideoCard` | `VideoCard` | Glass effect, animated borders |
 | `ModernAudioCard` | `AudioCard` | Gradient waveforms, glow effects |
@@ -308,7 +366,6 @@ class App extends StatelessWidget {
 | `ModernPanelistsModal` | — | Panelist management for webinars |
 | `ModernPermissionsModal` | — | Per-participant permission control |
 | `TranslationSettingsModal` | — | Real-time translation configuration |
-```
 
 ---
 
@@ -334,29 +391,9 @@ class ConferenceApp extends StatelessWidget {
 }
 ```
 
-### Demo/Preview Mode (No Server)
+### Headless Mode (Build Your Own UI)
 
-```dart
-import 'package:mediasfu_sdk/mediasfu_sdk.dart';
-
-class DemoApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MediasfuGeneric(
-      options: MediasfuGenericOptions(
-        useLocalUIMode: true,
-        useSeed: true,
-        seedData: SeedData(
-          member: "DemoUser",
-          eventType: EventType.conference,
-        ),
-      ),
-    );
-  }
-}
-```
-
-### Headless Mode (Custom UI)
+Use MediaSFU as a pure backend engine while rendering a completely custom UI:
 
 ```dart
 import 'package:mediasfu_sdk/mediasfu_sdk.dart';
@@ -380,11 +417,10 @@ class _CustomAppState extends State<CustomApp> {
         MediasfuGeneric(
           options: MediasfuGenericOptions(
             credentials: Credentials(apiUserName: "user", apiKey: "key"),
-            returnUI: false, // Headless mode
+            returnUI: false, // Headless mode — no default UI rendered
             updateSourceParameters: _updateParams,
           ),
         ),
-        // Your custom UI using _params
         ValueListenableBuilder<MediasfuParameters?>(
           valueListenable: _params,
           builder: (context, params, _) {
@@ -421,7 +457,6 @@ VideoCardType myCustomVideoCard({
         options: VideoCardOptions(
           participant: participant,
           videoStream: stream.stream,
-          // ... configure as needed
         ),
       ),
     ),
@@ -443,7 +478,7 @@ MediasfuGeneric(
 
 ### UI Overrides
 
-Override specific UI components while keeping the rest:
+Override specific UI components while keeping the defaults for everything else:
 
 ```dart
 final uiOverrides = MediasfuUICustomOverrides(
@@ -458,7 +493,6 @@ final uiOverrides = MediasfuUICustomOverrides(
       );
     },
   ),
-  // Override other components...
 );
 
 MediasfuGeneric(
@@ -484,24 +518,22 @@ MediasfuGeneric(
 
 ## 🏠 Self-Hosting / Community Edition
 
-For self-hosted MediaSFU servers:
+For complete control over your infrastructure:
 
 ```dart
+// Self-hosted only
 MediasfuGeneric(
   options: MediasfuGenericOptions(
     localLink: "https://your-mediasfu-server.com",
-    connectMediaSFU: false,  // Don't connect to cloud
+    connectMediaSFU: false,
   ),
 )
-```
 
-### Hybrid Mode (Local + Cloud)
-
-```dart
+// Hybrid mode — local server + MediaSFU cloud features
 MediasfuGeneric(
   options: MediasfuGenericOptions(
     localLink: "https://your-server.com",
-    connectMediaSFU: true,   // Also connect to MediaSFU cloud
+    connectMediaSFU: true,
     credentials: Credentials(apiUserName: "user", apiKey: "key"),
   ),
 )
@@ -511,9 +543,9 @@ MediasfuGeneric(
 
 ## 🌐 Advanced Features
 
-### sourceParameters - The Power API
+### sourceParameters — The Power API
 
-Access all MediaSFU functionality through `sourceParameters`:
+Access all MediaSFU functionality programmatically through `sourceParameters`:
 
 ```dart
 // Get all video/audio streams
@@ -538,76 +570,53 @@ final isRecording = params.recordStarted;
 
 ### Panelists Mode (Webinars)
 
-In webinar mode, designate specific participants as **panelists** who can speak, while others remain audience members:
+Designate specific participants as **panelists** who can speak, while others remain audience members:
 
 ```dart
-// Access panelists from sourceParameters
 final panelists = params.panelists;
 final panelistsFocused = params.panelistsFocused;
 
-// Listen for panelist events:
-// - panelistsUpdated
-// - addedAsPanelist
-// - removedFromPanelists
-// - panelistFocusChanged
-
-// Toggle panelists modal
+// Events: panelistsUpdated, addedAsPanelist, removedFromPanelists, panelistFocusChanged
 params.updateIsPanelistsModalVisible(true);
 ```
 
 ### Individual & Group Permissions
 
-Control each participant's capabilities with granular permissions:
+Fine-grained control over what each participant can do:
 
 ```dart
-// Permission levels:
-// "0" - Standard participant
-// "1" - Elevated (co-host level)
-// "2" - Host (full control)
-
-// Configure per-participant capabilities:
-// - Video on/off
-// - Audio on/off  
-// - Screen sharing
-// - Chat access
-
-// Access permission config
+// Permission levels: "0" Standard, "1" Elevated (co-host), "2" Host (full control)
+// Configurable per participant: video, audio, screen sharing, chat access
 final permissionConfig = params.permissionConfig;
-
-// Toggle permissions modal
 params.updateIsPermissionsModalVisible(true);
 ```
 
 ### Real-time Translation 🌍
 
-Enable participants to **speak in their native language** and **listen in any language** with live AI translation:
+Participants speak in their native language and listen in any language — powered by live AI translation:
 
 ```dart
-// Translation is configured via TranslationSettingsModal
-// Available in ModernMediasfuGeneric
-
-// Translation events:
-// - translation:roomConfig
-// - translation:languageSet
-// - translation:subscribed
-// - translation:transcript
-// - translation:speakerOutputChanged
-
-// Access translation state
+// Translation is configured via TranslationSettingsModal (ModernMediasfuGeneric)
+// Events: translation:roomConfig, translation:languageSet, translation:subscribed,
+//         translation:transcript, translation:speakerOutputChanged
 final translationMeta = params.translationMeta;
 final translationConfig = params.translationConfig;
 ```
 
-**Translation Features:**
-- **Set your spoken language** — The system knows what language you're speaking
-- **Choose listening language** — Hear others translated to your preferred language
-- **Real-time transcription** — See live transcripts during meetings
-- **50+ languages supported** — Global communication made seamless
-- **Voice cloning options** — Advanced TTS with custom voice configurations
+- **50+ languages** — real-time speech translation during live calls
+- **No interpreters, no delay** — AI-powered, built into every call
+- **Voice cloning options** — advanced TTS with custom voice configurations
+
+### Virtual Backgrounds (Android/iOS)
+
+```yaml
+# Add to your pubspec.yaml (Android/iOS only):
+google_mlkit_selfie_segmentation: ^0.8.0
+```
+
+Virtual backgrounds are automatically available in MediaSettingsModal. Users can select blur or image backgrounds. See [Platform Setup](./PLATFORM_SETUP.md) for ML Kit configuration.
 
 ### Get Participant Media
-
-Retrieve specific participant streams:
 
 ```dart
 final videoStream = getParticipantMedia(
@@ -617,48 +626,31 @@ final videoStream = getParticipantMedia(
     parameters: params,
   ),
 );
-
-// Or by name
-final audioStream = getParticipantMedia(
-  options: GetParticipantMediaOptions(
-    participantName: 'John Doe',
-    mediaType: 'audio',
-    parameters: params,
-  ),
-);
 ```
 
-### Virtual Backgrounds (Android/iOS)
+---
 
-The SDK supports virtual backgrounds on Android and iOS using ML Kit:
+## 🛠️ SDKs for Every Framework
 
-```dart
-// Virtual backgrounds are automatically available in MediaSettingsModal
-// Users can select blur or image backgrounds
-```
+MediaSFU isn't just Flutter. The same communication platform is available across **7 frameworks** — same API surface, same capabilities, same pricing:
 
-> **Note**: Virtual backgrounds require an **optional dependency**. Add to your `pubspec.yaml`:
-> ```yaml
-> # Android/iOS only - for virtual backgrounds
-> google_mlkit_selfie_segmentation: ^0.8.0
-> ```
-> See [Platform Setup](./PLATFORM_SETUP.md) for ML Kit configuration.
+| Framework | Package |
+|-----------|---------|
+| **Flutter** | [mediasfu_sdk](https://pub.dev/packages/mediasfu_sdk) (you are here) |
+| **React** | [@mediasfu/mediasfu-reactjs](https://www.npmjs.com/package/@mediasfu/mediasfu-reactjs) |
+| **React Native** | [@mediasfu/mediasfu-reactnative](https://www.npmjs.com/package/@mediasfu/mediasfu-reactnative) |
+| **Expo** | [@mediasfu/mediasfu-reactnative-expo](https://www.npmjs.com/package/@mediasfu/mediasfu-reactnative-expo) |
+| **Angular** | [@mediasfu/mediasfu-angular](https://www.npmjs.com/package/@mediasfu/mediasfu-angular) |
+| **Vue** | [@mediasfu/mediasfu-vue](https://www.npmjs.com/package/@mediasfu/mediasfu-vue) |
+| **Android (Kotlin)** | [MediaSFU Android](https://github.com/MediaSFU/MediaSFU_SDK_Android) |
+
+Plus **native apps** for Windows, Linux, macOS, iOS, Android, and Web. Not Electron — real native apps.
 
 ---
 
 ## 📖 Detailed Documentation
 
-For comprehensive documentation including:
-
-- Full API reference
-- All component props
-- 200+ methods documentation
-- Socket event handling
-- Recording configuration
-- Breakout rooms
-- Whiteboard integration
-- Troubleshooting guide
-- And much more...
+For comprehensive documentation including full API reference, 200+ methods, socket event handling, recording configuration, breakout rooms, whiteboard integration, troubleshooting, and more:
 
 **📄 See [README_DETAILED.md](./README_DETAILED.md)**
 
@@ -682,5 +674,6 @@ MIT © [MediaSFU](https://www.mediasfu.com)
 ---
 
 <p align="center">
-  <strong>Built with ❤️ by MediaSFU</strong>
+  <strong>Built with ❤️ by MediaSFU</strong><br>
+  <sub>Voice · Video · AI · Translation · 6 Platforms · $0.10/1K min</sub>
 </p>

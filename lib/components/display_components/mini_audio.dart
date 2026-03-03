@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+
+import '../../utils/image_utils.dart';
 import 'package:flutter/material.dart';
 
 const List<int> _defaultWaveformDurations = [
@@ -205,7 +207,7 @@ class MiniAudioOptions {
     this.nameMaxLines,
     this.nameContainerDecoration,
     this.nameContainerPadding,
-    this.imageSource = 'https://mediasfu.com/images/logo192.png',
+    this.imageSource = kDefaultMediaSFULogo,
     this.roundedImage = false,
     this.imageFit = BoxFit.cover,
     this.imageAlignment = Alignment.center,
@@ -263,7 +265,6 @@ class MiniAudio extends StatefulWidget {
 }
 
 class _MiniAudioState extends State<MiniAudio> with TickerProviderStateMixin {
-  late OverlayEntry overlayEntry;
   late Offset position;
   late List<int> _waveformDurations;
   late List<AnimationController> _waveformControllers;
@@ -273,20 +274,13 @@ class _MiniAudioState extends State<MiniAudio> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    position = widget.options.initialPosition ?? const Offset(50, 50);
+    position = widget.options.initialPosition ?? const Offset(0, 0);
     _waveformDurations =
         widget.options.waveformDurations ?? _defaultWaveformDurations;
     _initWaveformAnimations();
     if (widget.options.showWaveform) {
       _startWaveformAnimations();
     }
-    overlayEntry = OverlayEntry(builder: (context) => buildMiniAudio(context));
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final overlayState = Overlay.maybeOf(context);
-      if (mounted && overlayState != null) {
-        overlayState.insert(overlayEntry);
-      }
-    });
   }
 
   @override
@@ -311,17 +305,12 @@ class _MiniAudioState extends State<MiniAudio> with TickerProviderStateMixin {
         widget.options.initialPosition != oldWidget.options.initialPosition) {
       position = widget.options.initialPosition!;
     }
-
-    overlayEntry.markNeedsBuild();
   }
 
   @override
   void dispose() {
     _stopWaveformAnimations();
     _disposeWaveformAnimations();
-    if (overlayEntry.mounted) {
-      overlayEntry.remove();
-    }
     super.dispose();
   }
 
@@ -375,7 +364,6 @@ class _MiniAudioState extends State<MiniAudio> with TickerProviderStateMixin {
     }
     setState(() {
       isDragging = true;
-      overlayEntry.markNeedsBuild();
     });
     widget.options.onDragStart?.call();
   }
@@ -386,7 +374,6 @@ class _MiniAudioState extends State<MiniAudio> with TickerProviderStateMixin {
     }
     setState(() {
       position += details.delta;
-      overlayEntry.markNeedsBuild();
     });
     widget.options.onPositionChanged?.call(position);
     widget.options.onDragUpdate?.call(position);
@@ -398,7 +385,6 @@ class _MiniAudioState extends State<MiniAudio> with TickerProviderStateMixin {
     }
     setState(() {
       isDragging = false;
-      overlayEntry.markNeedsBuild();
     });
     widget.options.onDragEnd?.call();
   }
@@ -445,7 +431,7 @@ class _MiniAudioState extends State<MiniAudio> with TickerProviderStateMixin {
   Widget _buildName(BuildContext context) {
     final defaultName = Container(
       padding: widget.options.nameContainerPadding ??
-          const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+          const EdgeInsets.symmetric(vertical: 3, horizontal: 4),
       decoration: widget.options.nameContainerDecoration ??
           const BoxDecoration(
             gradient: LinearGradient(
@@ -466,7 +452,9 @@ class _MiniAudioState extends State<MiniAudio> with TickerProviderStateMixin {
         textAlign: widget.options.nameTextAlign,
         maxLines: widget.options.nameMaxLines ?? 1,
         overflow: TextOverflow.ellipsis,
-        style: widget.options.nameTextStyling,
+        style: widget.options.nameTextStyling.copyWith(
+          fontSize: widget.options.nameTextStyling.fontSize ?? 11,
+        ),
       ),
     );
 
@@ -488,11 +476,9 @@ class _MiniAudioState extends State<MiniAudio> with TickerProviderStateMixin {
     final defaultImage = hasImage
         ? ClipRRect(
             borderRadius: borderRadius,
-            child: Image.network(
+            child: buildMediasfuImage(
               widget.options.imageSource,
               fit: widget.options.imageFit,
-              alignment: widget.options.imageAlignment,
-              errorBuilder: (_, __, ___) => _buildInitials(),
             ),
           )
         : _buildInitials();
@@ -672,19 +658,15 @@ class _MiniAudioState extends State<MiniAudio> with TickerProviderStateMixin {
       child: container,
     );
 
-    final defaultWrapper = Positioned(
-      left: position.dx,
-      top: position.dy,
-      child: widget.options.maintainStateWhenHidden
-          ? Visibility(
-              visible: widget.options.visible,
-              maintainAnimation: true,
-              maintainState: true,
-              maintainSize: true,
-              child: wrapperBody,
-            )
-          : wrapperBody,
-    );
+    final defaultWrapper = widget.options.maintainStateWhenHidden
+        ? Visibility(
+            visible: widget.options.visible,
+            maintainAnimation: true,
+            maintainState: true,
+            maintainSize: true,
+            child: wrapperBody,
+          )
+        : wrapperBody;
 
     return widget.options.wrapperBuilder?.call(
           MiniAudioWrapperContext(
@@ -700,6 +682,6 @@ class _MiniAudioState extends State<MiniAudio> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox.shrink();
+    return buildMiniAudio(context);
   }
 }

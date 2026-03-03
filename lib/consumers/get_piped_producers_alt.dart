@@ -27,6 +27,9 @@ abstract class GetPipedProducersAltParameters
   Set<String>? get translationSubscriptions;
   Map<String, dynamic>? get listenerTranslationOverrides;
 
+  // Method to get updated parameters
+  GetPipedProducersAltParameters Function() get getUpdatedAllParams;
+
   // Dynamic key-value support
   // dynamic operator [](String key);
 }
@@ -119,14 +122,16 @@ Future<void> getPipedProducersAlt(
             }
 
             if (translationMeta != null) {
+              // Re-fetch parameters to get the latest state
+              final freshParams = parameters.getUpdatedAllParams();
               final listenerTranslationPreferences =
-                  parameters.listenerTranslationPreferences;
+                  freshParams.listenerTranslationPreferences;
               final speakerTranslationStates =
-                  parameters.speakerTranslationStates;
+                  freshParams.speakerTranslationStates;
               final translationSubscriptions =
-                  parameters.translationSubscriptions;
+                  freshParams.translationSubscriptions;
               final listenerTranslationOverrides =
-                  parameters.listenerTranslationOverrides;
+                  freshParams.listenerTranslationOverrides;
 
               final normalizedLang = translationMeta.language.toLowerCase();
 
@@ -259,13 +264,13 @@ Future<void> getPipedProducersAlt(
               continue;
             }
 
-            final options = SignalNewConsumerTransportOptions(
+            final signalOptions = SignalNewConsumerTransportOptions(
               nsock: nsock,
               remoteProducerId: remoteProducerId,
               islevel: islevel,
               parameters: parameters,
             );
-            await signalNewConsumerTransport(options);
+            await signalNewConsumerTransport(signalOptions);
           }
         }
       },

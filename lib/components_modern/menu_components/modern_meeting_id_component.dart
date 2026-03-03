@@ -114,8 +114,8 @@ class _ModernMeetingIdComponentState extends State<ModernMeetingIdComponent>
     final surfaceColor =
         isDarkMode ? MediasfuColors.surface : Colors.grey.shade100;
     final borderColor = isDarkMode
-        ? Colors.white.withValues(alpha: 0.15)
-        : Colors.black.withValues(alpha: 0.1);
+        ? Colors.white.withOpacity(0.15)
+        : Colors.black.withOpacity(0.1);
 
     return Container(
       constraints: const BoxConstraints(maxWidth: 400),
@@ -160,8 +160,8 @@ class _ModernMeetingIdComponentState extends State<ModernMeetingIdComponent>
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      surfaceColor.withValues(alpha: isDarkMode ? 0.7 : 0.95),
-                      surfaceColor.withValues(alpha: isDarkMode ? 0.5 : 0.85),
+                      surfaceColor.withOpacity(isDarkMode ? 0.7 : 0.95),
+                      surfaceColor.withOpacity(isDarkMode ? 0.5 : 0.85),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(MediasfuSpacing.md),
@@ -176,7 +176,7 @@ class _ModernMeetingIdComponentState extends State<ModernMeetingIdComponent>
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: MediasfuColors.primary.withValues(alpha: 0.2),
+                        color: MediasfuColors.primary.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(MediasfuSpacing.xs),
                       ),
                       child: Icon(
@@ -217,13 +217,13 @@ class _ModernMeetingIdComponentState extends State<ModernMeetingIdComponent>
                                     ? [
                                         MediasfuColors.success,
                                         MediasfuColors.success
-                                            .withValues(alpha: 0.8),
+                                            .withOpacity(0.8),
                                       ]
                                     : [
                                         MediasfuColors.primary
-                                            .withValues(alpha: 0.3),
+                                            .withOpacity(0.3),
                                         MediasfuColors.secondary
-                                            .withValues(alpha: 0.2),
+                                            .withOpacity(0.2),
                                       ],
                               ),
                               borderRadius:
@@ -231,14 +231,14 @@ class _ModernMeetingIdComponentState extends State<ModernMeetingIdComponent>
                               border: Border.all(
                                 color: _copied
                                     ? MediasfuColors.success
-                                        .withValues(alpha: 0.5)
+                                        .withOpacity(0.5)
                                     : borderColor,
                               ),
                               boxShadow: _copied
                                   ? [
                                       BoxShadow(
                                         color: MediasfuColors.success
-                                            .withValues(alpha: 0.5),
+                                            .withOpacity(0.5),
                                         blurRadius: 12,
                                         spreadRadius: 2,
                                       ),

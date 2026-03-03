@@ -312,7 +312,8 @@ class _PollModalState extends State<PollModal> {
                 dense: true,
                 leading: Radio<String>(
                   value: option,
-                  enabled: false,
+                  groupValue: null,
+                  onChanged: null,
                 ),
                 title: Text(
                   option,
@@ -376,46 +377,51 @@ class _PollModalState extends State<PollModal> {
         _styles.currentPollOptionTextStyle ?? _styles.bodyTextStyle;
 
     return [
-      RadioGroup<int>(
-        groupValue: selectedOption,
-        onChanged: (int? value) {
-          if (value != null) {
-            handleVotePoll(
-              HandleVotePollOptions(
-                pollId: poll.id!,
-                optionIndex: value,
-                socket: widget.options.socket,
-                showAlert: widget.options.showAlert,
-                member: member,
-                roomName: widget.options.roomName,
-                updateIsPollModalVisible:
-                    widget.options.updateIsPollModalVisible,
-              ),
-            );
-          }
-        },
-        child: Column(
-          children: poll!.options.asMap().entries.map<Widget>((entry) {
-            final int index = entry.key;
-            final String option = entry.value;
-            return Builder(
-              builder: (context) {
-                final registry = RadioGroup.maybeOf<int>(context);
-                return ListTile(
-                  title: Text(
-                    option,
-                    style: optionTextStyle,
-                  ),
-                  leading: Radio<int>(
-                    value: index,
-                  ),
-                  onTap:
-                      registry == null ? null : () => registry.onChanged(index),
-                );
+      Column(
+        children: poll!.options.asMap().entries.map<Widget>((entry) {
+          final int index = entry.key;
+          final String option = entry.value;
+          return ListTile(
+            title: Text(
+              option,
+              style: optionTextStyle,
+            ),
+            leading: Radio<int>(
+              value: index,
+              groupValue: selectedOption,
+              onChanged: (int? value) {
+                if (value != null) {
+                  handleVotePoll(
+                    HandleVotePollOptions(
+                      pollId: poll.id!,
+                      optionIndex: value,
+                      socket: widget.options.socket,
+                      showAlert: widget.options.showAlert,
+                      member: member,
+                      roomName: widget.options.roomName,
+                      updateIsPollModalVisible:
+                          widget.options.updateIsPollModalVisible,
+                    ),
+                  );
+                }
               },
-            );
-          }).toList(),
-        ),
+            ),
+            onTap: () {
+              handleVotePoll(
+                HandleVotePollOptions(
+                  pollId: poll.id!,
+                  optionIndex: index,
+                  socket: widget.options.socket,
+                  showAlert: widget.options.showAlert,
+                  member: member,
+                  roomName: widget.options.roomName,
+                  updateIsPollModalVisible:
+                      widget.options.updateIsPollModalVisible,
+                ),
+              );
+            },
+          );
+        }).toList(),
       ),
     ];
   }

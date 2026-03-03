@@ -10,12 +10,16 @@ class AutoAdjustOptions {
   final EventType eventType;
   final bool shareScreenStarted;
   final bool shared;
+  final bool whiteboardStarted;
+  final bool whiteboardEnded;
 
   AutoAdjustOptions({
     required this.n,
     required this.eventType,
     required this.shareScreenStarted,
     required this.shared,
+    this.whiteboardStarted = false,
+    this.whiteboardEnded = false,
   });
 }
 
@@ -58,10 +62,14 @@ Future<List<int>> autoAdjust(AutoAdjustOptions options) async {
     val2 = 12 - val1;
   } else if (options.eventType == EventType.chat ||
       (options.eventType == EventType.conference &&
-          !(options.shareScreenStarted || options.shared))) {
+          !(options.shareScreenStarted ||
+              options.shared ||
+              (options.whiteboardStarted && !options.whiteboardEnded)))) {
     val1 = 12;
     val2 = 12 - val1;
-  } else if (options.shareScreenStarted || options.shared) {
+  } else if (options.shareScreenStarted ||
+      options.shared ||
+      (options.whiteboardStarted && !options.whiteboardEnded)) {
     val2 = 10;
     val1 = 12 - val2;
   } else {

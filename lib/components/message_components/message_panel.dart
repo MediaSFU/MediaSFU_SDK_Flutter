@@ -138,6 +138,7 @@ class _MessagePanelState extends State<MessagePanel> {
   final ValueNotifier<String?> _senderId = ValueNotifier(null);
   final ValueNotifier<String> _directMessageText = ValueNotifier('');
   final ValueNotifier<String> _groupMessageText = ValueNotifier('');
+  final ValueNotifier<bool> _dmHintDismissed = ValueNotifier(false);
 
   @override
   void initState() {
@@ -280,8 +281,67 @@ class _MessagePanelState extends State<MessagePanel> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDirect = widget.options.type == 'direct';
+
     return Column(
       children: [
+        // DM hint when direct messages list is empty and no recipient selected
+        if (isDirect)
+          ValueListenableBuilder<bool>(
+            valueListenable: _dmHintDismissed,
+            builder: (context, dismissed, _) {
+              return ValueListenableBuilder<String?>(
+                valueListenable: _senderId,
+                builder: (context, sender, _) {
+                  if (dismissed ||
+                      widget.options.startDirectMessage ||
+                      sender != null ||
+                      (widget.options.islevel != '2' &&
+                          !widget.options.youAreCoHost)) {
+                    return const SizedBox.shrink();
+                  }
+                  return Container(
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withAlpha(20),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.blue.withAlpha(60),
+                        width: 0.5,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info_outline,
+                            size: 16, color: Colors.blue[400]),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Reply to existing DMs or start a new one from the Participants list.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.blue[700],
+                              height: 1.3,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        GestureDetector(
+                          onTap: () => _dmHintDismissed.value = true,
+                          child: Icon(Icons.close,
+                              size: 14, color: Colors.blue[300]),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+
         // Messages List
         Expanded(
           child: ListView.builder(
@@ -363,6 +423,7 @@ class _MessagePanelState extends State<MessagePanel> {
     _senderId.dispose();
     _directMessageText.dispose();
     _groupMessageText.dispose();
+    _dmHintDismissed.dispose();
     super.dispose();
   }
 }

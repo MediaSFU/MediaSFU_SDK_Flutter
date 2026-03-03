@@ -6,10 +6,12 @@ import 'virtual_background_types.dart';
 import 'segmenter/segmenter.dart';
 
 // Platform check helper that works on all platforms including web
-bool _isMobilePlatform() {
+bool _isSupportedPlatform() {
   if (kIsWeb) return false;
   return defaultTargetPlatform == TargetPlatform.android ||
-      defaultTargetPlatform == TargetPlatform.iOS;
+      defaultTargetPlatform == TargetPlatform.iOS ||
+      defaultTargetPlatform == TargetPlatform.macOS ||
+      defaultTargetPlatform == TargetPlatform.windows;
 }
 
 /// Legacy abstract interface for backward compatibility.
@@ -34,8 +36,13 @@ abstract class BackgroundSegmenter {
   bool get isReady;
 
   /// Check if this platform is supported
+  /// Supported platforms:
+  /// - iOS: MediaPipe TFLite
+  /// - Android: Google MediaPipe
+  /// - macOS: Apple Vision
+  /// - Windows: ONNX Runtime + DirectML
   static bool get isPlatformSupported {
-    return _isMobilePlatform();
+    return _isSupportedPlatform();
   }
 }
 
@@ -128,21 +135,37 @@ class VirtualBackgroundProcessor {
   /// Automatically creates the appropriate platform-specific segmenter.
   ///
   /// If you have a custom [legacySegmenter], set it before calling initialize.
-  Future<void> initialize([SegmenterConfig? config]) async {
-    // Create platform-specific segmenter via conditional import factory
-    _platformSegmenter = createSegmenter();
+  ///
+  /// Returns true if initialization was successful, false if it failed.
+  /// Failures are handled gracefully - virtual backgrounds will be disabled.
+  Future<bool> initialize([SegmenterConfig? config]) async {
+    try {
+      // Create platform-specific segmenter via conditional import factory
+      _platformSegmenter = createSegmenter();
 
-    // Initialize the platform segmenter
-    await _platformSegmenter.initialize(config ?? const SegmenterConfig());
+      // Initialize the platform segmenter
+      await _platformSegmenter.initialize(config ?? const SegmenterConfig());
 
-    // Also initialize legacy segmenter if provided
-    if (legacySegmenter != null) {
-      await legacySegmenter!.initialize();
+      // Also initialize legacy segmenter if provided
+      if (legacySegmenter != null) {
+        try {
+          await legacySegmenter!.initialize();
+        } catch (e) {
+          debugPrint(
+              'VirtualBackgroundProcessor: Legacy segmenter init failed: $e');
+        }
+      }
+
+      _isInitialized = _platformSegmenter.isReady;
+      debugPrint(
+          'VirtualBackgroundProcessor: Initialized with ${_platformSegmenter.platformName} (ready=$_isInitialized)');
+      return _isInitialized;
+    } catch (e, stack) {
+      debugPrint('⚠️ VirtualBackgroundProcessor: Initialization failed: $e');
+      debugPrint('Stack: $stack');
+      _isInitialized = false;
+      return false;
     }
-
-    _isInitialized = true;
-    debugPrint(
-        'VirtualBackgroundProcessor: Initialized with ${_platformSegmenter.platformName}');
   }
 
   /// Set the current virtual background.

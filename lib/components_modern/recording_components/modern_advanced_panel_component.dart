@@ -6,6 +6,7 @@ import '../../components/recording_components/advanced_panel_component.dart'
 import '../../types/types.dart' show EventType;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
+import '../core/widgets/modern_switch.dart';
 
 /// Configuration options for ModernAdvancedPanelComponent.
 /// Uses the same [AdvancedPanelComponentParameters] as the original component.
@@ -398,10 +399,10 @@ class _ModernAdvancedPanelComponentState
     return Container(
       padding: const EdgeInsets.all(MediasfuSpacing.md),
       decoration: BoxDecoration(
-        color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
+        color: (isDark ? Colors.white : Colors.black).withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+          color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
         ),
       ),
       child: Column(
@@ -414,16 +415,16 @@ class _ModernAdvancedPanelComponentState
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      MediasfuColors.primary.withValues(alpha: 0.2),
-                      MediasfuColors.secondary.withValues(alpha: 0.2),
+                      MediasfuColors.primary.withOpacity(0.2),
+                      MediasfuColors.secondary.withOpacity(0.2),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: [
                     BoxShadow(
-                      color: MediasfuColors.primary.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      spreadRadius: 1,
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 6,
+                      offset: const Offset(0, 1),
                     ),
                   ],
                 ),
@@ -536,11 +537,10 @@ class _ModernAdvancedPanelComponentState
           vertical: MediasfuSpacing.sm,
         ),
         decoration: BoxDecoration(
-          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
+          color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color:
-                (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+            color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
           ),
         ),
         child: Row(
@@ -552,14 +552,14 @@ class _ModernAdvancedPanelComponentState
                 color: color,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: (isDark ? Colors.white : Colors.black)
-                      .withValues(alpha: 0.2),
+                  color:
+                      (isDark ? Colors.white : Colors.black).withOpacity(0.2),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: color.withValues(alpha: 0.4),
-                    blurRadius: 8,
-                    spreadRadius: 1,
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
                   ),
                 ],
               ),
@@ -575,7 +575,7 @@ class _ModernAdvancedPanelComponentState
                       style: TextStyle(
                         fontSize: 12,
                         color: (isDark ? Colors.white : Colors.black)
-                            .withValues(alpha: 0.6),
+                            .withOpacity(0.6),
                       ),
                     ),
                   Text(
@@ -610,7 +610,7 @@ class _ModernAdvancedPanelComponentState
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
+        color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -667,58 +667,15 @@ class _ModernAdvancedPanelComponentState
             label,
             style: TextStyle(
               fontSize: 13,
-              color:
-                  (isDark ? Colors.white : Colors.black).withValues(alpha: 0.7),
+              color: (isDark ? Colors.white : Colors.black).withOpacity(0.7),
             ),
           ),
         ),
-        GestureDetector(
-          onTap: () => onChanged(!value),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: 52,
-            height: 28,
-            decoration: BoxDecoration(
-              gradient: value
-                  ? LinearGradient(
-                      colors: [
-                        MediasfuColors.primary,
-                        MediasfuColors.secondary
-                      ],
-                    )
-                  : null,
-              color: value
-                  ? null
-                  : (isDark ? Colors.white : Colors.black)
-                      .withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Stack(
-              children: [
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeInOut,
-                  left: value ? 26 : 2,
-                  top: 2,
-                  child: Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+        ModernSwitch(
+          value: value,
+          onChanged: (v) => onChanged(v),
+          isDarkMode: isDark,
+          semanticLabel: '$label toggle',
         ),
       ],
     );
@@ -727,10 +684,10 @@ class _ModernAdvancedPanelComponentState
   Widget _buildTextField(bool isDark) {
     return Container(
       decoration: BoxDecoration(
-        color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
+        color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+          color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
         ),
       ),
       child: TextField(
@@ -744,8 +701,7 @@ class _ModernAdvancedPanelComponentState
         decoration: InputDecoration(
           hintText: 'Enter custom text (max 40 chars)',
           hintStyle: TextStyle(
-            color:
-                (isDark ? Colors.white : Colors.black).withValues(alpha: 0.5),
+            color: (isDark ? Colors.white : Colors.black).withOpacity(0.5),
             fontSize: 14,
           ),
           border: InputBorder.none,

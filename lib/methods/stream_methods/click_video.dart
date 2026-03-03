@@ -325,16 +325,17 @@ Future<void> clickVideo(ClickVideoOptions options) async {
         }
       }
 
-      Map<String, dynamic> mediaConstraints =
-          userDefaultVideoInputDevice.isNotEmpty
-              ? _buildMediaConstraints(userDefaultVideoInputDevice, vidCons,
-                  currentFacingMode, frameRate)
-              : _buildAltMediaConstraints(vidCons, frameRate);
+      Map<String, dynamic> mediaConstraints = userDefaultVideoInputDevice
+              .isNotEmpty
+          ? _buildMediaConstraints(userDefaultVideoInputDevice, vidCons,
+              currentFacingMode, frameRate)
+          : _buildAltMediaConstraints(vidCons, frameRate, currentFacingMode);
       try {
         await _attemptStream(
             mediaConstraints, streamSuccessVideo, parameters, showAlert);
       } catch (error) {
-        mediaConstraints = _buildAltMediaConstraints(vidCons, frameRate);
+        mediaConstraints =
+            _buildAltMediaConstraints(vidCons, frameRate, currentFacingMode);
         try {
           await _attemptStream(
               mediaConstraints, streamSuccessVideo, parameters, showAlert);
@@ -367,9 +368,9 @@ Map<String, dynamic> _buildMediaConstraints(
 
   return {
     'video': {
+      'deviceId': deviceId,
+      'facingMode': facingMode ?? 'user',
       'mandatory': {
-        'sourceId': deviceId,
-        'facingMode': facingMode ?? 'user',
         'width': vidConsMap['width'],
         'height': vidConsMap['height'],
         'frameRate': {'ideal': frameRate},
@@ -382,11 +383,13 @@ Map<String, dynamic> _buildMediaConstraints(
 Map<String, dynamic> _buildAltMediaConstraints(
   VidCons vidCons,
   int frameRate,
+  String? facingMode,
 ) {
   final vidConsMap = vidCons.toMap();
 
   return {
     'video': {
+      'facingMode': facingMode ?? 'user',
       'mandatory': {
         'width': vidConsMap['width'],
         'height': vidConsMap['height'],

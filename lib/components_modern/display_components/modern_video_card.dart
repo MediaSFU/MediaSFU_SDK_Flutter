@@ -9,6 +9,7 @@ import 'modern_card_video_display.dart'
 import 'modern_audio_decibel_check.dart'
     show ModernAudioDecibelCheck, ModernAudioDecibelCheckOptions;
 import '../../consumers/control_media.dart' show ControlMediaOptions;
+import '../../types/types.dart' show LiveSubtitle;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
 
@@ -154,66 +155,97 @@ class _ModernVideoCardState extends State<ModernVideoCard>
           builder: (context, child) {
             return Transform.scale(
               scale: _hoverAnimation.value,
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius:
-                      BorderRadius.circular(widget.options.borderRadius),
-                  boxShadow: [
-                    BoxShadow(
-                      color: MediasfuColors.primary
-                          .withValues(alpha: _isHovered ? 0.3 : 0.15),
-                      blurRadius: _isHovered ? 20 : 12,
-                      spreadRadius: _isHovered ? 2 : 0,
+              child: ValueListenableBuilder<bool>(
+                valueListenable: showWaveform,
+                builder: (context, isSpeaking, child) {
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    decoration: BoxDecoration(
+                      borderRadius:
+                          BorderRadius.circular(widget.options.borderRadius),
+                      border: isSpeaking
+                          ? Border.all(
+                              color: MediasfuColors.success,
+                              width: 2.5,
+                            )
+                          : Border.all(
+                              color: Colors.transparent,
+                              width: 2.5,
+                            ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isSpeaking
+                              ? MediasfuColors.success.withOpacity(0.15)
+                              : Colors.black
+                                  .withOpacity(_isHovered ? 0.5 : 0.35),
+                          blurRadius: isSpeaking ? 16 : (_isHovered ? 16 : 8),
+                          spreadRadius: isSpeaking ? 1 : 0,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius:
-                      BorderRadius.circular(widget.options.borderRadius),
-                  child: Stack(
-                    children: [
-                      // Video display
-                      Positioned.fill(child: _buildVideoDisplay()),
+                    child: ClipRRect(
+                      borderRadius:
+                          BorderRadius.circular(widget.options.borderRadius),
+                      child: Stack(
+                        children: [
+                          // Video display
+                          Positioned.fill(child: _buildVideoDisplay()),
 
-                      // Gradient overlay
-                      Positioned.fill(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.transparent,
-                                Colors.black.withValues(alpha: 0.1),
-                                Colors.black.withValues(alpha: 0.5),
-                              ],
-                              stops: const [0.0, 0.5, 1.0],
+                          // Gradient overlay — steeper at bottom for name legibility
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.transparent,
+                                    Colors.black.withOpacity(0.55),
+                                  ],
+                                  stops: const [0.0, 0.5, 1.0],
+                                ),
+                              ),
                             ),
                           ),
-                        ),
+
+                          // Info overlay (name badge + waveform)
+                          _buildInfoOverlay(),
+
+                          // Controls
+                          if (widget.options.showControls)
+                            _buildControlsOverlay(),
+
+                          // Live subtitle overlay - use notifier for reactive updates if available
+                          if (widget.options.liveSubtitle != null)
+                            widget.options.showSubtitlesNotifier != null
+                                ? ValueListenableBuilder<bool>(
+                                    valueListenable:
+                                        widget.options.showSubtitlesNotifier!,
+                                    builder: (context, showSubtitles, _) {
+                                      if (showSubtitles) {
+                                        return _buildSubtitleOverlay();
+                                      }
+                                      return const SizedBox.shrink();
+                                    },
+                                  )
+                                : (widget.options.showSubtitles
+                                    ? _buildSubtitleOverlay()
+                                    : const SizedBox.shrink()),
+
+                          // Audio decibel check
+                          _buildAudioDecibelCheck(),
+
+                          // ForceFullDisplay indicator for user's own video
+                          _buildForceFullDisplayIndicator(),
+
+                          // Self-awareness indicator for webinar selfview
+                          _buildSelfAwarenessIndicator(),
+                        ],
                       ),
-
-                      // Info overlay (name badge + waveform)
-                      _buildInfoOverlay(),
-
-                      // Controls
-                      if (widget.options.showControls) _buildControlsOverlay(),
-
-                      // Status indicator
-                      if (widget.options.showStatusIndicator)
-                        _buildStatusIndicator(),
-
-                      // Audio decibel check
-                      _buildAudioDecibelCheck(),
-
-                      // ForceFullDisplay indicator for user's own video
-                      _buildForceFullDisplayIndicator(),
-
-                      // Self-awareness indicator for webinar selfview
-                      _buildSelfAwarenessIndicator(),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                },
               ),
             );
           },
@@ -238,7 +270,7 @@ class _ModernVideoCardState extends State<ModernVideoCard>
         doMirror: widget.options.doMirror,
         borderRadius: widget.options.borderRadius,
         enableGlassmorphism: widget.options.enableGlassmorphism,
-        isDarkMode: Theme.of(context).brightness == Brightness.dark,
+        isDarkMode: widget.options.isDarkMode,
       ),
     );
   }
@@ -258,42 +290,27 @@ class _ModernVideoCardState extends State<ModernVideoCard>
   Widget _buildDefaultInfoOverlay() {
     if (!widget.options.showInfo) return const SizedBox();
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(MediasfuSpacing.sm),
-      child: BackdropFilter(
-        filter: widget.options.enableGlassmorphism
-            ? ImageFilter.blur(sigmaX: 10, sigmaY: 10)
-            : ImageFilter.blur(sigmaX: 0, sigmaY: 0),
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: MediasfuSpacing.sm,
-            vertical: MediasfuSpacing.xs,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.4),
-            borderRadius: BorderRadius.circular(MediasfuSpacing.sm),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.1),
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                widget.options.participant.name,
-                style: const TextStyle(
-                  color:
-                      Colors.white, // Always white on dark glassmorphic overlay
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          widget.options.participant.name,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+            shadows: [
+              Shadow(
+                color: Colors.black.withOpacity(0.7),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
               ),
-              const SizedBox(width: MediasfuSpacing.xs),
-              _buildWaveformIndicator(),
             ],
           ),
         ),
-      ),
+        const SizedBox(width: MediasfuSpacing.xs),
+        _buildWaveformIndicator(),
+      ],
     );
   }
 
@@ -349,18 +366,18 @@ class _ModernVideoCardState extends State<ModernVideoCard>
       right: position.contains('right') ? MediasfuSpacing.sm : null,
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 200),
-        opacity: _isHovered ? 1.0 : 0.7,
+        opacity: _isHovered ? 1.0 : 0.0,
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(MediasfuSpacing.sm),
+          borderRadius: BorderRadius.circular(6),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+            filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
             child: Container(
-              padding: const EdgeInsets.all(MediasfuSpacing.xs),
+              padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(MediasfuSpacing.sm),
+                color: Colors.black.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.1),
+                  color: Colors.white.withOpacity(0.08),
                 ),
               ),
               child: Row(
@@ -415,68 +432,86 @@ class _ModernVideoCardState extends State<ModernVideoCard>
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-            gradient: isActive
-                ? LinearGradient(
-                    colors: [
-                      MediasfuColors.success.withValues(alpha: 0.3),
-                      MediasfuColors.accent.withValues(alpha: 0.2),
-                    ],
-                  )
-                : null,
-            color:
-                isActive ? null : MediasfuColors.danger.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(8),
+            color: Colors.black.withOpacity(0.55),
+            borderRadius: BorderRadius.circular(6),
             border: Border.all(
-              color: isActive
-                  ? MediasfuColors.success.withValues(alpha: 0.6)
-                  : MediasfuColors.danger.withValues(alpha: 0.5),
+              color: Colors.white.withOpacity(0.08),
             ),
-            boxShadow: isActive
-                ? [
-                    BoxShadow(
-                      color: MediasfuColors.success.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      spreadRadius: 1,
-                    ),
-                  ]
-                : null,
           ),
           child: Icon(
             icon,
             color: isActive ? MediasfuColors.success : MediasfuColors.danger,
-            size: 16,
+            size: 14,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildStatusIndicator() {
-    return Positioned(
-      top: MediasfuSpacing.sm,
-      right: MediasfuSpacing.sm,
-      child: ScaleTransition(
-        scale: _pulseAnimation,
-        child: Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(
-            color: widget.options.participant.videoOn ?? false
-                ? MediasfuColors.success
-                : Colors.grey,
-            shape: BoxShape.circle,
-            boxShadow: widget.options.participant.videoOn ?? false
-                ? [
-                    BoxShadow(
-                      color: MediasfuColors.success.withValues(alpha: 0.5),
-                      blurRadius: 8,
-                      spreadRadius: 2,
+  /// Builds the live subtitle overlay displaying translated/transcribed text
+  Widget _buildSubtitleOverlay() {
+    return ValueListenableBuilder<LiveSubtitle?>(
+      valueListenable: widget.options.liveSubtitle!,
+      builder: (context, subtitle, _) {
+        // Don't show if no subtitle or expired
+        if (subtitle == null || subtitle.text.isEmpty || subtitle.isExpired) {
+          return const SizedBox.shrink();
+        }
+
+        return Positioned(
+          bottom: widget.options.showControls
+              ? MediasfuSpacing.xl + 8
+              : MediasfuSpacing.md,
+          left: MediasfuSpacing.sm,
+          right: MediasfuSpacing.sm,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.9,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: MediasfuSpacing.sm,
+                      vertical: MediasfuSpacing.xs,
                     ),
-                  ]
-                : null,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.75),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.15),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      subtitle.text,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        height: 1.3,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black54,
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -532,11 +567,10 @@ class _ModernVideoCardState extends State<ModernVideoCard>
                           vertical: MediasfuSpacing.xs,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.65),
+                          color: Colors.black.withOpacity(0.65),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color:
-                                MediasfuColors.warning.withValues(alpha: 0.5),
+                            color: MediasfuColors.warning.withOpacity(0.5),
                             width: 1,
                           ),
                         ),
@@ -557,7 +591,7 @@ class _ModernVideoCardState extends State<ModernVideoCard>
                                     ? 'Cropped - others see more.'
                                     : 'Cropped view - others see more of your video.',
                                 style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.9),
+                                  color: Colors.white.withOpacity(0.9),
                                   fontSize: 11,
                                 ),
                                 overflow: TextOverflow.ellipsis,
@@ -597,7 +631,7 @@ class _ModernVideoCardState extends State<ModernVideoCard>
                               onTap: () => _showCropIndicator.value = false,
                               child: Icon(
                                 Icons.close,
-                                color: Colors.white.withValues(alpha: 0.6),
+                                color: Colors.white.withOpacity(0.6),
                                 size: 14,
                               ),
                             ),
@@ -646,10 +680,10 @@ class _ModernVideoCardState extends State<ModernVideoCard>
                   vertical: MediasfuSpacing.xs,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.65),
+                  color: Colors.black.withOpacity(0.65),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: MediasfuColors.primary.withValues(alpha: 0.5),
+                    color: MediasfuColors.primary.withOpacity(0.5),
                     width: 1,
                   ),
                 ),
@@ -668,7 +702,7 @@ class _ModernVideoCardState extends State<ModernVideoCard>
                       child: Text(
                         'Full capture area - this is exactly what others see',
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.9),
+                          color: Colors.white.withOpacity(0.9),
                           fontSize: 11,
                         ),
                         overflow: TextOverflow.ellipsis,

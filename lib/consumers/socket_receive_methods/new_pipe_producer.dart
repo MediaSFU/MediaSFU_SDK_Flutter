@@ -150,7 +150,8 @@ Future<void> newPipeProducer(NewPipeProducerOptions options) async {
   final producerId = options.producerId;
   final islevel = options.islevel;
   final nsock = options.nsock;
-  final parameters = options.parameters;
+  // Get fresh parameters to ensure we have the latest state
+  final parameters = options.parameters.getUpdatedAllParams();
   final translationMeta = options.translationMeta;
 
   if (translationMeta != null) {

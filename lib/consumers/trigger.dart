@@ -168,6 +168,8 @@ Future<void> trigger(TriggerOptions options) async {
           eventType: eventType,
           shareScreenStarted: shareScreenStarted,
           shared: shared,
+          whiteboardStarted: whiteboardStarted,
+          whiteboardEnded: whiteboardEnded,
         );
         adjustedValues = await autoAdjust(
           optionsAutoAdjust,
@@ -215,6 +217,8 @@ Future<void> trigger(TriggerOptions options) async {
         eventType: eventType,
         shareScreenStarted: shareScreenStarted,
         shared: shared,
+        whiteboardStarted: whiteboardStarted,
+        whiteboardEnded: whiteboardEnded,
       );
       final adjustedValues = await autoAdjust(
         optionsAutoAdjust,

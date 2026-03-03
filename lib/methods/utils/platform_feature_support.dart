@@ -6,7 +6,7 @@ enum MediasfuFeature {
   /// Screen annotation/screenboard feature (web only).
   screenboard,
 
-  /// Virtual backgrounds feature (mobile only - iOS/Android).
+  /// Virtual backgrounds feature (iOS, Android, macOS, Windows).
   virtualBackgrounds,
 
   /// Screen sharing feature (all platforms with platform-specific implementations).
@@ -91,9 +91,12 @@ class PlatformFeatureSupport {
         return kIsWeb;
 
       case MediasfuFeature.virtualBackgrounds:
-        // Virtual backgrounds are only supported on mobile (iOS/Android)
-        // using ML Kit Selfie Segmentation
-        return isMobile;
+        // Virtual backgrounds supported on:
+        // - iOS: MediaPipe TFLite
+        // - Android: Google MediaPipe
+        // - macOS: Apple Vision
+        // Windows support is disabled pending a viable frame-injection path.
+        return isMobile || isMacOS;
 
       case MediasfuFeature.screenShare:
         // Screen sharing is supported on all platforms with platform-specific implementations:
@@ -116,7 +119,7 @@ class PlatformFeatureSupport {
         return ['Web'];
 
       case MediasfuFeature.virtualBackgrounds:
-        return ['Android', 'iOS'];
+        return ['Android', 'iOS', 'macOS'];
 
       case MediasfuFeature.screenShare:
         return ['Web', 'Android', 'iOS', 'Windows', 'macOS', 'Linux'];

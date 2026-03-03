@@ -140,10 +140,15 @@ Future<void> readjust({
       }
     } else if (eventType == EventType.chat ||
         (eventType == EventType.conference &&
-            !(shareScreenStarted || shared))) {
+            !(shareScreenStarted ||
+                shared ||
+                (parameters.whiteboardStarted &&
+                    !parameters.whiteboardEnded)))) {
       val1 = 12;
       val2 = 0;
-    } else if (shareScreenStarted || shared) {
+    } else if (shareScreenStarted ||
+        shared ||
+        (parameters.whiteboardStarted && !parameters.whiteboardEnded)) {
       val1 = 2;
       val2 = 10;
     } else {

@@ -102,7 +102,7 @@ class WhiteboardPainter extends CustomPainter {
   /// Draws the eraser cursor as a circle at the given position
   void _drawEraserCursor(Canvas canvas, Offset position) {
     final paint = Paint()
-      ..color = Colors.red.withValues(alpha: 0.5)
+      ..color = Colors.red.withOpacity(0.5)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0;
 
@@ -111,7 +111,7 @@ class WhiteboardPainter extends CustomPainter {
 
     // Draw a filled semi-transparent circle for better visibility
     final fillPaint = Paint()
-      ..color = Colors.red.withValues(alpha: 0.1)
+      ..color = Colors.red.withOpacity(0.1)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(position, eraserThickness / 2, fillPaint);
   }

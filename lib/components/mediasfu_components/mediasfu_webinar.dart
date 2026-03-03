@@ -1,4 +1,5 @@
 // ignore_for_file: empty_catches, non_constant_identifier_names
+import '../../utils/image_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
 import '../misc_components/prejoin_page.dart';
@@ -360,7 +361,8 @@ import '../../types/types.dart'
         CreateMediaSFURoomOptions,
         JoinMediaSFURoomOptions,
         JoinRoomOnMediaSFUType,
-        CreateRoomOnMediaSFUType;
+        CreateRoomOnMediaSFUType,
+        LiveSubtitle;
 import '../whiteboard_components/whiteboard_shape.dart' show WhiteboardShape;
 import '../../methods/utils/create_response_join_room.dart'
     show createResponseJoinRoom, CreateResponseJoinRoomOptions;
@@ -840,8 +842,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
           eventType.value == EventType.conference)) {
         // Handle landscape orientation for webinar and conference event types
         final mediaQuery = MediaQuery.of(context);
-        final safeAreaInsets =
-            mediaQuery.padding + mediaQuery.systemGestureInsets;
+        final safeAreaInsets = mediaQuery.padding;
         // Use available height after safe area is subtracted
         final availableHeight =
             mediaQuery.size.height - safeAreaInsets.top - safeAreaInsets.bottom;
@@ -4331,10 +4332,9 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
   void _handleOrientationChange() {
     try {
       final mediaQuery = MediaQuery.of(context);
-      final safeAreaInsets =
-          mediaQuery.padding + mediaQuery.systemGestureInsets;
+      final safeAreaInsets = mediaQuery.padding;
 
-      // Calculate available height after safe area is removed (since we're in SafeArea)
+      // Calculate available height after safe area is removed
       final availableHeight =
           mediaQuery.size.height - safeAreaInsets.top - safeAreaInsets.bottom;
 
@@ -4415,8 +4415,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
             sec: sec,
             apiUserName: apiUserName,
             parameters: PreJoinPageParameters(
-              imgSrc: widget.options.imgSrc ??
-                  'https://mediasfu.com/images/logo192.png',
+              imgSrc: widget.options.imgSrc ?? kDefaultMediaSFULogo,
               showAlert: showAlert,
               updateIsLoadingModalVisible: updateIsLoadingModalVisible,
               connectSocket: connectSocket,
@@ -4657,9 +4656,12 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
       updateRecordingProgressTime('00:00:00');
       updateRecordElapsedTime(0);
       updateShowRecordButtons(false);
+      // Show loading overlay during cleanup transition
+      updateIsLoadingModalVisible(true);
       // Delay before updating validated
       await Future.delayed(const Duration(milliseconds: 1000));
       updateValidated(false);
+      updateIsLoadingModalVisible(false);
     }
 
     Future<io.Socket?> connectsocket(String apiUserName, String token,
@@ -6175,6 +6177,11 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
         isDarkModeValue: false,
         updateIsDarkModeValue: (_) {},
 
+        // Live subtitles on video cards (not used in original components)
+        showSubtitlesOnCards: false,
+        liveSubtitles: ValueNotifier<Map<String, LiveSubtitle>>({}),
+        updateShowSubtitlesOnCards: (_) {},
+
         // Whiteboard-related variables
         whiteboardUsers: whiteboardUsers.value,
         currentWhiteboardIndex: currentWhiteboardIndex.value,
@@ -6787,8 +6794,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
     return _welcomePageBuilder(
       context,
       WelcomePageOptions(
-        imgSrc:
-            widget.options.imgSrc ?? 'https://mediasfu.com/images/logo192.png',
+        imgSrc: widget.options.imgSrc ?? kDefaultMediaSFULogo,
         updateIsLoadingModalVisible: updateIsLoadingModalVisible,
         updateValidated: updateValidated,
         updateApiUserName: updateApiUserName,
@@ -6808,8 +6814,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
       context,
       PreJoinPageOptions(
         parameters: PreJoinPageParameters(
-          imgSrc: widget.options.imgSrc ??
-              'https://mediasfu.com/images/logo192.png',
+          imgSrc: widget.options.imgSrc ?? kDefaultMediaSFULogo,
           updateIsLoadingModalVisible: updateIsLoadingModalVisible,
           updateValidated: updateValidated,
           updateApiUserName: updateApiUserName,

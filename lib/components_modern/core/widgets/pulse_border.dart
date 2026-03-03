@@ -209,10 +209,10 @@ class _PulseBorderPainter extends CustomPainter {
           ..shader = gradient.createShader(rect)
           ..style = PaintingStyle.stroke
           ..strokeWidth = borderWidth
-          ..color = color.withValues(alpha: opacity);
+          ..color = color.withOpacity(opacity);
       } else {
         paint = Paint()
-          ..color = color.withValues(alpha: opacity)
+          ..color = color.withOpacity(opacity)
           ..style = PaintingStyle.stroke
           ..strokeWidth = borderWidth;
       }
@@ -352,7 +352,7 @@ class _PulseRingPainter extends CustomPainter {
       final opacity = (1.0 - value).clamp(0.0, 1.0);
 
       final paint = Paint()
-        ..color = color.withValues(alpha: opacity * 0.6)
+        ..color = color.withOpacity(opacity * 0.6)
         ..style = PaintingStyle.stroke
         ..strokeWidth = strokeWidth;
 

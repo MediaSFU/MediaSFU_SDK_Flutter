@@ -483,6 +483,9 @@ class _SubAspectComponentState extends State<SubAspectComponent> {
 
   @override
   Widget build(BuildContext context) {
+    // Get bottom safe area for iOS home indicator/gesture bar
+    final double bottomSafeArea = MediaQuery.of(context).viewPadding.bottom;
+
     final Widget defaultContent = Stack(
       clipBehavior: widget.options.clipBehavior,
       children: widget.options.children,
@@ -525,7 +528,7 @@ class _SubAspectComponentState extends State<SubAspectComponent> {
         defaultContainer;
 
     final Widget defaultWrapper = Positioned(
-      bottom: 0,
+      bottom: bottomSafeArea, // Account for iOS home indicator
       left: 0,
       child: container,
     );

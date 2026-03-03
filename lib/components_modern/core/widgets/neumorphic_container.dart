@@ -167,12 +167,12 @@ class _NeumorphicContainerState extends State<NeumorphicContainer>
       if (isDark) {
         return [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.4),
+            color: Colors.black.withOpacity(0.4),
             blurRadius: baseBlur / 2,
             offset: Offset(-baseOffset / 2, -baseOffset / 2),
           ),
           BoxShadow(
-            color: const Color(0xFF2D3A4F).withValues(alpha: 0.2),
+            color: const Color(0xFF2D3A4F).withOpacity(0.2),
             blurRadius: baseBlur / 2,
             offset: Offset(baseOffset / 2, baseOffset / 2),
           ),
@@ -180,12 +180,12 @@ class _NeumorphicContainerState extends State<NeumorphicContainer>
       } else {
         return [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: Colors.black.withOpacity(0.08),
             blurRadius: baseBlur / 2,
             offset: Offset(-baseOffset / 2, -baseOffset / 2),
           ),
           BoxShadow(
-            color: Colors.white.withValues(alpha: 0.5),
+            color: Colors.white.withOpacity(0.5),
             blurRadius: baseBlur / 2,
             offset: Offset(baseOffset / 2, baseOffset / 2),
           ),
@@ -197,12 +197,12 @@ class _NeumorphicContainerState extends State<NeumorphicContainer>
     if (isDark) {
       return [
         BoxShadow(
-          color: Colors.black.withValues(alpha: 0.5),
+          color: Colors.black.withOpacity(0.5),
           blurRadius: baseBlur,
           offset: Offset(baseOffset, baseOffset),
         ),
         BoxShadow(
-          color: const Color(0xFF2D3A4F).withValues(alpha: 0.3),
+          color: const Color(0xFF2D3A4F).withOpacity(0.3),
           blurRadius: baseBlur,
           offset: Offset(-baseOffset, -baseOffset),
         ),
@@ -210,12 +210,12 @@ class _NeumorphicContainerState extends State<NeumorphicContainer>
     } else {
       return [
         BoxShadow(
-          color: Colors.black.withValues(alpha: 0.1),
+          color: Colors.black.withOpacity(0.1),
           blurRadius: baseBlur,
           offset: Offset(baseOffset, baseOffset),
         ),
         BoxShadow(
-          color: Colors.white.withValues(alpha: 0.8),
+          color: Colors.white.withOpacity(0.8),
           blurRadius: baseBlur,
           offset: Offset(-baseOffset, -baseOffset),
         ),

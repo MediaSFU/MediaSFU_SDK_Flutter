@@ -11,6 +11,7 @@ import '../../types/modal_style_options.dart' show ModalRenderMode;
 import '../../types/types.dart' show WaitingRoomParticipant;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
+import '../core/widgets/modal_header.dart';
 
 typedef ModernWaitingRoomModalType = Widget Function(
     {required WaitingRoomModalOptions options});
@@ -137,7 +138,7 @@ class _ModernWaitingRoomModalState extends State<ModernWaitingRoomModal>
                 child: FadeTransition(
                   opacity: _fadeAnimation,
                   child: Container(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Colors.black.withOpacity(0.05),
                   ),
                 ),
               ),
@@ -163,25 +164,24 @@ class _ModernWaitingRoomModalState extends State<ModernWaitingRoomModal>
                         decoration: BoxDecoration(
                           color: useHighTransparency
                               ? (widget.options.isDarkMode
-                                  ? Colors.black.withValues(alpha: 0.05)
-                                  : Colors.white.withValues(alpha: 0.08))
+                                  ? Colors.black.withOpacity(0.05)
+                                  : Colors.white.withOpacity(0.08))
                               : (widget.options.isDarkMode
-                                  ? Colors.black.withValues(alpha: 0.7)
-                                  : Colors.white.withValues(alpha: 0.9)),
+                                  ? Colors.black.withOpacity(0.7)
+                                  : Colors.white.withOpacity(0.9)),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: widget.options.isDarkMode
-                                ? Colors.white.withValues(
-                                    alpha: useHighTransparency ? 0.08 : 0.1)
-                                : Colors.black.withValues(
-                                    alpha: useHighTransparency ? 0.05 : 0.1),
+                                ? Colors.white.withOpacity(
+                                    useHighTransparency ? 0.08 : 0.1)
+                                : Colors.black.withOpacity(
+                                    useHighTransparency ? 0.05 : 0.1),
                           ),
                           boxShadow: useHighTransparency
                               ? []
                               : [
                                   BoxShadow(
-                                    color: MediasfuColors.info
-                                        .withValues(alpha: 0.2),
+                                    color: MediasfuColors.info.withOpacity(0.2),
                                     blurRadius: 40,
                                     spreadRadius: 8,
                                   ),
@@ -219,99 +219,40 @@ class _ModernWaitingRoomModalState extends State<ModernWaitingRoomModal>
   }
 
   Widget _buildHeader(int count) {
-    return Container(
-      padding: const EdgeInsets.all(MediasfuSpacing.md),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: widget.options.isDarkMode
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.1),
+    return ModalHeader(
+      icon: Icons.hourglass_empty_rounded,
+      title: 'Waiting Room',
+      onClose: _handleClose,
+      isDarkMode: widget.options.isDarkMode,
+      gradientColors: [
+        MediasfuColors.info,
+        MediasfuColors.info.withOpacity(0.7),
+      ],
+      trailing: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: MediasfuSpacing.sm,
+          vertical: MediasfuSpacing.xs,
+        ),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              MediasfuColors.info.withOpacity(0.2),
+              MediasfuColors.info.withOpacity(0.1),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: MediasfuColors.info.withOpacity(0.3),
           ),
         ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(MediasfuSpacing.sm),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  MediasfuColors.info,
-                  MediasfuColors.info.withValues(alpha: 0.7),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: MediasfuColors.info.withValues(alpha: 0.5),
-                  blurRadius: 12,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.hourglass_empty_rounded,
-              color: Colors.white,
-              size: 20,
-            ),
+        child: Text(
+          count.toString(),
+          style: TextStyle(
+            color: MediasfuColors.info,
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
           ),
-          const SizedBox(width: MediasfuSpacing.sm),
-          Text(
-            'Waiting Room',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: widget.options.isDarkMode ? Colors.white : Colors.black87,
-            ),
-          ),
-          const SizedBox(width: MediasfuSpacing.sm),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: MediasfuSpacing.sm,
-              vertical: MediasfuSpacing.xs,
-            ),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  MediasfuColors.info.withValues(alpha: 0.2),
-                  MediasfuColors.info.withValues(alpha: 0.1),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: MediasfuColors.info.withValues(alpha: 0.3),
-              ),
-            ),
-            child: Text(
-              count.toString(),
-              style: TextStyle(
-                color: MediasfuColors.info,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-              ),
-            ),
-          ),
-          const Spacer(),
-          GestureDetector(
-            onTap: _handleClose,
-            child: Container(
-              padding: const EdgeInsets.all(MediasfuSpacing.sm),
-              decoration: BoxDecoration(
-                color: widget.options.isDarkMode
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                Icons.close_rounded,
-                color:
-                    widget.options.isDarkMode ? Colors.white70 : Colors.black54,
-                size: 20,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -322,18 +263,20 @@ class _ModernWaitingRoomModalState extends State<ModernWaitingRoomModal>
       child: Container(
         decoration: BoxDecoration(
           color: widget.options.isDarkMode
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.black.withValues(alpha: 0.05),
+              ? Colors.white.withOpacity(0.12)
+              : const Color(0xFFEEF2F7),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: widget.options.isDarkMode
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.1),
+                ? Colors.white.withOpacity(0.18)
+                : Colors.black.withOpacity(0.12),
           ),
         ),
         child: TextField(
           controller: _searchController,
           onChanged: widget.options.onWaitingRoomFilterChange,
+          cursorColor:
+              widget.options.isDarkMode ? Colors.white : Colors.black87,
           style: TextStyle(
             color: widget.options.isDarkMode ? Colors.white : Colors.black87,
           ),
@@ -341,13 +284,15 @@ class _ModernWaitingRoomModalState extends State<ModernWaitingRoomModal>
             hintText: 'Search participants...',
             hintStyle: TextStyle(
               color:
-                  widget.options.isDarkMode ? Colors.white54 : Colors.black38,
+                  widget.options.isDarkMode ? Colors.white70 : Colors.black45,
             ),
             prefixIcon: Icon(
               Icons.search_rounded,
               color:
-                  widget.options.isDarkMode ? Colors.white54 : Colors.black38,
+                  widget.options.isDarkMode ? Colors.white70 : Colors.black45,
             ),
+            filled: true,
+            fillColor: Colors.transparent,
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: MediasfuSpacing.md,
@@ -401,13 +346,13 @@ class _ModernWaitingRoomModalState extends State<ModernWaitingRoomModal>
       padding: const EdgeInsets.all(MediasfuSpacing.md),
       decoration: BoxDecoration(
         color: widget.options.isDarkMode
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.black.withValues(alpha: 0.03),
+            ? Colors.white.withOpacity(0.05)
+            : Colors.black.withOpacity(0.03),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: widget.options.isDarkMode
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.black.withValues(alpha: 0.1),
+              ? Colors.white.withOpacity(0.1)
+              : Colors.black.withOpacity(0.1),
         ),
       ),
       child: Row(
@@ -506,10 +451,10 @@ class _ModernWaitingRoomModalState extends State<ModernWaitingRoomModal>
           vertical: MediasfuSpacing.xs,
         ),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.2),
+          color: color.withOpacity(0.2),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: color.withValues(alpha: 0.5),
+            color: color.withOpacity(0.5),
           ),
         ),
         child: Row(

@@ -32,6 +32,10 @@ class BackgroundProcessorService {
   MediaStream? _sourceStream;
   VirtualBackground? _currentBackground;
 
+  // Target dimensions (vidCons) for downscaled processing
+  int? _targetWidth;
+  int? _targetHeight;
+
   // Current processed frame
   ui.Image? _currentFrame;
 
@@ -93,19 +97,27 @@ class BackgroundProcessorService {
   }
 
   /// Start processing frames from the given stream
-  Future<void> start(MediaStream stream) async {
+  ///
+  /// [targetWidth]/[targetHeight] - Optional vidCons dimensions. When set,
+  /// frames are decoded at these dimensions instead of the camera's native
+  /// resolution, significantly reducing CPU/GPU load.
+  Future<void> start(MediaStream stream,
+      {int? targetWidth, int? targetHeight}) async {
     if (!_isInitialized) {
       await initialize();
     }
 
     _sourceStream = stream;
+    _targetWidth = targetWidth;
+    _targetHeight = targetHeight;
 
     // Only start processing if we have a background set
     if (hasBackground) {
       await _startProcessingInternal();
     }
 
-    debugPrint('BackgroundProcessorService: Started with stream');
+    debugPrint(
+        'BackgroundProcessorService: Started with stream (target: ${targetWidth ?? "native"}x${targetHeight ?? "native"})');
   }
 
   /// Stop all processing
@@ -123,7 +135,12 @@ class BackgroundProcessorService {
     }
 
     _isProcessing = true;
-    await _frameProcessor!.startProcessing(_sourceStream!, fps: 10);
+    await _frameProcessor!.startProcessing(
+      _sourceStream!,
+      fps: 10,
+      targetWidth: _targetWidth,
+      targetHeight: _targetHeight,
+    );
     debugPrint('BackgroundProcessorService: Processing started');
   }
 
@@ -138,21 +155,40 @@ class BackgroundProcessorService {
 
   /// Called when a frame is processed by the FrameProcessor
   void _onFrameProcessed(ProcessedFrame frame) async {
-    if (!_isProcessing || _currentBackground == null) return;
+    // Early exit if not processing (race condition guard)
+    if (!_isProcessing || _currentBackground == null || _compositor == null) {
+      return;
+    }
+
+    // Capture references to prevent null during async operations
+    final compositor = _compositor;
+    final background = _currentBackground;
+
+    if (compositor == null || background == null) {
+      return;
+    }
 
     try {
       // Composite the frame with the background
-      final composited = await _compositor?.compose(
+      final composited = await compositor.compose(
         frame: frame,
-        background: _currentBackground!,
+        background: background,
       );
 
-      if (composited != null) {
-        _currentFrame = composited;
-        onFrameReady?.call(composited);
+      // Check again after async operation
+      if (!_isProcessing) {
+        debugPrint(
+            'BackgroundProcessorService: Stopped during compositing, discarding frame');
+        return;
       }
-    } catch (e) {
-      debugPrint('BackgroundProcessorService: Compositing error: $e');
+
+      _currentFrame = composited;
+      onFrameReady?.call(composited);
+        } catch (e) {
+      // Only log if still processing (otherwise expected during shutdown)
+      if (_isProcessing) {
+        debugPrint('BackgroundProcessorService: Compositing error: $e');
+      }
     }
   }
 

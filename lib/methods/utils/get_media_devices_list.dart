@@ -29,6 +29,7 @@
 /// ```
 library;
 
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
@@ -42,6 +43,26 @@ typedef GetMediaDevicesListType = Future<List<MediaDeviceInfo>> Function(
 /// to ensure proper device labels and information are available.
 Future<List<MediaDeviceInfo>> getMediaDevicesList(String kind) async {
   try {
+    // On macOS, first check if devices exist before requesting permissions
+    // This prevents crashes when no audio/video devices are connected
+    if (!kIsWeb && Platform.isMacOS) {
+      try {
+        final existingDevices = await navigator.mediaDevices.enumerateDevices();
+        final hasRequestedKind = existingDevices.any((d) => d.kind == kind);
+        if (!hasRequestedKind) {
+          if (kDebugMode) {
+            print('No $kind devices found on macOS - skipping getUserMedia');
+          }
+          return [];
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('Could not enumerate devices on macOS: $e');
+        }
+        return [];
+      }
+    }
+
     // Attempt to get media stream to trigger permission prompt if needed
     // This ensures device labels are available
     try {

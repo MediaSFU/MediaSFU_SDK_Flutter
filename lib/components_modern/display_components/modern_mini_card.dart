@@ -109,15 +109,21 @@ class _ModernMiniCardState extends State<ModernMiniCard>
   Widget _buildContainer(BuildContext context, Widget child, bool hasImage) {
     final options = widget.options;
 
-    // Premium gradient with brand colors
+    // Premium gradient with brand colors — theme-aware
     final defaultGradient = LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
-      colors: [
-        MediasfuColors.primary,
-        MediasfuColors.secondary,
-        MediasfuColors.accent,
-      ],
+      colors: options.isDarkMode
+          ? [
+              MediasfuColors.primary,
+              MediasfuColors.secondary,
+              MediasfuColors.accent,
+            ]
+          : [
+              MediasfuColors.primaryLight,
+              MediasfuColors.secondaryLight,
+              MediasfuColors.accentLight,
+            ],
       stops: const [0.0, 0.5, 1.0],
     );
 
@@ -137,7 +143,7 @@ class _ModernMiniCardState extends State<ModernMiniCard>
       final backgroundColor = options.initialsBackgroundColor ??
           (options.isDarkMode
               ? MediasfuColors.primaryDark
-                  .withValues(alpha: 0.3) // Brand primary with transparency
+                  .withOpacity(0.3) // Brand primary with transparency
               : MediasfuColors.surfaceElevated);
 
       decoration = BoxDecoration(
@@ -153,21 +159,21 @@ class _ModernMiniCardState extends State<ModernMiniCard>
             ? (options.enablePremiumBorder
                 ? Border.all(
                     color: options.borderColor ??
-                        MediasfuColors.primary.withValues(alpha: 0.4),
+                        MediasfuColors.primary.withOpacity(0.4),
                     width: options.borderWidth,
                   )
                 : Border.all(
                     color: options.borderColor ??
                         (options.isDarkMode
-                            ? Colors.white.withValues(
-                                alpha: 0.2) // More visible border in dark mode
-                            : Colors.black.withValues(alpha: 0.15)),
+                            ? Colors.white.withOpacity(
+                                0.2) // More visible border in dark mode
+                            : Colors.black.withOpacity(0.15)),
                     width: options.borderWidth,
                   ))
             : (options.isDarkMode && !hasImage
                 // Add subtle border in dark mode even without showBorder for visual separation
                 ? Border.all(
-                    color: Colors.white.withValues(alpha: 0.1),
+                    color: Colors.white.withOpacity(0.1),
                     width: 1,
                   )
                 : null),
@@ -176,20 +182,23 @@ class _ModernMiniCardState extends State<ModernMiniCard>
                 (options.enableGlow
                     ? [
                         BoxShadow(
-                          color: glowColor.withValues(
-                              alpha: options.glowIntensity),
+                          color: glowColor.withOpacity(options.isDarkMode
+                              ? options.glowIntensity
+                              : options.glowIntensity * 0.5),
                           blurRadius: 16,
                           spreadRadius: 2,
                         ),
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.3),
+                          color: Colors.black
+                              .withOpacity(options.isDarkMode ? 0.3 : 0.12),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),
                       ]
                     : [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
+                          color: Colors.black
+                              .withOpacity(options.isDarkMode ? 0.2 : 0.08),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -263,8 +272,8 @@ class _ModernMiniCardState extends State<ModernMiniCard>
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      MediasfuColors.primary.withValues(alpha: 0.2),
-                      MediasfuColors.secondary.withValues(alpha: 0.1),
+                      MediasfuColors.primary.withOpacity(0.2),
+                      MediasfuColors.secondary.withOpacity(0.1),
                     ],
                   ),
                 ),
@@ -277,8 +286,7 @@ class _ModernMiniCardState extends State<ModernMiniCard>
                       valueColor: AlwaysStoppedAnimation<Color>(
                         MediasfuColors.primary,
                       ),
-                      backgroundColor:
-                          MediasfuColors.primary.withValues(alpha: 0.2),
+                      backgroundColor: MediasfuColors.primary.withOpacity(0.2),
                     ),
                   ),
                 ),
@@ -288,7 +296,7 @@ class _ModernMiniCardState extends State<ModernMiniCard>
               width: options.size,
               height: options.size,
               color: (options.isDarkMode ? Colors.white : Colors.black)
-                  .withValues(alpha: 0.1),
+                  .withOpacity(0.1),
               child: Center(
                 child: SizedBox(
                   width: options.size * 0.35,
@@ -324,16 +332,19 @@ class _ModernMiniCardState extends State<ModernMiniCard>
         style: options.initialsTextStyle ??
             TextStyle(
               fontSize: options.fontSize,
-              color: Colors.white,
+              color:
+                  options.isDarkMode ? Colors.white : const Color(0xFF1F2937),
               fontWeight: FontWeight.w700,
               letterSpacing: 1.0,
-              shadows: [
-                Shadow(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 4,
-                  offset: const Offset(0, 1),
-                ),
-              ],
+              shadows: options.isDarkMode
+                  ? [
+                      Shadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ]
+                  : null,
             ),
       ),
     );

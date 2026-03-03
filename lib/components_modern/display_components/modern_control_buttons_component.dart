@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -95,9 +94,10 @@ class _ModernControlButtonsComponentState
           borderRadius: BorderRadius.circular(32),
           boxShadow: [
             BoxShadow(
-              color: MediasfuColors.primary.withValues(alpha: 0.15),
-              blurRadius: 20,
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 16,
               spreadRadius: 0,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -177,10 +177,9 @@ class _PremiumControlButtonState extends State<_PremiumControlButton>
         widget.options.activeIconColor ??
         (isDark ? MediasfuColors.primaryDark : MediasfuColors.primary);
 
-    // Determine glow color based on state
-    final Color glowColor = isActive
-        ? activeColor
-        : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.transparent);
+    // Determine hover/active background
+    final Color activeHoverColor =
+        isActive ? activeColor : (isDark ? Colors.white : Colors.black);
 
     Widget iconButton = MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -207,20 +206,10 @@ class _PremiumControlButtonState extends State<_PremiumControlButton>
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isActive
-                  ? activeColor.withValues(alpha: 0.15)
+                  ? activeColor.withOpacity(0.15)
                   : (_isHovered
-                      ? (isDark ? Colors.white : Colors.black)
-                          .withValues(alpha: 0.1)
+                      ? (isDark ? Colors.white : Colors.black).withOpacity(0.1)
                       : Colors.transparent),
-              boxShadow: isActive || _isHovered
-                  ? [
-                      BoxShadow(
-                        color: glowColor.withValues(alpha: 0.3),
-                        blurRadius: 12,
-                        spreadRadius: 0,
-                      ),
-                    ]
-                  : null,
             ),
             child: AnimatedIconButton(
               icon: effectiveIcon,

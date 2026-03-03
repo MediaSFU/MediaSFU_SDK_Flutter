@@ -288,8 +288,8 @@ class _PremiumTextFieldState extends State<PremiumTextField>
         return Colors.transparent;
       case PremiumTextFieldVariant.glass:
         return widget.isDarkMode
-            ? Colors.white.withValues(alpha: 0.08)
-            : Colors.black.withValues(alpha: 0.04);
+            ? Colors.white.withOpacity(0.08)
+            : Colors.black.withOpacity(0.04);
       case PremiumTextFieldVariant.neumorphic:
         return widget.isDarkMode
             ? MediasfuColors.surfaceDark
@@ -300,8 +300,8 @@ class _PremiumTextFieldState extends State<PremiumTextField>
   Color get _textColor => widget.isDarkMode ? Colors.white : Colors.black87;
 
   Color get _hintColor => widget.isDarkMode
-      ? Colors.white.withValues(alpha: 0.5)
-      : Colors.black.withValues(alpha: 0.4);
+      ? Colors.white.withOpacity(0.5)
+      : Colors.black.withOpacity(0.4);
 
   Color get _iconColor => _isFocused
       ? (_hasError ? _errorColor : _primaryColor)
@@ -319,8 +319,8 @@ class _PremiumTextFieldState extends State<PremiumTextField>
             color: focused || error
                 ? color
                 : (widget.isDarkMode
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.08)),
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.black.withOpacity(0.08)),
             width: focused ? 2 : 1,
           ),
         );
@@ -334,8 +334,8 @@ class _PremiumTextFieldState extends State<PremiumTextField>
                 : (focused
                     ? _primaryColor
                     : (widget.isDarkMode
-                        ? Colors.white.withValues(alpha: 0.2)
-                        : Colors.black.withValues(alpha: 0.15))),
+                        ? Colors.white.withOpacity(0.2)
+                        : Colors.black.withOpacity(0.15))),
             width: focused ? 2 : 1.5,
           ),
         );
@@ -348,8 +348,8 @@ class _PremiumTextFieldState extends State<PremiumTextField>
                 : (focused
                     ? _primaryColor
                     : (widget.isDarkMode
-                        ? Colors.white.withValues(alpha: 0.3)
-                        : Colors.black.withValues(alpha: 0.2))),
+                        ? Colors.white.withOpacity(0.3)
+                        : Colors.black.withOpacity(0.2))),
             width: focused ? 2 : 1,
           ),
         );
@@ -359,12 +359,12 @@ class _PremiumTextFieldState extends State<PremiumTextField>
           borderRadius: BorderRadius.circular(_borderRadius),
           borderSide: BorderSide(
             color: error
-                ? _errorColor.withValues(alpha: 0.5)
+                ? _errorColor.withOpacity(0.5)
                 : (focused
-                    ? _primaryColor.withValues(alpha: 0.6)
+                    ? _primaryColor.withOpacity(0.6)
                     : (widget.isDarkMode
-                        ? Colors.white.withValues(alpha: 0.15)
-                        : Colors.black.withValues(alpha: 0.1))),
+                        ? Colors.white.withOpacity(0.15)
+                        : Colors.black.withOpacity(0.1))),
             width: 1,
           ),
         );
@@ -401,15 +401,15 @@ class _PremiumTextFieldState extends State<PremiumTextField>
       return [
         BoxShadow(
           color: widget.isDarkMode
-              ? const Color(0xFF404060).withValues(alpha: 0.3)
-              : Colors.white.withValues(alpha: 0.8),
+              ? const Color(0xFF404060).withOpacity(0.3)
+              : Colors.white.withOpacity(0.8),
           offset: const Offset(-3, -3),
           blurRadius: 6,
         ),
         BoxShadow(
           color: widget.isDarkMode
-              ? const Color(0xFF0A0A12).withValues(alpha: 0.5)
-              : const Color(0xFFD1D9E6).withValues(alpha: 0.5),
+              ? const Color(0xFF0A0A12).withOpacity(0.5)
+              : const Color(0xFFD1D9E6).withOpacity(0.5),
           offset: const Offset(3, 3),
           blurRadius: 6,
         ),
@@ -505,8 +505,8 @@ class _PremiumTextFieldState extends State<PremiumTextField>
           hintStyle: TextStyle(color: _hintColor),
           helperStyle: TextStyle(
             color: widget.isDarkMode
-                ? Colors.white.withValues(alpha: 0.6)
-                : Colors.black.withValues(alpha: 0.5),
+                ? Colors.white.withOpacity(0.6)
+                : Colors.black.withOpacity(0.5),
             fontSize: 12,
           ),
           counterText: '', // Hide default counter
@@ -552,8 +552,8 @@ class _PremiumTextFieldState extends State<PremiumTextField>
                   widget.helperText!,
                   style: TextStyle(
                     color: widget.isDarkMode
-                        ? Colors.white.withValues(alpha: 0.6)
-                        : Colors.black.withValues(alpha: 0.5),
+                        ? Colors.white.withOpacity(0.6)
+                        : Colors.black.withOpacity(0.5),
                     fontSize: 12,
                   ),
                 )
@@ -564,8 +564,8 @@ class _PremiumTextFieldState extends State<PremiumTextField>
                   '$_charCount/${widget.maxLength}',
                   style: TextStyle(
                     color: widget.isDarkMode
-                        ? Colors.white.withValues(alpha: 0.5)
-                        : Colors.black.withValues(alpha: 0.4),
+                        ? Colors.white.withOpacity(0.5)
+                        : Colors.black.withOpacity(0.4),
                     fontSize: 12,
                   ),
                 ),

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../types/types.dart'
     show
@@ -9,6 +10,7 @@ import '../../types/types.dart'
         ShowAlert,
         TranslationMeta,
         ListenerTranslationPreferences;
+import '../../types/modal_style_options.dart' show ModalRenderMode;
 import '../../components_modern/core/theme/mediasfu_colors.dart';
 import '../../components_modern/core/theme/mediasfu_spacing.dart';
 import '../../components_modern/core/theme/mediasfu_typography.dart';
@@ -208,6 +210,20 @@ class TranslationSettingsModalOptions {
   final Function(String?)? updateMyDefaultListenLanguage;
   final Function(Map<String, String>)? updateListenPreferences;
 
+  // Live subtitles on video cards
+  final bool? showSubtitlesOnCards;
+  final Function(bool)? updateShowSubtitlesOnCards;
+
+  /// True when translation is billed from the user's personal credits
+  final bool isPersonalTranslation;
+
+  /// User's voice clones passed from the app level.
+  /// Each clone is a map with keys: id, voiceId, name, provider, isDefault.
+  final List<Map<String, dynamic>>? userVoiceClones;
+
+  /// Render mode: modal (overlay) or sidebar (inline, no backdrop/rounded corners).
+  final ModalRenderMode renderMode;
+
   TranslationSettingsModalOptions({
     required this.isVisible,
     required this.onClose,
@@ -238,6 +254,11 @@ class TranslationSettingsModalOptions {
     this.updateMyDefaultOutputLanguage,
     this.updateMyDefaultListenLanguage,
     this.updateListenPreferences,
+    this.showSubtitlesOnCards,
+    this.updateShowSubtitlesOnCards,
+    this.isPersonalTranslation = false,
+    this.userVoiceClones,
+    this.renderMode = ModalRenderMode.modal,
   });
 }
 
@@ -578,6 +599,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
   String? _localDefaultOutputLang;
   String? _localDefaultListen;
   late Map<String, String> _localListenPrefs;
+  late bool _localShowSubtitles;
 
   // Rate limiting
   static const int RATE_LIMIT_MS = 30000;
@@ -595,6 +617,12 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
 
   // Voice cloning
   VoiceCloneConfig? _voiceCloneConfig;
+  List<Map<String, dynamic>> _fetchedClones = [];
+  String _cloneVoiceId = '';
+  String _cloneProvider = 'cartesia';
+  double _cloneStability = 0.5;
+  double _cloneSimilarity = 0.75;
+  bool _showManualCloneEntry = false;
 
   // Fetched data
   Map<String, List<VoiceOption>>? _availableVoices;
@@ -616,19 +644,10 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
   }
 
   void _initializeState() {
-    debugPrint('TranslationSettingsModal: Initializing state');
     final prefs = widget.options.listenerTranslationPreferences;
     _localListenPrefs = prefs != null ? Map.from(prefs.perSpeaker) : {};
     _localDefaultListen = prefs?.globalLanguage;
     _perSpeakerMode = _localListenPrefs.isNotEmpty;
-
-    debugPrint('TranslationSettingsModal: Listen prefs: $_localListenPrefs');
-    debugPrint(
-        'TranslationSettingsModal: Default listen: $_localDefaultListen');
-
-    debugPrint('TranslationSettingsModal: Member: ${widget.options.member}');
-    debugPrint(
-        'TranslationSettingsModal: Speaker states keys: ${widget.options.speakerTranslationStates?.keys.toList()}');
 
     final speakerState =
         widget.options.speakerTranslationStates?[widget.options.member];
@@ -637,17 +656,36 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
       _localSpokenEnabled = speakerState['enabled'] ?? false;
       _localDefaultOutputLang = speakerState['outputLanguage'];
     } else {
-      _localSpokenLanguage = 'en';
-      _localSpokenEnabled = false;
-      _localDefaultOutputLang = null;
+      _localSpokenLanguage = widget.options.mySpokenLanguage ?? 'en';
+      _localSpokenEnabled = widget.options.mySpokenLanguageEnabled ?? false;
+      _localDefaultOutputLang = widget.options.myDefaultOutputLanguage;
     }
 
-    debugPrint(
-        'TranslationSettingsModal: Spoken language: $_localSpokenLanguage');
-    debugPrint(
-        'TranslationSettingsModal: Spoken enabled: $_localSpokenEnabled');
-    debugPrint(
-        'TranslationSettingsModal: Default output: $_localDefaultOutputLang');
+    _localShowSubtitles = widget.options.showSubtitlesOnCards ?? false;
+
+    // Initialize voice clones from props (passed from app level)
+    _fetchedClones = widget.options.userVoiceClones ?? [];
+
+    // Default to clone mode if user has clones
+    if (_fetchedClones.isNotEmpty) {
+      _voiceSelectionMode = VoiceSelectionMode.clone;
+      // Auto-select the default clone, or the first one
+      final defaultClone = _fetchedClones.firstWhere(
+        (c) => c['isDefault'] == true,
+        orElse: () => _fetchedClones.first,
+      );
+      final cloneId = defaultClone['providerVoiceId']?.toString() ??
+          defaultClone['voiceId']?.toString() ??
+          defaultClone['id']?.toString() ??
+          '';
+      final cloneProv = defaultClone['provider']?.toString() ?? 'cartesia';
+      if (cloneId.isNotEmpty) {
+        _voiceCloneConfig = VoiceCloneConfig(
+          provider: cloneProv,
+          voiceId: cloneId,
+        );
+      }
+    }
 
     if (widget.options.translationConfig?.translationVoiceConfig?.ttsNickName !=
         null) {
@@ -735,8 +773,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
             _voicesLoading = false;
           });
         }
-      } catch (e) {
-        debugPrint('[TranslationSettingsModal] Failed to fetch voices: $e');
+      } catch (_) {
         if (mounted) {
           setState(() {
             _voicesLoading = false;
@@ -807,7 +844,6 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
   }
 
   Future<void> _handleApply() async {
-    debugPrint('TranslationSettingsModal: Handling apply');
     final now = DateTime.now().millisecondsSinceEpoch;
     final spokenChanged =
         _localSpokenLanguage != widget.options.mySpokenLanguage ||
@@ -818,9 +854,6 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
         ? _localDefaultListen != widget.options.myDefaultListenLanguage
         : !_areMapsEqual(
             _localListenPrefs, widget.options.listenPreferences ?? {});
-
-    debugPrint('TranslationSettingsModal: Spoken changed: $spokenChanged');
-    debugPrint('TranslationSettingsModal: Listen changed: $listenChanged');
 
     // Rate limiting checks
     if (spokenChanged && _lastSpokenChange > 0) {
@@ -868,8 +901,6 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
         voiceConfig['voiceGender'] = _selectedVoiceGender;
       }
 
-      debugPrint('TranslationSettingsModal: Voice config: $voiceConfig');
-
       // Update spoken language
       if (spokenChanged || _localSpokenEnabled) {
         widget.options.socket?.emit('translation:setMyLanguage', {
@@ -894,8 +925,6 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
       // Update listening preferences
       if (!_perSpeakerMode) {
         if (_localDefaultListen != widget.options.myDefaultListenLanguage) {
-          debugPrint(
-              'TranslationSettingsModal: Emitting setDefaultListenLanguage: $_localDefaultListen');
           widget.options.socket?.emit('translation:setDefaultListenLanguage', {
             'roomName': widget.options.roomName,
             'language': _localDefaultListen,
@@ -918,16 +947,12 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
 
           if (prevLang != language) {
             if (prevLang != null) {
-              debugPrint(
-                  'TranslationSettingsModal: Unsubscribing $speakerId from $prevLang');
               widget.options.socket?.emit('translation:unsubscribe', {
                 'roomName': widget.options.roomName,
                 'speakerId': speakerId,
                 'language': prevLang,
               });
             }
-            debugPrint(
-                'TranslationSettingsModal: Subscribing $speakerId to $language');
             widget.options.socket?.emit('translation:subscribe', {
               'roomName': widget.options.roomName,
               'speakerId': speakerId,
@@ -939,8 +964,6 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
         // Unsubscribe removed
         for (final entry in (widget.options.listenPreferences ?? {}).entries) {
           if (!_localListenPrefs.containsKey(entry.key)) {
-            debugPrint(
-                'TranslationSettingsModal: Unsubscribing removed $entry');
             widget.options.socket?.emit('translation:unsubscribe', {
               'roomName': widget.options.roomName,
               'speakerId': entry.key,
@@ -961,9 +984,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
         duration: 2000,
       );
       widget.options.onClose();
-    } catch (e, stackTrace) {
-      debugPrint('Failed to save translation settings: $e');
-      debugPrint('Stack trace: $stackTrace');
+    } catch (_) {
       widget.options.showAlert?.call(
         message: 'Failed to save settings',
         type: 'danger',
@@ -977,6 +998,12 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
   @override
   Widget build(BuildContext context) {
     if (!widget.options.isVisible) return const SizedBox.shrink();
+
+    // For sidebar or inline mode, render content directly without modal wrapper
+    if (widget.options.renderMode == ModalRenderMode.sidebar ||
+        widget.options.renderMode == ModalRenderMode.inline) {
+      return _buildSidebarContent();
+    }
 
     return Stack(
       children: [
@@ -1021,6 +1048,31 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
           ),
         ),
       ],
+    );
+  }
+
+  /// Sidebar/inline rendering: no backdrop, no Center wrapper, no rounded corners,
+  /// no glassmorphism — just plain content filling the sidebar container.
+  Widget _buildSidebarContent() {
+    return Container(
+      color: widget.isDarkMode
+          ? MediasfuColors.surfaceDark
+          : MediasfuColors.surface,
+      child: Column(
+        children: [
+          _buildHeader(),
+          _buildTabs(),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(MediasfuSpacing.md),
+              child: _activeTab == 'speaking'
+                  ? _buildSpeakingTab()
+                  : _buildListeningTab(),
+            ),
+          ),
+          _buildFooter(),
+        ],
+      ),
     );
   }
 
@@ -1215,14 +1267,6 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
           ),
           child: Row(
             children: [
-              Checkbox(
-                value: _localSpokenEnabled,
-                onChanged: (val) =>
-                    setState(() => _localSpokenEnabled = val ?? false),
-                activeColor: widget.isDarkMode
-                    ? MediasfuColors.primaryDark
-                    : MediasfuColors.primary,
-              ),
               Expanded(
                 child: Text(
                   'Speak in a different language (translate my voice)',
@@ -1233,9 +1277,65 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
                   ),
                 ),
               ),
+              Switch(
+                value: _localSpokenEnabled,
+                onChanged: (val) => setState(() => _localSpokenEnabled = val),
+                activeColor: const Color(0xFF22C55E),
+                activeTrackColor: const Color(0xFF22C55E).withOpacity(0.5),
+                inactiveThumbColor: widget.isDarkMode
+                    ? Colors.grey.shade400
+                    : Colors.grey.shade600,
+                inactiveTrackColor: widget.isDarkMode
+                    ? Colors.grey.shade700
+                    : Colors.grey.shade300,
+              ),
             ],
           ),
         ),
+        if (widget.options.isPersonalTranslation)
+          Padding(
+            padding: EdgeInsets.only(top: MediasfuSpacing.sm),
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: MediasfuSpacing.md,
+                vertical: MediasfuSpacing.sm,
+              ),
+              decoration: BoxDecoration(
+                color: widget.isDarkMode
+                    ? const Color(0xFFEAB308).withOpacity(0.08)
+                    : const Color(0xFFEAB308).withOpacity(0.06),
+                borderRadius: BorderRadius.circular(MediasfuBorders.sm),
+                border: Border.all(
+                  color: widget.isDarkMode
+                      ? const Color(0xFFEAB308).withOpacity(0.2)
+                      : const Color(0xFFEAB308).withOpacity(0.15),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 14,
+                    color: widget.isDarkMode
+                        ? const Color(0xFFFBBF24)
+                        : const Color(0xFFD97706),
+                  ),
+                  SizedBox(width: MediasfuSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      'Translation is billed from your personal credits',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: widget.isDarkMode
+                            ? Colors.white.withOpacity(0.7)
+                            : Colors.black.withOpacity(0.6),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         if (_localSpokenEnabled) ...[
           SizedBox(height: MediasfuSpacing.lg),
           Text(
@@ -1259,6 +1359,9 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
           ),
           if (_localDefaultOutputLang != null) _buildVoiceSettings(),
         ],
+        // Subtitles toggle - also on speaking tab
+        SizedBox(height: MediasfuSpacing.lg),
+        _buildSubtitlesToggle(),
       ],
     );
   }
@@ -1333,14 +1436,6 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
     return Expanded(
       child: InkWell(
         onTap: () {
-          if (mode == VoiceSelectionMode.clone) {
-            widget.options.showAlert?.call(
-              message: '🎤 Voice Cloning - Coming Soon!',
-              type: 'info',
-              duration: 3000,
-            );
-            return;
-          }
           setState(() => _voiceSelectionMode = mode);
         },
         child: Container(
@@ -1588,21 +1683,548 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
   }
 
   Widget _buildCloneVoiceSettings() {
-    return Container(
-      padding: EdgeInsets.all(MediasfuSpacing.sm),
-      decoration: BoxDecoration(
-        color: widget.isDarkMode
-            ? MediasfuColors.warning.withOpacity(0.1)
-            : MediasfuColors.warning.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(MediasfuBorders.sm),
-      ),
-      child: Text(
-        '⚠️ Voice cloning requires a pre-created cloned voice from your TTS provider.',
-        style: TextStyle(
-          color: MediasfuColors.warning,
-          fontSize: MediasfuTypography.bodySmall.fontSize,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Info banner
+        Container(
+          padding: EdgeInsets.all(MediasfuSpacing.sm),
+          margin: EdgeInsets.only(bottom: MediasfuSpacing.md),
+          decoration: BoxDecoration(
+            color: widget.isDarkMode
+                ? MediasfuColors.info.withOpacity(0.1)
+                : MediasfuColors.info.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(MediasfuBorders.sm),
+          ),
+          child: Row(
+            children: [
+              Icon(FontAwesomeIcons.circleInfo,
+                  size: 14,
+                  color: widget.isDarkMode
+                      ? const Color(0xFF60A5FA)
+                      : const Color(0xFF2563EB)),
+              SizedBox(width: MediasfuSpacing.sm),
+              Expanded(
+                child: Text(
+                  'Select a cloned voice or enter a voice ID manually.',
+                  style: TextStyle(
+                    color: widget.isDarkMode
+                        ? const Color(0xFF60A5FA)
+                        : const Color(0xFF2563EB),
+                    fontSize: MediasfuTypography.bodySmall.fontSize,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
+
+        // Clones display (passed from app level)
+        if (_fetchedClones.isNotEmpty) ...[
+          Text(
+            'Your Cloned Voices',
+            style: TextStyle(
+              fontSize: MediasfuTypography.bodySmall.fontSize,
+              color: widget.isDarkMode
+                  ? MediasfuColors.textMutedDark
+                  : MediasfuColors.textMuted,
+            ),
+          ),
+          SizedBox(height: MediasfuSpacing.sm),
+          Wrap(
+            spacing: MediasfuSpacing.sm,
+            runSpacing: MediasfuSpacing.sm,
+            children: _fetchedClones.map((clone) {
+              final cloneId = clone['providerVoiceId']?.toString() ??
+                  clone['voiceId']?.toString() ??
+                  clone['id']?.toString() ??
+                  '';
+              final cloneName = clone['name']?.toString() ?? 'Clone';
+              final cloneProviderVal =
+                  clone['provider']?.toString() ?? 'cartesia';
+              final isDefault = clone['isDefault'] == true;
+              final isSelected = _voiceCloneConfig?.voiceId == cloneId;
+
+              return InkWell(
+                onTap: () {
+                  setState(() {
+                    _voiceCloneConfig = VoiceCloneConfig(
+                      provider: cloneProviderVal,
+                      voiceId: cloneId,
+                    );
+                  });
+                  widget.options.showAlert?.call(
+                    message: 'Voice clone "$cloneName" selected!',
+                    type: 'success',
+                    duration: 2000,
+                  );
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: MediasfuSpacing.md,
+                    vertical: MediasfuSpacing.sm,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? (widget.isDarkMode
+                            ? MediasfuColors.primaryDark
+                            : MediasfuColors.primary)
+                        : (widget.isDarkMode
+                            ? Colors.white.withOpacity(0.08)
+                            : Colors.black.withOpacity(0.05)),
+                    border: Border.all(
+                      color: isSelected
+                          ? (widget.isDarkMode
+                              ? MediasfuColors.primaryDark
+                              : MediasfuColors.primary)
+                          : (widget.isDarkMode
+                              ? Colors.white.withOpacity(0.1)
+                              : Colors.black.withOpacity(0.1)),
+                      width: isSelected ? 2 : 1,
+                    ),
+                    borderRadius: BorderRadius.circular(MediasfuBorders.md),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '🎤',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      SizedBox(width: MediasfuSpacing.xs),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            cloneName,
+                            style: TextStyle(
+                              color: isSelected
+                                  ? Colors.white
+                                  : (widget.isDarkMode
+                                      ? MediasfuColors.textPrimaryDark
+                                      : MediasfuColors.textPrimary),
+                              fontSize: MediasfuTypography.bodySmall.fontSize,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            cloneProviderVal,
+                            style: TextStyle(
+                              color: isSelected
+                                  ? Colors.white.withOpacity(0.7)
+                                  : (widget.isDarkMode
+                                      ? MediasfuColors.textMutedDark
+                                      : MediasfuColors.textMuted),
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (isDefault) ...[
+                        SizedBox(width: MediasfuSpacing.xs),
+                        Icon(FontAwesomeIcons.star,
+                            size: 10, color: MediasfuColors.warning),
+                      ],
+                      if (isSelected) ...[
+                        SizedBox(width: MediasfuSpacing.xs),
+                        Icon(FontAwesomeIcons.check,
+                            size: 12, color: Colors.white),
+                      ],
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          SizedBox(height: MediasfuSpacing.md),
+        ],
+
+        // No clones available
+        if (_fetchedClones.isEmpty)
+          Container(
+            padding: EdgeInsets.all(MediasfuSpacing.md),
+            margin: EdgeInsets.only(bottom: MediasfuSpacing.md),
+            decoration: BoxDecoration(
+              color: widget.isDarkMode
+                  ? Colors.white.withOpacity(0.05)
+                  : Colors.black.withOpacity(0.03),
+              borderRadius: BorderRadius.circular(MediasfuBorders.md),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  '🎤',
+                  style: const TextStyle(fontSize: 32),
+                ),
+                SizedBox(height: MediasfuSpacing.sm),
+                Text(
+                  'No cloned voices found',
+                  style: TextStyle(
+                    color: widget.isDarkMode
+                        ? MediasfuColors.textPrimaryDark
+                        : MediasfuColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: MediasfuSpacing.xs),
+                Text(
+                  'Create a voice clone on the web dashboard, then select it here.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: widget.isDarkMode
+                        ? MediasfuColors.textMutedDark
+                        : MediasfuColors.textMuted,
+                    fontSize: MediasfuTypography.bodySmall.fontSize,
+                  ),
+                ),
+                SizedBox(height: MediasfuSpacing.md),
+                InkWell(
+                  onTap: () => launchUrl(
+                    Uri.parse('https://mediasfu.com/lite/voice-clone'),
+                    mode: LaunchMode.externalApplication,
+                  ),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: MediasfuSpacing.lg,
+                      vertical: MediasfuSpacing.sm,
+                    ),
+                    decoration: BoxDecoration(
+                      color: widget.isDarkMode
+                          ? MediasfuColors.accentDark
+                          : MediasfuColors.accent,
+                      borderRadius: BorderRadius.circular(MediasfuBorders.md),
+                    ),
+                    child: Text(
+                      '🌐 Create Clone on Web',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: MediasfuTypography.bodySmall.fontSize,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+        // Manual entry toggle (hidden for now)
+        if (false)
+          InkWell(
+            onTap: () =>
+                setState(() => _showManualCloneEntry = !_showManualCloneEntry),
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: MediasfuSpacing.sm),
+              child: Row(
+                children: [
+                  Icon(
+                    _showManualCloneEntry
+                        ? FontAwesomeIcons.chevronUp
+                        : FontAwesomeIcons.chevronDown,
+                    size: 12,
+                    color: widget.isDarkMode
+                        ? MediasfuColors.textMutedDark
+                        : MediasfuColors.textMuted,
+                  ),
+                  SizedBox(width: MediasfuSpacing.sm),
+                  Text(
+                    'Enter voice ID manually',
+                    style: TextStyle(
+                      color: widget.isDarkMode
+                          ? MediasfuColors.textMutedDark
+                          : MediasfuColors.textMuted,
+                      fontSize: MediasfuTypography.bodySmall.fontSize,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+        // Manual clone entry form (hidden for now)
+        if (false && _showManualCloneEntry) ...[
+          SizedBox(height: MediasfuSpacing.sm),
+
+          // Provider selector
+          Text(
+            'Voice Clone Provider',
+            style: TextStyle(
+              color: widget.isDarkMode
+                  ? MediasfuColors.textMutedDark
+                  : MediasfuColors.textMuted,
+              fontSize: MediasfuTypography.bodySmall.fontSize,
+            ),
+          ),
+          SizedBox(height: MediasfuSpacing.xs),
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: MediasfuSpacing.md,
+              vertical: MediasfuSpacing.xs,
+            ),
+            decoration: BoxDecoration(
+              color: widget.isDarkMode
+                  ? MediasfuColors.surfaceElevatedDark
+                  : MediasfuColors.surfaceElevated,
+              border: Border.all(
+                color: widget.isDarkMode
+                    ? Colors.white.withOpacity(0.15)
+                    : Colors.black.withOpacity(0.15),
+              ),
+              borderRadius: BorderRadius.circular(MediasfuBorders.md),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _cloneProvider,
+                isExpanded: true,
+                dropdownColor: widget.isDarkMode
+                    ? MediasfuColors.surfaceElevatedDark
+                    : MediasfuColors.surfaceElevated,
+                style: TextStyle(
+                  color: widget.isDarkMode
+                      ? MediasfuColors.textPrimaryDark
+                      : MediasfuColors.textPrimary,
+                  fontSize: MediasfuTypography.bodyMedium.fontSize,
+                ),
+                items: const [
+                  DropdownMenuItem(
+                      value: 'cartesia',
+                      child: Text('Cartesia (System Default)')),
+                  DropdownMenuItem(
+                      value: 'elevenlabs', child: Text('ElevenLabs')),
+                  DropdownMenuItem(value: 'playht', child: Text('PlayHT')),
+                ],
+                onChanged: (v) {
+                  if (v != null) setState(() => _cloneProvider = v);
+                },
+              ),
+            ),
+          ),
+          SizedBox(height: MediasfuSpacing.md),
+
+          // Voice ID input
+          Text(
+            'Cloned Voice ID',
+            style: TextStyle(
+              color: widget.isDarkMode
+                  ? MediasfuColors.textMutedDark
+                  : MediasfuColors.textMuted,
+              fontSize: MediasfuTypography.bodySmall.fontSize,
+            ),
+          ),
+          SizedBox(height: MediasfuSpacing.xs),
+          TextField(
+            onChanged: (v) => _cloneVoiceId = v,
+            decoration: InputDecoration(
+              hintText: 'Enter your cloned voice ID',
+              hintStyle: TextStyle(
+                color: widget.isDarkMode
+                    ? MediasfuColors.textMutedDark
+                    : MediasfuColors.textMuted,
+                fontSize: MediasfuTypography.bodySmall.fontSize,
+              ),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: MediasfuSpacing.md,
+                vertical: MediasfuSpacing.sm,
+              ),
+              filled: true,
+              fillColor: widget.isDarkMode
+                  ? MediasfuColors.surfaceElevatedDark
+                  : MediasfuColors.surfaceElevated,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(MediasfuBorders.md),
+                borderSide: BorderSide(
+                  color: widget.isDarkMode
+                      ? Colors.white.withOpacity(0.15)
+                      : Colors.black.withOpacity(0.15),
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(MediasfuBorders.md),
+                borderSide: BorderSide(
+                  color: widget.isDarkMode
+                      ? Colors.white.withOpacity(0.15)
+                      : Colors.black.withOpacity(0.15),
+                ),
+              ),
+            ),
+            style: TextStyle(
+              color: widget.isDarkMode
+                  ? MediasfuColors.textPrimaryDark
+                  : MediasfuColors.textPrimary,
+              fontSize: MediasfuTypography.bodyMedium.fontSize,
+            ),
+          ),
+          SizedBox(height: MediasfuSpacing.md),
+
+          // ElevenLabs-specific sliders
+          if (_cloneProvider == 'elevenlabs') ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Stability',
+                  style: TextStyle(
+                    color: widget.isDarkMode
+                        ? MediasfuColors.textMutedDark
+                        : MediasfuColors.textMuted,
+                    fontSize: MediasfuTypography.bodySmall.fontSize,
+                  ),
+                ),
+                Text(
+                  '${(_cloneStability * 100).round()}%',
+                  style: TextStyle(
+                    color: widget.isDarkMode
+                        ? MediasfuColors.textMutedDark
+                        : MediasfuColors.textMuted,
+                    fontSize: MediasfuTypography.bodySmall.fontSize,
+                  ),
+                ),
+              ],
+            ),
+            Slider(
+              value: _cloneStability,
+              min: 0,
+              max: 1,
+              divisions: 20,
+              activeColor: widget.isDarkMode
+                  ? MediasfuColors.primaryDark
+                  : MediasfuColors.primary,
+              onChanged: (v) => setState(() => _cloneStability = v),
+            ),
+            Text(
+              'Higher = more consistent, Lower = more expressive',
+              style: TextStyle(
+                color: widget.isDarkMode
+                    ? Colors.white.withOpacity(0.5)
+                    : Colors.black.withOpacity(0.5),
+                fontSize: 11,
+              ),
+            ),
+            SizedBox(height: MediasfuSpacing.sm),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Similarity Boost',
+                  style: TextStyle(
+                    color: widget.isDarkMode
+                        ? MediasfuColors.textMutedDark
+                        : MediasfuColors.textMuted,
+                    fontSize: MediasfuTypography.bodySmall.fontSize,
+                  ),
+                ),
+                Text(
+                  '${(_cloneSimilarity * 100).round()}%',
+                  style: TextStyle(
+                    color: widget.isDarkMode
+                        ? MediasfuColors.textMutedDark
+                        : MediasfuColors.textMuted,
+                    fontSize: MediasfuTypography.bodySmall.fontSize,
+                  ),
+                ),
+              ],
+            ),
+            Slider(
+              value: _cloneSimilarity,
+              min: 0,
+              max: 1,
+              divisions: 20,
+              activeColor: widget.isDarkMode
+                  ? MediasfuColors.primaryDark
+                  : MediasfuColors.primary,
+              onChanged: (v) => setState(() => _cloneSimilarity = v),
+            ),
+            Text(
+              'Higher = closer to original voice',
+              style: TextStyle(
+                color: widget.isDarkMode
+                    ? Colors.white.withOpacity(0.5)
+                    : Colors.black.withOpacity(0.5),
+                fontSize: 11,
+              ),
+            ),
+            SizedBox(height: MediasfuSpacing.md),
+          ],
+
+          // Apply manual clone button
+          InkWell(
+            onTap: () {
+              if (_cloneVoiceId.trim().isNotEmpty) {
+                setState(() {
+                  _voiceCloneConfig = VoiceCloneConfig(
+                    provider: _cloneProvider,
+                    voiceId: _cloneVoiceId.trim(),
+                    stability:
+                        _cloneProvider == 'elevenlabs' ? _cloneStability : null,
+                    similarity: _cloneProvider == 'elevenlabs'
+                        ? _cloneSimilarity
+                        : null,
+                  );
+                });
+                widget.options.showAlert?.call(
+                  message: 'Voice clone configured!',
+                  type: 'success',
+                  duration: 2000,
+                );
+              } else {
+                widget.options.showAlert?.call(
+                  message: 'Please enter a cloned voice ID',
+                  type: 'danger',
+                  duration: 2000,
+                );
+              }
+            },
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(MediasfuSpacing.md),
+              decoration: BoxDecoration(
+                color: widget.isDarkMode
+                    ? MediasfuColors.accentDark
+                    : MediasfuColors.accent,
+                borderRadius: BorderRadius.circular(MediasfuBorders.md),
+              ),
+              child: Text(
+                '🎤 Apply Voice Clone',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: MediasfuTypography.bodyMedium.fontSize,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+
+        // Current clone summary
+        if (_voiceCloneConfig != null)
+          Container(
+            margin: EdgeInsets.only(top: MediasfuSpacing.md),
+            padding: EdgeInsets.all(MediasfuSpacing.sm),
+            decoration: BoxDecoration(
+              color: widget.isDarkMode
+                  ? MediasfuColors.success.withOpacity(0.1)
+                  : MediasfuColors.success.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(MediasfuBorders.sm),
+            ),
+            child: Row(
+              children: [
+                Icon(FontAwesomeIcons.check,
+                    size: 12, color: MediasfuColors.success),
+                SizedBox(width: MediasfuSpacing.sm),
+                Expanded(
+                  child: Text(
+                    'Clone active: ${_voiceCloneConfig!.provider} / ${_voiceCloneConfig!.voiceId.length > 12 ? '${_voiceCloneConfig!.voiceId.substring(0, 12)}...' : _voiceCloneConfig!.voiceId}',
+                    style: TextStyle(
+                      color: MediasfuColors.success,
+                      fontSize: MediasfuTypography.bodySmall.fontSize,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 
@@ -1727,7 +2349,92 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
                   isHost: widget.options.islevel == '2',
                 )),
         ],
+
+        // Live Subtitles Toggle
+        SizedBox(height: MediasfuSpacing.xl),
+        Divider(
+          color: MediasfuColors.glassBorder(darkMode: widget.isDarkMode),
+        ),
+        SizedBox(height: MediasfuSpacing.md),
+        _buildSubtitlesToggle(),
       ],
+    );
+  }
+
+  /// Builds the subtitle toggle for showing live captions on video cards
+  Widget _buildSubtitlesToggle() {
+    return Container(
+      padding: EdgeInsets.all(MediasfuSpacing.md),
+      decoration: BoxDecoration(
+        color: widget.isDarkMode
+            ? MediasfuColors.surfaceElevatedDark
+            : MediasfuColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(MediasfuBorders.md),
+        border: Border.all(
+          color: MediasfuColors.glassBorder(darkMode: widget.isDarkMode),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            FontAwesomeIcons.closedCaptioning,
+            size: 20,
+            color: _localShowSubtitles
+                ? (widget.isDarkMode
+                    ? MediasfuColors.accentDark
+                    : MediasfuColors.accent)
+                : (widget.isDarkMode
+                    ? MediasfuColors.textMutedDark
+                    : MediasfuColors.textMuted),
+          ),
+          SizedBox(width: MediasfuSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Show Subtitles on Video',
+                  style: TextStyle(
+                    color: widget.isDarkMode
+                        ? MediasfuColors.textPrimaryDark
+                        : MediasfuColors.textPrimary,
+                    fontWeight: FontWeight.w500,
+                    fontSize: MediasfuTypography.bodyMedium.fontSize,
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'Display live captions on participant video cards',
+                  style: TextStyle(
+                    color: widget.isDarkMode
+                        ? MediasfuColors.textMutedDark
+                        : MediasfuColors.textMuted,
+                    fontSize: MediasfuTypography.bodySmall.fontSize,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: _localShowSubtitles,
+            onChanged: (value) {
+              setState(() => _localShowSubtitles = value);
+              widget.options.updateShowSubtitlesOnCards?.call(value);
+            },
+            activeColor: widget.isDarkMode
+                ? MediasfuColors.accentDark
+                : MediasfuColors.accent,
+            activeTrackColor: (widget.isDarkMode
+                    ? MediasfuColors.accentDark
+                    : MediasfuColors.accent)
+                .withOpacity(0.5),
+            inactiveThumbColor:
+                widget.isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600,
+            inactiveTrackColor:
+                widget.isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300,
+          ),
+        ],
+      ),
     );
   }
 

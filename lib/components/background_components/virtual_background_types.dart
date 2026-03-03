@@ -105,7 +105,7 @@ class VirtualBackground {
       'name': name,
       'thumbnailUrl': thumbnailUrl,
       'imageUrl': imageUrl,
-      'color': color?.toARGB32(),
+      'color': color?.value,
       'blurIntensity': blurIntensity,
       'videoUrl': videoUrl,
       'isPreset': isPreset,
@@ -156,7 +156,7 @@ class VirtualBackground {
   /// Factory for creating a color background
   factory VirtualBackground.color(Color color, {String? name}) {
     return VirtualBackground(
-      id: 'color_${color.toARGB32()}',
+      id: 'color_${color.value}',
       type: BackgroundType.color,
       name: name ?? 'Color',
       color: color,
@@ -257,10 +257,10 @@ class VirtualBackground {
       data.setUint32(34, pixelDataSize, Endian.little);
 
       // Fill with color (BGRA format)
-      final b = (color.b * 255).round();
-      final g = (color.g * 255).round();
-      final r = (color.r * 255).round();
-      final a = (color.a * 255).round();
+      final b = color.blue;
+      final g = color.green;
+      final r = color.red;
+      final a = color.alpha;
 
       int offset = 54;
       for (int y = 0; y < height; y++) {

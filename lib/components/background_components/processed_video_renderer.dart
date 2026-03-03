@@ -230,20 +230,44 @@ class _ProcessedVideoRendererState extends State<ProcessedVideoRenderer> {
 
   /// Called when a frame has been segmented
   void _onFrameProcessed(ProcessedFrame frame) async {
+    // Early exit if not mounted or not processing (race condition guard)
     if (!mounted || !_isProcessing) return;
+
+    // Capture references to prevent null during async operations
+    final compositor = _compositor;
+    final streamSource = _streamSource;
+
+    if (compositor == null || streamSource == null) {
+      return;
+    }
 
     final stopwatch = Stopwatch()..start();
 
     try {
       // Compose the frame with virtual background
       final background = widget.background ?? VirtualBackground.none();
-      final composedFrame = await _compositor!.compose(
+      final composedFrame = await compositor.compose(
         frame: frame,
         background: background,
       );
 
-      // Push to stream source for display
-      await _streamSource?.pushFrame(composedFrame);
+      // Check if still processing after async operation
+      if (!mounted || !_isProcessing) {
+        debugPrint(
+            'ProcessedVideoRenderer: Stopped during compositing, discarding frame');
+        return;
+      }
+
+      // Push to stream source for display (with try-catch for state errors)
+      try {
+        await streamSource.pushFrame(composedFrame);
+      } catch (e) {
+        // Stream source may be disposed during shutdown
+        if (_isProcessing) {
+          debugPrint('ProcessedVideoRenderer: pushFrame error: $e');
+        }
+        return;
+      }
 
       // Update FPS counter
       _frameCount++;
@@ -260,7 +284,10 @@ class _ProcessedVideoRendererState extends State<ProcessedVideoRenderer> {
       stopwatch.stop();
       widget.onFrameProcessed?.call(stopwatch.elapsed);
     } catch (e) {
-      debugPrint('ProcessedVideoRenderer: Compositing error: $e');
+      // Only log if still processing (otherwise expected during shutdown)
+      if (_isProcessing) {
+        debugPrint('ProcessedVideoRenderer: Compositing error: $e');
+      }
     }
   }
 
@@ -313,7 +340,7 @@ class _ProcessedVideoRendererState extends State<ProcessedVideoRenderer> {
             if (_isProcessing && _currentFrame == null)
               Positioned.fill(
                 child: Container(
-                  color: Colors.black.withValues(alpha: 0.3),
+                  color: Colors.black.withOpacity(0.3),
                   child: const Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -374,7 +401,7 @@ class _ProcessedVideoRendererState extends State<ProcessedVideoRenderer> {
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.8),
+                    color: Colors.green.withOpacity(0.8),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
