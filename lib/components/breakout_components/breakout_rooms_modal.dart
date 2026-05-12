@@ -217,12 +217,12 @@ class RoomList extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      icon: const Icon(FontAwesomeIcons.pen),
+                      icon: const FaIcon(FontAwesomeIcons.pen),
                       onPressed: () => options.handleEditRoom(roomIndex),
                       iconSize: 16,
                     ),
                     IconButton(
-                      icon: const Icon(FontAwesomeIcons.xmark),
+                      icon: const FaIcon(FontAwesomeIcons.xmark),
                       onPressed: () => options.handleDeleteRoom(roomIndex),
                       iconSize: 16,
                     ),
@@ -234,7 +234,7 @@ class RoomList extends StatelessWidget {
                 return ListTile(
                   title: Text(participant.name),
                   trailing: IconButton(
-                    icon: const Icon(FontAwesomeIcons.xmark),
+                    icon: const FaIcon(FontAwesomeIcons.xmark),
                     onPressed: () =>
                         options.handleRemoveParticipant(roomIndex, participant),
                     iconSize: 16,
@@ -317,7 +317,7 @@ class EditRoomModal extends StatelessWidget {
                         title:
                             Text('Edit Room ${options.currentRoomIndex! + 1}'),
                         trailing: IconButton(
-                          icon: const Icon(FontAwesomeIcons.xmark),
+                          icon: const FaIcon(FontAwesomeIcons.xmark),
                           onPressed: () =>
                               options.updateEditRoomModalVisible(false),
                           iconSize: 16,
@@ -341,13 +341,13 @@ class EditRoomModal extends StatelessWidget {
                                 return ListTile(
                                   title: Row(
                                     children: [
-                                      const Icon(FontAwesomeIcons.user),
+                                      const FaIcon(FontAwesomeIcons.user),
                                       const SizedBox(width: 10),
                                       Text(participant.name),
                                     ],
                                   ),
                                   trailing: IconButton(
-                                    icon: const Icon(FontAwesomeIcons.xmark),
+                                    icon: const FaIcon(FontAwesomeIcons.xmark),
                                     onPressed: () =>
                                         options.handleRemoveParticipant(
                                             options.currentRoomIndex!,
@@ -384,13 +384,13 @@ class EditRoomModal extends StatelessWidget {
                                 return ListTile(
                                   title: Row(
                                     children: [
-                                      const Icon(FontAwesomeIcons.user),
+                                      const FaIcon(FontAwesomeIcons.user),
                                       const SizedBox(width: 10),
                                       Text(participant.name),
                                     ],
                                   ),
                                   trailing: IconButton(
-                                    icon: const Icon(FontAwesomeIcons.plus),
+                                    icon: const FaIcon(FontAwesomeIcons.plus),
                                     onPressed: () =>
                                         options.handleAddParticipant(
                                             options.currentRoomIndex!,
@@ -951,7 +951,7 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
                           onPressed: handleRandomAssign,
                           child: const Row(
                             children: [
-                              Icon(FontAwesomeIcons.shuffle),
+                              FaIcon(FontAwesomeIcons.shuffle),
                               SizedBox(width: 2),
                               Text('Random'),
                             ],
@@ -962,7 +962,7 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
                           onPressed: handleManualAssign,
                           child: const Row(
                             children: [
-                              Icon(FontAwesomeIcons.handPointer),
+                              FaIcon(FontAwesomeIcons.handPointer),
                               SizedBox(width: 5),
                               Text('Manual'),
                             ],
@@ -973,7 +973,7 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
                           onPressed: handleAddRoom,
                           child: const Row(
                             children: [
-                              Icon(FontAwesomeIcons.plus),
+                              FaIcon(FontAwesomeIcons.plus),
                               SizedBox(width: 2),
                               Text('Add Room'),
                             ],
@@ -984,7 +984,7 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
                           onPressed: handleSaveRooms,
                           child: const Row(
                             children: [
-                              Icon(FontAwesomeIcons.floppyDisk),
+                              FaIcon(FontAwesomeIcons.floppyDisk),
                               SizedBox(width: 2),
                               Text('Save Rooms'),
                             ],
@@ -1071,7 +1071,7 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
                           onPressed: handleStartBreakout,
                           child: const Row(
                             children: [
-                              Icon(FontAwesomeIcons.play),
+                              FaIcon(FontAwesomeIcons.play),
                               SizedBox(width: 5),
                               Text('Start Breakout'),
                             ],
@@ -1084,7 +1084,7 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
                           onPressed: handleStartBreakout,
                           child: const Row(
                             children: [
-                              Icon(FontAwesomeIcons.arrowsRotate),
+                              FaIcon(FontAwesomeIcons.arrowsRotate),
                               SizedBox(width: 5),
                               Text('Update Breakout'),
                             ],
@@ -1095,7 +1095,7 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
                           onPressed: handleStopBreakout,
                           child: const Row(
                             children: [
-                              Icon(FontAwesomeIcons.stop),
+                              FaIcon(FontAwesomeIcons.stop),
                               SizedBox(width: 5),
                               Text('Stop Breakout'),
                             ],

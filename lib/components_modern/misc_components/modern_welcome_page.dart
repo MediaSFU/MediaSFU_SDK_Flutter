@@ -315,9 +315,10 @@ class _ModernWelcomePageState extends State<ModernWelcomePage>
                             ],
                           ),
                           padding: const EdgeInsets.all(3),
-                          child: buildLogoCircle(
-                            widget.options.imgSrc,
+                          child: CircleAvatar(
                             radius: 48,
+                            backgroundImage:
+                                resolveImageSource(widget.options.imgSrc),
                           ),
                         ),
                         const SizedBox(height: MediasfuSpacing.lg),

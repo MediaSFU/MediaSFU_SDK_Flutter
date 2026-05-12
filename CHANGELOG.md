@@ -1,3 +1,15 @@
+### 2.2.7
+* **Minor Improvements**:
+  - Updated `font_awesome_flutter` to version 11.0.0 for access to the latest icons and features.
+  - Improved error handling and logging in permission-related socket receive methods.
+  - Updated `flutter_webrtc` to version 1.4.1 for enhanced compatibility and performance.
+
+### 2.2.6
+* **Minor Bug Fixes**:
+  - Resolved minor UI glitches in custom builder implementations.
+  - Improved error handling and logging for custom builder functions.
+  - Updated documentation with clearer examples for custom builder usage.
+
 ### 2.2.5
 * **Major Bug Fixes**:
   - UI stability improvements across all components, especially in no-UI mode.

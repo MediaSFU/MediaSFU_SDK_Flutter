@@ -893,10 +893,12 @@ class _ModernPreJoinPageState extends State<ModernPreJoinPage>
                             ],
                           ),
                           padding: const EdgeInsets.all(3),
-                          child: buildLogoCircle(
-                            widget.options.parameters.imgSrc ??
-                                kDefaultMediaSFULogo,
+                          child: CircleAvatar(
                             radius: 48,
+                            backgroundImage: resolveImageSource(
+                              widget.options.parameters.imgSrc ??
+                                  kDefaultMediaSFULogo,
+                            ),
                           ),
                         ),
                         const SizedBox(height: MediasfuSpacing.lg),

@@ -1,5 +1,5 @@
 // ignore_for_file: empty_catches, non_constant_identifier_names
-import '../../utils/image_utils.dart';
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import '../core/theme/mediasfu_theme.dart';
 import '../core/theme/mediasfu_animations.dart';
@@ -584,9 +584,8 @@ class ModernMediasfuGenericOptions {
   ContainerStyleOptions? containerStyle;
   MediasfuUICustomOverrides? uiOverrides;
 
-  /// Whether to use fixed link (stagerooms.mediasfu.com) instead of dynamic URL selection
-  /// When true, always connects to stagerooms.mediasfu.com
-  /// When false, URL is selected based on meeting ID prefix (d=demos, s=sandbox, p=production)
+  /// Whether to use a fixed room host instead of meeting-based URL selection.
+  /// Use this only when your deployment requires a single fixed entry host.
   bool? useFixedLink;
 
   /// App key for Flutter app authentication in socket handshake (X-App-Key)
@@ -622,14 +621,14 @@ class ModernMediasfuGenericOptions {
   /// Each clone is a map with keys: id, voiceId, name, provider, isDefault.
   List<Map<String, dynamic>>? userVoiceClones;
 
-  /// When true, keeps the urn:3gpp:video-orientation RTP header extension
-  /// so recorded video has correct orientation metadata.
-  bool optimizeVideoRecord;
-
-  /// Optional callback for navigating back from the prejoin/setup page.
-  /// When provided, the setup page back button will call this instead of
-  /// using Navigator.maybePop. Useful for apps using GoRouter or custom routing.
+  /// Optional callback invoked when the user wants to navigate back
+  /// (e.g., from the pre-join page or after leaving a meeting).
   VoidCallback? onBack;
+
+  /// When true, the `urn:3gpp:video-orientation` RTP header extension is
+  /// preserved during mediasoup device creation, which improves video
+  /// recording quality by retaining orientation metadata.
+  bool optimizeVideoRecord;
 
   ModernMediasfuGenericOptions({
     this.preJoinPageWidget,
@@ -662,8 +661,8 @@ class ModernMediasfuGenericOptions {
     this.canUsePersonalTranslation = false,
     this.personalTranslationUsername,
     this.userVoiceClones,
-    this.optimizeVideoRecord = false,
     this.onBack,
+    this.optimizeVideoRecord = false,
     CustomWorkspaceBuilder? customWorkspaceBuilder,
   }) {
     applyCustomWorkspaceBuilder(customWorkspaceBuilder);
@@ -1107,7 +1106,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           eventType.value == EventType.conference)) {
         // Handle landscape orientation for webinar and conference event types
         final mediaQuery = MediaQuery.of(context);
-        final safeAreaInsets = mediaQuery.padding;
+        final safeAreaInsets =
+            mediaQuery.padding + mediaQuery.systemGestureInsets;
         // Use available height after safe area is subtracted
         final availableHeight =
             mediaQuery.size.height - safeAreaInsets.top - safeAreaInsets.bottom;
@@ -2224,7 +2224,6 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       if (value == EventType.conference &&
           !shareScreenStarted.value &&
           !shared.value &&
-          !(whiteboardStarted.value && !whiteboardEnded.value) &&
           mainHeightWidth != 0) {
         mainHeightWidth = 0;
         mediasfuParameters.mainHeightWidth = 0;
@@ -2232,9 +2231,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             widget.options.sourceParameters, 'mainHeightWidth', 0.0);
       }
     });
-    if (value == EventType.chat ||
-        value == EventType.conference ||
-        value == EventType.webinar) {
+    if (value == EventType.chat) {
       updateMeetingDisplayType('all');
     }
   }
@@ -4961,6 +4958,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     mediasfuParameters.whiteboardEnded = value;
     updateSpecificState(
         widget.options.sourceParameters, 'whiteboardEnded', value);
+    // When whiteboard ends and no screen share is active, reset layout
+    if (value && !screenShareActive) {
+      updateMainHeightWidth(0);
+    }
   }
 
   void updateWhiteboardLimit(int value) {
@@ -5140,6 +5141,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             LaunchRecordingOptions(
                 updateIsRecordingModalVisible: updateIsRecordingModalVisible,
                 isRecordingModalVisible: isRecordingModalVisible.value,
+                showAlert: showAlert,
                 stopLaunchRecord: stopLaunchRecord.value,
                 canLaunchRecord: canLaunchRecord.value,
                 recordingAudioSupport: recordingAudioSupport.value,
@@ -5269,6 +5271,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             LaunchRecordingOptions(
                 updateIsRecordingModalVisible: updateIsRecordingModalVisible,
                 isRecordingModalVisible: isRecordingModalVisible.value,
+                showAlert: showAlert,
                 stopLaunchRecord: stopLaunchRecord.value,
                 canLaunchRecord: canLaunchRecord.value,
                 recordingAudioSupport: recordingAudioSupport.value,
@@ -5389,6 +5392,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             LaunchRecordingOptions(
                 updateIsRecordingModalVisible: updateIsRecordingModalVisible,
                 isRecordingModalVisible: isRecordingModalVisible.value,
+                showAlert: showAlert,
                 stopLaunchRecord: stopLaunchRecord.value,
                 canLaunchRecord: canLaunchRecord.value,
                 recordingAudioSupport: recordingAudioSupport.value,
@@ -6305,10 +6309,26 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               ),
               name: null,
               semanticsLabel: recordPaused.value
-                  ? 'Resume recording'
-                  : 'Pause/stop recording',
+                  ? 'Open recording settings'
+                  : 'Pause recording to access settings',
               onPress: () {
-                updateActiveSidebarContent(SidebarContent.recording);
+                launchRecording(
+                  LaunchRecordingOptions(
+                    updateIsRecordingModalVisible:
+                        updateIsRecordingModalVisible,
+                    isRecordingModalVisible: isRecordingModalVisible.value,
+                    showAlert: showAlert,
+                    stopLaunchRecord: stopLaunchRecord.value,
+                    canLaunchRecord: canLaunchRecord.value,
+                    recordingAudioSupport: recordingAudioSupport.value,
+                    recordingVideoSupport: recordingVideoSupport.value,
+                    updateCanRecord: updateCanRecord,
+                    updateClearedToRecord: updateClearedToRecord,
+                    recordStarted: recordStarted.value,
+                    recordPaused: recordPaused.value,
+                    localUIMode: widget.options.useLocalUIMode == true,
+                  ),
+                );
               },
               activeColor: MediasfuColors.danger,
               inActiveColor:
@@ -6324,7 +6344,23 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               icon: Icons.fiber_manual_record_outlined,
               alternateIcon: Icons.fiber_manual_record,
               onPress: () {
-                updateActiveSidebarContent(SidebarContent.recording);
+                launchRecording(
+                  LaunchRecordingOptions(
+                    updateIsRecordingModalVisible:
+                        updateIsRecordingModalVisible,
+                    isRecordingModalVisible: isRecordingModalVisible.value,
+                    showAlert: showAlert,
+                    stopLaunchRecord: stopLaunchRecord.value,
+                    canLaunchRecord: canLaunchRecord.value,
+                    recordingAudioSupport: recordingAudioSupport.value,
+                    recordingVideoSupport: recordingVideoSupport.value,
+                    updateCanRecord: updateCanRecord,
+                    updateClearedToRecord: updateClearedToRecord,
+                    recordStarted: recordStarted.value,
+                    recordPaused: recordPaused.value,
+                    localUIMode: widget.options.useLocalUIMode == true,
+                  ),
+                );
               },
               activeColor: MediasfuColors.danger,
               inActiveColor:
@@ -6385,7 +6421,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                   clipBehavior: Clip.none,
                   children: [
                     Icon(Icons.front_hand_outlined,
-                        size: 16,
+                        size: 20,
                         color:
                             MediasfuColors.themedIcon(darkMode: isDarkModeVal)),
                     if (requestCounter.value > 0)
@@ -6398,24 +6434,24 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 3, vertical: 1),
+                              horizontal: 4, vertical: 1),
                           child: Text(
                             requestCounter.value.toString(),
                             style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 9,
+                                fontSize: 10,
                                 fontWeight: FontWeight.bold),
                           ),
                         ),
                       ),
                   ],
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 6),
                 Text(
                   'Requests',
                   style: TextStyle(
                     color: MediasfuColors.themedText(darkMode: isDarkModeVal),
-                    fontSize: 10,
+                    fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -6476,41 +6512,14 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   void dispose() {
     isPortrait.removeListener(_handleOrientationChange);
     activeSidebarContent.removeListener(_handleSidebarVisibilityChange);
-
-    // Safety net: clean up sockets if not already cleaned via closeAndReset
-    try {
-      if (socket.value != null) {
-        socket.value!.clearListeners();
-        socket.value!.disconnect();
-        socket.value!.close();
-        socket.value!.dispose();
-      }
-    } catch (_) {}
-    try {
-      if (localSocket.value != null) {
-        localSocket.value!.clearListeners();
-        localSocket.value!.disconnect();
-        localSocket.value!.close();
-        localSocket.value!.dispose();
-      }
-    } catch (_) {}
-    try {
-      for (final socketMap in consumeSockets.value) {
-        final s = socketMap.values.first;
-        s.clearListeners();
-        s.disconnect();
-        s.close();
-        s.dispose();
-      }
-    } catch (_) {}
-
     super.dispose();
   }
 
   void _handleOrientationChange({bool immediate = false}) {
     try {
       final mediaQuery = MediaQuery.of(context);
-      final safeAreaInsets = mediaQuery.padding;
+      final safeAreaInsets =
+          mediaQuery.padding + mediaQuery.systemGestureInsets;
 
       // Calculate available height after safe area is removed (since we're in SafeArea)
       final availableHeight =
@@ -6555,6 +6564,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
 
       final dimensions = computeDimensions();
 
+      // Update the isWideScreen ValueNotifier so getEstimate uses the correct value
+      final bool prevWide = this.isWideScreen.value;
+      if (isWideScreen != prevWide) {
+        updateIsWideScreen(isWideScreen);
+      }
+
       // Update component sizes when parent dimensions, main size, or stacking mode changes
       if (immediate) {
         // Immediate update for responsive size changes
@@ -6563,6 +6578,22 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           updateComponentSizes(dimensions);
         });
+      }
+
+      // If screen share or whiteboard is active and orientation changed,
+      // recalculate grid rows/cols so layout adapts to new orientation
+      if (isWideScreen != prevWide &&
+          (shareScreenStarted.value ||
+              shared.value ||
+              (whiteboardStarted.value && !whiteboardEnded.value))) {
+        try {
+          onScreenChanges(
+            OnScreenChangesOptions(
+              changed: true,
+              parameters: mediasfuParameters,
+            ),
+          );
+        } catch (_) {}
       }
 
       _updateControlHeight();
@@ -6603,7 +6634,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             sec: sec,
             apiUserName: apiUserName,
             parameters: PreJoinPageParameters(
-              imgSrc: widget.options.imgSrc ?? kDefaultMediaSFULogo,
+              imgSrc: widget.options.imgSrc ??
+                  'https://mediasfu.com/images/logo192.png',
               showAlert: showAlert,
               updateIsLoadingModalVisible: updateIsLoadingModalVisible,
               connectSocket: connectSocket,
@@ -6780,10 +6812,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       final ip = socketMap.keys.first;
       final socket = socketMap[ip];
       try {
-        socket!.clearListeners();
-        socket.disconnect();
+        socket!.disconnect();
         socket.close();
-        socket.dispose();
       } catch (error) {
         if (kDebugMode) {
           // print('Error disconnecting socket with IP: $ip: $error');
@@ -6913,27 +6943,6 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         updateRoomRecvIPs([]);
       } catch (e) {}
 
-      // Disconnect and reset main socket and localSocket
-      try {
-        if (socket.value != null) {
-          socket.value!.clearListeners();
-          socket.value!.disconnect();
-          socket.value!.close();
-          socket.value!.dispose();
-          updateSocket(null);
-        }
-      } catch (e) {}
-
-      try {
-        if (localSocket.value != null) {
-          localSocket.value!.clearListeners();
-          localSocket.value!.disconnect();
-          localSocket.value!.close();
-          localSocket.value!.dispose();
-          updateLocalSocket(null);
-        }
-      } catch (e) {}
-
       // Reset translation states (not in initialValuesState)
       try {
         if (mounted) {
@@ -6988,9 +6997,6 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       // Reset device
       updateDevice(null);
       updateRtpCapabilities(null);
-
-      // Show loading overlay during cleanup transition
-      updateIsLoadingModalVisible(true);
 
       // Delay before updating validated
       await Future.delayed(const Duration(milliseconds: 1000));
@@ -8148,7 +8154,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         if (!skipSockets && localChanged) {
           // Re-call connectsocket with skipSockets = true
           await connectsocket(apiUserName, token, skipSockets: true);
-          await Future.delayed(const Duration(milliseconds: 1500));
+          await Future.delayed(const Duration(milliseconds: 1000));
           updateIsLoadingModalVisible(false);
           return socketDefault;
         } else {
@@ -8216,7 +8222,6 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               startTime: DateTime.now().millisecondsSinceEpoch ~/ 1000,
               parameters: mediasfuParameters,
             ));
-            Future.delayed(const Duration(milliseconds: 500));
             updateIsLoadingModalVisible(false);
           }).catchError((error, stackTrace) {
             updateIsLoadingModalVisible(false);
@@ -9181,8 +9186,14 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     // Get safe area padding for manual handling
     final mediaQuery = MediaQuery.of(context);
     final topPadding = mediaQuery.padding.top;
-    // ignore: unused_local_variable
-    final bottomPadding = mediaQuery.padding.bottom;
+    bool isIOS = false;
+    if (!kIsWeb) {
+      try {
+        isIOS = Platform.isIOS;
+      } catch (_) {
+        isIOS = false;
+      }
+    }
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
@@ -9199,8 +9210,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           return Scaffold(
             body: Column(
               children: [
-                // Status bar / notch background overlay (all platforms)
-                if (topPadding > 0)
+                // Status bar background overlay for iOS (semi-transparent dark)
+                if (isIOS && topPadding > 0)
                   Container(
                     height: topPadding,
                     color: Colors.black
@@ -9545,6 +9556,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                                                                             builder: (context,
                                                                                 meetingProgressTime,
                                                                                 child) {
+                                                                              // Offset timer below whiteboard toolbar when whiteboard is active
+                                                                              final bool wbActive = whiteboardStarted.value && !whiteboardEnded.value;
                                                                               return RepaintBoundary(
                                                                                 child: _meetingProgressTimerBuilder(
                                                                                     context,
@@ -9556,6 +9569,11 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                                                                                               ? Colors.yellow
                                                                                               : Colors.red,
                                                                                       showTimer: true,
+                                                                                      position: 'topLeft',
+                                                                                      positionOverride: MeetingProgressTimerPositionOverride(
+                                                                                        top: wbActive ? 50.0 : 0.0,
+                                                                                        left: 0.0,
+                                                                                      ),
                                                                                     )),
                                                                               );
                                                                             }),
@@ -9711,12 +9729,6 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                                                                           builder: (context,
                                                                               meetingProgressTime,
                                                                               child) {
-                                                                            final timerTopOffset = doPaginate.value && paginationDirection.value == 'horizontal'
-                                                                                ? paginationHeightWidth.value.toDouble() + 4
-                                                                                : 2.0;
-                                                                            final timerLeftOffset = doPaginate.value && paginationDirection.value == 'vertical'
-                                                                                ? paginationHeightWidth.value.toDouble() + 4
-                                                                                : 2.0;
                                                                             return RepaintBoundary(
                                                                               child: _meetingProgressTimerBuilder(
                                                                                   context,
@@ -9728,11 +9740,6 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                                                                                             ? Colors.yellow
                                                                                             : Colors.red,
                                                                                     showTimer: mainHeightWidth == 0 ? true : false,
-                                                                                    position: 'topLeft',
-                                                                                    positionOverride: MeetingProgressTimerPositionOverride(
-                                                                                      top: timerTopOffset,
-                                                                                      left: timerLeftOffset,
-                                                                                    ),
                                                                                   )),
                                                                             );
                                                                           }),
@@ -9896,19 +9903,6 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                                                   : Colors.black87,
                                               alignment: MainAxisAlignment
                                                   .spaceBetween,
-                                              iconSize: 16,
-                                              textStyle: TextStyle(
-                                                fontSize: 10,
-                                                color: isDarkModeVal
-                                                    ? Colors.white
-                                                    : Colors.black87,
-                                              ),
-                                              buttonPadding:
-                                                  const EdgeInsets.all(4),
-                                              buttonMargin:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 2,
-                                                      vertical: 2),
                                               vertical:
                                                   false, // Set to true for vertical layout
                                               buttonBuilder:
@@ -9951,7 +9945,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     return _welcomePageBuilder(
       context,
       WelcomePageOptions(
-        imgSrc: widget.options.imgSrc ?? kDefaultMediaSFULogo,
+        imgSrc:
+            widget.options.imgSrc ?? 'https://mediasfu.com/images/logo192.png',
         updateIsLoadingModalVisible: updateIsLoadingModalVisible,
         updateValidated: updateValidated,
         updateApiUserName: updateApiUserName,
@@ -9972,7 +9967,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       PreJoinPageOptions(
         // return widget.options.preJoinPageWidget!(
         parameters: PreJoinPageParameters(
-          imgSrc: widget.options.imgSrc ?? kDefaultMediaSFULogo,
+          imgSrc: widget.options.imgSrc ??
+              'https://mediasfu.com/images/logo192.png',
           updateIsLoadingModalVisible: updateIsLoadingModalVisible,
           updateValidated: updateValidated,
           updateApiUserName: updateApiUserName,
@@ -10012,7 +10008,6 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         localSubUserName: widget.options.localSubUserName,
         useFixedLink: widget.options.useFixedLink,
         initialMeetingId: widget.options.initialMeetingId,
-        onBack: widget.options.onBack,
       ),
     );
   }
@@ -10111,67 +10106,34 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                 child: InkWell(
                   onTap: sidebarNavigateBack,
                   borderRadius: BorderRadius.circular(0),
-                  splashColor: (isDarkModeVal
-                          ? MediasfuColors.primaryDark
-                          : MediasfuColors.primary)
-                      .withOpacity(0.15),
-                  highlightColor: (isDarkModeVal
-                          ? MediasfuColors.primaryDark
-                          : MediasfuColors.primary)
-                      .withOpacity(0.08),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 14),
+                        horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
-                      color: isDarkModeVal
-                          ? MediasfuColors.primaryDark.withOpacity(0.12)
-                          : MediasfuColors.primary.withOpacity(0.06),
                       border: Border(
                         bottom: BorderSide(
                           color: isDarkModeVal
-                              ? MediasfuColors.primaryDark.withOpacity(0.25)
-                              : MediasfuColors.primary.withOpacity(0.15),
+                              ? Colors.white.withOpacity(0.06)
+                              : Colors.black.withOpacity(0.06),
                           width: 1,
                         ),
                       ),
                     ),
                     child: Row(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: isDarkModeVal
-                                ? MediasfuColors.primaryDark.withOpacity(0.18)
-                                : MediasfuColors.primary.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.arrow_back_ios_rounded,
-                            color: isDarkModeVal
-                                ? MediasfuColors.primaryLightDark
-                                : MediasfuColors.primary,
-                            size: 18,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          'Back to Menu',
-                          style: TextStyle(
-                            color: isDarkModeVal
-                                ? MediasfuColors.primaryLightDark
-                                : MediasfuColors.primary,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                        const Spacer(),
                         Icon(
-                          Icons.menu_rounded,
-                          color: isDarkModeVal
-                              ? MediasfuColors.primaryDark.withOpacity(0.5)
-                              : MediasfuColors.primary.withOpacity(0.35),
-                          size: 18,
+                          Icons.arrow_back_ios_rounded,
+                          color: MediasfuColors.primary,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Menu',
+                          style: TextStyle(
+                            color: MediasfuColors.primary,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ],
                     ),
@@ -10279,10 +10241,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                     ),
                   ),
                 ),
-                // Sidebar panel - slides in from right with 5% vertical margin
+                // Sidebar panel - slides in from right
                 Positioned(
-                  top: MediaQuery.of(context).size.height * 0.05,
-                  bottom: MediaQuery.of(context).size.height * 0.05,
+                  top: 0,
+                  bottom: 0,
                   right: 0,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
@@ -10293,10 +10255,6 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                         darkMode: isDarkModeVal,
                         elevation: 2,
                       ),
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(16),
-                        bottomLeft: Radius.circular(16),
-                      ),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.25),
@@ -10304,17 +10262,19 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                           offset: const Offset(-4, 0),
                         ),
                       ],
+                      border: Border(
+                        left: BorderSide(
+                          color: isDarkModeVal
+                              ? Colors.white.withOpacity(0.1)
+                              : Colors.black.withOpacity(0.08),
+                          width: 1,
+                        ),
+                      ),
                     ),
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(16),
-                        bottomLeft: Radius.circular(16),
-                      ),
-                      child: SafeArea(
-                        left: false,
-                        child:
-                            _buildSidebarContent(sidebarContent, isDarkModeVal),
-                      ),
+                    child: SafeArea(
+                      left: false,
+                      child:
+                          _buildSidebarContent(sidebarContent, isDarkModeVal),
                     ),
                   ),
                 ),

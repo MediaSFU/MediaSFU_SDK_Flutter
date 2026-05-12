@@ -352,7 +352,7 @@ class _LanguageDropdownState extends State<LanguageDropdown> {
                     ),
                   ),
                 ),
-                Icon(
+                FaIcon(
                   _isOpen
                       ? FontAwesomeIcons.chevronUp
                       : FontAwesomeIcons.chevronDown,
@@ -438,7 +438,7 @@ class _LanguageDropdownState extends State<LanguageDropdown> {
   }
 
   Widget _buildOption(String value, String label,
-      {bool isSelected = false, IconData? icon}) {
+      {bool isSelected = false, FaIconData? icon}) {
     return InkWell(
       onTap: () {
         widget.onChange(value);
@@ -459,7 +459,7 @@ class _LanguageDropdownState extends State<LanguageDropdown> {
         child: Row(
           children: [
             if (icon != null) ...[
-              Icon(
+              FaIcon(
                 icon,
                 size: 12,
                 color: isSelected
@@ -522,7 +522,7 @@ class SpeakerLanguageRow extends StatelessWidget {
           Expanded(
             child: Row(
               children: [
-                Icon(
+                FaIcon(
                   FontAwesomeIcons.user,
                   size: 14,
                   color: isDarkMode
@@ -662,7 +662,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
       _localDefaultOutputLang = widget.options.myDefaultOutputLanguage;
     }
 
-    _localShowSubtitles = widget.options.showSubtitlesOnCards ?? false;
+    _localShowSubtitles = widget.options.showSubtitlesOnCards ?? true;
 
     // Initialize voice clones from props (passed from app level)
     _fetchedClones = widget.options.userVoiceClones ?? [];
@@ -1092,7 +1092,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
         children: [
           Row(
             children: [
-              Icon(
+              FaIcon(
                 FontAwesomeIcons.globe,
                 color: widget.isDarkMode
                     ? MediasfuColors.accentDark
@@ -1106,7 +1106,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
             ],
           ),
           IconButton(
-            icon: const Icon(FontAwesomeIcons.xmark),
+            icon: const FaIcon(FontAwesomeIcons.xmark),
             onPressed: widget.options.onClose,
             color: widget.isDarkMode
                 ? Colors.white.withOpacity(0.8)
@@ -1137,7 +1137,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
     );
   }
 
-  Widget _buildTabButton(String id, IconData icon, String label) {
+  Widget _buildTabButton(String id, FaIconData icon, String label) {
     final isActive = _activeTab == id;
     return Expanded(
       child: InkWell(
@@ -1164,7 +1164,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
+              FaIcon(
                 icon,
                 size: 16,
                 color: isActive
@@ -1225,7 +1225,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
             ),
             child: Row(
               children: [
-                Icon(FontAwesomeIcons.clock,
+                FaIcon(FontAwesomeIcons.clock,
                     size: 14, color: MediasfuColors.warning),
                 SizedBox(width: MediasfuSpacing.sm),
                 Text(
@@ -1387,7 +1387,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
         children: [
           Row(
             children: [
-              Icon(
+              FaIcon(
                 FontAwesomeIcons.wandMagicSparkles,
                 color: widget.isDarkMode
                     ? MediasfuColors.accentDark
@@ -1545,7 +1545,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
                 ),
               ),
               if (isSelected)
-                Icon(
+                FaIcon(
                   FontAwesomeIcons.check,
                   size: 12,
                   color: MediasfuColors.success,
@@ -1699,7 +1699,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
           ),
           child: Row(
             children: [
-              Icon(FontAwesomeIcons.circleInfo,
+              FaIcon(FontAwesomeIcons.circleInfo,
                   size: 14,
                   color: widget.isDarkMode
                       ? const Color(0xFF60A5FA)
@@ -1823,12 +1823,12 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
                       ),
                       if (isDefault) ...[
                         SizedBox(width: MediasfuSpacing.xs),
-                        Icon(FontAwesomeIcons.star,
+                        FaIcon(FontAwesomeIcons.star,
                             size: 10, color: MediasfuColors.warning),
                       ],
                       if (isSelected) ...[
                         SizedBox(width: MediasfuSpacing.xs),
-                        Icon(FontAwesomeIcons.check,
+                        FaIcon(FontAwesomeIcons.check,
                             size: 12, color: Colors.white),
                       ],
                     ],
@@ -1920,7 +1920,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
               padding: EdgeInsets.symmetric(vertical: MediasfuSpacing.sm),
               child: Row(
                 children: [
-                  Icon(
+                  FaIcon(
                     _showManualCloneEntry
                         ? FontAwesomeIcons.chevronUp
                         : FontAwesomeIcons.chevronDown,
@@ -2213,7 +2213,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
             ),
             child: Row(
               children: [
-                Icon(FontAwesomeIcons.check,
+                FaIcon(FontAwesomeIcons.check,
                     size: 12, color: MediasfuColors.success),
                 SizedBox(width: MediasfuSpacing.sm),
                 Expanded(
@@ -2261,7 +2261,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
             ),
             child: Row(
               children: [
-                Icon(FontAwesomeIcons.clock,
+                FaIcon(FontAwesomeIcons.clock,
                     size: 14, color: MediasfuColors.warning),
                 SizedBox(width: MediasfuSpacing.sm),
                 Text(
@@ -2380,7 +2380,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
       ),
       child: Row(
         children: [
-          Icon(
+          FaIcon(
             FontAwesomeIcons.closedCaptioning,
             size: 20,
             color: _localShowSubtitles
@@ -2442,7 +2442,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
     );
   }
 
-  Widget _buildModeButton(bool isPerSpeaker, IconData icon, String label) {
+  Widget _buildModeButton(bool isPerSpeaker, FaIconData icon, String label) {
     final isSelected = _perSpeakerMode == isPerSpeaker;
     return InkWell(
       onTap: () => setState(() => _perSpeakerMode = isPerSpeaker),
@@ -2461,7 +2461,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            FaIcon(
               icon,
               size: 16,
               color: isSelected
@@ -2510,7 +2510,9 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
             label: _isSaving ? 'Saving...' : 'Apply Changes',
             variant: PremiumButtonVariant.filled,
             onPressed: _isSaving ? null : _handleApply,
-            leadingIcon: _isSaving ? null : FontAwesomeIcons.check,
+            leading: _isSaving
+                ? null
+                : const FaIcon(FontAwesomeIcons.check, size: 16),
             child: _isSaving
                 ? const SizedBox(
                     width: 16,

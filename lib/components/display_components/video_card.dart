@@ -447,7 +447,7 @@ class VideoCardOptions {
     this.isDarkMode = false,
     this.onToggleSelfViewFit,
     this.liveSubtitle,
-    this.showSubtitles = false,
+    this.showSubtitles = true,
     this.showSubtitlesNotifier,
   });
 }

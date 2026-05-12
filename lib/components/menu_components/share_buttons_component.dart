@@ -11,7 +11,7 @@ import '../../types/types.dart' show EventType;
 ///
 /// **Properties:**
 /// - `action`: Callback invoked when button is tapped (required)
-/// - `icon`: IconData for button (null shows error_outline icon)
+/// - `icon`: IconData or FaIconData for button (null shows error_outline icon)
 /// - `show`: Visibility flag (true = show button, false = hide). Defaults to true
 /// - `backgroundColor`: Button background color. Defaults to Colors.blue
 /// - `iconColor`: Icon color. Defaults to Colors.white
@@ -34,7 +34,7 @@ import '../../types/types.dart' show EventType;
 /// )
 /// ```
 class ShareButtonOptions {
-  final IconData? icon;
+  final dynamic icon;
   final VoidCallback action;
   final bool show;
   final Color? backgroundColor;
@@ -351,7 +351,7 @@ class ShareButtonsComponent extends StatelessWidget {
                   color: button.backgroundColor ?? Colors.blue,
                   borderRadius: BorderRadius.circular(5),
                 ),
-                child: Icon(
+                child: _buildShareIcon(
                   button.icon ?? Icons.error_outline,
                   color: button.iconColor ?? Colors.white,
                   size: 24,
@@ -361,5 +361,17 @@ class ShareButtonsComponent extends StatelessWidget {
           )
           .toList(),
     );
+  }
+
+  Widget _buildShareIcon(dynamic icon, {required Color color, double? size}) {
+    if (icon is FaIconData) {
+      return FaIcon(icon, color: color, size: size);
+    }
+
+    if (icon is IconData) {
+      return Icon(icon, color: color, size: size);
+    }
+
+    return Icon(Icons.error_outline, color: color, size: size);
   }
 }

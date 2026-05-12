@@ -12,7 +12,7 @@ import '../core/theme/mediasfu_spacing.dart';
 /// Defines the appearance and action for one social sharing button with
 /// modern glassmorphic styling and animated interactions.
 class ModernShareButtonOptions {
-  final IconData? icon;
+  final dynamic icon;
   final VoidCallback action;
   final bool show;
   final Color? backgroundColor;
@@ -228,7 +228,7 @@ class _ModernShareButtonsComponentState
 }
 
 class _ShareButtonData {
-  final IconData icon;
+  final dynamic icon;
   final VoidCallback action;
   final Color backgroundColor;
   final Color? iconColor;
@@ -358,7 +358,7 @@ class _ModernShareButtonState extends State<_ModernShareButton>
                     ],
                   ),
                   child: Center(
-                    child: Icon(
+                    child: _buildShareIcon(
                       data.icon,
                       size: widget.iconSize,
                       color: data.iconColor ?? Colors.white,
@@ -392,5 +392,17 @@ class _ModernShareButtonState extends State<_ModernShareButton>
     }
 
     return button;
+  }
+
+  Widget _buildShareIcon(dynamic icon, {required double size, Color? color}) {
+    if (icon is FaIconData) {
+      return FaIcon(icon, size: size, color: color);
+    }
+
+    if (icon is IconData) {
+      return Icon(icon, size: size, color: color);
+    }
+
+    return Icon(Icons.share, size: size, color: color);
   }
 }

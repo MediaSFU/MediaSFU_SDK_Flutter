@@ -3976,6 +3976,7 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
           LaunchRecordingOptions(
               updateIsRecordingModalVisible: updateIsRecordingModalVisible,
               isRecordingModalVisible: isRecordingModalVisible.value,
+              showAlert: showAlert,
               stopLaunchRecord: stopLaunchRecord.value,
               canLaunchRecord: canLaunchRecord.value,
               recordingAudioSupport: recordingAudioSupport.value,
@@ -4008,6 +4009,7 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
             LaunchRecordingOptions(
                 updateIsRecordingModalVisible: updateIsRecordingModalVisible,
                 isRecordingModalVisible: isRecordingModalVisible.value,
+                showAlert: showAlert,
                 stopLaunchRecord: stopLaunchRecord.value,
                 canLaunchRecord: canLaunchRecord.value,
                 recordingAudioSupport: recordingAudioSupport.value,
@@ -6170,7 +6172,7 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
         updateIsDarkModeValue: (_) {},
 
         // Live subtitles on video cards (not used in original components)
-        showSubtitlesOnCards: false,
+        showSubtitlesOnCards: true,
         liveSubtitles: ValueNotifier<Map<String, LiveSubtitle>>({}),
         updateShowSubtitlesOnCards: (_) {},
 

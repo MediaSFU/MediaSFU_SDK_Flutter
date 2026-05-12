@@ -499,7 +499,7 @@ class AudioCardOptions {
     this.isDarkMode = false,
     this.backgroundGradient,
     this.liveSubtitle,
-    this.showSubtitles = false,
+    this.showSubtitles = true,
     this.showSubtitlesNotifier,
   });
 }

@@ -3979,6 +3979,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
           LaunchRecordingOptions(
               updateIsRecordingModalVisible: updateIsRecordingModalVisible,
               isRecordingModalVisible: isRecordingModalVisible.value,
+              showAlert: showAlert,
               stopLaunchRecord: stopLaunchRecord.value,
               canLaunchRecord: canLaunchRecord.value,
               recordingAudioSupport: recordingAudioSupport.value,
@@ -4010,6 +4011,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
             LaunchRecordingOptions(
                 updateIsRecordingModalVisible: updateIsRecordingModalVisible,
                 isRecordingModalVisible: isRecordingModalVisible.value,
+                showAlert: showAlert,
                 stopLaunchRecord: stopLaunchRecord.value,
                 canLaunchRecord: canLaunchRecord.value,
                 recordingAudioSupport: recordingAudioSupport.value,

@@ -65,7 +65,7 @@ class _ModernRequestsModalState extends State<ModernRequestsModal>
     });
   }
 
-  IconData _getRequestIcon(String? iconName) {
+  FaIconData _getRequestIcon(String? iconName) {
     switch (iconName?.toLowerCase()) {
       case 'fa-microphone':
         return FontAwesomeIcons.microphone;

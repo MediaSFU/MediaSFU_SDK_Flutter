@@ -792,15 +792,15 @@ class _ConfigureWhiteboardModalState extends State<ConfigureWhiteboardModal> {
   Widget _buildParticipantCard({
     required String title,
     required String subtitle,
-    required IconData icon,
+    required FaIconData icon,
     required Color iconColor,
     required List<Participant> participants,
     required Function(Participant) onAction,
-    required IconData actionIcon,
+    required FaIconData actionIcon,
     required Color actionColor,
     required Color actionBgColor,
     required String emptyMessage,
-    required IconData emptyIcon,
+    required FaIconData emptyIcon,
     required Color headerColor,
     required Color borderColor,
   }) {
@@ -935,7 +935,7 @@ class _ConfigureWhiteboardModalState extends State<ConfigureWhiteboardModal> {
   Widget _buildParticipantTile({
     required Participant participant,
     required Function(Participant) onAction,
-    required IconData actionIcon,
+    required FaIconData actionIcon,
     required Color actionColor,
     required Color actionBgColor,
   }) {
@@ -1103,7 +1103,7 @@ class _ConfigureWhiteboardModalState extends State<ConfigureWhiteboardModal> {
   }
 
   Widget _buildActionButton({
-    required IconData icon,
+    required FaIconData icon,
     required String label,
     required Color color,
     VoidCallback? onPressed,

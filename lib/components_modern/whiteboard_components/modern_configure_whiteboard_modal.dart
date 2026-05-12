@@ -878,11 +878,11 @@ class _ModernConfigureWhiteboardModalState
   Widget _buildParticipantCard({
     required String title,
     required String subtitle,
-    required IconData icon,
+    required FaIconData icon,
     required Color accentColor,
     required List<Participant> participants,
     required Function(Participant) onAction,
-    required IconData actionIcon,
+    required FaIconData actionIcon,
     required bool isRemove,
     required String emptyMessage,
     required String emptySubtitle,
@@ -1029,7 +1029,7 @@ class _ModernConfigureWhiteboardModalState
   Widget _buildParticipantTile({
     required Participant participant,
     required Function(Participant) onAction,
-    required IconData actionIcon,
+    required FaIconData actionIcon,
     required bool isRemove,
   }) {
     final initials = participant.name.isNotEmpty
@@ -1214,7 +1214,7 @@ class _ModernConfigureWhiteboardModalState
   }
 
   Widget _buildModernButton({
-    required IconData icon,
+    required FaIconData icon,
     required String label,
     required Color color,
     VoidCallback? onPressed,

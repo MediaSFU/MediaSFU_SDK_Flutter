@@ -240,23 +240,19 @@ class _BackgroundModalState extends State<BackgroundModal>
         final vidCons = _params.vidCons;
         if (vidCons != null) {
           if (vidCons is Map<String, dynamic>) {
-            if (vidCons['width'] != null) {
+            if (vidCons['width'] != null)
               mandatoryConstraints['width'] = vidCons['width'];
-            }
-            if (vidCons['height'] != null) {
+            if (vidCons['height'] != null)
               mandatoryConstraints['height'] = vidCons['height'];
-            }
           } else {
             // VidCons type - call toMap() method if available
             try {
               final consMap = (vidCons as dynamic).toMap();
               if (consMap is Map<String, dynamic>) {
-                if (consMap['width'] != null) {
+                if (consMap['width'] != null)
                   mandatoryConstraints['width'] = consMap['width'];
-                }
-                if (consMap['height'] != null) {
+                if (consMap['height'] != null)
                   mandatoryConstraints['height'] = consMap['height'];
-                }
               }
             } catch (_) {}
           }
@@ -1075,7 +1071,8 @@ class _BackgroundModalState extends State<BackgroundModal>
           child: Icon(
             Icons.blur_on,
             size: 64,
-            color: Colors.blue.withOpacity(0.5 + _selectedBackground!.blurIntensity * 0.5),
+            color: Colors.blue
+                .withOpacity(0.5 + _selectedBackground!.blurIntensity * 0.5),
           ),
         ),
       );
@@ -1129,8 +1126,8 @@ class _BackgroundModalState extends State<BackgroundModal>
                     Icon(
                       Icons.blur_on,
                       size: 40,
-                      color: Colors.blue
-                          .withOpacity(0.5 + bg.blurIntensity * 0.5),
+                      color:
+                          Colors.blue.withOpacity(0.5 + bg.blurIntensity * 0.5),
                     ),
                   ],
                 ),

@@ -133,6 +133,23 @@ class RecordingModalOptions {
   });
 }
 
+String? getRecordingDisplayAdvice(RecordingModalParameters parameters) {
+  final normalizedRecordingMediaOptions =
+      parameters.recordingMediaOptions == 'all'
+          ? 'video'
+          : parameters.recordingMediaOptions;
+
+  if (!parameters.recordingVideoParticipantsFullRoomSupport &&
+      parameters.recordingVideoOptions == 'all' &&
+      normalizedRecordingMediaOptions == 'video' &&
+      parameters.meetingDisplayType == 'all' &&
+      !(parameters.breakOutRoomStarted && !parameters.breakOutRoomEnded)) {
+    return 'Meeting display is set to All, so this recording may be blocked. To fix it, go back to the main menu, open Display, choose Media, then return here and confirm.';
+  }
+
+  return null;
+}
+
 typedef RecordingModalType = Widget Function(
     {required RecordingModalOptions options});
 
@@ -196,6 +213,9 @@ class RecordingModal extends StatelessWidget {
             topRight: Radius.circular(10),
           ),
         );
+    final currentParameters = options.parameters.getUpdatedAllParams();
+    final recordingDisplayAdvice =
+        getRecordingDisplayAdvice(currentParameters);
 
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,6 +275,44 @@ class RecordingModal extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
+        if (recordingDisplayAdvice != null) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0x1FF59E0B),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: const Color(0x54F59E0B),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Fix before confirming',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.8,
+                    color: Color(0xFFB45309),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  recordingDisplayAdvice,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [

@@ -301,7 +301,8 @@ class _WhiteboardToolbarState extends State<WhiteboardToolbar> {
     );
   }
 
-  Widget _buildModeButton(WhiteboardMode mode, IconData icon, String tooltip) {
+  Widget _buildModeButton(
+      WhiteboardMode mode, FaIconData icon, String tooltip) {
     final isSelected = widget.currentMode == mode;
 
     return Tooltip(
@@ -345,8 +346,8 @@ class _WhiteboardToolbarState extends State<WhiteboardToolbar> {
             WhiteboardShapeType.oval, 'Oval', FontAwesomeIcons.circle),
         _buildShapeMenuItem(WhiteboardShapeType.pentagon, 'Pentagon',
             FontAwesomeIcons.starOfDavid),
-        _buildShapeMenuItem(
-            WhiteboardShapeType.hexagon, 'Hexagon', FontAwesomeIcons.drawPolygon),
+        _buildShapeMenuItem(WhiteboardShapeType.hexagon, 'Hexagon',
+            FontAwesomeIcons.drawPolygon),
         _buildShapeMenuItem(WhiteboardShapeType.rhombus, 'Rhombus',
             FontAwesomeIcons.diamondTurnRight),
       ],
@@ -377,7 +378,7 @@ class _WhiteboardToolbarState extends State<WhiteboardToolbar> {
   }
 
   PopupMenuItem<WhiteboardShapeType> _buildShapeMenuItem(
-      WhiteboardShapeType type, String label, IconData icon) {
+      WhiteboardShapeType type, String label, FaIconData icon) {
     return PopupMenuItem(
       value: type,
       child: Row(
@@ -648,7 +649,7 @@ class _WhiteboardToolbarState extends State<WhiteboardToolbar> {
   }
 
   Widget _buildActionButton(
-      IconData icon, String tooltip, VoidCallback? onPressed) {
+      FaIconData icon, String tooltip, VoidCallback? onPressed) {
     return Tooltip(
       message: tooltip,
       child: InkWell(

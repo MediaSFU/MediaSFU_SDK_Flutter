@@ -21,3 +21,7 @@ scripts/
 # Files that are gitignored but checked in (pub.dev warning)
 dartdoc_options.yaml
 doc/doc_assets/
+
+# Local-only entrypoints that are not part of the published SDK surface
+lib/main_setup.dart
+lib/components_limited/

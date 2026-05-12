@@ -274,9 +274,8 @@ class PreJoinPageOptions {
   /// Used for subuser accounts within an organization
   final String? localSubUserName;
 
-  /// Whether to use fixed link (stagerooms.mediasfu.com) instead of dynamic URL selection
-  /// When true, always connects to stagerooms.mediasfu.com
-  /// When false, URL is selected based on meeting ID prefix (d=demos, s=sandbox, p=production)
+  /// Whether to use a fixed room host instead of meeting-based URL selection.
+  /// Use this only when your deployment requires a single fixed entry host.
   final bool? useFixedLink;
 
   /// Initial meeting ID to pre-fill in the prejoin form
@@ -1123,9 +1122,11 @@ class _PreJoinPageState extends State<PreJoinPage> {
             child: Column(
               children: [
                 const SizedBox(height: 20),
-                buildLogoCircle(
-                    widget.options.parameters.imgSrc ?? kDefaultMediaSFULogo,
-                    radius: 50),
+                CircleAvatar(
+                  radius: 50,
+                  backgroundImage: resolveImageSource(
+                      widget.options.parameters.imgSrc ?? kDefaultMediaSFULogo),
+                ),
                 const SizedBox(height: 10),
                 _buildInputFields(),
                 if (_error.isNotEmpty)

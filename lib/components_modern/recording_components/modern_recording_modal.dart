@@ -2,7 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../components/recording_components/recording_modal.dart'
-    show RecordingModalOptions;
+    show RecordingModalOptions, getRecordingDisplayAdvice;
 import '../../types/modal_style_options.dart' show ModalRenderMode;
 import 'modern_standard_panel_component.dart'
     show ModernStandardPanelComponent, ModernStandardPanelComponentOptions;
@@ -73,10 +73,13 @@ class _ModernRecordingModalState extends State<ModernRecordingModal>
 
   @override
   Widget build(BuildContext context) {
+    final recordingDisplayAdvice = getRecordingDisplayAdvice(
+        widget.options.parameters.getUpdatedAllParams());
+
     // For sidebar or inline mode, render content directly without modal wrapper
     if (widget.options.renderMode == ModalRenderMode.sidebar ||
         widget.options.renderMode == ModalRenderMode.inline) {
-      return _buildSidebarContent();
+      return _buildSidebarContent(recordingDisplayAdvice);
     }
 
     final mediaSize = MediaQuery.of(context).size;
@@ -165,7 +168,7 @@ class _ModernRecordingModalState extends State<ModernRecordingModal>
                             _buildHeader(),
                             _buildTabBar(),
                             Expanded(child: _buildTabContent()),
-                            _buildFooter(),
+                            _buildFooter(recordingDisplayAdvice),
                           ],
                         ),
                       ),
@@ -181,13 +184,13 @@ class _ModernRecordingModalState extends State<ModernRecordingModal>
   }
 
   /// Builds sidebar-optimized content for embedding in sidebar panel.
-  Widget _buildSidebarContent() {
+  Widget _buildSidebarContent(String? recordingDisplayAdvice) {
     return Column(
       children: [
         _buildHeader(),
         _buildTabBar(),
         Expanded(child: _buildTabContent()),
-        _buildFooter(),
+        _buildFooter(recordingDisplayAdvice),
       ],
     );
   }
@@ -283,7 +286,7 @@ class _ModernRecordingModalState extends State<ModernRecordingModal>
     );
   }
 
-  Widget _buildFooter() {
+  Widget _buildFooter(String? recordingDisplayAdvice) {
     return Container(
       padding: const EdgeInsets.all(MediasfuSpacing.md),
       decoration: BoxDecoration(
@@ -295,40 +298,91 @@ class _ModernRecordingModalState extends State<ModernRecordingModal>
           ),
         ),
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: _buildActionButton(
-              label: 'Confirm Settings',
-              icon: Icons.check_rounded,
-              isPrimary: false,
-              isSuccess: _isConfirmed,
-              onTap: () {
-                widget.options.confirmRecording(
-                  ConfirmRecordingOptions(
-                      parameters: widget.options.parameters),
-                );
-                setState(() => _isConfirmed = true);
-              },
+          if (recordingDisplayAdvice != null) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(MediasfuSpacing.sm),
+              decoration: BoxDecoration(
+                color: widget.options.isDarkMode
+                    ? const Color(0x24F59E0B)
+                    : const Color(0x1FF59E0B),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: widget.options.isDarkMode
+                      ? const Color(0x47F59E0B)
+                      : const Color(0x54F59E0B),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Fix before confirming',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                      color: widget.options.isDarkMode
+                          ? const Color(0xFFFBBF24)
+                          : const Color(0xFFB45309),
+                    ),
+                  ),
+                  const SizedBox(height: MediasfuSpacing.xs),
+                  Text(
+                    recordingDisplayAdvice,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      height: 1.4,
+                      color: widget.options.isDarkMode
+                          ? Colors.white
+                          : const Color(0xFF1E293B),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: MediasfuSpacing.md),
-          Expanded(
-            child: _buildActionButton(
-              label: 'Start Recording',
-              icon: Icons.fiber_manual_record_rounded,
-              isPrimary: true,
-              isEnabled: _isConfirmed,
-              onTap: _isConfirmed
-                  ? () {
-                      widget.options.startRecording(
-                        StartRecordingOptions(
-                            parameters: widget.options.parameters),
-                      );
-                      _handleClose();
-                    }
-                  : null,
-            ),
+            const SizedBox(height: MediasfuSpacing.md),
+          ],
+          Row(
+            children: [
+              Expanded(
+                child: _buildActionButton(
+                  label: 'Confirm Settings',
+                  icon: Icons.check_rounded,
+                  isPrimary: false,
+                  isSuccess: _isConfirmed,
+                  onTap: () {
+                    widget.options.confirmRecording(
+                      ConfirmRecordingOptions(
+                          parameters: widget.options.parameters),
+                    );
+                    setState(() => _isConfirmed = true);
+                  },
+                ),
+              ),
+              const SizedBox(width: MediasfuSpacing.md),
+              Expanded(
+                child: _buildActionButton(
+                  label: 'Start Recording',
+                  icon: Icons.fiber_manual_record_rounded,
+                  isPrimary: true,
+                  isEnabled: _isConfirmed,
+                  onTap: _isConfirmed
+                      ? () {
+                          widget.options.startRecording(
+                            StartRecordingOptions(
+                                parameters: widget.options.parameters),
+                          );
+                          _handleClose();
+                        }
+                      : null,
+                ),
+              ),
+            ],
           ),
         ],
       ),

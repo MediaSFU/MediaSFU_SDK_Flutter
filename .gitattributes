@@ -1,2 +1,2 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Auto detect text files, normalize them in Git, and keep LF in the working tree.
+* text=auto eol=lf
