@@ -215,7 +215,7 @@ Future<void> breakoutRoomUpdated(BreakoutRoomUpdatedOptions options) async {
     }
   } catch (error) {
     if (kDebugMode) {
-      print('Error in breakoutRoomUpdated: $error');
+      debugPrint('Error in breakoutRoomUpdated: $error');
     }
   }
 }

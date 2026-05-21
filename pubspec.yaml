@@ -1,6 +1,6 @@
 name: mediasfu_sdk
 description: "Flutter WebRTC SDK for video conferencing, webinars, live streaming, chat, whiteboards, recording, translation, and AI-powered meeting apps with MediaSFU."
-version: 2.2.7
+version: 2.2.8
 homepage: https://www.mediasfu.com
 repository: https://github.com/MediaSFU/MediaSFU_SDK_Flutter
 
@@ -30,7 +30,7 @@ dependencies:
   path_provider: ^2.1.2
   # Whiteboard dependencies (cross-platform)
   path_drawing: ^1.0.1
-  share_plus: ^12.0.1
+  share_plus: ^13.1.0
   # Web whiteboard canvas capture (transitive deps made explicit)
   web: ^1.1.1
   dart_webrtc: ^1.4.6

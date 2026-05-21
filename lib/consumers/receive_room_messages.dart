@@ -58,7 +58,7 @@ Future<void> receiveRoomMessages(ReceiveRoomMessagesOptions options) async {
           options.updateMessages(messages);
         } else {
           if (kDebugMode) {
-            print("Error: Invalid message format received.");
+            debugPrint("Error: Invalid message format received.");
           }
         }
       },
@@ -66,7 +66,7 @@ Future<void> receiveRoomMessages(ReceiveRoomMessagesOptions options) async {
   } catch (error) {
     // Handle errors if any
     if (kDebugMode) {
-      print("Error receiving messages: $error");
+      debugPrint("Error receiving messages: $error");
     }
   }
 }

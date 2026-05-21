@@ -39,7 +39,7 @@ void timeLeftRecording(TimeLeftRecordingOptions options) {
     );
   } catch (error) {
     if (kDebugMode) {
-      print("Error in timeLeftRecording: $error");
+      debugPrint("Error in timeLeftRecording: $error");
     }
   }
 }

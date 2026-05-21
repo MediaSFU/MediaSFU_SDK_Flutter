@@ -1,3 +1,7 @@
+### 2.2.8
+* **Minor Improvements**:
+  - Minor UI enhancements and bug fixes across all components.
+
 ### 2.2.7
 * **Minor Improvements**:
   - Updated `font_awesome_flutter` to version 11.0.0 for access to the latest icons and features.

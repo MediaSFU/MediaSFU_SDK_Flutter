@@ -71,7 +71,7 @@ Future<void> disconnectUserSelf(DisconnectUserSelfOptions options) async {
     }
   } catch (e) {
     if (kDebugMode) {
-      print('Error disconnecting user from local room: $e');
+      debugPrint('Error disconnecting user from local room: $e');
     }
   }
 }

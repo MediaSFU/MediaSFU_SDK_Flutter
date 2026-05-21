@@ -123,7 +123,7 @@ Future<void> resumePauseStreams({
     }
   } catch (error) {
     if (kDebugMode) {
-      print('Error during resuming or pausing streams: $error');
+      debugPrint('Error during resuming or pausing streams: $error');
     }
   }
 }

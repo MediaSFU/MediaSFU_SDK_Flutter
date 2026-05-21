@@ -133,7 +133,7 @@ Future<void> producerMediaClosed(
       producerToClose.consumer.close();
     } catch (error) {
       if (kDebugMode) {
-        print('Error closing consumer: $error');
+        debugPrint('Error closing consumer: $error');
       }
     }
 

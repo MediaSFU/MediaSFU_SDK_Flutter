@@ -123,7 +123,7 @@ Future<void> getDomains(GetDomainsOptions options) async {
     );
   } catch (error) {
     if (kDebugMode) {
-      print("MediaSFU - Error in getDomains: $error");
+      debugPrint("MediaSFU - Error in getDomains: $error");
     }
   }
 }

@@ -277,7 +277,7 @@ Future<void> getPipedProducersAlt(
     );
   } catch (error) {
     if (kDebugMode) {
-      print('Error getting piped producers: ${error.toString()}');
+      debugPrint('Error getting piped producers: ${error.toString()}');
     }
     rethrow;
   }

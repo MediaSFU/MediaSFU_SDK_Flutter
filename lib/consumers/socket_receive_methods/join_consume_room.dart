@@ -189,7 +189,7 @@ Future<ResponseJoinRoom> joinConsumeRoom(JoinConsumeRoomOptions options) async {
     return data;
   } catch (error) {
     if (kDebugMode) {
-      print('MediaSFU - Error in joinConsumeRoom: $error');
+      debugPrint('MediaSFU - Error in joinConsumeRoom: $error');
     }
     throw Exception(
       'Failed to join the consumption room or set up necessary components.',

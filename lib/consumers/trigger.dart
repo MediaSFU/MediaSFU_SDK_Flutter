@@ -199,7 +199,7 @@ Future<void> trigger(TriggerOptions options) async {
               // handle success
             } else {
               if (kDebugMode) {
-                print('${data['reason']} updateScreenClient failed');
+                debugPrint('${data['reason']} updateScreenClient failed');
               }
             }
           },
@@ -245,7 +245,7 @@ Future<void> trigger(TriggerOptions options) async {
               // handle success
             } else {
               if (kDebugMode) {
-                print('${data['reason']} updateScreenClient failed');
+                debugPrint('${data['reason']} updateScreenClient failed');
               }
             }
           },
@@ -258,7 +258,7 @@ Future<void> trigger(TriggerOptions options) async {
     }
   } catch (error) {
     if (kDebugMode) {
-      print('Error in trigger: $error');
+      debugPrint('Error in trigger: $error');
     }
   }
 }

@@ -368,7 +368,7 @@ Future<void> allMembersRest(
     }
   } catch (error, s) {
     if (kDebugMode) {
-      print('Errors in allMembersRest: $error $s');
+      debugPrint('Errors in allMembersRest: $error $s');
     }
     rethrow;
   }

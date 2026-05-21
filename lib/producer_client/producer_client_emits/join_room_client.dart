@@ -66,7 +66,7 @@ Future<ResponseJoinRoom> joinRoomClient(JoinRoomClientOptions options) async {
 
     if (options.consume) {
       if (kDebugMode) {
-        print('Joining room with consume');
+        debugPrint('Joining room with consume');
       }
       // Use `joinConRoom` for consuming
       final option = JoinConRoomOptions(
@@ -82,7 +82,7 @@ Future<ResponseJoinRoom> joinRoomClient(JoinRoomClientOptions options) async {
       );
     } else {
       if (kDebugMode) {
-        print('Joining room without consume');
+        debugPrint('Joining room without consume');
       }
       // Use `joinRoom` for non-consuming
       final option = JoinRoomOptions(
@@ -101,7 +101,7 @@ Future<ResponseJoinRoom> joinRoomClient(JoinRoomClientOptions options) async {
     return data;
   } catch (error) {
     if (kDebugMode) {
-      print('Error joining room: $error');
+      debugPrint('Error joining room: $error');
     }
     throw Exception(
         'Failed to join the room. Please check your connection and try again.');

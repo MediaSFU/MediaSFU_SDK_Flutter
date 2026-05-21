@@ -165,7 +165,7 @@ Future<void> signalNewConsumerTransport(
         data['callback']();
       } catch (error) {
         if (kDebugMode) {
-          print('transport-recv-connect error: $error');
+          debugPrint('transport-recv-connect error: $error');
         }
 
         // Handle error
@@ -230,7 +230,7 @@ Future<void> signalNewConsumerTransport(
       });
     } catch (error) {
       if (kDebugMode) {
-        print('MediaSFU - consume error: $error');
+        debugPrint('MediaSFU - consume error: $error');
       }
 
       return;
@@ -249,7 +249,7 @@ Future<void> signalNewConsumerTransport(
         accept: (param) {});
   } catch (error) {
     if (kDebugMode) {
-      print('signalNewConsumerTransport error: $error');
+      debugPrint('signalNewConsumerTransport error: $error');
     }
 
     // Handle error

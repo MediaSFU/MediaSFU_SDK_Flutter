@@ -797,7 +797,7 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
           });
         } catch (e) {
           if (kDebugMode) {
-            print('Error starting local breakout rooms: $e');
+            debugPrint('Error starting local breakout rooms: $e');
           }
         }
       }
@@ -841,7 +841,7 @@ class _BreakoutRoomsModalState extends State<BreakoutRoomsModal> {
         });
       } catch (e) {
         if (kDebugMode) {
-          print('Error stopping local breakout rooms: $e');
+          debugPrint('Error stopping local breakout rooms: $e');
         }
       }
     }

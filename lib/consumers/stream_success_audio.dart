@@ -280,7 +280,7 @@ Future<void> streamSuccessAudio(
         );
       } catch (error) {
         if (kDebugMode) {
-          print("Error creating transport: $error");
+          debugPrint("Error creating transport: $error");
         }
       }
     } else {
@@ -346,7 +346,7 @@ Future<void> streamSuccessAudio(
     }
   } catch (error) {
     if (kDebugMode) {
-      print('streamSuccessAudio error: $error');
+      debugPrint('streamSuccessAudio error: $error');
     }
 
     parameters.showAlert!(

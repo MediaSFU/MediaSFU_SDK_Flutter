@@ -82,7 +82,7 @@ Future<void> connectLocalSendTransportScreen({
     }
   } catch (error) {
     if (kDebugMode) {
-      print('Error connecting local screen transport: $error');
+      debugPrint('Error connecting local screen transport: $error');
     }
     rethrow; // Re-throw to propagate the error
   }

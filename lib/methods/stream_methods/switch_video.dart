@@ -193,7 +193,7 @@ Future<void> switchVideo(SwitchVideoOptions options) async {
     }
   } catch (error) {
     if (kDebugMode) {
-      print('switchVideo error: $error');
+      debugPrint('switchVideo error: $error');
     }
   }
 }

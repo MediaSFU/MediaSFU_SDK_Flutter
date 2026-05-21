@@ -259,8 +259,8 @@ Future<void> reorderStreams(
   } catch (error, stackTrace) {
     // Handle errors
     if (kDebugMode) {
-      print('Error during reordering streams: $error');
-      print('Stack trace reordering streams: $stackTrace');
+      debugPrint('Error during reordering streams: $error');
+      debugPrint('Stack trace reordering streams: $stackTrace');
     }
   }
 }

@@ -96,7 +96,7 @@ bool _validateInputs(JoinRoomOptions options) {
       options.apiUserName.isEmpty ||
       options.member.isEmpty) {
     if (kDebugMode) {
-      print('Missing required parameters');
+      debugPrint('Missing required parameters');
     }
     return false;
   }
@@ -106,7 +106,7 @@ bool _validateInputs(JoinRoomOptions options) {
       !_validateAlphanumeric(options.apiUserName) ||
       !_validateAlphanumeric(options.member)) {
     if (kDebugMode) {
-      print('Invalid roomName, apiUserName, or member');
+      debugPrint('Invalid roomName, apiUserName, or member');
     }
     return false;
   }
@@ -116,7 +116,7 @@ bool _validateInputs(JoinRoomOptions options) {
       options.roomName.startsWith('p') ||
       options.roomName.startsWith('d'))) {
     if (kDebugMode) {
-      print('Invalid roomName, must start with "s" or "p" or "d"');
+      debugPrint('Invalid roomName, must start with "s" or "p" or "d"');
     }
     return false;
   }
@@ -127,7 +127,7 @@ bool _validateInputs(JoinRoomOptions options) {
       options.apiUserName.length >= 6 &&
       ['0', '1', '2'].contains(options.islevel))) {
     if (kDebugMode) {
-      print('Invalid roomName, islevel, apiUserName, or secret');
+      debugPrint('Invalid roomName, islevel, apiUserName, or secret');
     }
     return false;
   }

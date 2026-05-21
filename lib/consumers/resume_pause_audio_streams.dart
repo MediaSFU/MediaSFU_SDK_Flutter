@@ -198,7 +198,7 @@ Future<void> resumePauseAudioStreams({
     );
   } catch (error) {
     if (kDebugMode) {
-      print('Error in resumePauseAudioStreams: $error');
+      debugPrint('Error in resumePauseAudioStreams: $error');
     }
   }
 }

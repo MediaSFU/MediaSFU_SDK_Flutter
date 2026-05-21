@@ -36,7 +36,7 @@ abstract class BackgroundModalParameters {
   bool get videoAlreadyOn;
 
   /// Video constraints for camera initialization when videoAlreadyOn is false
-  /// Can be `VidCons` type or `Map<String, dynamic>`
+  /// Can be VidCons type or Map<String, dynamic>
   dynamic get vidCons;
 
   /// Target frame rate for camera preview
@@ -281,7 +281,7 @@ class _BackgroundModalState extends State<BackgroundModal>
           });
         }
         if (kDebugMode) {
-          print('MediaSFU - BackgroundModal: Camera initialization failed: $e');
+          debugPrint('MediaSFU - BackgroundModal: Camera initialization failed: $e');
         }
       }
     }
@@ -1071,8 +1071,7 @@ class _BackgroundModalState extends State<BackgroundModal>
           child: Icon(
             Icons.blur_on,
             size: 64,
-            color: Colors.blue
-                .withOpacity(0.5 + _selectedBackground!.blurIntensity * 0.5),
+            color: Colors.blue.withOpacity(0.5 + _selectedBackground!.blurIntensity * 0.5),
           ),
         ),
       );
@@ -1126,8 +1125,8 @@ class _BackgroundModalState extends State<BackgroundModal>
                     Icon(
                       Icons.blur_on,
                       size: 40,
-                      color:
-                          Colors.blue.withOpacity(0.5 + bg.blurIntensity * 0.5),
+                      color: Colors.blue
+                          .withOpacity(0.5 + bg.blurIntensity * 0.5),
                     ),
                   ],
                 ),

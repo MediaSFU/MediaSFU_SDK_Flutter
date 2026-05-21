@@ -683,7 +683,7 @@ Future<void> dispStreams(DispStreamsOptions options) async {
         }
       } catch (error) {
         if (kDebugMode) {
-          print('Error in resumePauseAudioStreams: $error');
+          debugPrint('Error in resumePauseAudioStreams: $error');
         }
       }
 
@@ -696,7 +696,7 @@ Future<void> dispStreams(DispStreamsOptions options) async {
         }
       } catch (error) {
         if (kDebugMode) {
-          print('Error in resumePauseStreams: $error');
+          debugPrint('Error in resumePauseStreams: $error');
         }
       }
 
@@ -756,7 +756,7 @@ Future<void> dispStreams(DispStreamsOptions options) async {
     }
   } catch (error) {
     if (kDebugMode) {
-      print('dispStreams error: $error');
+      debugPrint('dispStreams error: $error');
     }
   }
 }

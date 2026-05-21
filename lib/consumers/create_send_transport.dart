@@ -133,7 +133,7 @@ Future<void> createLocalSendTransport(
           );
         } catch (error) {
           if (kDebugMode) {
-            print('MediaSFU - Error creating local send transport: $error');
+            debugPrint('MediaSFU - Error creating local send transport: $error');
           }
         }
         if (updateLocalProducerTransport != null) {
@@ -173,7 +173,7 @@ Future<void> createLocalSendTransport(
         localProducerTransport?.on('connectionstatechange', (state) async {
           if (state == 'failed') {
             if (kDebugMode) {
-              print("Local transport connection failed.");
+              debugPrint("Local transport connection failed.");
             }
             await localProducerTransport?.close();
           }
@@ -199,14 +199,14 @@ Future<void> createLocalSendTransport(
           );
         } catch (error) {
           if (kDebugMode) {
-            print("Error in local transport creation: $error");
+            debugPrint("Error in local transport creation: $error");
           }
         }
       },
     );
   } catch (error) {
     if (kDebugMode) {
-      print('MediaSFU - Error creating local send transport: $error');
+      debugPrint('MediaSFU - Error creating local send transport: $error');
     }
   }
 }
@@ -305,7 +305,7 @@ Future<void> createSendTransport(
       await createLocalSendTransport(options);
     } catch (error) {
       if (kDebugMode) {
-        print("Error creating local send transport: $error");
+        debugPrint("Error creating local send transport: $error");
       }
     }
 
@@ -341,7 +341,7 @@ Future<void> createSendTransport(
           );
         } catch (error) {
           if (kDebugMode) {
-            print('MediaSFU - Error creating send transport: $error');
+            debugPrint('MediaSFU - Error creating send transport: $error');
           }
         }
         updateProducerTransport(producerTransport);
@@ -383,7 +383,7 @@ Future<void> createSendTransport(
             case 'connected':
               break;
             case 'failed':
-              if (kDebugMode) print("Transport connection failed.");
+              if (kDebugMode) debugPrint("Transport connection failed.");
               await producerTransport?.close();
               break;
             default:
@@ -408,14 +408,14 @@ Future<void> createSendTransport(
           );
         } catch (error) {
           if (kDebugMode) {
-            print("Error in transport creation: $error");
+            debugPrint("Error in transport creation: $error");
           }
         }
       },
     );
   } catch (error) {
     if (kDebugMode) {
-      print('MediaSFU - Error creating send transport: $error');
+      debugPrint('MediaSFU - Error creating send transport: $error');
     }
   }
 }

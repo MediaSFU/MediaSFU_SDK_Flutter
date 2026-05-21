@@ -372,7 +372,7 @@ Future<void> streamSuccessVideo(
         } catch (e) {
           // Don't fail the whole video setup if background application fails
           if (kDebugMode) {
-            print('MediaSFU - Auto-apply background failed: $e');
+            debugPrint('MediaSFU - Auto-apply background failed: $e');
           }
         }
       }
@@ -383,7 +383,7 @@ Future<void> streamSuccessVideo(
         duration: 3000,
       );
       if (kDebugMode) {
-        print("Error in video streaming setup: $error");
+        debugPrint("Error in video streaming setup: $error");
       }
     }
 
@@ -451,7 +451,7 @@ Future<void> streamSuccessVideo(
     }
   } catch (error) {
     if (kDebugMode) {
-      print('MediaSFU - streamSuccessVideo error: $error');
+      debugPrint('MediaSFU - streamSuccessVideo error: $error');
     }
     // Optionally retshrow or handle the error further
     // throw error;

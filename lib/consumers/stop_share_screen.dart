@@ -31,7 +31,7 @@ Future<void> _stopAndroidForegroundService() async {
     }
   } catch (e) {
     if (kDebugMode) {
-      print('Warning: Could not stop foreground service: $e');
+      debugPrint('Warning: Could not stop foreground service: $e');
     }
   }
 }
@@ -43,16 +43,16 @@ Future<void> _stopiOSBroadcast() async {
   try {
     if (Platform.isIOS) {
       if (kDebugMode) {
-        print('[ScreenShare] Stopping iOS broadcast extension...');
+        debugPrint('[ScreenShare] Stopping iOS broadcast extension...');
       }
       await _screenCaptureChannel.invokeMethod('stopScreenShare');
       if (kDebugMode) {
-        print('[ScreenShare] iOS broadcast stop request sent');
+        debugPrint('[ScreenShare] iOS broadcast stop request sent');
       }
     }
   } catch (e) {
     if (kDebugMode) {
-      print('Warning: Could not stop iOS broadcast: $e');
+      debugPrint('Warning: Could not stop iOS broadcast: $e');
     }
   }
 }
@@ -275,7 +275,7 @@ Future<void> stopShareScreen(StopShareScreenOptions options) async {
       updateLocalStreamScreen(null);
     } catch (error) {
       if (kDebugMode) {
-        print("Error stopping localStreamScreen tracks: $error");
+        debugPrint("Error stopping localStreamScreen tracks: $error");
       }
     }
   }
@@ -287,7 +287,7 @@ Future<void> stopShareScreen(StopShareScreenOptions options) async {
     await disconnectSendTransportScreen(optionsDisconnect);
   } catch (error) {
     if (kDebugMode) {
-      print("Error disconnecting send transport screen: $error");
+      debugPrint("Error disconnecting send transport screen: $error");
     }
   }
 
@@ -313,7 +313,7 @@ Future<void> stopShareScreen(StopShareScreenOptions options) async {
     prepopulateUserMedia(optionsPrepopulate);
   } catch (error) {
     if (kDebugMode) {
-      print("Error in prepopulateUserMedia: $error");
+      debugPrint("Error in prepopulateUserMedia: $error");
     }
   }
 
@@ -326,7 +326,7 @@ Future<void> stopShareScreen(StopShareScreenOptions options) async {
     );
   } catch (error) {
     if (kDebugMode) {
-      print("Error in reorderStreams: $error");
+      debugPrint("Error in reorderStreams: $error");
     }
   }
 

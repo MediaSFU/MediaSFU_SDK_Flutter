@@ -1011,8 +1011,8 @@ Future<void> changeVids(ChangeVidsOptions options) async {
     }
   } catch (error, stackTrace) {
     if (kDebugMode) {
-      print('changeVids error: $error');
-      print('changeVids stack trace: $stackTrace');
+      debugPrint('changeVids error: $error');
+      debugPrint('changeVids stack trace: $stackTrace');
     }
   }
 }

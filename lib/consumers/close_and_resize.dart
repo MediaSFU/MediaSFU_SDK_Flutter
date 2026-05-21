@@ -360,7 +360,7 @@ Future<void> closeAndResize(CloseAndResizeOptions options) async {
     }
   } catch (error) {
     if (kDebugMode) {
-      print('closeAndResize error: $error');
+      debugPrint('closeAndResize error: $error');
     }
   }
 }

@@ -275,7 +275,7 @@ class _ModernBreakoutRoomsModalState extends State<ModernBreakoutRoomsModal>
             },
             ack: (_) {});
       } catch (e) {
-        if (kDebugMode) print('Local socket error: $e');
+        if (kDebugMode) debugPrint('Local socket error: $e');
       }
     }
   }
@@ -305,7 +305,7 @@ class _ModernBreakoutRoomsModalState extends State<ModernBreakoutRoomsModal>
             },
             ack: (_) {});
       } catch (e) {
-        if (kDebugMode) print('Local socket error: $e');
+        if (kDebugMode) debugPrint('Local socket error: $e');
       }
     }
   }

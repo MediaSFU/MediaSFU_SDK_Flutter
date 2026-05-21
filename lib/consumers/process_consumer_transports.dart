@@ -138,7 +138,7 @@ Future<void> processConsumerTransports(
     }
   } catch (error) {
     if (kDebugMode) {
-      print('Error in processConsumerTransports: $error');
+      debugPrint('Error in processConsumerTransports: $error');
     }
   }
 }

@@ -112,7 +112,7 @@ Future<void> receiveAllPipedTransports(
     );
   } catch (error) {
     if (kDebugMode) {
-      print('Error in receiveAllPipedTransports: $error');
+      debugPrint('Error in receiveAllPipedTransports: $error');
     }
     completer.completeError(error);
   }

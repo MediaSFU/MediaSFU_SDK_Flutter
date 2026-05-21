@@ -641,7 +641,6 @@ When asking an AI assistant for help, include the package version, the selected 
 | React Native CLI | [mediasfu.com/reactnative](https://www.mediasfu.com/reactnative) |
 | React Native Expo | [mediasfu.com/reactnativeexpo](https://www.mediasfu.com/reactnativeexpo) |
 | JavaScript | [mediasfu.com/javascript](https://www.mediasfu.com/javascript) |
-| Electron | [mediasfu.com/electron](https://www.mediasfu.com/electron) |
 
 ## License
 

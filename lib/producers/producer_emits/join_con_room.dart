@@ -118,7 +118,7 @@ Future<ResponseJoinRoom> joinConRoom(JoinConRoomOptions options) async {
     return completer.future;
   } catch (error) {
     if (kDebugMode) {
-      print('Error joining consume room: $error');
+      debugPrint('Error joining consume room: $error');
     }
     rethrow;
   }

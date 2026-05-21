@@ -114,7 +114,7 @@ void updateConsumingDomains(UpdateConsumingDomainsOptions options) async {
     }
   } catch (error) {
     if (kDebugMode) {
-      print("Error in updateConsumingDomains: $error");
+      debugPrint("Error in updateConsumingDomains: $error");
     }
   }
 }

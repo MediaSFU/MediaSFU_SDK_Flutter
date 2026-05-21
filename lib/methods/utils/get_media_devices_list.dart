@@ -51,13 +51,13 @@ Future<List<MediaDeviceInfo>> getMediaDevicesList(String kind) async {
         final hasRequestedKind = existingDevices.any((d) => d.kind == kind);
         if (!hasRequestedKind) {
           if (kDebugMode) {
-            print('No $kind devices found on macOS - skipping getUserMedia');
+            debugPrint('No $kind devices found on macOS - skipping getUserMedia');
           }
           return [];
         }
       } catch (e) {
         if (kDebugMode) {
-          print('Could not enumerate devices on macOS: $e');
+          debugPrint('Could not enumerate devices on macOS: $e');
         }
         return [];
       }
@@ -93,13 +93,13 @@ Future<List<MediaDeviceInfo>> getMediaDevicesList(String kind) async {
         // Permission denied or not available, continue anyway
         // Devices may still be enumerated but with limited information
         if (kDebugMode) {
-          print('Permission not granted for media devices: $permissionError');
+          debugPrint('Permission not granted for media devices: $permissionError');
         }
       }
     } catch (e) {
       // Continue even if getUserMedia fails
       if (kDebugMode) {
-        print('Could not get user media: $e');
+        debugPrint('Could not get user media: $e');
       }
     }
 
@@ -113,7 +113,7 @@ Future<List<MediaDeviceInfo>> getMediaDevicesList(String kind) async {
   } catch (e) {
     // Return an empty list if an error occurs
     if (kDebugMode) {
-      print('Error getting media devices list: $e');
+      debugPrint('Error getting media devices list: $e');
     }
     return [];
   }

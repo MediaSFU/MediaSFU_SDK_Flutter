@@ -519,7 +519,7 @@ class _MediasfuChatState extends State<MediasfuChat> {
     } catch (error) {
       // Handle and log errors during the joinRoom process
       if (kDebugMode) {
-        print('Error joining room: $error');
+        debugPrint('Error joining room: $error');
       }
 
       // throw new Exception('Failed to join the room. Please check your connection and try again.');
@@ -3955,7 +3955,7 @@ class _MediasfuChatState extends State<MediasfuChat> {
           }
         } catch (error) {
           if (kDebugMode) {
-            print('Error in updateAndComplete: $error');
+            debugPrint('Error in updateAndComplete: $error');
           }
         }
       }
@@ -4014,7 +4014,7 @@ class _MediasfuChatState extends State<MediasfuChat> {
       }
     } catch (error) {
       if (kDebugMode) {
-        print('Error joining room: $error');
+        debugPrint('Error joining room: $error');
       }
     }
   }
@@ -5296,7 +5296,7 @@ class _MediasfuChatState extends State<MediasfuChat> {
         widget.options.sourceParameters = mediasfuParameters;
       } catch (error) {
         if (kDebugMode) {
-          print('Error setting source parameters: $error');
+          debugPrint('Error setting source parameters: $error');
         }
       }
     }
@@ -5312,7 +5312,7 @@ class _MediasfuChatState extends State<MediasfuChat> {
         updateMessages(widget.options.seedData!.messages!);
       } catch (error) {
         if (kDebugMode) {
-          print('Error setting seed data: $error');
+          debugPrint('Error setting seed data: $error');
         }
       }
     }

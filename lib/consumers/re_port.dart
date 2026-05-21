@@ -160,7 +160,7 @@ Future<void> rePort(
     }
   } catch (error) {
     if (kDebugMode) {
-      print('Error during rePorting: $error');
+      debugPrint('Error during rePorting: $error');
     }
   }
 }

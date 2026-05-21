@@ -578,7 +578,7 @@ Future<List<Widget>?> prepopulateUserMedia(
             } catch (error) {
               // Handle audio card creation error
               if (kDebugMode) {
-                print('Error creating AudioCard: $error');
+                debugPrint('Error creating AudioCard: $error');
               }
             }
 
@@ -642,7 +642,7 @@ Future<List<Widget>?> prepopulateUserMedia(
             } catch (error) {
               // Handle mini card creation error
               if (kDebugMode) {
-                print('Error creating MiniCard: $error');
+                debugPrint('Error creating MiniCard: $error');
               }
             }
 
@@ -714,7 +714,7 @@ Future<List<Widget>?> prepopulateUserMedia(
           } catch (error) {
             // Handle video card creation error
             if (kDebugMode) {
-              print('Error creating VideoCard: $error');
+              debugPrint('Error creating VideoCard: $error');
             }
           }
         } else {
@@ -850,7 +850,7 @@ Future<List<Widget>?> prepopulateUserMedia(
           } catch (error) {
             // Handle video card creation error
             if (kDebugMode) {
-              print('Error creating VideoCard or MiniCard: $error');
+              debugPrint('Error creating VideoCard or MiniCard: $error');
             }
           }
         }
@@ -919,7 +919,7 @@ Future<List<Widget>?> prepopulateUserMedia(
   } catch (error) {
     // Handle errors during the process of preparing and populating the main screen
     if (kDebugMode) {
-      print('Error preparing and populating the main screen: $error');
+      debugPrint('Error preparing and populating the main screen: $error');
     }
 
     // Optionally, rethrow the error or return an empty list

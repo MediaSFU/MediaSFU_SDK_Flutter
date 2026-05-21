@@ -186,7 +186,7 @@ Future<void> controlMediaHost(ControlMediaHostOptions options) async {
           await params.disconnectSendTransportAudio(optionsDisconnect);
           params.updateAudioAlreadyOn(false);
         } catch (error) {
-          if (kDebugMode) print('Error controlling audio: $error');
+          if (kDebugMode) debugPrint('Error controlling audio: $error');
         }
 
         try {
@@ -202,7 +202,7 @@ Future<void> controlMediaHost(ControlMediaHostOptions options) async {
           await params.stopShareScreen(optionsStopShare);
           params.updateScreenAlreadyOn(false);
         } catch (error) {
-          if (kDebugMode) print('Error controlling screenshare: $error');
+          if (kDebugMode) debugPrint('Error controlling screenshare: $error');
         }
 
         try {
@@ -225,7 +225,7 @@ Future<void> controlMediaHost(ControlMediaHostOptions options) async {
           await params.onScreenChanges(optionsOnScreen);
           params.updateVideoAlreadyOn(false);
         } catch (error) {
-          if (kDebugMode) print('Error controlling video: $error');
+          if (kDebugMode) debugPrint('Error controlling video: $error');
         }
         break;
 
@@ -233,6 +233,6 @@ Future<void> controlMediaHost(ControlMediaHostOptions options) async {
         throw ArgumentError('Invalid media control type');
     }
   } catch (error) {
-    if (kDebugMode) print('Error in controlMediaHost: $error');
+    if (kDebugMode) debugPrint('Error in controlMediaHost: $error');
   }
 }

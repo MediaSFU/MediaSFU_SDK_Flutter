@@ -202,10 +202,7 @@ class _WelcomePageState extends State<WelcomePage> {
                 // Brand Logo
                 Container(
                   margin: const EdgeInsets.only(bottom: 10),
-                  child: CircleAvatar(
-                    radius: 50,
-                    backgroundImage: resolveImageSource(kDefaultMediaSFULogo),
-                  ),
+                  child: buildLogoCircle(kDefaultMediaSFULogo, radius: 50),
                 ),
                 // Input Fields
                 Column(

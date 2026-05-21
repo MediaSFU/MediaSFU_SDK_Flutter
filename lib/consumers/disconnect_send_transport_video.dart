@@ -105,7 +105,7 @@ Future<void> disconnectLocalSendTransportVideo(
     });
   } catch (error) {
     if (kDebugMode) {
-      print('Error disconnecting local send transport for video: $error');
+      debugPrint('Error disconnecting local send transport for video: $error');
     }
     rethrow; // Re-throw to propagate the error
   }
@@ -222,13 +222,13 @@ Future<void> disconnectSendTransportVideo(
       await disconnectLocalSendTransportVideo(options);
     } catch (localError) {
       if (kDebugMode) {
-        print('Error disconnecting local video send transport: $localError');
+        debugPrint('Error disconnecting local video send transport: $localError');
       }
       // Optionally, handle the local error (e.g., show a notification)
     }
   } catch (error) {
     if (kDebugMode) {
-      print('Error disconnecting send transport for video: $error');
+      debugPrint('Error disconnecting send transport for video: $error');
     }
   }
 }

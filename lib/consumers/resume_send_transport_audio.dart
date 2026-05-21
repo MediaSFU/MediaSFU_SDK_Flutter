@@ -84,7 +84,7 @@ Future<void> resumeLocalSendTransportAudio(
     }
   } catch (error) {
     if (kDebugMode) {
-      print('Error resuming local audio send transport: $error');
+      debugPrint('Error resuming local audio send transport: $error');
     }
     rethrow; // Re-throw to propagate the error
   }
@@ -176,13 +176,13 @@ Future<void> resumeSendTransportAudio(
       await resumeLocalSendTransportAudio(options);
     } catch (localError) {
       if (kDebugMode) {
-        print('Error resuming local audio send transport: $localError');
+        debugPrint('Error resuming local audio send transport: $localError');
       }
       // Optionally, handle the local error (e.g., show a notification)
     }
   } catch (error) {
     if (kDebugMode) {
-      print('Error during resuming audio send transport: $error');
+      debugPrint('Error during resuming audio send transport: $error');
     }
   }
 }

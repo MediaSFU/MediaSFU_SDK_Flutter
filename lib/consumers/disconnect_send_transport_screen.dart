@@ -98,7 +98,7 @@ Future<void> disconnectLocalSendTransportScreen(
     });
   } catch (error) {
     if (kDebugMode) {
-      print('Error disconnecting local send transport for screen: $error');
+      debugPrint('Error disconnecting local send transport for screen: $error');
     }
     rethrow; // Re-throw to propagate the error
   }
@@ -176,7 +176,7 @@ Future<void> disconnectSendTransportScreen(
   } catch (error) {
     // Handle errors during the disconnection process
     if (kDebugMode) {
-      print('Error disconnecting send transport for screen: $error');
+      debugPrint('Error disconnecting send transport for screen: $error');
     }
   }
 
@@ -185,7 +185,7 @@ Future<void> disconnectSendTransportScreen(
     await disconnectLocalSendTransportScreen(options);
   } catch (localError) {
     if (kDebugMode) {
-      print('Error disconnecting local send transport for screen: $localError');
+      debugPrint('Error disconnecting local send transport for screen: $localError');
     }
     // Optionally, handle the local error (e.g., show a notification)
   }

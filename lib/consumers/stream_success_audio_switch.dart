@@ -260,7 +260,7 @@ Future<void> streamSuccessAudioSwitch(
         }
       } catch (error) {
         if (kDebugMode) {
-          print(
+          debugPrint(
               'Error in streamSuccessAudioSwitch localSocket pauseProducerMedia:');
         }
       }
@@ -317,7 +317,7 @@ Future<void> streamSuccessAudioSwitch(
           );
         } catch (error) {
           if (kDebugMode) {
-            print(
+            debugPrint(
                 'Error in streamSuccessAudioSwitch createSendTransport: $error');
           }
         }
@@ -333,7 +333,7 @@ Future<void> streamSuccessAudioSwitch(
           );
         } catch (error) {
           if (kDebugMode) {
-            print(
+            debugPrint(
                 'Error in streamSuccessAudioSwitch connectSendTransportAudio: $error');
           }
         }
@@ -365,7 +365,7 @@ Future<void> streamSuccessAudioSwitch(
           }
         } catch (error) {
           if (kDebugMode) {
-            print(
+            debugPrint(
                 'Error in streamSuccessAudioSwitch localSocket pauseProducerMedia:');
           }
         }
@@ -390,7 +390,7 @@ Future<void> streamSuccessAudioSwitch(
     }
   } catch (error) {
     if (kDebugMode) {
-      print('MediaSFU - Error in streamSuccessAudioSwitch: $error');
+      debugPrint('MediaSFU - Error in streamSuccessAudioSwitch: $error');
     }
     // Optionally, handle errors further (e.g., show alert to the user)
   }

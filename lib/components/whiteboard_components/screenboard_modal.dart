@@ -180,9 +180,9 @@ class _ScreenboardModalState extends State<ScreenboardModal> {
         } else {
           // Non-web: annotations are local-only
           if (kDebugMode) {
-            print(
+            debugPrint(
                 'ScreenboardModal: Annotation broadcasting not supported on this platform');
-            print('ScreenboardModal: Annotations will only be visible locally');
+            debugPrint('ScreenboardModal: Annotations will only be visible locally');
           }
         }
 
@@ -193,8 +193,8 @@ class _ScreenboardModalState extends State<ScreenboardModal> {
       }
     } catch (e, stack) {
       if (kDebugMode) {
-        print('ScreenboardModal: Error showing modal: $e');
-        print(stack);
+        debugPrint('ScreenboardModal: Error showing modal: $e');
+        debugPrint(stack.toString());
       }
     } finally {
       _isProcessing = false;
@@ -216,7 +216,7 @@ class _ScreenboardModalState extends State<ScreenboardModal> {
   ) async {
     try {
       if (kDebugMode) {
-        print('ScreenboardModal: Starting annotation capture (React-style)');
+        debugPrint('ScreenboardModal: Starting annotation capture (React-style)');
       }
 
       // Clone the original stream for later restoration (React: clonedStreamScreen)
@@ -224,8 +224,8 @@ class _ScreenboardModalState extends State<ScreenboardModal> {
       // when we replace localStreamScreen with processedStream
       _originalStreamScreen = await localStreamScreen.clone();
       if (kDebugMode) {
-        print('ScreenboardModal: Cloned original stream for restoration');
-        print(
+        debugPrint('ScreenboardModal: Cloned original stream for restoration');
+        debugPrint(
             'ScreenboardModal: Original stream has ${_originalStreamScreen?.getVideoTracks().length} video tracks');
       }
 
@@ -238,7 +238,7 @@ class _ScreenboardModalState extends State<ScreenboardModal> {
 
       if (annotationCanvas == null) {
         if (kDebugMode) {
-          print('ScreenboardModal: Failed to initialize annotation capture');
+          debugPrint('ScreenboardModal: Failed to initialize annotation capture');
         }
         return;
       }
@@ -253,7 +253,7 @@ class _ScreenboardModalState extends State<ScreenboardModal> {
 
       if (processedStream == null) {
         if (kDebugMode) {
-          print('ScreenboardModal: Failed to start capture');
+          debugPrint('ScreenboardModal: Failed to start capture');
         }
         return;
       }
@@ -269,10 +269,10 @@ class _ScreenboardModalState extends State<ScreenboardModal> {
       params.updateLocalStreamScreen(processedStream);
 
       if (kDebugMode) {
-        print('ScreenboardModal: Annotation capture started');
-        print(
+        debugPrint('ScreenboardModal: Annotation capture started');
+        debugPrint(
             'ScreenboardModal: processedStream has ${processedStream.getVideoTracks().length} video tracks');
-        print(
+        debugPrint(
             'ScreenboardModal: Updated localStreamScreen to show combined stream locally');
       }
 
@@ -290,7 +290,7 @@ class _ScreenboardModalState extends State<ScreenboardModal> {
         );
       } catch (e) {
         if (kDebugMode) {
-          print('ScreenboardModal: Error disconnecting screen transport: $e');
+          debugPrint('ScreenboardModal: Error disconnecting screen transport: $e');
         }
       }
 
@@ -307,18 +307,18 @@ class _ScreenboardModalState extends State<ScreenboardModal> {
         );
 
         if (kDebugMode) {
-          print(
+          debugPrint(
               'ScreenboardModal: Reconnected with combined annotation stream');
         }
       } catch (e) {
         if (kDebugMode) {
-          print('ScreenboardModal: Error connecting screen transport: $e');
+          debugPrint('ScreenboardModal: Error connecting screen transport: $e');
         }
       }
     } catch (e, stack) {
       if (kDebugMode) {
-        print('ScreenboardModal: Error starting annotation capture: $e');
-        print(stack);
+        debugPrint('ScreenboardModal: Error starting annotation capture: $e');
+        debugPrint(stack.toString());
       }
     }
   }
@@ -338,14 +338,14 @@ class _ScreenboardModalState extends State<ScreenboardModal> {
       final shared = params.shared;
 
       if (kDebugMode) {
-        print(
+        debugPrint(
             'ScreenboardModal: _hideModal called, annotate=$annotate, shared=$shared');
       }
 
       // React: if (!annotate) { ... } - only stop if annotation is disabled
       if (!annotate) {
         if (kDebugMode) {
-          print(
+          debugPrint(
               'ScreenboardModal: annotate=false, stopping annotation capture');
         }
         // Stop annotation capture
@@ -359,14 +359,14 @@ class _ScreenboardModalState extends State<ScreenboardModal> {
         }
       } else {
         if (kDebugMode) {
-          print(
+          debugPrint(
               'ScreenboardModal: annotate=true, keeping capture running (modal just hiding)');
         }
       }
     } catch (e, stack) {
       if (kDebugMode) {
-        print('ScreenboardModal: Error hiding modal: $e');
-        print(stack);
+        debugPrint('ScreenboardModal: Error hiding modal: $e');
+        debugPrint(stack.toString());
       }
     } finally {
       _isProcessing = false;
@@ -392,7 +392,7 @@ class _ScreenboardModalState extends State<ScreenboardModal> {
     params.updateCanvasScreenboard(null);
 
     if (kDebugMode) {
-      print('ScreenboardModal: Annotation capture stopped');
+      debugPrint('ScreenboardModal: Annotation capture stopped');
     }
   }
 
@@ -405,7 +405,7 @@ class _ScreenboardModalState extends State<ScreenboardModal> {
 
     if (originalStream == null) {
       if (kDebugMode) {
-        print(
+        debugPrint(
             'ScreenboardModal: No original screen stream saved for restoration');
       }
       return;
@@ -413,12 +413,12 @@ class _ScreenboardModalState extends State<ScreenboardModal> {
 
     final videoTracks = originalStream.getVideoTracks();
     if (kDebugMode) {
-      print('ScreenboardModal: Restoring original screen stream');
-      print(
+      debugPrint('ScreenboardModal: Restoring original screen stream');
+      debugPrint(
           'ScreenboardModal: Original stream has ${videoTracks.length} video tracks');
       if (videoTracks.isNotEmpty) {
         final track = videoTracks.first;
-        print(
+        debugPrint(
             'ScreenboardModal: Track enabled: ${track.enabled}, readyState: ${track.kind}');
       }
     }
@@ -434,11 +434,11 @@ class _ScreenboardModalState extends State<ScreenboardModal> {
         ),
       );
       if (kDebugMode) {
-        print('ScreenboardModal: Disconnected transport successfully');
+        debugPrint('ScreenboardModal: Disconnected transport successfully');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('ScreenboardModal: Error disconnecting transport: $e');
+        debugPrint('ScreenboardModal: Error disconnecting transport: $e');
       }
     }
 
@@ -454,11 +454,11 @@ class _ScreenboardModalState extends State<ScreenboardModal> {
       );
 
       if (kDebugMode) {
-        print('ScreenboardModal: Reconnected with original screen stream');
+        debugPrint('ScreenboardModal: Reconnected with original screen stream');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('ScreenboardModal: Error reconnecting transport: $e');
+        debugPrint('ScreenboardModal: Error reconnecting transport: $e');
       }
     }
 

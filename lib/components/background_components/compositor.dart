@@ -117,7 +117,7 @@ class Compositor {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
     // ignore: unused_local_variable
-    final size = Size(frame.width.toDouble(), frame.height.toDouble());
+    // final size = Size(frame.width.toDouble(), frame.height.toDouble());
 
     // Step 1: Draw blurred background
     final originalImage = await _createImageFromBytes(

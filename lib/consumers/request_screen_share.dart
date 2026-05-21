@@ -135,7 +135,7 @@ Future<void> requestScreenShare(
   } catch (error) {
     // Log any errors encountered
     if (kDebugMode) {
-      print("Error during requesting screen share: $error");
+      debugPrint("Error during requesting screen share: $error");
     }
   }
 }

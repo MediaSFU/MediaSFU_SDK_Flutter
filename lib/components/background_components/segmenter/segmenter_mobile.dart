@@ -34,7 +34,8 @@ class MobileSegmenter implements BackgroundSegmenterBase {
 
   /// Whether current platform supports native segmentation
   /// Windows is disabled — no viable frame-injection path in libwebrtc.
-  bool get _supportsNativeSegmentation => Platform.isIOS || Platform.isMacOS;
+  bool get _supportsNativeSegmentation =>
+      Platform.isIOS || Platform.isMacOS;
 
   @override
   Future<void> initialize([

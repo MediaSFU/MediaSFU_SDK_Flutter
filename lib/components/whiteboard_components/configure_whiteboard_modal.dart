@@ -156,6 +156,20 @@ class _ConfigureWhiteboardModalState extends State<ConfigureWhiteboardModal> {
     _params.updateCanStartWhiteboard(isValid);
   }
 
+  Widget _buildIconWidget(
+    Object icon, {
+    double size = 16,
+    Color? color,
+  }) {
+    if (icon is FaIconData) {
+      return FaIcon(icon, size: size, color: color);
+    }
+    if (icon is IconData) {
+      return Icon(icon, size: size, color: color);
+    }
+    return Icon(Icons.help_outline, size: size, color: color);
+  }
+
   void _addParticipant(Participant participant) {
     setState(() {
       _pendingParticipants.remove(participant);
@@ -792,15 +806,15 @@ class _ConfigureWhiteboardModalState extends State<ConfigureWhiteboardModal> {
   Widget _buildParticipantCard({
     required String title,
     required String subtitle,
-    required FaIconData icon,
+    required Object icon,
     required Color iconColor,
     required List<Participant> participants,
     required Function(Participant) onAction,
-    required FaIconData actionIcon,
+    required Object actionIcon,
     required Color actionColor,
     required Color actionBgColor,
     required String emptyMessage,
-    required FaIconData emptyIcon,
+    required Object emptyIcon,
     required Color headerColor,
     required Color borderColor,
   }) {
@@ -836,7 +850,7 @@ class _ConfigureWhiteboardModalState extends State<ConfigureWhiteboardModal> {
                     color: iconColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: FaIcon(icon, size: 12, color: iconColor),
+                  child: _buildIconWidget(icon, size: 12, color: iconColor),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -893,7 +907,7 @@ class _ConfigureWhiteboardModalState extends State<ConfigureWhiteboardModal> {
                             color: Colors.grey[100],
                             shape: BoxShape.circle,
                           ),
-                          child: FaIcon(
+                          child: _buildIconWidget(
                             emptyIcon,
                             size: 20,
                             color: Colors.grey[400],
@@ -935,7 +949,7 @@ class _ConfigureWhiteboardModalState extends State<ConfigureWhiteboardModal> {
   Widget _buildParticipantTile({
     required Participant participant,
     required Function(Participant) onAction,
-    required FaIconData actionIcon,
+    required Object actionIcon,
     required Color actionColor,
     required Color actionBgColor,
   }) {
@@ -993,7 +1007,7 @@ class _ConfigureWhiteboardModalState extends State<ConfigureWhiteboardModal> {
                 color: actionBgColor,
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: FaIcon(
+              child: _buildIconWidget(
                 actionIcon,
                 size: 12,
                 color: actionColor,
@@ -1103,7 +1117,7 @@ class _ConfigureWhiteboardModalState extends State<ConfigureWhiteboardModal> {
   }
 
   Widget _buildActionButton({
-    required FaIconData icon,
+    required Object icon,
     required String label,
     required Color color,
     VoidCallback? onPressed,
@@ -1138,7 +1152,7 @@ class _ConfigureWhiteboardModalState extends State<ConfigureWhiteboardModal> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            FaIcon(
+            _buildIconWidget(
               icon,
               size: 14,
               color: isDisabled ? Colors.grey[500] : Colors.white,

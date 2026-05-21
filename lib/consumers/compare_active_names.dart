@@ -130,7 +130,7 @@ Future<void> compareActiveNames(CompareActiveNamesOptions options) async {
     updatePrevActiveNames(List<String>.from(activeNames));
   } catch (error) {
     if (kDebugMode) {
-      print('compareActiveNames error: $error');
+      debugPrint('compareActiveNames error: $error');
     }
   }
 }

@@ -158,7 +158,7 @@ Future<void> connectRecvTransport(ConnectRecvTransportOptions options) async {
         } catch (error) {
           // Handle error
           if (kDebugMode) {
-            print('consumerResume error: $error');
+            debugPrint('consumerResume error: $error');
           }
         }
       }
@@ -166,7 +166,7 @@ Future<void> connectRecvTransport(ConnectRecvTransportOptions options) async {
   } catch (error) {
     // Handle error
     if (kDebugMode) {
-      print('consume error: $error');
+      debugPrint('consume error: $error');
     }
   }
 }

@@ -103,7 +103,7 @@ Future<void> getVideos({required GetVideosOptions options}) async {
   } catch (error) {
     // Log error in debug mode
     if (kDebugMode) {
-      print('Error updating video streams: ${error.toString()}');
+      debugPrint('Error updating video streams: ${error.toString()}');
     }
     rethrow;
   }

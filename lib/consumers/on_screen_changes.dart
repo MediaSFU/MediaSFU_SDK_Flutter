@@ -128,7 +128,7 @@ Future<void> onScreenChanges(OnScreenChangesOptions options) async {
     );
   } catch (error) {
     if (kDebugMode) {
-      print('Error handling screen changes: ${error.toString()}');
+      debugPrint('Error handling screen changes: ${error.toString()}');
     }
   }
 }

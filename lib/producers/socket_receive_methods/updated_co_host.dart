@@ -78,7 +78,7 @@ void updatedCoHost(UpdatedCoHostOptions options) async {
     }
   } catch (error) {
     if (kDebugMode) {
-      print("Error in updatedCoHost: $error");
+      debugPrint("Error in updatedCoHost: $error");
     }
   }
 }

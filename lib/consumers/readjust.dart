@@ -189,7 +189,7 @@ Future<void> readjust({
     }
   } catch (error) {
     if (kDebugMode) {
-      print("Error updating layout: $error");
+      debugPrint("Error updating layout: $error");
     }
   }
 }

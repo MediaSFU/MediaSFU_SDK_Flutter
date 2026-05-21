@@ -494,7 +494,7 @@ void updateRoomParametersClient({
   } catch (error) {
     // Print the error along with the stack trace
     if (kDebugMode) {
-      print('Update room parameters error: $error');
+      debugPrint('Update room parameters error: $error');
     }
     // print('Stack trace: $stackTrace');
     try {

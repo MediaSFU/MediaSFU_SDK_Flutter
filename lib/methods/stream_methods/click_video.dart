@@ -248,12 +248,12 @@ Future<void> clickVideo(ClickVideoOptions options) async {
     if (!videoAction && islevel != '2' && !youAreCoHost) {
       // Debug logging
       if (kDebugMode) {
-        print('=== clickVideo DEBUG ===');
-        print(
+        debugPrint('=== clickVideo DEBUG ===');
+        debugPrint(
             'videoAction: $videoAction, islevel: $islevel, youAreCoHost: $youAreCoHost');
-        print(
+        debugPrint(
             'permissionConfig from parameters: ${parameters.permissionConfig}');
-        print('videoSetting: $videoSetting');
+        debugPrint('videoSetting: $videoSetting');
       }
 
       final optionsCheck = CheckPermissionOptions(

@@ -100,7 +100,7 @@ Future<void> permissionUpdated(PermissionUpdatedOptions options) async {
       );
     }
   } catch (e) {
-    debugPrint('Error handling permissionUpdated: $e');
+    debugPrint('Error handling permissionUpdated: ${e.toString()}');
   }
 }
 
@@ -124,6 +124,6 @@ Future<void> permissionConfigUpdated(
     // Update local permission config
     options.updatePermissionConfig?.call(data.config);
   } catch (e) {
-    debugPrint('Error handling permissionConfigUpdated: $e');
+    debugPrint('Error handling permissionConfigUpdated: ${e.toString()}');
   }
 }

@@ -764,7 +764,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
     } catch (error) {
       // Handle and log errors during the joinRoom process
       if (kDebugMode) {
-        print('Error joining room: $error');
+        debugPrint('Error joining room: $error');
       }
 
       // throw new Exception('Failed to join the room. Please check your connection and try again.');
@@ -4513,7 +4513,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
           }
         } catch (error) {
           if (kDebugMode) {
-            print('Error in updateAndComplete: $error');
+            debugPrint('Error in updateAndComplete: $error');
           }
         }
       }
@@ -4572,7 +4572,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
       }
     } catch (error) {
       if (kDebugMode) {
-        print('Error joining room: $error');
+        debugPrint('Error joining room: $error');
       }
     }
   }
@@ -6180,7 +6180,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
         updateIsDarkModeValue: (_) {},
 
         // Live subtitles on video cards (not used in original components)
-        showSubtitlesOnCards: false,
+        showSubtitlesOnCards: true,
         liveSubtitles: ValueNotifier<Map<String, LiveSubtitle>>({}),
         updateShowSubtitlesOnCards: (_) {},
 
@@ -6241,7 +6241,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
         widget.options.sourceParameters = mediasfuParameters;
       } catch (error) {
         if (kDebugMode) {
-          print('Error setting source parameters: $error');
+          debugPrint('Error setting source parameters: $error');
         }
       }
     }
@@ -6261,7 +6261,7 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
         updateWaitingRoomCounter(widget.options.seedData!.waitingList!.length);
       } catch (error) {
         if (kDebugMode) {
-          print('Error setting seed data: $error');
+          debugPrint('Error setting seed data: $error');
         }
       }
     }

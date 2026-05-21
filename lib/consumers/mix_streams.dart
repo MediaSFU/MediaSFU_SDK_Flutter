@@ -115,7 +115,7 @@ Future<List<Stream>> mixStreams({
     return mixedStreams;
   } catch (error) {
     if (kDebugMode) {
-      print('Error mixing streams: ${error.toString()}');
+      debugPrint('Error mixing streams: ${error.toString()}');
     }
     rethrow;
   }

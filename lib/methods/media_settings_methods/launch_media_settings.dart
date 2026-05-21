@@ -90,7 +90,7 @@ Future<void> launchMediaSettings(LaunchMediaSettingsOptions options) async {
     } catch (error) {
       options.updateIsLoadingModalVisible(false);
       if (kDebugMode) {
-        print('Error getting media devices: $error');
+        debugPrint('Error getting media devices: $error');
       }
     }
   }

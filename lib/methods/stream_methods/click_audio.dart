@@ -337,7 +337,7 @@ Future<void> clickAudio(ClickAudioOptions options) async {
               }
             } catch (e) {
               if (kDebugMode) {
-                print(e);
+                debugPrint(e.toString());
               }
             }
 
@@ -407,7 +407,7 @@ Future<void> clickAudio(ClickAudioOptions options) async {
     }
   } catch (error) {
     if (kDebugMode) {
-      print('Error in clickAudio: $error');
+      debugPrint('Error in clickAudio: $error');
     }
   }
 }

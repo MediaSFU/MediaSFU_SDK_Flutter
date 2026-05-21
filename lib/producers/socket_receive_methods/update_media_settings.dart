@@ -64,7 +64,7 @@ void updateMediaSettings(UpdateMediaSettingsOptions options) {
     options.updateChatSetting(chatSetting);
   } catch (error) {
     if (kDebugMode) {
-      print("Error in updateMediaSettings: $error");
+      debugPrint("Error in updateMediaSettings: $error");
     }
   }
 }

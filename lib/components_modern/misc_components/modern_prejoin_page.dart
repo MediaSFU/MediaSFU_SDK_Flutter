@@ -132,7 +132,7 @@ class _ModernPreJoinPageState extends State<ModernPreJoinPage>
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error: $e');
+        debugPrint('Error: $e');
       }
       rethrow;
     }
@@ -802,10 +802,9 @@ class _ModernPreJoinPageState extends State<ModernPreJoinPage>
           });
         }
       }
-    } catch (error, stackTrace) {
+    } catch (error) {
       if (kDebugMode) {
-        print('Error joining room: $error');
-        print(stackTrace);
+        debugPrint('Error joining room: $error');
       }
       widget.options.parameters.showAlert?.call(
         message: 'Unable to join room. ${error.toString()}',

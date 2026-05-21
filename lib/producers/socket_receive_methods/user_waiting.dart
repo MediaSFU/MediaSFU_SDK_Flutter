@@ -47,7 +47,7 @@ void userWaiting(UserWaitingOptions options) {
     options.updateTotalReqWait(updatedTotalReqWait);
   } catch (error) {
     if (kDebugMode) {
-      print("Error in userWaiting: $error");
+      debugPrint("Error in userWaiting: $error");
     }
   }
 }

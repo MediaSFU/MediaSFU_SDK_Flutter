@@ -59,7 +59,7 @@ Future<void> handleEndPoll(HandleEndPollOptions options) async {
     );
   } catch (error) {
     if (kDebugMode) {
-      print('Error ending poll: $error');
+      debugPrint('Error ending poll: $error');
     }
   }
 }

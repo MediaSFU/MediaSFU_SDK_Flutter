@@ -146,7 +146,7 @@ Future<MediaStream?> getParticipantMedia(
   } catch (e) {
     // Return null if an error occurs
     if (kDebugMode) {
-      print('Error getting participant media: $e');
+      debugPrint('Error getting participant media: $e');
     }
     return null;
   }

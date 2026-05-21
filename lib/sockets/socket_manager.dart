@@ -175,7 +175,7 @@ Future<io.Socket> connectSocket(ConnectSocketOptions options) async {
 
   // Handle connection success
   socket.onConnect((_) {
-    if (kDebugMode) print('Connected to $conn socket with ID: ${socket.id}');
+    if (kDebugMode) debugPrint('Connected to $conn socket with ID: ${socket.id}');
     completer.complete(socket);
   });
 

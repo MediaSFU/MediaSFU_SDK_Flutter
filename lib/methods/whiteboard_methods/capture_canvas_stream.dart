@@ -74,9 +74,9 @@ Future<void> captureCanvasStream(CaptureCanvasStreamOptions options) async {
       // Check if we're on web and canvas capture is supported
       if (kIsWeb && isWebCanvasCaptureSupported()) {
         if (kDebugMode) {
-          print(
+          debugPrint(
               'captureCanvasStream: Web platform detected, canvas capture is available');
-          print(
+          debugPrint(
               'captureCanvasStream: To capture screenboard annotations, use startScreenboardCapture()');
         }
         // Note: Actual capture is initiated from the screenboard component
@@ -86,7 +86,7 @@ Future<void> captureCanvasStream(CaptureCanvasStreamOptions options) async {
       } else {
         // Non-web platforms or unsupported browsers
         if (kDebugMode) {
-          print(
+          debugPrint(
               'captureCanvasStream: Canvas stream capture is not natively supported on this platform. '
               'Whiteboard data is synced to server for recording.');
         }
@@ -100,7 +100,7 @@ Future<void> captureCanvasStream(CaptureCanvasStreamOptions options) async {
         }
       } catch (e) {
         if (kDebugMode) {
-          print('captureCanvasStream: Error stopping canvas stream tracks: $e');
+          debugPrint('captureCanvasStream: Error stopping canvas stream tracks: $e');
         }
       }
 
@@ -123,13 +123,13 @@ Future<void> captureCanvasStream(CaptureCanvasStreamOptions options) async {
         ]);
       } catch (e) {
         if (kDebugMode) {
-          print('captureCanvasStream: Error disconnecting transport: $e');
+          debugPrint('captureCanvasStream: Error disconnecting transport: $e');
         }
       }
     }
   } catch (error) {
     if (kDebugMode) {
-      print('captureCanvasStream: Error - $error');
+      debugPrint('captureCanvasStream: Error - $error');
     }
   }
 }

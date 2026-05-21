@@ -110,7 +110,7 @@ Future<void> disconnectLocalSendTransportAudio(
     });
   } catch (error) {
     if (kDebugMode) {
-      print('Error disconnecting local audio send transport: $error');
+      debugPrint('Error disconnecting local audio send transport: $error');
     }
     rethrow; // Re-throw to propagate the error
   }
@@ -235,13 +235,13 @@ Future<void> disconnectSendTransportAudio(
       await disconnectLocalSendTransportAudio(options);
     } catch (localError) {
       if (kDebugMode) {
-        print('Error disconnecting local audio send transport: $localError');
+        debugPrint('Error disconnecting local audio send transport: $localError');
       }
       // Optionally, handle the local error (e.g., show a notification)
     }
   } catch (error) {
     if (kDebugMode) {
-      print('MediaSFU - disconnectSendTransportAudio error: $error');
+      debugPrint('MediaSFU - disconnectSendTransportAudio error: $error');
     }
     // Handle errors as needed (e.g., show alert, retry logic)
   }

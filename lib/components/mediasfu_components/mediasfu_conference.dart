@@ -752,7 +752,7 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
     } catch (error) {
       // Handle and log errors during the joinRoom process
       if (kDebugMode) {
-        print('Error joining room: $error');
+        debugPrint('Error joining room: $error');
       }
 
       // throw new Exception('Failed to join the room. Please check your connection and try again.');
@@ -4511,7 +4511,7 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
           }
         } catch (error) {
           if (kDebugMode) {
-            print('Error in updateAndComplete: $error');
+            debugPrint('Error in updateAndComplete: $error');
           }
         }
       }
@@ -4570,7 +4570,7 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
       }
     } catch (error) {
       if (kDebugMode) {
-        print('Error joining room: $error');
+        debugPrint('Error joining room: $error');
       }
     }
   }
@@ -6239,7 +6239,7 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
         widget.options.sourceParameters = mediasfuParameters;
       } catch (error) {
         if (kDebugMode) {
-          print('Error setting source parameters: $error');
+          debugPrint('Error setting source parameters: $error');
         }
       }
     }
@@ -6258,7 +6258,7 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
         updateWaitingRoomCounter(widget.options.seedData!.waitingList!.length);
       } catch (error) {
         if (kDebugMode) {
-          print('Error setting seed data: $error');
+          debugPrint('Error setting seed data: $error');
         }
       }
     }

@@ -100,7 +100,7 @@ Future<void> generatePageContent(GeneratePageContentOptions options) async {
     );
   } catch (error) {
     if (kDebugMode) {
-      print('Error generating page content: ${error.toString()}');
+      debugPrint('Error generating page content: ${error.toString()}');
     }
   }
 }

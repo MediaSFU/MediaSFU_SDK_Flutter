@@ -17,24 +17,18 @@ import '../types/types.dart'
 /// Method channel for Android foreground service control and iOS background task
 const _screenCaptureChannel = MethodChannel('com.mediasfu/screen_capture');
 
-/// Starts the MEDIA_PROJECTION foreground service for screen capture on Android.
-///
-/// Android 14+ (API 34) requires this strict ordering:
-///   1. Request MediaProjection permission (user consent dialog)
-///   2. Start foreground service with FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
-///   3. Call getDisplayMedia()
-///
-/// This method handles step 2. It MUST be called AFTER the user has granted
-/// screen capture permission via Helper.requestCapturePermission().
+/// Starts the foreground service for screen capture on Android.
+/// This MUST be called before requesting screen capture on Android 10+ (API 29+).
+/// On Android 14+ (API 34), failing to start this service will crash the app.
 Future<void> _startAndroidForegroundService() async {
   if (kIsWeb) return;
   try {
     if (Platform.isAndroid) {
       await _screenCaptureChannel.invokeMethod('startForegroundService');
-      // Small delay to ensure service is fully active before getDisplayMedia
-      await Future.delayed(const Duration(milliseconds: 300));
     }
-  } catch (_) {}
+  } catch (e) {
+    // Silently handle error
+  }
 }
 
 /// Stops the foreground service for screen capture on Android.
@@ -44,7 +38,9 @@ Future<void> _stopAndroidForegroundService() async {
     if (Platform.isAndroid) {
       await _screenCaptureChannel.invokeMethod('stopForegroundService');
     }
-  } catch (_) {}
+  } catch (e) {
+    // Silently handle error
+  }
 }
 
 /// Parameters for starting screen sharing.
@@ -514,6 +510,7 @@ Future<DesktopCapturerSource?> _showScreenPickerDialog(
 
   // Show the enhanced picker dialog
   return showDialog<DesktopCapturerSource>(
+    // ignore: use_build_context_synchronously
     context: context,
     barrierDismissible: false,
     builder: (BuildContext context) {
@@ -574,37 +571,19 @@ Future<void> startShareScreen(StartShareScreenOptions options) async {
       return;
     }
 
-    // Android 14+ (API 34) requires a strict 3-step flow:
-    //   1. Request MediaProjection permission (consent dialog)
-    //   2. Start MEDIA_PROJECTION foreground service
-    //   3. Call getDisplayMedia()
-    // See: https://medium.com/@owinojumahjerome/flutter-webrtc-screen-sharing-on-android-14-the-missing-guide-4f45391055f3
-    if (!kIsWeb && Platform.isAndroid) {
-      // Step 1: Request screen capture permission FIRST (shows system dialog)
-      final bool granted = await Helper.requestCapturePermission();
-      if (!granted) {
-        showAlert?.call(
-          message:
-              'Screen sharing permission denied. Please allow screen capture and try again.',
-          type: 'danger',
-          duration: 3000,
-        );
-        updateShared(false);
-        return;
-      }
-
-      // Step 2: Start MEDIA_PROJECTION foreground service (now allowed after consent)
+    // Platform-specific preparations BEFORE requesting screen capture
+    if (Platform.isAndroid) {
+      // Android requires a foreground service to be running during screen capture.
+      // This is REQUIRED on Android 10+ (API 29) and MANDATORY on Android 14+ (API 34)
+      // Without this, the app will crash when trying to start MediaProjection
       await _startAndroidForegroundService();
-
-      // Step 3 continues below with getDisplayMedia()
     }
     // iOS: flutter_webrtc handles ReplayKit via getDisplayMedia when
     // RTCAppGroupIdentifier + RTCScreenSharingExtension are set in Info.plist.
     // The system broadcast picker appears automatically.
 
     // Request screen capture using getDisplayMedia
-    // On Android 14+, the permission token is already stored from step 1,
-    // so getDisplayMedia() will skip the consent dialog and capture directly.
+    // This works on Web, Android, iOS, Windows, macOS, and Linux
     try {
       MediaStream stream;
 
@@ -634,6 +613,7 @@ Future<void> startShareScreen(StartShareScreenOptions options) async {
           });
         } else {
           // Show screen picker dialog
+          // ignore: use_build_context_synchronously
           final selectedSource = await _showScreenPickerDialog(context);
           if (selectedSource == null) {
             // User cancelled

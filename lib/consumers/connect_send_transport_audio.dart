@@ -153,7 +153,7 @@ Future<void> connectLocalSendTransportAudio({
     }
   } catch (error) {
     if (kDebugMode) {
-      print('Error connecting local audio transport: $error');
+      debugPrint('Error connecting local audio transport: $error');
     }
     rethrow; // Re-throw to allow parent function to handle it
   }
@@ -300,14 +300,14 @@ Future<void> connectSendTransportAudio(
         }
       } catch (error) {
         if (kDebugMode) {
-          print('Error connecting local audio transport: $error');
+          debugPrint('Error connecting local audio transport: $error');
         }
       }
     }
   } catch (error) {
     // Handle error if showAlert is available
     if (kDebugMode) {
-      print('connectSendTransportAudio error: $error');
+      debugPrint('connectSendTransportAudio error: $error');
     }
   }
 }

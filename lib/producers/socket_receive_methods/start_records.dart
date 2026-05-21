@@ -53,18 +53,18 @@ Future<void> startRecords(StartRecordsOptions options) async {
       ack: (data) {
         if (data is Map && data['success'] == true) {
           if (kDebugMode) {
-            print('Recording started successfully');
+            debugPrint('Recording started successfully');
           }
         } else {
           if (kDebugMode) {
-            print('Failed to start recording');
+            debugPrint('Failed to start recording');
           }
         }
       },
     );
   } catch (error) {
     if (kDebugMode) {
-      print("Error in startRecords: $error");
+      debugPrint("Error in startRecords: $error");
     }
   }
 }

@@ -23,7 +23,7 @@ class SoundPlayer {
   static Future<void> play(SoundPlayerOptions options) async {
     if (!_isValidUrl(options.soundUrl)) {
       if (kDebugMode) {
-        print('Invalid URL: ${options.soundUrl}');
+        debugPrint('Invalid URL: ${options.soundUrl}');
       }
       return;
     }
@@ -32,7 +32,7 @@ class SoundPlayer {
       await _audioPlayer.play(UrlSource(options.soundUrl));
     } catch (e) {
       if (kDebugMode) {
-        print('Failed to play sound: $e');
+        debugPrint('Failed to play sound: $e');
       }
     }
   }
@@ -43,7 +43,7 @@ class SoundPlayer {
       await _audioPlayer.stop();
     } catch (e) {
       if (kDebugMode) {
-        print('Failed to stop sound: $e');
+        debugPrint('Failed to stop sound: $e');
       }
     }
   }
@@ -60,7 +60,7 @@ class SoundPlayer {
       await _audioPlayer.setSource(UrlSource(options.soundUrl));
     } catch (e) {
       if (kDebugMode) {
-        print('Failed to preload sound: $e');
+        debugPrint('Failed to preload sound: $e');
       }
     }
   }
@@ -72,7 +72,7 @@ class SoundPlayer {
       _audioPlayer.release();
     } catch (e) {
       if (kDebugMode) {
-        print('Failed to stop and reinitialize: $e');
+        debugPrint('Failed to stop and reinitialize: $e');
       }
     }
   }
@@ -81,7 +81,7 @@ class SoundPlayer {
   static void attachListeners() {
     _audioPlayer.onPlayerComplete.listen((_) {
       if (kDebugMode) {
-        print('Playback completed.');
+        debugPrint('Playback completed.');
       }
     });
   }

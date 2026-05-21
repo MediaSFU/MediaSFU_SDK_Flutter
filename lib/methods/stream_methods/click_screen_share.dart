@@ -279,7 +279,7 @@ Future<void> clickScreenShare(ClickScreenShareOptions options) async {
     }
   } catch (error) {
     if (kDebugMode) {
-      print("Error during screen share action: $error");
+      debugPrint("Error during screen share action: $error");
     }
   }
 }

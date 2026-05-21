@@ -58,7 +58,7 @@ Future<Device?> createDeviceClient(
   } catch (error) {
     if (error.runtimeType.toString() == 'UnsupportedError') {
       if (kDebugMode) {
-        print('Device creation is not supported on this device.');
+        debugPrint('Device creation is not supported on this device.');
       }
       return null;
     }

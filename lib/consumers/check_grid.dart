@@ -101,7 +101,7 @@ Future<List<dynamic>> checkGrid(CheckGridOptions options) async {
     ];
   } catch (error) {
     if (kDebugMode) {
-      print('checkGrid error: $error');
+      debugPrint('checkGrid error: $error');
     }
     return [];
   }

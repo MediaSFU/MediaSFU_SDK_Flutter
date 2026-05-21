@@ -308,7 +308,7 @@ Future<void> streamSuccessScreen(
         );
       } catch (rePortError) {
         if (kDebugMode) {
-          print('Error reinitializing ports: $rePortError');
+          debugPrint('Error reinitializing ports: $rePortError');
         }
       }
     }
@@ -355,12 +355,12 @@ Future<void> streamSuccessScreen(
       }
     } catch (error) {
       if (kDebugMode) {
-        print('Error handling screen annotation: $error');
+        debugPrint('Error handling screen annotation: $error');
       }
     }
   } catch (error) {
     if (kDebugMode) {
-      print('streamSuccessScreen error: $error');
+      debugPrint('streamSuccessScreen error: $error');
     }
 
     try {
@@ -373,7 +373,7 @@ Future<void> streamSuccessScreen(
       );
     } catch (alertError) {
       if (kDebugMode) {
-        print('Error showing alert: $alertError');
+        debugPrint('Error showing alert: $alertError');
       }
     }
 

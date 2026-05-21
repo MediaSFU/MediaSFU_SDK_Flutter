@@ -34,6 +34,7 @@ class _ModernVideoCardState extends State<ModernVideoCard>
   late AnimationController _pulseController;
   late AnimationController _hoverController;
   // ignore: unused_field
+  // ignore: unused_field
   late Animation<double> _pulseAnimation;
   late Animation<double> _hoverAnimation;
   ValueNotifier<bool> showWaveform = ValueNotifier<bool>(false);
@@ -254,7 +255,7 @@ class _ModernVideoCardState extends State<ModernVideoCard>
       );
     } catch (error) {
       if (kDebugMode) {
-        print('Error in ModernVideoCard: $error');
+        debugPrint('Error in ModernVideoCard: $error');
       }
       return ErrorWidget(error.toString());
     }

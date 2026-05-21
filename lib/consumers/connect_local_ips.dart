@@ -145,11 +145,11 @@ Future<void> connectLocalIps(ConnectLocalIpsOptions options) async {
     await receiveAllPipedTransports(optionsReceive);
 
     if (kDebugMode) {
-      print('Successfully connected local IPs and set up event listeners.');
+      debugPrint('Successfully connected local IPs and set up event listeners.');
     }
   } catch (error) {
     if (kDebugMode) {
-      print('ConnectLocalIps error: $error');
+      debugPrint('ConnectLocalIps error: $error');
     }
   }
 }

@@ -275,7 +275,7 @@ Future<void> recordingNotice(RecordingNoticeOptions options) async {
     }
   } catch (error) {
     if (kDebugMode) {
-      print("Error in recordingNotice: $error");
+      debugPrint("Error in recordingNotice: $error");
     }
 
     // throw Error("Failed to handle recording state and status.");

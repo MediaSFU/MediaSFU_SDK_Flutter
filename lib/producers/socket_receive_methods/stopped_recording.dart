@@ -49,7 +49,7 @@ Future<void> stoppedRecording(StoppedRecordingOptions options) async {
     }
   } catch (error) {
     if (kDebugMode) {
-      print("Error in stoppedRecording: $error");
+      debugPrint("Error in stoppedRecording: $error");
     }
   }
 }

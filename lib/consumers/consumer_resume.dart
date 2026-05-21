@@ -838,7 +838,7 @@ Future<void> consumerResume(ConsumerResumeOptions options) async {
     }
   } catch (error) {
     if (kDebugMode) {
-      print('MediaSFU - consumerResumed error: $error');
+      debugPrint('MediaSFU - consumerResumed error: $error');
     }
     // Optionally, you can rethrow the error or handle it as needed
     // throw error;

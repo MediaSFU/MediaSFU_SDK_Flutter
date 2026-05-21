@@ -94,7 +94,7 @@ class _MediasfuModernAppState extends State<MediasfuModernApp> {
       apiKey:
           'yourDevApiKey1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
     );
-    const localLink = 'http://localhost:3000';
+    const localLink = 'http://192.168.1.133:3000';
     const connectMediaSFU = false;
 
     final CreateMediaSFURoomOptions noUIPreJoinOptionsCreate =

@@ -881,7 +881,7 @@ class _VideoCardState extends State<VideoCard> with TickerProviderStateMixin {
       return container;
     } catch (error) {
       if (kDebugMode) {
-        print('Error adding widget: $error');
+        debugPrint('Error adding widget: $error');
       }
       return ErrorWidget(error.toString());
     }

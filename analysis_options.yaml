@@ -4,11 +4,19 @@ analyzer:
   errors:
     deprecated_member_use: ignore
     deprecated_member_use_from_same_package: ignore
+    unintended_html_in_doc_comment: ignore
+    use_build_context_synchronously: ignore
+    body_might_complete_normally_catch_error: ignore
+    dead_code: ignore
 
 linter:
   rules:
     annotate_overrides: false
+    curly_braces_in_flow_control_structures: false
     library_private_types_in_public_api: false
+
+formatter:
+  trailing_commas: preserve
 
 
 # Additional information about this file can be found at

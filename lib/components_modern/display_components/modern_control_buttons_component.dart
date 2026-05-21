@@ -38,9 +38,6 @@ class _ModernControlButtonsComponentState
       vsync: this,
       duration: MediasfuAnimations.normal,
     );
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _entryController, curve: Curves.easeOutBack),
-    );
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _entryController, curve: Curves.easeOut),
     );

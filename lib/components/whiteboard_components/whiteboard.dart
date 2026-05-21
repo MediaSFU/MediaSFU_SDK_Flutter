@@ -188,6 +188,7 @@ class _WhiteboardState extends State<Whiteboard> {
   final ValueNotifier<Offset?> _eraserCursorNotifier =
       ValueNotifier<Offset?>(null);
   // ignore: unused_element
+  // ignore: unused_element
   Offset? get _eraserCursorPosition => _eraserCursorNotifier.value;
   set _eraserCursorPosition(Offset? value) =>
       _eraserCursorNotifier.value = value;
@@ -249,7 +250,7 @@ class _WhiteboardState extends State<Whiteboard> {
         _processWhiteboardAction(action, payload);
       });
     } catch (e) {
-      if (kDebugMode) print('Error in whiteboardAction: $e');
+      if (kDebugMode) debugPrint('Error in whiteboardAction: $e');
     }
   }
 
@@ -612,7 +613,7 @@ class _WhiteboardState extends State<Whiteboard> {
             }
           }
         } catch (e) {
-          if (kDebugMode) print('Error stopping canvas capture: $e');
+          if (kDebugMode) debugPrint('Error stopping canvas capture: $e');
         }
       } else if (data['status'] == 'started' && params.whiteboardStarted) {
         params.updateWhiteboardStarted(true);
@@ -625,7 +626,7 @@ class _WhiteboardState extends State<Whiteboard> {
         ));
       }
     } catch (e) {
-      if (kDebugMode) print('Error in whiteboardUpdated: $e');
+      if (kDebugMode) debugPrint('Error in whiteboardUpdated: $e');
     }
   }
 
@@ -755,7 +756,7 @@ class _WhiteboardState extends State<Whiteboard> {
         });
       }
     }).catchError((e) {
-      if (kDebugMode) print('Error loading background image: $e');
+      if (kDebugMode) debugPrint('Error loading background image: $e');
     });
   }
 
@@ -1299,10 +1300,10 @@ class _WhiteboardState extends State<Whiteboard> {
         );
       } else if (result.status == ShareResultStatus.dismissed) {
         // User dismissed the share sheet - no error needed
-        if (kDebugMode) print('Share dismissed by user');
+        if (kDebugMode) debugPrint('Share dismissed by user');
       }
     } catch (e) {
-      if (kDebugMode) print('Error saving canvas: $e');
+      if (kDebugMode) debugPrint('Error saving canvas: $e');
       _params.showAlert?.call(
         message: 'Error saving image: $e',
         type: 'danger',
@@ -1388,7 +1389,7 @@ class _WhiteboardState extends State<Whiteboard> {
         },
       });
     } catch (e) {
-      if (kDebugMode) print('Error uploading image: $e');
+      if (kDebugMode) debugPrint('Error uploading image: $e');
       _params.showAlert?.call(
         message: 'Error uploading image: $e',
         type: 'danger',

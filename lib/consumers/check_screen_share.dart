@@ -130,7 +130,7 @@ Future<void> checkScreenShare(CheckScreenShareOptions options) async {
     }
   } catch (error) {
     if (kDebugMode) {
-      print('checkScreenShare error: $error');
+      debugPrint('checkScreenShare error: $error');
     }
   }
 }

@@ -120,7 +120,7 @@ Future<void> compareScreenStates(CompareScreenStatesOptions options) async {
     }
   } catch (error) {
     if (kDebugMode) {
-      print('compareScreenStates error: $error');
+      debugPrint('compareScreenStates error: $error');
     }
   }
 }

@@ -79,7 +79,7 @@ Future<void> connectLocalSendTransportVideo({
     }
   } catch (error) {
     if (kDebugMode) {
-      print('Error connecting local video transport: $error');
+      debugPrint('Error connecting local video transport: $error');
     }
     rethrow; // Re-throw to propagate the error
   }
@@ -258,13 +258,13 @@ Future<void> connectSendTransportVideo(
         );
       } catch (localError) {
         if (kDebugMode) {
-          print('Error connecting local video transport: $localError');
+          debugPrint('Error connecting local video transport: $localError');
         }
       }
     }
   } catch (error) {
     if (kDebugMode) {
-      print('connectSendTransportVideo error: $error');
+      debugPrint('connectSendTransportVideo error: $error');
     }
     rethrow;
   }

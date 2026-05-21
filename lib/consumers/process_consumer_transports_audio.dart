@@ -128,7 +128,7 @@ Future<void> processConsumerTransportsAudio(
   } catch (error) {
     // Handle errors during the process of pausing or resuming consumer transports
     if (kDebugMode) {
-      print('Error processing consumer transports: $error');
+      debugPrint('Error processing consumer transports: $error');
     }
 
     // throw new Error('Error processing consumer transports: $error');

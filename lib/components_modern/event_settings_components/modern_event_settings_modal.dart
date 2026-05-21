@@ -108,6 +108,7 @@ class _ModernEventSettingsModalState extends State<ModernEventSettingsModal>
   }
 
   // ignore: unused_element
+  // ignore: unused_element
   IconData _getStateIcon(String state) {
     switch (state) {
       case 'allow':

@@ -212,7 +212,8 @@ import '../../methods/utils/sleep.dart' show sleep;
 import '../../consumers/change_vids.dart' show changeVids;
 import '../../consumers/compare_active_names.dart' show compareActiveNames;
 import '../../consumers/compare_screen_states.dart' show compareScreenStates;
-import '../../consumers/create_send_transport.dart' show createSendTransport;
+import '../../consumers/create_send_transport.dart'
+    show createSendTransport;
 import '../../consumers/resume_send_transport_audio.dart'
     show resumeSendTransportAudio;
 import '../../consumers/receive_all_piped_transports.dart'
@@ -766,7 +767,7 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
     } catch (error) {
       // Handle and log errors during the joinRoom process
       if (kDebugMode) {
-        print('Error joining room: $error');
+        debugPrint('Error joining room: $error');
       }
 
       // throw new Exception('Failed to join the room. Please check your connection and try again.');
@@ -4153,7 +4154,6 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
             LaunchRecordingOptions(
                 updateIsRecordingModalVisible: updateIsRecordingModalVisible,
                 isRecordingModalVisible: isRecordingModalVisible.value,
-                showAlert: showAlert,
                 stopLaunchRecord: stopLaunchRecord.value,
                 canLaunchRecord: canLaunchRecord.value,
                 recordingAudioSupport: recordingAudioSupport.value,
@@ -4246,7 +4246,6 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
           LaunchRecordingOptions(
               updateIsRecordingModalVisible: updateIsRecordingModalVisible,
               isRecordingModalVisible: isRecordingModalVisible.value,
-              showAlert: showAlert,
               stopLaunchRecord: stopLaunchRecord.value,
               canLaunchRecord: canLaunchRecord.value,
               recordingAudioSupport: recordingAudioSupport.value,
@@ -4329,7 +4328,6 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
           LaunchRecordingOptions(
               updateIsRecordingModalVisible: updateIsRecordingModalVisible,
               isRecordingModalVisible: isRecordingModalVisible.value,
-              showAlert: showAlert,
               stopLaunchRecord: stopLaunchRecord.value,
               canLaunchRecord: canLaunchRecord.value,
               recordingAudioSupport: recordingAudioSupport.value,
@@ -4362,7 +4360,6 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
             LaunchRecordingOptions(
                 updateIsRecordingModalVisible: updateIsRecordingModalVisible,
                 isRecordingModalVisible: isRecordingModalVisible.value,
-                showAlert: showAlert,
                 stopLaunchRecord: stopLaunchRecord.value,
                 canLaunchRecord: canLaunchRecord.value,
                 recordingAudioSupport: recordingAudioSupport.value,
@@ -5139,7 +5136,7 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
           }
         } catch (error) {
           if (kDebugMode) {
-            print('Error in updateAndComplete: $error');
+            debugPrint('Error in updateAndComplete: $error');
           }
         }
       }
@@ -5198,7 +5195,7 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
       }
     } catch (error) {
       if (kDebugMode) {
-        print('Error joining room: $error');
+        debugPrint('Error joining room: $error');
       }
     }
   }
@@ -6867,7 +6864,7 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
         widget.options.sourceParameters = mediasfuParameters;
       } catch (error) {
         if (kDebugMode) {
-          print('Error setting source parameters: $error');
+          debugPrint('Error setting source parameters: $error');
         }
       }
     }
@@ -6887,7 +6884,7 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
         updateWaitingRoomCounter(widget.options.seedData!.waitingList!.length);
       } catch (error) {
         if (kDebugMode) {
-          print('Error setting seed data: $error');
+          debugPrint('Error setting seed data: $error');
         }
       }
     }

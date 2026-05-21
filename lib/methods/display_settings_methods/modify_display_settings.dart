@@ -199,7 +199,7 @@ Future<void> modifyDisplaySettings(ModifyDisplaySettingsOptions options) async {
     }
   } catch (error) {
     if (kDebugMode) {
-      print("MediaSFU - Error in modifyDisplaySettings: $error");
+      debugPrint("MediaSFU - Error in modifyDisplaySettings: $error");
     }
   }
 }

@@ -70,7 +70,6 @@ List<int> getEstimate(GetEstimateOptions options) {
     bool removeAltGrid = params.removeAltGrid;
     bool isWideScreen = params.isWideScreen;
     // ignore: unused_local_variable
-    bool isMediumScreen = params.isMediumScreen;
     var updateRemoveAltGrid = params.updateRemoveAltGrid;
     CalculateRowsAndColumnsType calculateRowsAndColumns =
         params.calculateRowsAndColumns;

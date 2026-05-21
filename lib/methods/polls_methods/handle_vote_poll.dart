@@ -72,7 +72,7 @@ Future<void> handleVotePoll(HandleVotePollOptions options) async {
     );
   } catch (error) {
     if (kDebugMode) {
-      print('Error submitting vote: $error');
+      debugPrint('Error submitting vote: $error');
     }
   }
 }

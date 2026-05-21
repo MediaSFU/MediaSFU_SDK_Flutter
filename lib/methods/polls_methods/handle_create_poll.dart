@@ -65,7 +65,7 @@ Future<void> handleCreatePoll(HandleCreatePollOptions options) async {
     );
   } catch (error) {
     if (kDebugMode) {
-      print('Error creating poll: $error');
+      debugPrint('Error creating poll: $error');
     }
   }
 }

@@ -246,7 +246,7 @@ Future<bool?> startRecording(StartRecordingOptions options) async {
     return recAttempt;
   } catch (error) {
     if (kDebugMode) {
-      print('Error in startRecording: $error');
+      debugPrint('Error in startRecording: $error');
     }
     return null;
   }

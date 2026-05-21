@@ -108,7 +108,7 @@ Future<void> controlMedia(ControlMediaOptions options) async {
           .value;
     } catch (error) {
       if (kDebugMode) {
-        print('Error retrieving media control value: $error');
+        debugPrint('Error retrieving media control value: $error');
       }
     }
 
@@ -119,7 +119,7 @@ Future<void> controlMedia(ControlMediaOptions options) async {
 
     if (participant.name.isEmpty) {
       if (kDebugMode) {
-        print('Participant not found');
+        debugPrint('Participant not found');
       }
       return;
     }
@@ -151,7 +151,7 @@ Future<void> controlMedia(ControlMediaOptions options) async {
     }
   } catch (error, stackTrace) {
     if (kDebugMode) {
-      print('controlMedia error: $error $stackTrace');
+      debugPrint('controlMedia error: $error $stackTrace');
     }
   }
 }

@@ -198,7 +198,7 @@ Future<void> connectSendTransport(
     }
   } catch (error) {
     if (kDebugMode) {
-      print('MediaSFU - connectSendTransport error: $error');
+      debugPrint('MediaSFU - connectSendTransport error: $error');
     }
   }
 }

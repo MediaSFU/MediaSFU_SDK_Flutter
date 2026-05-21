@@ -101,8 +101,8 @@ Future<void> pollUpdated(PollUpdatedOptions options) async {
     }
   } catch (error, stackTrace) {
     if (kDebugMode) {
-      print('Error updating poll: $error');
-      print('Stacktrace: $stackTrace');
+      debugPrint('Error updating poll: $error');
+      debugPrint('Stacktrace: $stackTrace');
     }
   }
 }

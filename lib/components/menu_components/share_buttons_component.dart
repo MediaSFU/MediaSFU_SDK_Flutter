@@ -11,7 +11,7 @@ import '../../types/types.dart' show EventType;
 ///
 /// **Properties:**
 /// - `action`: Callback invoked when button is tapped (required)
-/// - `icon`: IconData or FaIconData for button (null shows error_outline icon)
+/// - `icon`: IconData for button (null shows error_outline icon)
 /// - `show`: Visibility flag (true = show button, false = hide). Defaults to true
 /// - `backgroundColor`: Button background color. Defaults to Colors.blue
 /// - `iconColor`: Icon color. Defaults to Colors.white
@@ -34,7 +34,7 @@ import '../../types/types.dart' show EventType;
 /// )
 /// ```
 class ShareButtonOptions {
-  final dynamic icon;
+  final Object? icon;
   final VoidCallback action;
   final bool show;
   final Color? backgroundColor;
@@ -278,6 +278,16 @@ class ShareButtonsComponent extends StatelessWidget {
 
   const ShareButtonsComponent({super.key, required this.options});
 
+  Widget _buildShareIcon(Object? icon, Color color) {
+    if (icon is FaIconData) {
+      return FaIcon(icon, color: color, size: 24);
+    }
+    if (icon is IconData) {
+      return Icon(icon, color: color, size: 24);
+    }
+    return Icon(Icons.error_outline, color: color, size: 24);
+  }
+
   String getShareUrl() {
     if (options.localLink != null &&
         options.localLink!.isNotEmpty &&
@@ -352,26 +362,13 @@ class ShareButtonsComponent extends StatelessWidget {
                   borderRadius: BorderRadius.circular(5),
                 ),
                 child: _buildShareIcon(
-                  button.icon ?? Icons.error_outline,
-                  color: button.iconColor ?? Colors.white,
-                  size: 24,
+                  button.icon,
+                  button.iconColor ?? Colors.white,
                 ),
               ),
             ),
           )
           .toList(),
     );
-  }
-
-  Widget _buildShareIcon(dynamic icon, {required Color color, double? size}) {
-    if (icon is FaIconData) {
-      return FaIcon(icon, color: color, size: size);
-    }
-
-    if (icon is IconData) {
-      return Icon(icon, color: color, size: size);
-    }
-
-    return Icon(Icons.error_outline, color: color, size: size);
   }
 }

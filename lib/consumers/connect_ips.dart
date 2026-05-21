@@ -130,7 +130,7 @@ Future<List<dynamic>> connectIps(ConnectIpsOptions options) async {
     // Check for required parameters
     if (options.apiKey == null && options.apiToken.isEmpty) {
       if (kDebugMode) {
-        print('Missing required parameters for authentication');
+        debugPrint('Missing required parameters for authentication');
       }
       return [consumeSockets, roomRecvIPs];
     }
@@ -223,7 +223,7 @@ Future<List<dynamic>> connectIps(ConnectIpsOptions options) async {
         }
       } catch (error) {
         if (kDebugMode) {
-          print('connectIps error with IP $ip: $error');
+          debugPrint('connectIps error with IP $ip: $error');
         }
       }
     }
@@ -231,7 +231,7 @@ Future<List<dynamic>> connectIps(ConnectIpsOptions options) async {
     return [consumeSockets, roomRecvIPs];
   } catch (error) {
     if (kDebugMode) {
-      print('connectIps error: $error');
+      debugPrint('connectIps error: $error');
     }
     return [consumeSockets, parameters.roomRecvIPs];
   }

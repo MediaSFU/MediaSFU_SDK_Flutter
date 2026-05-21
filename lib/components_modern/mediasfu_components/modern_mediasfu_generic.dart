@@ -584,8 +584,9 @@ class ModernMediasfuGenericOptions {
   ContainerStyleOptions? containerStyle;
   MediasfuUICustomOverrides? uiOverrides;
 
-  /// Whether to use a fixed room host instead of meeting-based URL selection.
-  /// Use this only when your deployment requires a single fixed entry host.
+  /// Whether to use fixed link (stagerooms.mediasfu.com) instead of dynamic URL selection
+  /// When true, always connects to stagerooms.mediasfu.com
+  /// When false, URL is selected based on meeting ID prefix (d=demos, s=sandbox, p=production)
   bool? useFixedLink;
 
   /// App key for Flutter app authentication in socket handshake (X-App-Key)
@@ -1018,7 +1019,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     } catch (error) {
       // Handle and log errors during the joinRoom process
       if (kDebugMode) {
-        print('Error joining room: $error');
+        debugPrint('Error joining room: $error');
       }
 
       Future.delayed(const Duration(milliseconds: 1000), () {
@@ -1306,9 +1307,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
 
   // Live Subtitles on Video Cards
   /// Whether to show subtitles on participant video cards
-  final ValueNotifier<bool> showSubtitlesOnCards = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> showSubtitlesOnCards = ValueNotifier<bool>(true);
 
-  /// Per-speaker live subtitle data: `Map<speakerId, LiveSubtitle>`
+  /// Per-speaker live subtitle data: Map<speakerId, LiveSubtitle>
   final ValueNotifier<Map<String, LiveSubtitle>> liveSubtitles =
       ValueNotifier<Map<String, LiveSubtitle>>({});
 
@@ -1329,7 +1330,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   final ValueNotifier<bool> youAreCoHost = ValueNotifier(false);
   final ValueNotifier<bool> youAreHost = ValueNotifier(false);
   final ValueNotifier<bool> confirmedToRecord = ValueNotifier(false);
-  final ValueNotifier<String> meetingDisplayType = ValueNotifier('all');
+  final ValueNotifier<String> meetingDisplayType = ValueNotifier('media');
   final ValueNotifier<bool> meetingVideoOptimized = ValueNotifier(false);
   final ValueNotifier<EventType> eventType = ValueNotifier(EventType.webinar);
   final ValueNotifier<List<Participant>> participants =
@@ -2122,11 +2123,11 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       closeSidebar();
       updateIsMeetingActive(false);
       // Disable screen wake lock when leaving meeting
-      ScreenWakeLock.disable().catchError((_) => false);
+      ScreenWakeLock.disable().catchError((_) {});
     } else {
       updateIsMeetingActive(true);
       // Enable screen wake lock to keep screen on during meeting
-      ScreenWakeLock.enable().catchError((_) => false);
+      ScreenWakeLock.enable().catchError((_) {});
     }
 
     if (validated) {
@@ -6743,7 +6744,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           }
         } catch (error) {
           if (kDebugMode) {
-            print('Error in updateAndComplete: $error');
+            debugPrint('Error in updateAndComplete: $error');
           }
         }
       }
@@ -6802,7 +6803,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       }
     } catch (error) {
       if (kDebugMode) {
-        print('Error joining room: $error');
+        debugPrint('Error joining room: $error');
       }
     }
   }
@@ -9105,7 +9106,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         widget.options.sourceParameters = mediasfuParameters;
       } catch (error) {
         if (kDebugMode) {
-          print('Error setting source parameters: $error');
+          debugPrint('Error setting source parameters: $error');
         }
       }
     }
@@ -9125,7 +9126,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         updateWaitingRoomCounter(widget.options.seedData!.waitingList!.length);
       } catch (error) {
         if (kDebugMode) {
-          print('Error setting seed data: $error');
+          debugPrint('Error setting seed data: $error');
         }
       }
     }
