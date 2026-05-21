@@ -97,7 +97,7 @@ abstract class AddVideosGridParameters
   /// Reactive notifier for whether to show subtitles on cards
   ValueListenable<bool>? get showSubtitlesOnCardsNotifier;
 
-  /// Per-speaker live subtitle data: Map<speakerId, LiveSubtitle>
+  /// Per-speaker live subtitle data: `Map<speakerId, LiveSubtitle>`
   ValueListenable<Map<String, LiveSubtitle>> get liveSubtitles;
 
   // Method to retrieve updated parameters
@@ -739,7 +739,7 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
     }
   } catch (error) {
     if (kDebugMode) {
-      debugPrint('Error in addVideosGrid: $error');
+      print('Error in addVideosGrid: $error');
     }
   }
 }

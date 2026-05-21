@@ -212,8 +212,7 @@ import '../../methods/utils/sleep.dart' show sleep;
 import '../../consumers/change_vids.dart' show changeVids;
 import '../../consumers/compare_active_names.dart' show compareActiveNames;
 import '../../consumers/compare_screen_states.dart' show compareScreenStates;
-import '../../consumers/create_send_transport.dart'
-    show createSendTransport;
+import '../../consumers/create_send_transport.dart' show createSendTransport;
 import '../../consumers/resume_send_transport_audio.dart'
     show resumeSendTransportAudio;
 import '../../consumers/receive_all_piped_transports.dart'

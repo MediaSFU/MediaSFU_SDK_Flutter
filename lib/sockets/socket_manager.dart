@@ -175,14 +175,18 @@ Future<io.Socket> connectSocket(ConnectSocketOptions options) async {
 
   // Handle connection success
   socket.onConnect((_) {
-    if (kDebugMode) debugPrint('Connected to $conn socket with ID: ${socket.id}');
-    completer.complete(socket);
+    if (kDebugMode) print('Connected to $conn socket with ID: ${socket.id}');
+    if (!completer.isCompleted) {
+      completer.complete(socket);
+    }
   });
 
   // Handle connection error
   socket.onConnectError((error) {
-    completer
-        .completeError(Exception('Error connecting to media socket: $error'));
+    if (!completer.isCompleted) {
+      completer
+          .completeError(Exception('Error connecting to media socket: $error'));
+    }
   });
 
   return completer.future;
@@ -238,16 +242,20 @@ Future<ResponseLocalConnection> connectLocalSocket(
 
   // Handle connection success
   socket.on('connection-success', (data) {
-    final connectionData =
-        ResponseLocalConnectionData.fromMap(Map<String, dynamic>.from(data));
-    completer.complete(
-        ResponseLocalConnection(socket: socket, data: connectionData));
+    if (!completer.isCompleted) {
+      final connectionData =
+          ResponseLocalConnectionData.fromMap(Map<String, dynamic>.from(data));
+      completer.complete(
+          ResponseLocalConnection(socket: socket, data: connectionData));
+    }
   });
 
   // Handle connection error
   socket.onConnectError((error) {
-    completer.completeError(
-        Exception('Error connecting to local media socket: $error'));
+    if (!completer.isCompleted) {
+      completer.completeError(
+          Exception('Error connecting to local media socket: $error'));
+    }
   });
 
   return completer.future;

@@ -182,7 +182,8 @@ class _ScreenboardModalState extends State<ScreenboardModal> {
           if (kDebugMode) {
             debugPrint(
                 'ScreenboardModal: Annotation broadcasting not supported on this platform');
-            debugPrint('ScreenboardModal: Annotations will only be visible locally');
+            debugPrint(
+                'ScreenboardModal: Annotations will only be visible locally');
           }
         }
 
@@ -216,7 +217,8 @@ class _ScreenboardModalState extends State<ScreenboardModal> {
   ) async {
     try {
       if (kDebugMode) {
-        debugPrint('ScreenboardModal: Starting annotation capture (React-style)');
+        debugPrint(
+            'ScreenboardModal: Starting annotation capture (React-style)');
       }
 
       // Clone the original stream for later restoration (React: clonedStreamScreen)
@@ -238,7 +240,8 @@ class _ScreenboardModalState extends State<ScreenboardModal> {
 
       if (annotationCanvas == null) {
         if (kDebugMode) {
-          debugPrint('ScreenboardModal: Failed to initialize annotation capture');
+          debugPrint(
+              'ScreenboardModal: Failed to initialize annotation capture');
         }
         return;
       }
@@ -290,7 +293,8 @@ class _ScreenboardModalState extends State<ScreenboardModal> {
         );
       } catch (e) {
         if (kDebugMode) {
-          debugPrint('ScreenboardModal: Error disconnecting screen transport: $e');
+          debugPrint(
+              'ScreenboardModal: Error disconnecting screen transport: $e');
         }
       }
 
