@@ -841,7 +841,7 @@ class _VideoCardState extends State<VideoCard> with TickerProviderStateMixin {
         _buildOverlayPositioned(context),
         if (widget.options.showControls) _buildControlsPositioned(),
         _buildAudioDecibelCheck(),
-        if (subtitleOverlay != null) subtitleOverlay,
+        ?subtitleOverlay,
       ];
 
       final defaultWrapper = Stack(children: stackChildren);

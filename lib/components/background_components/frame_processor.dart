@@ -264,9 +264,10 @@ class FrameProcessor {
       // Reset failure counter on successful capture
       _consecutiveFailures = 0;
 
-      if (shouldLog)
+      if (shouldLog) {
         debugPrint(
             'FrameProcessor: Captured ${imageBytes.length} bytes (JPEG)');
+      }
 
       // Save JPEG to temp file for ML Kit to process directly
       // This avoids the RGBA/BGRA conversion issues
@@ -274,8 +275,9 @@ class FrameProcessor {
       final tempFile = File('${tempDir.path}/ml_frame.jpg');
       await tempFile.writeAsBytes(imageBytes);
 
-      if (shouldLog)
+      if (shouldLog) {
         debugPrint('FrameProcessor: Saved JPEG to ${tempFile.path}');
+      }
 
       // Also decode to get dimensions and RGBA for compositing
       // Decode JPEG — if vidCons target dimensions are set, decode directly
@@ -291,8 +293,9 @@ class FrameProcessor {
       _lastWidth = image.width;
       _lastHeight = image.height;
 
-      if (shouldLog)
+      if (shouldLog) {
         debugPrint('FrameProcessor: Decoded image ${_lastWidth}x$_lastHeight');
+      }
 
       // Get raw RGBA bytes from the image for compositing later
       final ByteData? byteData =
@@ -313,8 +316,9 @@ class FrameProcessor {
         return;
       }
 
-      if (shouldLog)
+      if (shouldLog) {
         debugPrint('FrameProcessor: Running segmentation via file path');
+      }
 
       // Run segmentation using file path (more reliable than fromBytes)
       final metadata = SegmenterInputMetadata(

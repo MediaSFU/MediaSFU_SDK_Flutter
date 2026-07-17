@@ -73,8 +73,8 @@ flutter pub add mediasfu_sdk
 
 Base requirements from `pubspec.yaml`:
 
-- Flutter `>=1.17.0`
-- Dart `>=3.3.3 <4.0.0`
+- Flutter `>=3.38.1`
+- Dart `>=3.10.0 <4.0.0`
 
 ### Optional feature dependencies
 
@@ -86,7 +86,7 @@ google_mlkit_selfie_segmentation: ^0.10.0
 
 # Web whiteboard and capture helpers
 web: ^1.1.1
-dart_webrtc: ^1.4.6
+dart_webrtc: ^1.8.1
 ```
 
 | Feature | Dependency | Platforms |

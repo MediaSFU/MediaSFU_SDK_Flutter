@@ -1,3 +1,10 @@
+### 2.2.9
+* **Compatibility and dependency updates**:
+  - Fixed static analysis on Flutter 3.44+ after `CupertinoPageTransitionsBuilder` moved to the Cupertino library.
+  - Updated `mediasfu_mediasoup_client` to 0.1.4 and `flutter_webrtc` to 1.5.2.
+  - Updated direct dependency baselines to their latest compatible releases.
+  - Aligned the declared Dart and Flutter minimums with the supported dependency graph.
+
 ### 2.2.8
 * **Minor Improvements**:
   - Minor UI enhancements and bug fixes across all components.

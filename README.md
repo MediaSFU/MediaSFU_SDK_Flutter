@@ -5,36 +5,38 @@
 <p align="center">
   <a href="https://pub.dev/packages/mediasfu_sdk"><img src="https://img.shields.io/pub/v/mediasfu_sdk.svg?style=flat-square" alt="pub.dev version" /></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square" alt="MIT License" /></a>
-  <a href="https://flutter.dev"><img src="https://img.shields.io/badge/Flutter-3.3+-02569B?style=flat-square&logo=flutter&logoColor=white" alt="Flutter 3.3+" /></a>
-  <a href="https://dart.dev"><img src="https://img.shields.io/badge/Dart-3.3+-0175C2?style=flat-square&logo=dart&logoColor=white" alt="Dart 3.3+" /></a>
+  <a href="https://flutter.dev"><img src="https://img.shields.io/badge/Flutter-3.38.1+-02569B?style=flat-square&logo=flutter&logoColor=white" alt="Flutter 3.38.1+" /></a>
+  <a href="https://dart.dev"><img src="https://img.shields.io/badge/Dart-3.10+-0175C2?style=flat-square&logo=dart&logoColor=white" alt="Dart 3.10+" /></a>
 </p>
 
 # MediaSFU Flutter SDK
 
-`mediasfu_sdk` is the official Flutter WebRTC SDK for building MediaSFU-powered video conferencing, webinar, broadcast, live streaming, chat, whiteboard, recording, translation, and AI-assisted meeting experiences across Android, iOS, Web, macOS, Windows, and Linux.
+Build video meetings, webinars, broadcasts, live streams, and collaborative rooms in Flutter without assembling the whole real-time experience from scratch.
 
-## Why Teams Choose MediaSFU
+`mediasfu_sdk` is the official MediaSFU Flutter WebRTC SDK. It combines ready-made room UI with headless APIs for audio, video, chat, screen sharing, whiteboards, breakout rooms, recording, real-time translation, and AI-assisted meeting workflows across Android, iOS, web, macOS, Windows, and Linux.
 
-- Start with a prebuilt room UI, then move to headless or deeply customized layouts when your product matures.
-- Use MediaSFU Cloud for managed infrastructure or `localLink` for self-hosted MediaSFU Open and proxy-backed deployments.
-- Ship one SDK for voice, video, chat, screen sharing, whiteboard, breakout rooms, recording, real-time translation, and AI-adjacent meeting workflows.
-- Lean on public docs, generated API docs, sandbox tools, and the MediaSFU community forum when integration questions come up.
+[Quick start](#quick-start-prebuilt-room) · [Try the sandbox](https://www.mediasfu.com/sandbox) · [Flutter guide](https://www.mediasfu.com/docs/sdks/flutter/) · [API reference](https://www.mediasfu.com/api/flutter/) · [Self-host with MediaSFU Open](https://github.com/MediaSFU/MediaSFUOpen)
 
-## Search-Friendly Use Cases
+## Why Product Teams Choose MediaSFU
 
-Developers usually arrive here looking for one or more of these real use cases:
+- **Launch sooner:** start with a complete meeting, webinar, broadcast, or chat interface instead of building every room interaction yourself.
+- **Keep control as you grow:** customize individual cards and modals, or switch to headless mode and own the entire UI without replacing the room runtime.
+- **Choose your deployment:** use MediaSFU Cloud for a managed backend, MediaSFU Open for self-hosting, or route room creation through your own secure proxy.
+- **Build beyond basic calls:** use one SDK surface for collaboration features such as polls, breakout rooms, whiteboards, recording, translation, and telephony-ready rooms.
+- **Ship across Flutter targets:** share the same integration model across mobile, web, and desktop while handling each platform's permissions and media requirements.
 
-- Flutter video conferencing SDK
-- Flutter WebRTC SDK
-- Flutter webinar SDK
-- Flutter broadcast or live streaming SDK
-- Flutter chat and meeting room SDK
-- Flutter whiteboard and collaboration SDK
-- Flutter real-time translation SDK
-- Flutter headless video room SDK
-- Flutter AI meeting or AI notes integration surface
+## Choose The Right Starting Point
 
-The package is designed for three integration styles:
+| Your goal | Start with | Why |
+| --- | --- | --- |
+| Add a working room to a Flutter app quickly | `MediasfuGeneric` or an event-specific widget | Prebuilt participant, media, chat, and collaboration UI |
+| Match an existing product design | SDK components and `MediasfuUICustomOverrides` | Replace selected surfaces while retaining the room runtime |
+| Own every pixel and interaction | Headless mode with `returnUI: false` | Receive `MediasfuParameters` state and helpers in your own widgets |
+| Run managed production infrastructure | [MediaSFU Cloud](https://www.mediasfu.com/documentation/) | Hosted room creation, signaling, media routing, and platform services |
+| Keep media infrastructure in your environment | [MediaSFU Open](https://github.com/MediaSFU/MediaSFUOpen) with `localLink` | Self-hosted deployment and infrastructure control |
+| Work directly with mediasoup transports and producers | [`mediasfu_mediasoup_client`](https://pub.dev/packages/mediasfu_mediasoup_client) | Lower-level client primitives without this SDK's complete product layer |
+
+Within this package, choose the integration depth that fits the product today:
 
 | Integration style | Use this when | Main APIs |
 | --- | --- | --- |
@@ -42,13 +44,13 @@ The package is designed for three integration styles:
 | Headless runtime | You want MediaSFU connection/media logic but your own UI | `returnUI: false`, `updateSourceParameters`, `MediasfuParameters` |
 | Custom UI with SDK components | You want to replace selected cards, modals, or layouts | custom builders, `MediasfuUICustomOverrides`, exported components |
 
-For the full long-form guide, see [README_DETAILED.md](./README_DETAILED.md). For native permissions and platform setup, see [PLATFORM_SETUP.md](./PLATFORM_SETUP.md).
+For the complete implementation guide, see [README_DETAILED.md](./README_DETAILED.md). For native permissions and platform setup, see [PLATFORM_SETUP.md](./PLATFORM_SETUP.md).
 
 ## Table Of Contents
 
+- [Why Product Teams Choose MediaSFU](#why-product-teams-choose-mediasfu)
+- [Choose The Right Starting Point](#choose-the-right-starting-point)
 - [Install](#install)
-- [Why Teams Choose MediaSFU](#why-teams-choose-mediasfu)
-- [Search-Friendly Use Cases](#search-friendly-use-cases)
 - [Backend Model](#backend-model)
 - [Quick Start: Prebuilt Room](#quick-start-prebuilt-room)
 - [Try The UI Without A Live Room](#try-the-ui-without-a-live-room)
@@ -61,8 +63,7 @@ For the full long-form guide, see [README_DETAILED.md](./README_DETAILED.md). Fo
 - [Customization](#customization)
 - [Feature Map](#feature-map)
 - [Troubleshooting](#troubleshooting)
-- [Docs, Support, And Search Map](#docs-support-and-search-map)
-- [LLM And Code Search Hints](#llm-and-code-search-hints)
+- [Resources And Support](#resources-and-support)
 
 ## Install
 
@@ -74,8 +75,8 @@ Minimum package requirements:
 
 | Requirement | Version |
 | --- | --- |
-| Dart | `>=3.3.3 <4.0.0` |
-| Flutter | `>=1.17.0` |
+| Dart | `>=3.10.0 <4.0.0` |
+| Flutter | `>=3.38.1` |
 
 Use the package barrel import in application code:
 
@@ -91,7 +92,7 @@ google_mlkit_selfie_segmentation: ^0.10.0
 
 # Web whiteboard and capture helpers
 web: ^1.1.1
-dart_webrtc: ^1.4.6
+dart_webrtc: ^1.8.1
 ```
 
 ## Backend Model
@@ -115,7 +116,7 @@ Security note: avoid embedding privileged production credentials in public clien
 
 ## Quick Start: Prebuilt Room
 
-This is the fastest working path for MediaSFU Cloud.
+This is the fastest working path for MediaSFU Cloud. Get your API username and key from the [MediaSFU developer dashboard](https://www.mediasfu.com/dashboard?mode=regular), or use the [self-hosted path](#self-hosted-mediasfu-open) instead.
 
 ```dart
 import 'package:flutter/material.dart';
@@ -585,22 +586,22 @@ ShareButtonOptions(
 | Font Awesome compile error with `Icon(FontAwesomeIcons.xmark)` | Use `FaIcon(FontAwesomeIcons.xmark)` with `font_awesome_flutter` v11 |
 | Analyzer reports only info-level lints | The package may still build; clean those lints separately if your CI treats infos as fatal |
 
-## Docs, Support, And Search Map
+## Resources And Support
 
-Current MediaSFU documentation and support entry points:
+Use the shortest path for the question you have:
 
 | Need | Link |
 | --- | --- |
-| Flutter SDK docs | [mediasfu.com/flutter](https://www.mediasfu.com/flutter) |
-| Developer docs portal | [mediasfu.com/docs](https://www.mediasfu.com/docs/) |
-| Quick start guide | [mediasfu.com/docs/usage/quickstart](https://www.mediasfu.com/docs/usage/quickstart/) |
-| Headless guide | [mediasfu.com/docs/usage/headless](https://www.mediasfu.com/docs/usage/headless/) |
-| Documentation map | [mediasfu.com/docs/guide-map](https://www.mediasfu.com/docs/guide-map/) |
-| Generated API docs | [mediasfu.com/docs/api](https://www.mediasfu.com/docs/api/) |
-| Developer console / API configuration | [mediasfu.com/documentation](https://www.mediasfu.com/documentation) |
+| Flutter setup and concepts | [Flutter SDK guide](https://www.mediasfu.com/docs/sdks/flutter/) |
+| Copy-and-run first integration | [Quick start guide](https://www.mediasfu.com/docs/usage/quickstart/) |
+| Fully custom Flutter UI | [Headless guide](https://www.mediasfu.com/docs/usage/headless/) |
+| Exact classes and signatures | [Generated Flutter API reference](https://www.mediasfu.com/api/flutter/) |
+| Browse all developer material | [MediaSFU docs portal](https://www.mediasfu.com/docs/) |
+| Developer console and API configuration | [Developer console guide](https://www.mediasfu.com/documentation/) |
 | Dashboard user guide | [mediasfu.com/user-guide](https://www.mediasfu.com/user-guide) |
-| Sandbox | [mediasfu.com/sandbox](https://www.mediasfu.com/sandbox) |
-| Widget Studio | [mediasfu.com/widget-studio](https://www.mediasfu.com/widget-studio) |
+| Test before integrating | [MediaSFU sandbox](https://www.mediasfu.com/sandbox) |
+| Prototype embeddable experiences | [Widget Studio](https://www.mediasfu.com/widget-studio) |
+| Self-host the media backend | [MediaSFU Open](https://github.com/MediaSFU/MediaSFUOpen) |
 | AI agents | [mediasfu.com/agents](https://www.mediasfu.com/agents) |
 | AI notes | [mediasfu.com/ai-notes-guide](https://www.mediasfu.com/ai-notes-guide) |
 | Translation | [mediasfu.com/translation](https://www.mediasfu.com/translation) |
@@ -609,26 +610,7 @@ Current MediaSFU documentation and support entry points:
 | Contact | [mediasfu.com/contact](https://www.mediasfu.com/contact) |
 | GitHub organization | [github.com/MediaSFU](https://github.com/MediaSFU) |
 
-Community forum categories include General Help, Deployment Issues, Mobile SDK, Web SDK, Integrations, Announcements, and Feature Requests. For Flutter package questions, use the Mobile SDK category and include your platform, Flutter version, package version, backend mode, and the smallest reproducible snippet.
-
-## LLM And Code Search Hints
-
-This section intentionally repeats the canonical names that developers and AI coding tools should use when searching or generating integrations.
-
-- Package name: `mediasfu_sdk`
-- Import: `package:mediasfu_sdk/mediasfu_sdk.dart`
-- Main prebuilt Flutter widgets: `MediasfuGeneric`, `MediasfuConference`, `MediasfuWebinar`, `MediasfuBroadcast`, `MediasfuChat`, `ModernMediasfuGeneric`
-- Main options classes: `MediasfuGenericOptions`, `MediasfuConferenceOptions`, `MediasfuWebinarOptions`, `MediasfuBroadcastOptions`, `MediasfuChatOptions`, `ModernMediasfuGenericOptions`
-- Credentials class: `Credentials(apiUserName, apiKey)`
-- Room helper payloads: `CreateMediaSFURoomOptions`, `JoinMediaSFURoomOptions`
-- Room helper functions: `createRoomOnMediaSFU`, `joinRoomOnMediaSFU`
-- Runtime state and methods: `MediasfuParameters`
-- UI override type: `MediasfuUICustomOverrides`
-- Demo mode types: `SeedData`, `EventType`
-- Backend keywords: MediaSFU Cloud, MediaSFU Open, self-hosted, `localLink`, `/createRoom`, `/joinRoom`
-- Feature keywords: Flutter video conferencing, Flutter WebRTC meeting SDK, Flutter webinar SDK, Flutter broadcast SDK, Flutter whiteboard, Flutter breakout rooms, Flutter live translation, Flutter AI meeting notes, Flutter SIP room, Flutter headless video SDK
-
-When asking an AI assistant for help, include the package version, the selected widget, whether you use MediaSFU Cloud or `localLink`, the target platform, and the exact error text.
+For faster help, include the `mediasfu_sdk` version, Flutter target, chosen room widget, backend mode (MediaSFU Cloud or `localLink`), exact error text, and a minimal reproducible snippet. Those details also give coding assistants the context needed to suggest the correct MediaSFU APIs.
 
 ## Related SDKs
 

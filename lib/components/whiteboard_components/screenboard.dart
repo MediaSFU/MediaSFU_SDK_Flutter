@@ -499,7 +499,7 @@ class _ScreenboardState extends State<Screenboard> {
                         painter: WhiteboardPainter(
                           shapes: [
                             ..._shapes,
-                            if (_currentShape != null) _currentShape!
+                            ?_currentShape
                           ],
                           panOffset: Offset.zero,
                           scale: 1.0,

@@ -11290,7 +11290,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   Widget _buildRecordingSidebarContent(bool isDarkModeVal) {
     return ValueListenableBuilder<bool>(
       valueListenable: recordUIChanged,
-      builder: (context, _, __) {
+      builder: (context, _, _) {
         final options = RecordingModalOptions(
           backgroundColor: Colors.transparent,
           isRecordingModalVisible: true,

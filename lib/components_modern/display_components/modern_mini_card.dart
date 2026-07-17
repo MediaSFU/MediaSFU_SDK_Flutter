@@ -235,7 +235,7 @@ class _ModernMiniCardState extends State<ModernMiniCard>
           if (loadingProgress == null) return child;
           return _buildLoadingPlaceholder(context);
         },
-        errorBuilder: (_, __, ___) => _buildInitials(context),
+        errorBuilder: (_, _, _) => _buildInitials(context),
       ),
     );
 

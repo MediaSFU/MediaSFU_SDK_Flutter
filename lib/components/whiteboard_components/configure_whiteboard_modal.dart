@@ -928,7 +928,7 @@ class _ConfigureWhiteboardModalState extends State<ConfigureWhiteboardModal> {
                     itemCount: participants.length,
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                    separatorBuilder: (_, __) => const SizedBox(height: 4),
+                    separatorBuilder: (_, _) => const SizedBox(height: 4),
                     itemBuilder: (context, index) {
                       final participant = participants[index];
                       return _buildParticipantTile(

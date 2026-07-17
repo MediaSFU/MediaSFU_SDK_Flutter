@@ -414,7 +414,7 @@ class _ModernFlexibleVideoState extends State<ModernFlexibleVideo> {
             alignment: Alignment.topLeft,
             child: gridWithOffset,
           ),
-          if (screenboardNode != null) screenboardNode,
+          ?screenboardNode,
         ];
 
         // Modern styled container

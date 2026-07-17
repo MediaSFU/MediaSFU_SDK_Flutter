@@ -972,7 +972,7 @@ class _ModernConfigureWhiteboardModalState
                 : ListView.separated(
                     itemCount: participants.length,
                     padding: const EdgeInsets.all(10),
-                    separatorBuilder: (_, __) => const SizedBox(height: 6),
+                    separatorBuilder: (_, _) => const SizedBox(height: 6),
                     itemBuilder: (context, index) {
                       return _buildParticipantTile(
                         participant: participants[index],

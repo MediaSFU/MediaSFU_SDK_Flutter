@@ -48,9 +48,9 @@ class GradientCard extends StatelessWidget {
           if (leading != null || trailing != null)
             Row(
               children: [
-                if (leading != null) leading!,
+                ?leading,
                 const Spacer(),
-                if (trailing != null) trailing!,
+                ?trailing,
               ],
             ),
           if (leading != null || trailing != null)
@@ -74,7 +74,7 @@ class GradientCard extends StatelessWidget {
                 ),
               ),
             ),
-          if (child != null) child!,
+          ?child,
         ],
       ),
     );

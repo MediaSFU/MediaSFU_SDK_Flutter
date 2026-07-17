@@ -404,7 +404,7 @@ class MiniCard extends StatelessWidget {
         options.imageSource!,
         fit: options.imageFit,
         alignment: options.imageAlignment,
-        errorBuilder: (_, __, ___) => _buildInitials(context),
+        errorBuilder: (_, _, _) => _buildInitials(context),
       ),
     );
 

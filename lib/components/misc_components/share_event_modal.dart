@@ -467,9 +467,9 @@ class ShareEventModal extends StatelessWidget {
     }
 
     final sectionWidgets = <Widget>[
-      if (passcodeSection != null) passcodeSection,
+      ?passcodeSection,
       meetingIdSection,
-      if (shareButtonsSection != null) shareButtonsSection,
+      ?shareButtonsSection,
     ];
 
     final bodyChildren = <Widget>[];

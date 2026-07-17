@@ -1,3 +1,6 @@
+// Required on Flutter 3.44+, where the transition builder moved libraries.
+// ignore: unnecessary_import
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'mediasfu_borders.dart';

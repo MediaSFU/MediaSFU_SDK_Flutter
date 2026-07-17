@@ -585,7 +585,7 @@ class _FlexibleVideoState extends State<FlexibleVideo> {
             alignment: Alignment.topLeft,
             child: gridWithOffset,
           ),
-          if (screenboardNode != null) screenboardNode,
+          ?screenboardNode,
         ];
 
         Widget container = Container(
