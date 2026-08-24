@@ -13,7 +13,8 @@ import '../translation_components/translation_settings_modal.dart'
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'dart:async';
 import 'package:flutter/services.dart'; // Import Services for platform-specific services
-import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kDebugMode, kIsWeb;
 
 //initial values
 import '../../methods/utils/initial_values.dart' show initialValuesState;
@@ -584,6 +585,11 @@ class ModernMediasfuGenericOptions {
   ContainerStyleOptions? containerStyle;
   MediasfuUICustomOverrides? uiOverrides;
 
+  /// Fractions of the viewport represented by the parent room container.
+  /// Values below 1 keep an embedded room parent-relative.
+  final double containerWidthFraction;
+  final double containerHeightFraction;
+
   /// Whether to use fixed link (stagerooms.mediasfu.com) instead of dynamic URL selection
   /// When true, always connects to stagerooms.mediasfu.com
   /// When false, URL is selected based on meeting ID prefix (d=demos, s=sandbox, p=production)
@@ -653,6 +659,8 @@ class ModernMediasfuGenericOptions {
     this.customComponent,
     this.containerStyle,
     this.uiOverrides,
+    double? containerWidthFraction,
+    double? containerHeightFraction,
     this.useFixedLink,
     this.localAppKey,
     this.localApiUserName,
@@ -665,7 +673,10 @@ class ModernMediasfuGenericOptions {
     this.optimizeVideoRecord = false,
     this.onBack,
     CustomWorkspaceBuilder? customWorkspaceBuilder,
-  }) {
+  }) : containerWidthFraction =
+           containerWidthFraction ?? containerStyle?.widthFraction ?? 1.0,
+       containerHeightFraction =
+           containerHeightFraction ?? containerStyle?.heightFraction ?? 1.0 {
     applyCustomWorkspaceBuilder(customWorkspaceBuilder);
   }
 
@@ -729,7 +740,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   late PrepopulateUserMediaType _prepopulateUserMediaHandler;
   late MiniAudioPlayerType _miniAudioPlayerHandler;
   late DefaultComponentBuilder<MainContainerComponentOptions>
-      _mainContainerBuilder;
+  _mainContainerBuilder;
   late DefaultComponentBuilder<MainAspectComponentOptions> _mainAspectBuilder;
   late DefaultComponentBuilder<MainScreenComponentOptions> _mainScreenBuilder;
   late DefaultComponentBuilder<MainGridComponentOptions> _mainGridBuilder;
@@ -741,42 +752,42 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   late DefaultComponentBuilder<AudioGridOptions> _audioGridBuilder;
   late DefaultComponentBuilder<PaginationOptions> _paginationBuilder;
   late DefaultComponentBuilder<ControlButtonsComponentOptions>
-      _controlButtonsBuilder;
+  _controlButtonsBuilder;
   late DefaultComponentBuilder<ControlButtonsComponentTouchOptions>
-      _controlButtonsTouchBuilder;
+  _controlButtonsTouchBuilder;
   late DefaultComponentBuilder<MeetingProgressTimerOptions>
-      _meetingProgressTimerBuilder;
+  _meetingProgressTimerBuilder;
   late DefaultComponentBuilder<MenuModalOptions> _menuModalBuilder;
   late DefaultComponentBuilder<DisplaySettingsModalOptions>
-      _displaySettingsModalBuilder;
+  _displaySettingsModalBuilder;
   late DefaultComponentBuilder<MediaSettingsModalOptions>
-      _mediaSettingsModalBuilder;
+  _mediaSettingsModalBuilder;
   late DefaultComponentBuilder<EventSettingsModalOptions>
-      _eventSettingsModalBuilder;
+  _eventSettingsModalBuilder;
   late DefaultComponentBuilder<RequestsModalOptions> _requestsModalBuilder;
   late DefaultComponentBuilder<WaitingRoomModalOptions>
-      _waitingRoomModalBuilder;
+  _waitingRoomModalBuilder;
   late DefaultComponentBuilder<ShareEventModalOptions> _shareEventModalBuilder;
   late DefaultComponentBuilder<RecordingModalOptions> _recordingModalBuilder;
   late DefaultComponentBuilder<CoHostModalOptions> _coHostModalBuilder;
   late DefaultComponentBuilder<ParticipantsModalOptions>
-      _participantsModalBuilder;
+  _participantsModalBuilder;
   late DefaultComponentBuilder<MessagesModalOptions> _messagesModalBuilder;
   late DefaultComponentBuilder<PollModalOptions> _pollModalBuilder;
   late DefaultComponentBuilder<BreakoutRoomsModalOptions>
-      _breakoutRoomsModalBuilder;
+  _breakoutRoomsModalBuilder;
   late DefaultComponentBuilder<ConfigureWhiteboardModalOptions>
-      _configureWhiteboardModalBuilder;
+  _configureWhiteboardModalBuilder;
   late DefaultComponentBuilder<ScreenboardModalOptions>
-      _screenboardModalBuilder;
+  _screenboardModalBuilder;
   late DefaultComponentBuilder<WhiteboardOptions> _whiteboardBuilder;
   late DefaultComponentBuilder<ScreenboardOptions> _screenboardBuilder;
   late DefaultComponentBuilder<BackgroundModalOptions> _backgroundModalBuilder;
   late DefaultComponentBuilder<ConfirmExitModalOptions>
-      _confirmExitModalBuilder;
+  _confirmExitModalBuilder;
   late DefaultComponentBuilder<AlertComponentOptions> _alertBuilder;
   late DefaultComponentBuilder<ConfirmHereModalOptions>
-      _confirmHereModalBuilder;
+  _confirmHereModalBuilder;
   late DefaultComponentBuilder<LoadingModalOptions> _loadingModalBuilder;
   late DefaultComponentBuilder<PreJoinPageOptions> _preJoinPageBuilder;
   late DefaultComponentBuilder<WelcomePageOptions> _welcomePageBuilder;
@@ -796,16 +807,16 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     );
     _prepopulateUserMediaHandler =
         withFunctionOverride<PrepopulateUserMediaType>(
-      base: prepopulateUserMedia,
-      override: _uiOverrides.prepopulateUserMedia,
-    );
+          base: prepopulateUserMedia,
+          override: _uiOverrides.prepopulateUserMedia,
+        );
     final miniAudioPlayerBuilder = withOverride<MiniAudioPlayerOptions>(
       override: _uiOverrides.miniAudioPlayer,
       baseBuilder: (context, options) => MiniAudioPlayer(options: options),
     );
     _miniAudioPlayerHandler = (options) => Builder(
-          builder: (context) => miniAudioPlayerBuilder(context, options),
-        );
+      builder: (context) => miniAudioPlayerBuilder(context, options),
+    );
     _mainContainerBuilder = withOverride<MainContainerComponentOptions>(
       override: _uiOverrides.mainContainer,
       baseBuilder: (context, options) =>
@@ -870,10 +881,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     );
     _controlButtonsTouchBuilder =
         withOverride<ControlButtonsComponentTouchOptions>(
-      override: _uiOverrides.controlButtonsTouch,
-      baseBuilder: (context, options) =>
-          ModernControlButtonsComponentTouch(options: options),
-    );
+          override: _uiOverrides.controlButtonsTouch,
+          baseBuilder: (context, options) =>
+              ModernControlButtonsComponentTouch(options: options),
+        );
     _meetingProgressTimerBuilder = withOverride<MeetingProgressTimerOptions>(
       override: _uiOverrides.meetingProgressTimer,
       baseBuilder: (context, options) => ModernMeetingProgressTimer(
@@ -885,8 +896,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         recordingState: options.initialBackgroundColor == Colors.red
             ? 'red'
             : options.initialBackgroundColor == Colors.yellow
-                ? 'yellow'
-                : 'green',
+            ? 'yellow'
+            : 'green',
       ),
     );
     _menuModalBuilder = withOverride<MenuModalOptions>(
@@ -950,10 +961,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     );
     _configureWhiteboardModalBuilder =
         withOverride<ConfigureWhiteboardModalOptions>(
-      override: _uiOverrides.configureWhiteboardModal,
-      baseBuilder: (context, options) =>
-          ModernConfigureWhiteboardModal(options: options),
-    );
+          override: _uiOverrides.configureWhiteboardModal,
+          baseBuilder: (context, options) =>
+              ModernConfigureWhiteboardModal(options: options),
+        );
     _screenboardModalBuilder = withOverride<ScreenboardModalOptions>(
       override: _uiOverrides.screenboardModal,
       baseBuilder: (context, options) => ScreenboardModal(options: options),
@@ -999,22 +1010,26 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     );
   }
 
-  Future<ResponseJoinRoom> joinRoom(
-      {required io.Socket? socket,
-      required String roomName,
-      required String islevel,
-      String? member,
-      String? sec,
-      required String apiUserName}) async {
+  Future<ResponseJoinRoom> joinRoom({
+    required io.Socket? socket,
+    required String roomName,
+    required String islevel,
+    String? member,
+    String? sec,
+    required String apiUserName,
+  }) async {
     try {
       // Emit the joinRoom event to the server using the provided socket
-      ResponseJoinRoom data = await joinRoomClient(JoinRoomClientOptions(
+      ResponseJoinRoom data = await joinRoomClient(
+        JoinRoomClientOptions(
           socket: socket,
           roomName: roomName,
           islevel: islevel,
           member: member!,
           sec: sec!,
-          apiUserName: apiUserName));
+          apiUserName: apiUserName,
+        ),
+      );
       return data;
     } catch (error) {
       // Handle and log errors during the joinRoom process
@@ -1076,8 +1091,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   void onWaitingRoomFilterChange(String value) {
     // Filter the waiting room list based on the value
     if (value.isNotEmpty) {
-      final filteredList = waitingRoomList.value.where((room) =>
-          room.name.toString().toLowerCase().contains(value.toLowerCase()));
+      final filteredList = waitingRoomList.value.where(
+        (room) =>
+            room.name.toString().toLowerCase().contains(value.toLowerCase()),
+      );
       filteredWaitingRoomList.value = filteredList.toList();
       waitingRoomCounter.value = filteredList.length;
     } else {
@@ -1089,10 +1106,11 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   void onRequestFilterChange(String value) {
     // Filter the request list based on the value
     if (value.isNotEmpty) {
-      final filteredList = requestList.value.where((request) => request['name']
-          .toString()
-          .toLowerCase()
-          .contains(value.toLowerCase()));
+      final filteredList = requestList.value.where(
+        (request) => request['name'].toString().toLowerCase().contains(
+          value.toLowerCase(),
+        ),
+      );
       filteredRequestList.value = filteredList.toList();
       requestCounter.value = filteredList.length;
     } else {
@@ -1196,8 +1214,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   final ValueNotifier<List<SidebarContent>> sidebarNavigationStack =
       ValueNotifier<List<SidebarContent>>([]);
 
-  void updateActiveSidebarContent(SidebarContent content,
-      {bool pushToStack = false}) {
+  void updateActiveSidebarContent(
+    SidebarContent content, {
+    bool pushToStack = false,
+  }) {
     // Toggle off if same content is selected
     if (activeSidebarContent.value == content) {
       activeSidebarContent.value = SidebarContent.none;
@@ -1207,7 +1227,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       if (pushToStack && activeSidebarContent.value != SidebarContent.none) {
         sidebarNavigationStack.value = [
           ...sidebarNavigationStack.value,
-          activeSidebarContent.value
+          activeSidebarContent.value,
         ];
       } else if (!pushToStack) {
         // Direct navigation - clear stack
@@ -1275,15 +1295,17 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   // Update states (variables) to initial values
   ValueNotifier<io.Socket?> socket = ValueNotifier<io.Socket?>(null);
   ValueNotifier<io.Socket?> localSocket = ValueNotifier<io.Socket?>(null);
-  ValueNotifier<ResponseJoinRoom?> roomData =
-      ValueNotifier<ResponseJoinRoom?>(ResponseJoinRoom());
+  ValueNotifier<ResponseJoinRoom?> roomData = ValueNotifier<ResponseJoinRoom?>(
+    ResponseJoinRoom(),
+  );
   ValueNotifier<Device?> device = ValueNotifier<Device?>(null);
 
   ValueNotifier<String> apiKey = ValueNotifier<String>('');
   ValueNotifier<String> apiUserName = ValueNotifier<String>('');
   ValueNotifier<String> apiToken = ValueNotifier<String>('');
-  ValueNotifier<String> link =
-      ValueNotifier<String>(''); // Link to the media server
+  ValueNotifier<String> link = ValueNotifier<String>(
+    '',
+  ); // Link to the media server
 
   // Translation state
   String mySpokenLanguage = 'en';
@@ -1315,27 +1337,34 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   // Room Details
   final ValueNotifier<String> roomName = ValueNotifier('');
   final ValueNotifier<String> member = ValueNotifier('');
-  final ValueNotifier<String> adminPasscode =
-      ValueNotifier(''); // Admin passcode
+  final ValueNotifier<String> adminPasscode = ValueNotifier(
+    '',
+  ); // Admin passcode
   final ValueNotifier<String> islevel = ValueNotifier("0");
   final ValueNotifier<String> coHost = ValueNotifier("No coHost");
   final ValueNotifier<List<CoHostResponsibility>> coHostResponsibility =
       ValueNotifier([
-    CoHostResponsibility(name: 'participants', value: false, dedicated: false),
-    CoHostResponsibility(name: 'media', value: false, dedicated: false),
-    CoHostResponsibility(name: 'waiting', value: false, dedicated: false),
-    CoHostResponsibility(name: 'chat', value: false, dedicated: false),
-  ]);
+        CoHostResponsibility(
+          name: 'participants',
+          value: false,
+          dedicated: false,
+        ),
+        CoHostResponsibility(name: 'media', value: false, dedicated: false),
+        CoHostResponsibility(name: 'waiting', value: false, dedicated: false),
+        CoHostResponsibility(name: 'chat', value: false, dedicated: false),
+      ]);
   final ValueNotifier<bool> youAreCoHost = ValueNotifier(false);
   final ValueNotifier<bool> youAreHost = ValueNotifier(false);
   final ValueNotifier<bool> confirmedToRecord = ValueNotifier(false);
   final ValueNotifier<String> meetingDisplayType = ValueNotifier('all');
   final ValueNotifier<bool> meetingVideoOptimized = ValueNotifier(false);
   final ValueNotifier<EventType> eventType = ValueNotifier(EventType.webinar);
-  final ValueNotifier<List<Participant>> participants =
-      ValueNotifier(<Participant>[]);
-  final ValueNotifier<List<Participant>> filteredParticipants =
-      ValueNotifier(<Participant>[]);
+  final ValueNotifier<List<Participant>> participants = ValueNotifier(
+    <Participant>[],
+  );
+  final ValueNotifier<List<Participant>> filteredParticipants = ValueNotifier(
+    <Participant>[],
+  );
   ValueNotifier<int> participantsCounter = ValueNotifier<int>(0);
   ValueNotifier<String> participantsFilter = ValueNotifier<String>('');
   ValueNotifier<List<ConsumeSocket>> consumeSockets =
@@ -1353,11 +1382,15 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   ValueNotifier<bool> shared = ValueNotifier<bool>(false);
   ValueNotifier<String> targetOrientation = ValueNotifier<String>('landscape');
   ValueNotifier<String> targetResolution = ValueNotifier<String>('sd');
-  ValueNotifier<String> targetResolutionHost =
-      ValueNotifier<String>('sd'); // Host resolution
-  ValueNotifier<VidCons> vidCons = ValueNotifier<VidCons>(VidCons(
+  ValueNotifier<String> targetResolutionHost = ValueNotifier<String>(
+    'sd',
+  ); // Host resolution
+  ValueNotifier<VidCons> vidCons = ValueNotifier<VidCons>(
+    VidCons(
       width: DimensionConstraints(ideal: 640),
-      height: DimensionConstraints(ideal: 480)));
+      height: DimensionConstraints(ideal: 480),
+    ),
+  );
   ValueNotifier<int> frameRate = ValueNotifier<int>(5);
   ValueNotifier<ProducerOptionsType?> hParams =
       ValueNotifier<ProducerOptionsType?>(null);
@@ -1373,50 +1406,56 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   final ValueNotifier<int> recordingAudioPausesCount = ValueNotifier(0);
   final ValueNotifier<bool> recordingAudioSupport = ValueNotifier(false);
   final ValueNotifier<int> recordingAudioPeopleLimit = ValueNotifier(0);
-  final ValueNotifier<int> recordingAudioParticipantsTimeLimit =
-      ValueNotifier(0);
+  final ValueNotifier<int> recordingAudioParticipantsTimeLimit = ValueNotifier(
+    0,
+  );
   final ValueNotifier<int> recordingVideoPausesCount = ValueNotifier(0);
   final ValueNotifier<int> recordingVideoPausesLimit = ValueNotifier(0);
   final ValueNotifier<bool> recordingVideoSupport = ValueNotifier(false);
   final ValueNotifier<int> recordingVideoPeopleLimit = ValueNotifier(0);
-  final ValueNotifier<int> recordingVideoParticipantsTimeLimit =
-      ValueNotifier(0);
-  final ValueNotifier<bool> recordingAllParticipantsSupport =
-      ValueNotifier(false);
-  final ValueNotifier<bool> recordingVideoParticipantsSupport =
-      ValueNotifier(false);
+  final ValueNotifier<int> recordingVideoParticipantsTimeLimit = ValueNotifier(
+    0,
+  );
+  final ValueNotifier<bool> recordingAllParticipantsSupport = ValueNotifier(
+    false,
+  );
+  final ValueNotifier<bool> recordingVideoParticipantsSupport = ValueNotifier(
+    false,
+  );
   final ValueNotifier<bool> recordingAllParticipantsFullRoomSupport =
       ValueNotifier(false);
   final ValueNotifier<bool> recordingVideoParticipantsFullRoomSupport =
       ValueNotifier(false);
-  final ValueNotifier<String> recordingPreferredOrientation =
-      ValueNotifier('landscape');
-  final ValueNotifier<bool> recordingSupportForOtherOrientation =
-      ValueNotifier(false);
+  final ValueNotifier<String> recordingPreferredOrientation = ValueNotifier(
+    'landscape',
+  );
+  final ValueNotifier<bool> recordingSupportForOtherOrientation = ValueNotifier(
+    false,
+  );
   final ValueNotifier<bool> recordingMultiFormatsSupport = ValueNotifier(false);
   // User Recording Parameters
   final ValueNotifier<UserRecordingParams> userRecordingParams =
       ValueNotifier<UserRecordingParams>(
-    UserRecordingParams(
-      mainSpecs: MainSpecs(
-        mediaOptions: 'video',
-        audioOptions: 'all',
-        videoOptions: 'all',
-        videoType: 'fullDisplay',
-        videoOptimized: false,
-        recordingDisplayType: 'media',
-        addHLS: false,
-      ),
-      dispSpecs: DispSpecs(
-        nameTags: true,
-        backgroundColor: '#000000',
-        nameTagsColor: '#ffffff',
-        orientationVideo: 'portrait',
-      ),
-    ),
-  );
+        UserRecordingParams(
+          mainSpecs: MainSpecs(
+            mediaOptions: 'video',
+            audioOptions: 'all',
+            videoOptions: 'all',
+            videoType: 'fullDisplay',
+            videoOptimized: false,
+            recordingDisplayType: 'media',
+            addHLS: false,
+          ),
+          dispSpecs: DispSpecs(
+            nameTags: true,
+            backgroundColor: '#000000',
+            nameTagsColor: '#ffffff',
+            orientationVideo: 'portrait',
+          ),
+        ),
+      );
 
-// Recording States
+  // Recording States
   ValueNotifier<bool> canRecord = ValueNotifier<bool>(false);
   ValueNotifier<bool> startReport = ValueNotifier<bool>(false);
   ValueNotifier<bool> endReport = ValueNotifier<bool>(false);
@@ -1632,8 +1671,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   final ValueNotifier<Producer?> audioProducer = ValueNotifier(null);
   final ValueNotifier<double> audioLevel = ValueNotifier(0.0);
   final ValueNotifier<Producer?>? localAudioProducer = ValueNotifier(null);
-  final ValueNotifier<List<TransportType>> consumerTransports =
-      ValueNotifier([]);
+  final ValueNotifier<List<TransportType>> consumerTransports = ValueNotifier(
+    [],
+  );
   final ValueNotifier<List<String>> consumingTransports = ValueNotifier([]);
 
   final ValueNotifier<List<Poll>> polls = ValueNotifier([]);
@@ -1663,8 +1703,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   ValueNotifier<MediaStream?> segmentVideo = ValueNotifier<MediaStream?>(null);
   ValueNotifier<dynamic> selfieSegmentation = ValueNotifier<dynamic>(null);
   ValueNotifier<bool> pauseSegmentation = ValueNotifier<bool>(false);
-  ValueNotifier<MediaStream?> processedStream =
-      ValueNotifier<MediaStream?>(null);
+  ValueNotifier<MediaStream?> processedStream = ValueNotifier<MediaStream?>(
+    null,
+  );
   ValueNotifier<bool> keepBackground = ValueNotifier<bool>(false);
   ValueNotifier<bool> backgroundHasChanged = ValueNotifier<bool>(false);
   ValueNotifier<MediaStream?> virtualStream = ValueNotifier<MediaStream?>(null);
@@ -1676,7 +1717,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   ValueNotifier<VirtualBackground?> selectedBackground =
       ValueNotifier<VirtualBackground?>(null);
 
-// Whiteboard-related variables
+  // Whiteboard-related variables
   ValueNotifier<List<WhiteboardUser>> whiteboardUsers =
       ValueNotifier<List<WhiteboardUser>>([]);
   ValueNotifier<int?> currentWhiteboardIndex = ValueNotifier<int?>(null);
@@ -1685,8 +1726,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   ValueNotifier<bool> whiteboardEnded = ValueNotifier<bool>(false);
   ValueNotifier<int> whiteboardLimit = ValueNotifier<int>(0);
   ValueNotifier<bool> isWhiteboardModalVisible = ValueNotifier<bool>(false);
-  ValueNotifier<bool> isConfigureWhiteboardModalVisible =
-      ValueNotifier<bool>(false);
+  ValueNotifier<bool> isConfigureWhiteboardModalVisible = ValueNotifier<bool>(
+    false,
+  );
   ValueNotifier<List<WhiteboardShape>> shapes =
       ValueNotifier<List<WhiteboardShape>>([]);
   ValueNotifier<bool> useImageBackground = ValueNotifier<bool>(true);
@@ -1696,12 +1738,13 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   ValueNotifier<MediaStream?> canvasStream = ValueNotifier<MediaStream?>(null);
   ValueNotifier<GlobalKey?> canvasWhiteboard = ValueNotifier<GlobalKey?>(null);
 
-// Screenboard-related variables
+  // Screenboard-related variables
   ValueNotifier<dynamic> canvasScreenboard = ValueNotifier<dynamic>(null);
   ValueNotifier<MediaStream?> processedScreenStream =
       ValueNotifier<MediaStream?>(null);
-  ValueNotifier<bool> annotateScreenStream =
-      ValueNotifier<bool>(false); // Annotate screen stream as boolean
+  ValueNotifier<bool> annotateScreenStream = ValueNotifier<bool>(
+    false,
+  ); // Annotate screen stream as boolean
   ValueNotifier<dynamic> mainScreenCanvas = ValueNotifier<dynamic>(null);
   ValueNotifier<bool> isScreenboardModalVisible = ValueNotifier<bool>(false);
 
@@ -1712,8 +1755,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
 
   // Panelists-related variables
   ValueNotifier<bool> isPanelistsModalVisible = ValueNotifier<bool>(false);
-  ValueNotifier<List<Participant>> panelists =
-      ValueNotifier<List<Participant>>([]);
+  ValueNotifier<List<Participant>> panelists = ValueNotifier<List<Participant>>(
+    [],
+  );
   ValueNotifier<bool> panelistFocusChangedValue = ValueNotifier<bool>(false);
   ValueNotifier<bool> panelistsFocused = ValueNotifier<bool>(false);
   ValueNotifier<bool> muteOthersMic = ValueNotifier<bool>(false);
@@ -1736,10 +1780,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   final ValueNotifier<bool> isWaitingModalVisible = ValueNotifier(false);
   final ValueNotifier<bool> isCoHostModalVisible = ValueNotifier(false);
   final ValueNotifier<bool> isMediaSettingsModalVisible = ValueNotifier(false);
-  final ValueNotifier<bool> isDisplaySettingsModalVisible =
-      ValueNotifier(false);
-  final ValueNotifier<bool> isTranslationSettingsModalVisible =
-      ValueNotifier(false);
+  final ValueNotifier<bool> isDisplaySettingsModalVisible = ValueNotifier(
+    false,
+  );
+  final ValueNotifier<bool> isTranslationSettingsModalVisible = ValueNotifier(
+    false,
+  );
   // totalReqWait variable and update method
   final ValueNotifier<int> totalReqWait = ValueNotifier(0);
   // Other Modals
@@ -1761,17 +1807,21 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   final ValueNotifier<String> recordingDisplayType = ValueNotifier('media');
   final ValueNotifier<bool> recordingAddHLS = ValueNotifier(true);
   final ValueNotifier<bool> recordingNameTags = ValueNotifier(true);
-  final ValueNotifier<String> recordingBackgroundColor =
-      ValueNotifier('#83c0e9');
+  final ValueNotifier<String> recordingBackgroundColor = ValueNotifier(
+    '#83c0e9',
+  );
   final ValueNotifier<String> recordingNameTagsColor = ValueNotifier('#ffffff');
   final ValueNotifier<bool> recordingAddText = ValueNotifier(false);
   final ValueNotifier<String> recordingCustomText = ValueNotifier('Add Text');
-  final ValueNotifier<String> recordingCustomTextPosition =
-      ValueNotifier('top');
-  final ValueNotifier<String> recordingCustomTextColor =
-      ValueNotifier('#ffffff');
-  final ValueNotifier<String> recordingOrientationVideo =
-      ValueNotifier('landscape');
+  final ValueNotifier<String> recordingCustomTextPosition = ValueNotifier(
+    'top',
+  );
+  final ValueNotifier<String> recordingCustomTextColor = ValueNotifier(
+    '#ffffff',
+  );
+  final ValueNotifier<String> recordingOrientationVideo = ValueNotifier(
+    'landscape',
+  );
   final ValueNotifier<bool> clearedToResume = ValueNotifier(true);
   final ValueNotifier<bool> clearedToRecord = ValueNotifier(true);
   // final ValueNotifier<String> recordState = ValueNotifier('green');
@@ -1792,8 +1842,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   final ValueNotifier<bool> hasCameraPermission = ValueNotifier(false);
   final ValueNotifier<bool> hasAudioPermission = ValueNotifier(false);
   final ValueNotifier<ComponentSizes> componentSizes = ValueNotifier(
-      ComponentSizes(
-          mainHeight: 0, otherHeight: 0, mainWidth: 0, otherWidth: 0));
+    ComponentSizes(mainHeight: 0, otherHeight: 0, mainWidth: 0, otherWidth: 0),
+  );
 
   // Update functionss
   void updateSocket(io.Socket? value) {
@@ -1808,13 +1858,17 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       localSocket.value = value;
       mediasfuParameters.localSocket = value;
       updateSpecificState(
-          widget.options.sourceParameters, 'localSocket', value);
+        widget.options.sourceParameters,
+        'localSocket',
+        value,
+      );
     });
   }
 
   // Translation update methods
   void updateListenerTranslationPreferences(
-      ListenerTranslationPreferences value) {
+    ListenerTranslationPreferences value,
+  ) {
     if (!mounted) return;
     setState(() {
       listenerTranslationPreferences = value;
@@ -1912,7 +1966,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   }
 
   void updateAvailableTranslationChannels(
-      String speakerId, List<String> languages, String originalProducerId) {
+    String speakerId,
+    List<String> languages,
+    String originalProducerId,
+  ) {
     if (!mounted) return;
     setState(() {
       availableTranslationChannels[speakerId] = {
@@ -1922,8 +1979,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     });
   }
 
-  Future<void> startConsumingTranslation(String producerId, String speakerId,
-      String language, String originalProducerId) async {
+  Future<void> startConsumingTranslation(
+    String producerId,
+    String speakerId,
+    String language,
+    String originalProducerId,
+  ) async {
     // Track this producer ID as a translation producer so consumerResume can identify it
     activeTranslationProducerIds.add(producerId);
 
@@ -1952,7 +2013,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   }
 
   Future<void> stopConsumingTranslation(
-      String speakerId, String language) async {
+    String speakerId,
+    String language,
+  ) async {
     // Find and close the consumer for this speaker/language combination
     String? producerIdToClose;
     String? originalProducerId;
@@ -1997,8 +2060,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       activeTranslationProducerIds.remove(producerId);
 
       // Remove from consumer transports
-      final updatedTransports =
-          List<TransportType>.from(consumerTransports.value);
+      final updatedTransports = List<TransportType>.from(
+        consumerTransports.value,
+      );
       updatedTransports.removeAt(transportIndex);
       updateConsumerTransports(updatedTransports);
 
@@ -2020,7 +2084,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   }
 
   void updateSpeakerTranslationState(
-      String speakerId, String? outputLanguage, String originalProducerId) {
+    String speakerId,
+    String? outputLanguage,
+    String originalProducerId,
+  ) {
     if (!mounted) return;
     setState(() {
       speakerTranslationStates[speakerId] = {
@@ -2031,7 +2098,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   }
 
   Future<void> pauseOriginalProducer(
-      String originalProducerId, String speakerId) async {
+    String originalProducerId,
+    String speakerId,
+  ) async {
     // Find the consumer transport for the original producer
     final transportIndex = consumerTransports.value.indexWhere(
       (t) => t.producerId == originalProducerId,
@@ -2051,7 +2120,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   }
 
   Future<void> resumeOriginalProducer(
-      String originalProducerId, String speakerId) async {
+    String originalProducerId,
+    String speakerId,
+  ) async {
     // Find the consumer transport for the original producer
     final transportIndex = consumerTransports.value.indexWhere(
       (t) => t.producerId == originalProducerId,
@@ -2080,17 +2151,22 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   }
 
   void updateListenPreferencesWrapper(
-      Map<String, String> Function(Map<String, String>) updater) {
+    Map<String, String> Function(Map<String, String>) updater,
+  ) {
     final currentMap = listenerTranslationPreferences.perSpeaker;
     final newMap = updater(currentMap);
-    updateListenerTranslationPreferences(ListenerTranslationPreferences(
+    updateListenerTranslationPreferences(
+      ListenerTranslationPreferences(
         perSpeaker: newMap,
-        globalLanguage: listenerTranslationPreferences.globalLanguage));
+        globalLanguage: listenerTranslationPreferences.globalLanguage,
+      ),
+    );
   }
 
   void updateTranscriptsWrapper(
-      List<TranslationTranscriptData> Function(List<TranslationTranscriptData>)
-          updater) {
+    List<TranslationTranscriptData> Function(List<TranslationTranscriptData>)
+    updater,
+  ) {
     if (!mounted) return;
     setState(() {
       transcripts = updater(transcripts);
@@ -2167,7 +2243,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       youAreCoHost.value = value;
       mediasfuParameters.youAreCoHost = value;
       updateSpecificState(
-          widget.options.sourceParameters, 'youAreCoHost', value);
+        widget.options.sourceParameters,
+        'youAreCoHost',
+        value,
+      );
     });
   }
 
@@ -2181,7 +2260,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     confirmedToRecord.value = value;
     mediasfuParameters.confirmedToRecord = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'confirmedToRecord', value);
+      widget.options.sourceParameters,
+      'confirmedToRecord',
+      value,
+    );
   }
 
   void updateMeetingDisplayType(String value) {
@@ -2190,7 +2272,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       meetingDisplayType.value = value;
       mediasfuParameters.meetingDisplayType = value;
       updateSpecificState(
-          widget.options.sourceParameters, 'meetingDisplayType', value);
+        widget.options.sourceParameters,
+        'meetingDisplayType',
+        value,
+      );
     });
   }
 
@@ -2200,7 +2285,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       meetingVideoOptimized.value = value;
       mediasfuParameters.meetingVideoOptimized = value;
       updateSpecificState(
-          widget.options.sourceParameters, 'meetingVideoOptimized', value);
+        widget.options.sourceParameters,
+        'meetingVideoOptimized',
+        value,
+      );
     });
   }
 
@@ -2213,11 +2301,14 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       // if webinar and mainHeightWidth is 92, change to 67
       if (value == EventType.webinar && mainHeightWidth == 92) {
         mainHeightWidth = 67;
-        updateComponentSizes(ComponentSizes(
+        updateComponentSizes(
+          ComponentSizes(
             mainHeight: mainHeightWidth,
             otherHeight: componentSizes.value.otherHeight,
             mainWidth: mainHeightWidth,
-            otherWidth: componentSizes.value.otherWidth));
+            otherWidth: componentSizes.value.otherWidth,
+          ),
+        );
       }
       // For conference mode without screen sharing, mainHeightWidth should be 0
       // so the participant grid fills the entire screen
@@ -2229,7 +2320,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         mainHeightWidth = 0;
         mediasfuParameters.mainHeightWidth = 0;
         updateSpecificState(
-            widget.options.sourceParameters, 'mainHeightWidth', 0.0);
+          widget.options.sourceParameters,
+          'mainHeightWidth',
+          0.0,
+        );
       }
     });
     if (value == EventType.chat ||
@@ -2245,33 +2339,48 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     updateSpecificState(widget.options.sourceParameters, 'participants', value);
     filteredParticipants.value = List.from(value);
     mediasfuParameters.filteredParticipants = List.from(value);
-    updateSpecificState(widget.options.sourceParameters, 'filteredParticipants',
-        List.from(value));
+    updateSpecificState(
+      widget.options.sourceParameters,
+      'filteredParticipants',
+      List.from(value),
+    );
     participantsCounter.value = value.length;
     mediasfuParameters.participantsCounter = value.length;
     updateSpecificState(
-        widget.options.sourceParameters, 'participantsCounter', value.length);
+      widget.options.sourceParameters,
+      'participantsCounter',
+      value.length,
+    );
   }
 
   void updateFilteredParticipants(List<Participant> value) {
     filteredParticipants.value = value;
     mediasfuParameters.filteredParticipants = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'filteredParticipants', value);
+      widget.options.sourceParameters,
+      'filteredParticipants',
+      value,
+    );
   }
 
   void updateParticipantsCounter(int value) {
     participantsCounter.value = value;
     mediasfuParameters.participantsCounter = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'participantsCounter', value);
+      widget.options.sourceParameters,
+      'participantsCounter',
+      value,
+    );
   }
 
   void updateParticipantsFilter(String value) {
     participantsFilter.value = value;
     mediasfuParameters.participantsFilter = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'participantsFilter', value);
+      widget.options.sourceParameters,
+      'participantsFilter',
+      value,
+    );
   }
 
   void updateRoomName(String value) {
@@ -2284,7 +2393,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     adminPasscode.value = value;
     mediasfuParameters.adminPasscode = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'adminPasscode', value);
+      widget.options.sourceParameters,
+      'adminPasscode',
+      value,
+    );
   }
 
   void updateIslevel(String value) {
@@ -2306,133 +2418,190 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     coHostResponsibility.value = value;
     mediasfuParameters.coHostResponsibility = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'coHostResponsibility', value);
+      widget.options.sourceParameters,
+      'coHostResponsibility',
+      value,
+    );
   }
 
   void updateRecordingAudioPausesLimit(int value) {
     recordingAudioPausesLimit.value = value;
     mediasfuParameters.recordingAudioPausesLimit = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordingAudioPausesLimit', value);
+      widget.options.sourceParameters,
+      'recordingAudioPausesLimit',
+      value,
+    );
   }
 
   void updateRecordingAudioPausesCount(int value) {
     recordingAudioPausesCount.value = value;
     mediasfuParameters.recordingAudioPausesCount = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordingAudioPausesCount', value);
+      widget.options.sourceParameters,
+      'recordingAudioPausesCount',
+      value,
+    );
   }
 
   void updateRecordingAudioSupport(bool value) {
     recordingAudioSupport.value = value;
     mediasfuParameters.recordingAudioSupport = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordingAudioSupport', value);
+      widget.options.sourceParameters,
+      'recordingAudioSupport',
+      value,
+    );
   }
 
   void updateRecordingAudioPeopleLimit(int value) {
     recordingAudioPeopleLimit.value = value;
     mediasfuParameters.recordingAudioPeopleLimit = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordingAudioPeopleLimit', value);
+      widget.options.sourceParameters,
+      'recordingAudioPeopleLimit',
+      value,
+    );
   }
 
   void updateRecordingAudioParticipantsTimeLimit(int value) {
     recordingAudioParticipantsTimeLimit.value = value;
     mediasfuParameters.recordingAudioParticipantsTimeLimit = value;
-    updateSpecificState(widget.options.sourceParameters,
-        'recordingAudioParticipantsTimeLimit', value);
+    updateSpecificState(
+      widget.options.sourceParameters,
+      'recordingAudioParticipantsTimeLimit',
+      value,
+    );
   }
 
   void updateRecordingVideoPausesCount(int value) {
     recordingVideoPausesCount.value = value;
     mediasfuParameters.recordingVideoPausesCount = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordingVideoPausesCount', value);
+      widget.options.sourceParameters,
+      'recordingVideoPausesCount',
+      value,
+    );
   }
 
   void updateRecordingVideoPausesLimit(int value) {
     recordingVideoPausesLimit.value = value;
     mediasfuParameters.recordingVideoPausesLimit = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordingVideoPausesLimit', value);
+      widget.options.sourceParameters,
+      'recordingVideoPausesLimit',
+      value,
+    );
   }
 
   void updateRecordingVideoSupport(bool value) {
     recordingVideoSupport.value = value;
     mediasfuParameters.recordingVideoSupport = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordingVideoSupport', value);
+      widget.options.sourceParameters,
+      'recordingVideoSupport',
+      value,
+    );
   }
 
   void updateRecordingVideoPeopleLimit(int value) {
     recordingVideoPeopleLimit.value = value;
     mediasfuParameters.recordingVideoPeopleLimit = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordingVideoPeopleLimit', value);
+      widget.options.sourceParameters,
+      'recordingVideoPeopleLimit',
+      value,
+    );
   }
 
   void updateRecordingVideoParticipantsTimeLimit(int value) {
     recordingVideoParticipantsTimeLimit.value = value;
     mediasfuParameters.recordingVideoParticipantsTimeLimit = value;
-    updateSpecificState(widget.options.sourceParameters,
-        'recordingVideoParticipantsTimeLimit', value);
+    updateSpecificState(
+      widget.options.sourceParameters,
+      'recordingVideoParticipantsTimeLimit',
+      value,
+    );
   }
 
   void updateRecordingAllParticipantsSupport(bool value) {
     recordingAllParticipantsSupport.value = value;
     mediasfuParameters.recordingAllParticipantsSupport = value;
-    updateSpecificState(widget.options.sourceParameters,
-        'recordingAllParticipantsSupport', value);
+    updateSpecificState(
+      widget.options.sourceParameters,
+      'recordingAllParticipantsSupport',
+      value,
+    );
   }
 
   void updateRecordingVideoParticipantsSupport(bool value) {
     recordingVideoParticipantsSupport.value = value;
     mediasfuParameters.recordingVideoParticipantsSupport = value;
-    updateSpecificState(widget.options.sourceParameters,
-        'recordingVideoParticipantsSupport', value);
+    updateSpecificState(
+      widget.options.sourceParameters,
+      'recordingVideoParticipantsSupport',
+      value,
+    );
   }
 
   void updateRecordingAllParticipantsFullRoomSupport(bool value) {
     recordingAllParticipantsFullRoomSupport.value = value;
     mediasfuParameters.recordingAllParticipantsFullRoomSupport = value;
-    updateSpecificState(widget.options.sourceParameters,
-        'recordingAllParticipantsFullRoomSupport', value);
+    updateSpecificState(
+      widget.options.sourceParameters,
+      'recordingAllParticipantsFullRoomSupport',
+      value,
+    );
   }
 
   void updateRecordingVideoParticipantsFullRoomSupport(bool value) {
     recordingVideoParticipantsFullRoomSupport.value = value;
     mediasfuParameters.recordingVideoParticipantsFullRoomSupport = value;
-    updateSpecificState(widget.options.sourceParameters,
-        'recordingVideoParticipantsFullRoomSupport', value);
+    updateSpecificState(
+      widget.options.sourceParameters,
+      'recordingVideoParticipantsFullRoomSupport',
+      value,
+    );
   }
 
   void updateRecordingPreferredOrientation(String value) {
     recordingPreferredOrientation.value = value;
     mediasfuParameters.recordingPreferredOrientation = value;
-    updateSpecificState(widget.options.sourceParameters,
-        'recordingPreferredOrientation', value);
+    updateSpecificState(
+      widget.options.sourceParameters,
+      'recordingPreferredOrientation',
+      value,
+    );
   }
 
   void updateRecordingSupportForOtherOrientation(bool value) {
     recordingSupportForOtherOrientation.value = value;
     mediasfuParameters.recordingSupportForOtherOrientation = value;
-    updateSpecificState(widget.options.sourceParameters,
-        'recordingSupportForOtherOrientation', value);
+    updateSpecificState(
+      widget.options.sourceParameters,
+      'recordingSupportForOtherOrientation',
+      value,
+    );
   }
 
   void updateRecordingMultiFormatsSupport(bool value) {
     recordingMultiFormatsSupport.value = value;
     mediasfuParameters.recordingMultiFormatsSupport = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordingMultiFormatsSupport', value);
+      widget.options.sourceParameters,
+      'recordingMultiFormatsSupport',
+      value,
+    );
   }
 
   void updateUserRecordingParams(UserRecordingParams value) {
     userRecordingParams.value = value;
     mediasfuParameters.userRecordingParams = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'userRecordingParams', value);
+      widget.options.sourceParameters,
+      'userRecordingParams',
+      value,
+    );
   }
 
   void updateCanRecord(bool value) {
@@ -2457,42 +2626,60 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     recordTimerInterval.value = value;
     mediasfuParameters.recordTimerInterval = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordTimerInterval', value);
+      widget.options.sourceParameters,
+      'recordTimerInterval',
+      value,
+    );
   }
 
   void updateRecordStartTime(int? value) {
     recordStartTime.value = value;
     mediasfuParameters.recordStartTime = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordStartTime', value);
+      widget.options.sourceParameters,
+      'recordStartTime',
+      value,
+    );
   }
 
   void updateRecordElapsedTime(int value) {
     recordElapsedTime.value = value;
     mediasfuParameters.recordElapsedTime = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordElapsedTime', value);
+      widget.options.sourceParameters,
+      'recordElapsedTime',
+      value,
+    );
   }
 
   void updateIsTimerRunning(bool value) {
     isTimerRunning.value = value;
     mediasfuParameters.isTimerRunning = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'isTimerRunning', value);
+      widget.options.sourceParameters,
+      'isTimerRunning',
+      value,
+    );
   }
 
   void updateCanPauseResume(bool value) {
     canPauseResume.value = value;
     mediasfuParameters.canPauseResume = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'canPauseResume', value);
+      widget.options.sourceParameters,
+      'canPauseResume',
+      value,
+    );
   }
 
   void updateRecordChangeSeconds(int value) {
     recordChangeSeconds.value = value;
     mediasfuParameters.recordChangeSeconds = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordChangeSeconds', value);
+      widget.options.sourceParameters,
+      'recordChangeSeconds',
+      value,
+    );
   }
 
   void updatePauseLimit(int value) {
@@ -2505,42 +2692,60 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     pauseRecordCount.value = value;
     mediasfuParameters.pauseRecordCount = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'pauseRecordCount', value);
+      widget.options.sourceParameters,
+      'pauseRecordCount',
+      value,
+    );
   }
 
   void updateCanLaunchRecord(bool value) {
     canLaunchRecord.value = value;
     mediasfuParameters.canLaunchRecord = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'canLaunchRecord', value);
+      widget.options.sourceParameters,
+      'canLaunchRecord',
+      value,
+    );
   }
 
   void updateStopLaunchRecord(bool value) {
     stopLaunchRecord.value = value;
     mediasfuParameters.stopLaunchRecord = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'stopLaunchRecord', value);
+      widget.options.sourceParameters,
+      'stopLaunchRecord',
+      value,
+    );
   }
 
   void updateParticipantsAll(List<Participant> value) {
     participantsAll.value = value;
     mediasfuParameters.participantsAll = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'participantsAll', value);
+      widget.options.sourceParameters,
+      'participantsAll',
+      value,
+    );
   }
 
   void updateConsumeSockets(List<ConsumeSocket> value) {
     consumeSockets.value = value;
     mediasfuParameters.consumeSockets = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'consumeSockets', value);
+      widget.options.sourceParameters,
+      'consumeSockets',
+      value,
+    );
   }
 
   void updateRtpCapabilities(RtpCapabilities? value) {
     rtpCapabilities.value = value;
     mediasfuParameters.rtpCapabilities = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'rtpCapabilities', value);
+      widget.options.sourceParameters,
+      'rtpCapabilities',
+      value,
+    );
   }
 
   void updateRoomRecvIPs(List<String> value) {
@@ -2553,21 +2758,30 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     meetingRoomParams.value = value;
     mediasfuParameters.meetingRoomParams = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'meetingRoomParams', value);
+      widget.options.sourceParameters,
+      'meetingRoomParams',
+      value,
+    );
   }
 
   void updateItemPageLimit(int value) {
     itemPageLimit.value = value;
     mediasfuParameters.itemPageLimit = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'itemPageLimit', value);
+      widget.options.sourceParameters,
+      'itemPageLimit',
+      value,
+    );
   }
 
   void updateAudioOnlyRoom(bool value) {
     audioOnlyRoom.value = value;
     mediasfuParameters.audioOnlyRoom = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'audioOnlyRoom', value);
+      widget.options.sourceParameters,
+      'audioOnlyRoom',
+      value,
+    );
   }
 
   void updateAddForBasic(bool value) {
@@ -2580,14 +2794,20 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     screenPageLimit.value = value;
     mediasfuParameters.screenPageLimit = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'screenPageLimit', value);
+      widget.options.sourceParameters,
+      'screenPageLimit',
+      value,
+    );
   }
 
   void updateShareScreenStarted(bool value) {
     shareScreenStarted.value = value;
     mediasfuParameters.shareScreenStarted = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'shareScreenStarted', value);
+      widget.options.sourceParameters,
+      'shareScreenStarted',
+      value,
+    );
   }
 
   void updateShared(bool value) {
@@ -2603,21 +2823,30 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     targetOrientation.value = value;
     mediasfuParameters.targetOrientation = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'targetOrientation', value);
+      widget.options.sourceParameters,
+      'targetOrientation',
+      value,
+    );
   }
 
   void updateTargetResolution(String value) {
     targetResolution.value = value;
     mediasfuParameters.targetResolution = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'targetResolution', value);
+      widget.options.sourceParameters,
+      'targetResolution',
+      value,
+    );
   }
 
   void updateTargetResolutionHost(String value) {
     targetResolutionHost.value = value;
     mediasfuParameters.targetResolutionHost = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'targetResolutionHost', value);
+      widget.options.sourceParameters,
+      'targetResolutionHost',
+      value,
+    );
   }
 
   void updateVidCons(VidCons value) {
@@ -2666,7 +2895,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     updateMainWindow.value = value;
     mediasfuParameters.updateMainWindow = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'updateMainWindow', value);
+      widget.options.sourceParameters,
+      'updateMainWindow',
+      value,
+    );
   }
 
   void updateFirstRound(bool value) {
@@ -2697,21 +2929,30 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     allVideoStreams.value = value;
     mediasfuParameters.allVideoStreams = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'allVideoStreams', value);
+      widget.options.sourceParameters,
+      'allVideoStreams',
+      value,
+    );
   }
 
   void updateNewLimitedStreams(List<Stream> value) {
     newLimitedStreams.value = value;
     mediasfuParameters.newLimitedStreams = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'newLimitedStreams', value);
+      widget.options.sourceParameters,
+      'newLimitedStreams',
+      value,
+    );
   }
 
   void updateNewLimitedStreamsIDs(List<String> value) {
     newLimitedStreamsIDs.value = value;
     mediasfuParameters.newLimitedStreamsIDs = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'newLimitedStreamsIDs', value);
+      widget.options.sourceParameters,
+      'newLimitedStreamsIDs',
+      value,
+    );
   }
 
   void updateActiveSounds(List<String> value) {
@@ -2724,28 +2965,40 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     screenShareIDStream.value = value;
     mediasfuParameters.screenShareIDStream = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'screenShareIDStream', value);
+      widget.options.sourceParameters,
+      'screenShareIDStream',
+      value,
+    );
   }
 
   void updateScreenShareNameStream(String value) {
     screenShareNameStream.value = value;
     mediasfuParameters.screenShareNameStream = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'screenShareNameStream', value);
+      widget.options.sourceParameters,
+      'screenShareNameStream',
+      value,
+    );
   }
 
   void updateAdminIDStream(String value) {
     adminIDStream.value = value;
     mediasfuParameters.adminIDStream = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'adminIDStream', value);
+      widget.options.sourceParameters,
+      'adminIDStream',
+      value,
+    );
   }
 
   void updateAdminNameStream(String value) {
     adminNameStream.value = value;
     mediasfuParameters.adminNameStream = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'adminNameStream', value);
+      widget.options.sourceParameters,
+      'adminNameStream',
+      value,
+    );
   }
 
   void updateYouYouStream(List<Stream> value) {
@@ -2758,7 +3011,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     youYouStreamIDs.value = value;
     mediasfuParameters.youYouStreamIDs = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'youYouStreamIDs', value);
+      widget.options.sourceParameters,
+      'youYouStreamIDs',
+      value,
+    );
   }
 
   void updateLocalStream(MediaStream? value) {
@@ -2773,7 +3029,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       recordStarted.value = value;
       mediasfuParameters.recordStarted = value;
       updateSpecificState(
-          widget.options.sourceParameters, 'recordStarted', value);
+        widget.options.sourceParameters,
+        'recordStarted',
+        value,
+      );
     });
     if (clearedToRecord.value == true &&
         clearedToResume.value == true &&
@@ -2788,7 +3047,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       recordResumed.value = value;
       mediasfuParameters.recordResumed = value;
       updateSpecificState(
-          widget.options.sourceParameters, 'recordResumed', value);
+        widget.options.sourceParameters,
+        'recordResumed',
+        value,
+      );
     });
   }
 
@@ -2798,7 +3060,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       recordPaused.value = value;
       mediasfuParameters.recordPaused = value;
       updateSpecificState(
-          widget.options.sourceParameters, 'recordPaused', value);
+        widget.options.sourceParameters,
+        'recordPaused',
+        value,
+      );
     });
   }
 
@@ -2808,7 +3073,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       recordStopped.value = value;
       mediasfuParameters.recordStopped = value;
       updateSpecificState(
-          widget.options.sourceParameters, 'recordStopped', value);
+        widget.options.sourceParameters,
+        'recordStopped',
+        value,
+      );
     });
   }
 
@@ -2816,21 +3084,30 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     adminRestrictSetting.value = value;
     mediasfuParameters.adminRestrictSetting = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'adminRestrictSetting', value);
+      widget.options.sourceParameters,
+      'adminRestrictSetting',
+      value,
+    );
   }
 
   void updateVideoRequestState(String value) {
     videoRequestState.value = value;
     mediasfuParameters.videoRequestState = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'videoRequestState', value);
+      widget.options.sourceParameters,
+      'videoRequestState',
+      value,
+    );
   }
 
   void updateVideoRequestTime(int? value) {
     videoRequestTime.value = value;
     mediasfuParameters.videoRequestTime = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'videoRequestTime', value);
+      widget.options.sourceParameters,
+      'videoRequestTime',
+      value,
+    );
   }
 
   void updateVideoAction(bool value) {
@@ -2843,28 +3120,40 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     localStreamVideo.value = value;
     mediasfuParameters.localStreamVideo = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'localStreamVideo', value);
+      widget.options.sourceParameters,
+      'localStreamVideo',
+      value,
+    );
   }
 
   void updateUserDefaultVideoInputDevice(String value) {
     userDefaultVideoInputDevice.value = value;
     mediasfuParameters.userDefaultVideoInputDevice = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'userDefaultVideoInputDevice', value);
+      widget.options.sourceParameters,
+      'userDefaultVideoInputDevice',
+      value,
+    );
   }
 
   void updateCurrentFacingMode(String value) {
     currentFacingMode.value = value;
     mediasfuParameters.currentFacingMode = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'currentFacingMode', value);
+      widget.options.sourceParameters,
+      'currentFacingMode',
+      value,
+    );
   }
 
   void updatePrevFacingMode(String value) {
     prevFacingMode.value = value;
     mediasfuParameters.prevFacingMode = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'prevFacingMode', value);
+      widget.options.sourceParameters,
+      'prevFacingMode',
+      value,
+    );
   }
 
   void updateDefVideoID(String value) {
@@ -2883,14 +3172,20 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     dispActiveNames.value = value;
     mediasfuParameters.dispActiveNames = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'dispActiveNames', value);
+      widget.options.sourceParameters,
+      'dispActiveNames',
+      value,
+    );
   }
 
   void updatePDispActiveNames(List<String> value) {
     pDispActiveNames.value = value;
     mediasfuParameters.pDispActiveNames = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'pDispActiveNames', value);
+      widget.options.sourceParameters,
+      'pDispActiveNames',
+      value,
+    );
   }
 
   void updateActiveNames(List<String> value) {
@@ -2903,7 +3198,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     prevActiveNames.value = value;
     mediasfuParameters.prevActiveNames = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'prevActiveNames', value);
+      widget.options.sourceParameters,
+      'prevActiveNames',
+      value,
+    );
   }
 
   void updatePActiveNames(List<String> value) {
@@ -2916,21 +3214,30 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     membersReceived.value = value;
     mediasfuParameters.membersReceived = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'membersReceived', value);
+      widget.options.sourceParameters,
+      'membersReceived',
+      value,
+    );
   }
 
   void updateDeferScreenReceived(bool value) {
     deferScreenReceived.value = value;
     mediasfuParameters.deferScreenReceived = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'deferScreenReceived', value);
+      widget.options.sourceParameters,
+      'deferScreenReceived',
+      value,
+    );
   }
 
   void updateHostFirstSwitch(bool value) {
     hostFirstSwitch.value = value;
     mediasfuParameters.hostFirstSwitch = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'hostFirstSwitch', value);
+      widget.options.sourceParameters,
+      'hostFirstSwitch',
+      value,
+    );
   }
 
   void updateMicAction(bool value) {
@@ -2955,42 +3262,60 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     audioRequestState.value = value!;
     mediasfuParameters.audioRequestState = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'audioRequestState', value);
+      widget.options.sourceParameters,
+      'audioRequestState',
+      value,
+    );
   }
 
   void updateScreenRequestState(String? value) {
     screenRequestState.value = value!;
     mediasfuParameters.screenRequestState = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'screenRequestState', value);
+      widget.options.sourceParameters,
+      'screenRequestState',
+      value,
+    );
   }
 
   void updateChatRequestState(String? value) {
     chatRequestState.value = value!;
     mediasfuParameters.chatRequestState = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'chatRequestState', value);
+      widget.options.sourceParameters,
+      'chatRequestState',
+      value,
+    );
   }
 
   void updateAudioRequestTime(int? value) {
     audioRequestTime.value = value;
     mediasfuParameters.audioRequestTime = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'audioRequestTime', value);
+      widget.options.sourceParameters,
+      'audioRequestTime',
+      value,
+    );
   }
 
   void updateScreenRequestTime(int? value) {
     screenRequestTime.value = value;
     mediasfuParameters.screenRequestTime = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'screenRequestTime', value);
+      widget.options.sourceParameters,
+      'screenRequestTime',
+      value,
+    );
   }
 
   void updateChatRequestTime(int? value) {
     chatRequestTime.value = value;
     mediasfuParameters.chatRequestTime = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'chatRequestTime', value);
+      widget.options.sourceParameters,
+      'chatRequestTime',
+      value,
+    );
   }
 
   void updateOldSoundIds(List<String> value) {
@@ -3009,7 +3334,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     mainScreenFilled.value = value;
     mediasfuParameters.mainScreenFilled = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'mainScreenFilled', value);
+      widget.options.sourceParameters,
+      'mainScreenFilled',
+      value,
+    );
   }
 
   void updateLocalStreamScreen(dynamic value) {
@@ -3019,14 +3347,20 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       mediasfuParameters.localStreamScreen = value;
     });
     updateSpecificState(
-        widget.options.sourceParameters, 'localStreamScreen', value);
+      widget.options.sourceParameters,
+      'localStreamScreen',
+      value,
+    );
   }
 
   void updateScreenAlreadyOn(bool value) {
     screenAlreadyOn.value = value;
     mediasfuParameters.screenAlreadyOn = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'screenAlreadyOn', value);
+      widget.options.sourceParameters,
+      'screenAlreadyOn',
+      value,
+    );
     if (!mounted) return;
     setState(() {
       screenShareActive = value;
@@ -3040,7 +3374,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     chatAlreadyOn.value = value;
     mediasfuParameters.chatAlreadyOn = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'chatAlreadyOn', value);
+      widget.options.sourceParameters,
+      'chatAlreadyOn',
+      value,
+    );
   }
 
   void updateRedirectURL(dynamic value) {
@@ -3053,7 +3390,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     oldAllStreams.value = value;
     mediasfuParameters.oldAllStreams = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'oldAllStreams', value);
+      widget.options.sourceParameters,
+      'oldAllStreams',
+      value,
+    );
   }
 
   void updateAdminVidID(String value) {
@@ -3072,49 +3412,70 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     nonAlVideoStreams.value = value;
     mediasfuParameters.nonAlVideoStreams = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'nonAlVideoStreams', value);
+      widget.options.sourceParameters,
+      'nonAlVideoStreams',
+      value,
+    );
   }
 
   void updateSortAudioLoudness(bool value) {
     sortAudioLoudness.value = value;
     mediasfuParameters.sortAudioLoudness = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'sortAudioLoudness', value);
+      widget.options.sourceParameters,
+      'sortAudioLoudness',
+      value,
+    );
   }
 
   void updateAudioDecibels(List<AudioDecibels> value) {
     audioDecibels.value = value;
     mediasfuParameters.audioDecibels = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'audioDecibels', value);
+      widget.options.sourceParameters,
+      'audioDecibels',
+      value,
+    );
   }
 
   void updateMixedAlVideoStreams(List<Stream> value) {
     mixedAlVideoStreams.value = value;
     mediasfuParameters.mixedAlVideoStreams = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'mixedAlVideoStreams', value);
+      widget.options.sourceParameters,
+      'mixedAlVideoStreams',
+      value,
+    );
   }
 
   void updateNonAlVideoStreamsMuted(List<Stream> value) {
     nonAlVideoStreamsMuted.value = value;
     mediasfuParameters.nonAlVideoStreamsMuted = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'nonAlVideoStreamsMuted', value);
+      widget.options.sourceParameters,
+      'nonAlVideoStreamsMuted',
+      value,
+    );
   }
 
   void updatePaginatedStreams(List<List<Stream>> value) {
     paginatedStreams.value = value;
     mediasfuParameters.paginatedStreams = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'paginatedStreams', value);
+      widget.options.sourceParameters,
+      'paginatedStreams',
+      value,
+    );
   }
 
   void updateLocalStreamAudio(MediaStream? value) {
     localStreamAudio.value = value;
     mediasfuParameters.localStreamAudio = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'localStreamAudio', value);
+      widget.options.sourceParameters,
+      'localStreamAudio',
+      value,
+    );
   }
 
   void updateDefAudioID(String value) {
@@ -3127,35 +3488,50 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     userDefaultAudioInputDevice.value = value;
     mediasfuParameters.userDefaultAudioInputDevice = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'userDefaultAudioInputDevice', value);
+      widget.options.sourceParameters,
+      'userDefaultAudioInputDevice',
+      value,
+    );
   }
 
   void updateUserDefaultAudioOutputDevice(String value) {
     userDefaultAudioOutputDevice.value = value;
     mediasfuParameters.userDefaultAudioOutputDevice = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'userDefaultAudioOutputDevice', value);
+      widget.options.sourceParameters,
+      'userDefaultAudioOutputDevice',
+      value,
+    );
   }
 
   void updateIsSpeakerphoneOn(bool value) {
     isSpeakerphoneOn.value = value;
     mediasfuParameters.isSpeakerphoneOn = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'isSpeakerphoneOn', value);
+      widget.options.sourceParameters,
+      'isSpeakerphoneOn',
+      value,
+    );
   }
 
   void updatePrevAudioInputDevice(String value) {
     prevAudioInputDevice.value = value;
     mediasfuParameters.prevAudioInputDevice = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'prevAudioInputDevice', value);
+      widget.options.sourceParameters,
+      'prevAudioInputDevice',
+      value,
+    );
   }
 
   void updatePrevVideoInputDevice(String value) {
     prevVideoInputDevice.value = value;
     mediasfuParameters.prevVideoInputDevice = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'prevVideoInputDevice', value);
+      widget.options.sourceParameters,
+      'prevVideoInputDevice',
+      value,
+    );
   }
 
   void updateAudioPaused(bool value) {
@@ -3168,14 +3544,20 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     mainScreenPerson.value = value;
     mediasfuParameters.mainScreenPerson = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'mainScreenPerson', value);
+      widget.options.sourceParameters,
+      'mainScreenPerson',
+      value,
+    );
   }
 
   void updateAdminOnMainScreen(bool value) {
     adminOnMainScreen.value = value;
     mediasfuParameters.adminOnMainScreen = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'adminOnMainScreen', value);
+      widget.options.sourceParameters,
+      'adminOnMainScreen',
+      value,
+    );
   }
 
   void updateScreenStates(List<ScreenState> value) {
@@ -3188,14 +3570,20 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     prevScreenStates.value = value;
     mediasfuParameters.prevScreenStates = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'prevScreenStates', value);
+      widget.options.sourceParameters,
+      'prevScreenStates',
+      value,
+    );
   }
 
   void updateUpdateDateState(dynamic value) {
     updateDateState.value = value;
     mediasfuParameters.updateDateState = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'updateDateState', value);
+      widget.options.sourceParameters,
+      'updateDateState',
+      value,
+    );
   }
 
   void updateLastUpdate(dynamic value) {
@@ -3208,21 +3596,30 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     nForReadjustRecord.value = value;
     mediasfuParameters.nForReadjustRecord = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'nForReadjustRecord', value);
+      widget.options.sourceParameters,
+      'nForReadjustRecord',
+      value,
+    );
   }
 
   void updateFixedPageLimit(int value) {
     fixedPageLimit.value = value;
     mediasfuParameters.fixedPageLimit = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'fixedPageLimit', value);
+      widget.options.sourceParameters,
+      'fixedPageLimit',
+      value,
+    );
   }
 
   void updateRemoveAltGrid(bool value) {
     removeAltGrid.value = value;
     mediasfuParameters.removeAltGrid = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'removeAltGrid', value);
+      widget.options.sourceParameters,
+      'removeAltGrid',
+      value,
+    );
   }
 
   void updateNForReadjust(int value) {
@@ -3235,21 +3632,30 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     lastReorderTime.value = value;
     mediasfuParameters.lastReorderTime = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'lastReorderTime', value);
+      widget.options.sourceParameters,
+      'lastReorderTime',
+      value,
+    );
   }
 
   void updateAudStreamNames(List<Stream> value) {
     audStreamNames.value = value;
     mediasfuParameters.audStreamNames = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'audStreamNames', value);
+      widget.options.sourceParameters,
+      'audStreamNames',
+      value,
+    );
   }
 
   void updateCurrentUserPage(int value) {
     currentUserPage.value = value;
     mediasfuParameters.currentUserPage = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'currentUserPage', value);
+      widget.options.sourceParameters,
+      'currentUserPage',
+      value,
+    );
   }
 
   void updateMainHeightWidth(dynamic value) {
@@ -3259,7 +3665,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       mainHeightWidth = value.toDouble();
       mediasfuParameters.mainHeightWidth = value.toDouble();
       updateSpecificState(
-          widget.options.sourceParameters, 'mainHeightWidth', value.toDouble());
+        widget.options.sourceParameters,
+        'mainHeightWidth',
+        value.toDouble(),
+      );
     });
 
     if (doUpdate && validated) {
@@ -3290,7 +3699,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     prevMainHeightWidth.value = value;
     mediasfuParameters.prevMainHeightWidth = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'prevMainHeightWidth', value);
+      widget.options.sourceParameters,
+      'prevMainHeightWidth',
+      value,
+    );
   }
 
   void updatePrevDoPaginate(bool value) {
@@ -3298,7 +3710,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       prevDoPaginate.value = value;
       mediasfuParameters.prevDoPaginate = value;
       updateSpecificState(
-          widget.options.sourceParameters, 'prevDoPaginate', value);
+        widget.options.sourceParameters,
+        'prevDoPaginate',
+        value,
+      );
     }
   }
 
@@ -3309,7 +3724,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         doPaginate.value = value;
         mediasfuParameters.doPaginate = value;
         updateSpecificState(
-            widget.options.sourceParameters, 'doPaginate', value);
+          widget.options.sourceParameters,
+          'doPaginate',
+          value,
+        );
       });
     }
   }
@@ -3330,7 +3748,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     chatRefStreams.value = value;
     mediasfuParameters.chatRefStreams = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'chatRefStreams', value);
+      widget.options.sourceParameters,
+      'chatRefStreams',
+      value,
+    );
   }
 
   void updateControlHeight(dynamic value) {
@@ -3339,7 +3760,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       controlHeight.value = value;
       mediasfuParameters.controlHeight = value;
       updateSpecificState(
-          widget.options.sourceParameters, 'controlHeight', value);
+        widget.options.sourceParameters,
+        'controlHeight',
+        value,
+      );
     });
   }
 
@@ -3353,14 +3777,20 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     isMediumScreen.value = value;
     mediasfuParameters.isMediumScreen = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'isMediumScreen', value);
+      widget.options.sourceParameters,
+      'isMediumScreen',
+      value,
+    );
   }
 
   void updateIsSmallScreen(bool value) {
     isSmallScreen.value = value;
     mediasfuParameters.isSmallScreen = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'isSmallScreen', value);
+      widget.options.sourceParameters,
+      'isSmallScreen',
+      value,
+    );
   }
 
   void updateAddGrid(bool value) {
@@ -3409,7 +3839,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     currentStreams.value = value;
     mediasfuParameters.currentStreams = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'currentStreams', value);
+      widget.options.sourceParameters,
+      'currentStreams',
+      value,
+    );
   }
 
   void updateShowMiniView(bool value) {
@@ -3434,28 +3867,40 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     allAudioStreams.value = value;
     mediasfuParameters.allAudioStreams = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'allAudioStreams', value);
+      widget.options.sourceParameters,
+      'allAudioStreams',
+      value,
+    );
   }
 
   void updateRemoteScreenStream(dynamic value) {
     remoteScreenStream.value = value;
     mediasfuParameters.remoteScreenStream = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'remoteScreenStream', value);
+      widget.options.sourceParameters,
+      'remoteScreenStream',
+      value,
+    );
   }
 
   void updateScreenProducer(dynamic value) {
     screenProducer.value = value;
     mediasfuParameters.screenProducer = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'screenProducer', value);
+      widget.options.sourceParameters,
+      'screenProducer',
+      value,
+    );
   }
 
   void updateLocalScreenProducer(dynamic value) {
     localScreenProducer!.value = value;
     mediasfuParameters.localScreenProducer = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'localScreenProducer', value);
+      widget.options.sourceParameters,
+      'localScreenProducer',
+      value,
+    );
   }
 
   void updateGotAllVids(bool value) {
@@ -3470,7 +3915,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       paginationHeightWidth.value = value;
       mediasfuParameters.paginationHeightWidth = value;
       updateSpecificState(
-          widget.options.sourceParameters, 'paginationHeightWidth', value);
+        widget.options.sourceParameters,
+        'paginationHeightWidth',
+        value,
+      );
     });
   }
 
@@ -3478,7 +3926,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     paginationDirection.value = value;
     mediasfuParameters.paginationDirection = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'paginationDirection', value);
+      widget.options.sourceParameters,
+      'paginationDirection',
+      value,
+    );
   }
 
   void updateGridSizes(GridSizes value) {
@@ -3491,7 +3942,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     screenForceFullDisplay.value = value;
     mediasfuParameters.screenForceFullDisplay = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'screenForceFullDisplay', value);
+      widget.options.sourceParameters,
+      'screenForceFullDisplay',
+      value,
+    );
   }
 
   void updateMainGridStream(dynamic value) {
@@ -3500,7 +3954,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       mainGridStream.value = value;
       mediasfuParameters.mainGridStream = value;
       updateSpecificState(
-          widget.options.sourceParameters, 'mainGridStream', value);
+        widget.options.sourceParameters,
+        'mainGridStream',
+        value,
+      );
     });
   }
 
@@ -3510,7 +3967,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       otherGridStreams = value;
       mediasfuParameters.otherGridStreams = value;
       updateSpecificState(
-          widget.options.sourceParameters, 'otherGridStreams', value);
+        widget.options.sourceParameters,
+        'otherGridStreams',
+        value,
+      );
     });
   }
 
@@ -3518,7 +3978,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     audioOnlyStreams.value = value;
     mediasfuParameters.audioOnlyStreams = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'audioOnlyStreams', value);
+      widget.options.sourceParameters,
+      'audioOnlyStreams',
+      value,
+    );
   }
 
   void addTranslationStream(Widget stream) {
@@ -3529,8 +3992,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
 
   void removeTranslationStream(String producerId) {
     final currentStreams = List<Widget>.from(translationStreams.value);
-    currentStreams
-        .removeWhere((widget) => widget.key == Key('translation-$producerId'));
+    currentStreams.removeWhere(
+      (widget) => widget.key == Key('translation-$producerId'),
+    );
     translationStreams.value = currentStreams;
   }
 
@@ -3550,21 +4014,30 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     meetingProgressTime.value = value;
     mediasfuParameters.meetingProgressTime = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'meetingProgressTime', value);
+      widget.options.sourceParameters,
+      'meetingProgressTime',
+      value,
+    );
   }
 
   void updateMeetingElapsedTime(dynamic value) {
     meetingElapsedTime.value = value;
     mediasfuParameters.meetingElapsedTime = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'meetingElapsedTime', value);
+      widget.options.sourceParameters,
+      'meetingElapsedTime',
+      value,
+    );
   }
 
   void updateRefParticipants(List<Participant> value) {
     refParticipants.value = value;
     mediasfuParameters.refParticipants = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'refParticipants', value);
+      widget.options.sourceParameters,
+      'refParticipants',
+      value,
+    );
   }
 
   void updateMessages(List<Message> value) {
@@ -3577,14 +4050,20 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     startDirectMessage.value = value;
     mediasfuParameters.startDirectMessage = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'startDirectMessage', value);
+      widget.options.sourceParameters,
+      'startDirectMessage',
+      value,
+    );
   }
 
   void updateDirectMessageDetails(Participant? value) {
     directMessageDetails.value = value;
     mediasfuParameters.directMessageDetails = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'directMessageDetails', value);
+      widget.options.sourceParameters,
+      'directMessageDetails',
+      value,
+    );
   }
 
   void updateShowMessagesBadge(bool value) {
@@ -3593,7 +4072,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       showMessagesBadge.value = value;
       mediasfuParameters.showMessagesBadge = value;
       updateSpecificState(
-          widget.options.sourceParameters, 'showMessagesBadge', value);
+        widget.options.sourceParameters,
+        'showMessagesBadge',
+        value,
+      );
     });
   }
 
@@ -3613,7 +4095,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     screenshareSetting.value = value;
     mediasfuParameters.screenshareSetting = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'screenshareSetting', value);
+      widget.options.sourceParameters,
+      'screenshareSetting',
+      value,
+    );
   }
 
   void updateChatSetting(String value) {
@@ -3632,7 +4117,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     forceFullDisplay.value = value;
     mediasfuParameters.forceFullDisplay = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'forceFullDisplay', value);
+      widget.options.sourceParameters,
+      'forceFullDisplay',
+      value,
+    );
     _prepopulateUserMediaHandler(
       PrepopulateUserMediaOptions(
         name: hostLabel.value,
@@ -3645,62 +4133,91 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     prevForceFullDisplay.value = value;
     mediasfuParameters.prevForceFullDisplay = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'prevForceFullDisplay', value);
+      widget.options.sourceParameters,
+      'prevForceFullDisplay',
+      value,
+    );
   }
 
   void updateSelfViewForceFull(bool value) {
     selfViewForceFull.value = value;
     mediasfuParameters.selfViewForceFull = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'selfViewForceFull', value);
+      widget.options.sourceParameters,
+      'selfViewForceFull',
+      value,
+    );
     // Trigger screen refresh to apply the self-view display change
-    onScreenChanges(OnScreenChangesOptions(
-      changed: true,
-      parameters: mediasfuParameters,
-    ));
+    onScreenChanges(
+      OnScreenChangesOptions(
+        changed: true,
+        parameters: mediasfuParameters,
+      ),
+    );
   }
 
   void updatePrevMeetingDisplayType(String value) {
     prevMeetingDisplayType.value = value;
     mediasfuParameters.prevMeetingDisplayType = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'prevMeetingDisplayType', value);
+      widget.options.sourceParameters,
+      'prevMeetingDisplayType',
+      value,
+    );
   }
 
   void updateWaitingRoomFilter(String value) {
     waitingRoomFilter.value = value;
     mediasfuParameters.waitingRoomFilter = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'waitingRoomFilter', value);
+      widget.options.sourceParameters,
+      'waitingRoomFilter',
+      value,
+    );
   }
 
   void updateWaitingRoomList(List<WaitingRoomParticipant> value) {
     waitingRoomList.value = value;
     mediasfuParameters.waitingRoomList = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'waitingRoomList', value);
+      widget.options.sourceParameters,
+      'waitingRoomList',
+      value,
+    );
     filteredWaitingRoomList.value = value;
     mediasfuParameters.filteredWaitingRoomList = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'filteredWaitingRoomList', value);
+      widget.options.sourceParameters,
+      'filteredWaitingRoomList',
+      value,
+    );
     waitingRoomCounter.value = value.length;
     mediasfuParameters.waitingRoomCounter = value.length;
     updateSpecificState(
-        widget.options.sourceParameters, 'waitingRoomCounter', value.length);
+      widget.options.sourceParameters,
+      'waitingRoomCounter',
+      value.length,
+    );
   }
 
   void updateWaitingRoomCounter(int value) {
     waitingRoomCounter.value = value;
     mediasfuParameters.waitingRoomCounter = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'waitingRoomCounter', value);
+      widget.options.sourceParameters,
+      'waitingRoomCounter',
+      value,
+    );
   }
 
   void updateRequestFilter(String value) {
     requestFilter.value = value;
     mediasfuParameters.requestFilter = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'requestFilter', value);
+      widget.options.sourceParameters,
+      'requestFilter',
+      value,
+    );
   }
 
   void updateRequestList(List<Request> value) {
@@ -3710,18 +4227,27 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     filteredRequestList.value = value;
     mediasfuParameters.filteredRequestList = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'filteredRequestList', value);
+      widget.options.sourceParameters,
+      'filteredRequestList',
+      value,
+    );
     requestCounter.value = value.length;
     mediasfuParameters.requestCounter = value.length;
     updateSpecificState(
-        widget.options.sourceParameters, 'requestCounter', value.length);
+      widget.options.sourceParameters,
+      'requestCounter',
+      value.length,
+    );
   }
 
   void updateRequestCounter(int value) {
     requestCounter.value = value;
     mediasfuParameters.requestCounter = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'requestCounter', value);
+      widget.options.sourceParameters,
+      'requestCounter',
+      value,
+    );
   }
 
   void updateAlertVisible(bool value) {
@@ -3746,21 +4272,30 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     alertDuration.value = value;
     mediasfuParameters.alertDuration = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'alertDuration', value);
+      widget.options.sourceParameters,
+      'alertDuration',
+      value,
+    );
   }
 
   void updateProgressTimerVisible(bool value) {
     progressTimerVisible.value = value;
     mediasfuParameters.progressTimerVisible = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'progressTimerVisible', value);
+      widget.options.sourceParameters,
+      'progressTimerVisible',
+      value,
+    );
   }
 
   void updateProgressTimerValue(int value) {
     progressTimerValue.value = value;
     mediasfuParameters.progressTimerValue = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'progressTimerValue', value);
+      widget.options.sourceParameters,
+      'progressTimerValue',
+      value,
+    );
   }
 
   void updateTotalReqWait(int value) {
@@ -3769,7 +4304,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       totalReqWait.value = value;
       mediasfuParameters.totalReqWait = value;
       updateSpecificState(
-          widget.options.sourceParameters, 'totalReqWait', value);
+        widget.options.sourceParameters,
+        'totalReqWait',
+        value,
+      );
     });
   }
 
@@ -3788,15 +4326,20 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     }
     mediasfuParameters.isMenuModalVisible = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'isMenuModalVisible', value);
+      widget.options.sourceParameters,
+      'isMenuModalVisible',
+      value,
+    );
   }
 
   void updateIsRecordingModalVisible(bool value) {
     // Route to sidebar (desktop embedded or mobile modal)
     if (value) {
       final pushToStack = activeSidebarContent.value == SidebarContent.menu;
-      updateActiveSidebarContent(SidebarContent.recording,
-          pushToStack: pushToStack);
+      updateActiveSidebarContent(
+        SidebarContent.recording,
+        pushToStack: pushToStack,
+      );
       isRecordingModalVisible.value = false;
     } else {
       if (activeSidebarContent.value == SidebarContent.recording) {
@@ -3811,7 +4354,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     }
     mediasfuParameters.isRecordingModalVisible = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'isRecordingModalVisible', value);
+      widget.options.sourceParameters,
+      'isRecordingModalVisible',
+      value,
+    );
     if (value) {
       updateConfirmedToRecord(false);
     }
@@ -3821,8 +4367,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     // Route to sidebar (desktop embedded or mobile modal)
     if (value) {
       final pushToStack = activeSidebarContent.value == SidebarContent.menu;
-      updateActiveSidebarContent(SidebarContent.eventSettings,
-          pushToStack: pushToStack);
+      updateActiveSidebarContent(
+        SidebarContent.eventSettings,
+        pushToStack: pushToStack,
+      );
       isSettingsModalVisible.value = false;
     } else {
       if (activeSidebarContent.value == SidebarContent.eventSettings) {
@@ -3832,15 +4380,20 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     }
     mediasfuParameters.isSettingsModalVisible = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'isSettingsModalVisible', value);
+      widget.options.sourceParameters,
+      'isSettingsModalVisible',
+      value,
+    );
   }
 
   void updateIsRequestsModalVisible(bool value) {
     // Route to sidebar (desktop embedded or mobile modal)
     if (value) {
       final pushToStack = activeSidebarContent.value == SidebarContent.menu;
-      updateActiveSidebarContent(SidebarContent.requests,
-          pushToStack: pushToStack);
+      updateActiveSidebarContent(
+        SidebarContent.requests,
+        pushToStack: pushToStack,
+      );
       isRequestsModalVisible.value = false;
     } else {
       if (activeSidebarContent.value == SidebarContent.requests) {
@@ -3850,15 +4403,20 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     }
     mediasfuParameters.isRequestsModalVisible = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'isRequestsModalVisible', value);
+      widget.options.sourceParameters,
+      'isRequestsModalVisible',
+      value,
+    );
   }
 
   void updateIsWaitingModalVisible(bool value) {
     // Route to sidebar (desktop embedded or mobile modal)
     if (value) {
       final pushToStack = activeSidebarContent.value == SidebarContent.menu;
-      updateActiveSidebarContent(SidebarContent.waiting,
-          pushToStack: pushToStack);
+      updateActiveSidebarContent(
+        SidebarContent.waiting,
+        pushToStack: pushToStack,
+      );
       isWaitingModalVisible.value = false;
     } else {
       if (activeSidebarContent.value == SidebarContent.waiting) {
@@ -3868,15 +4426,20 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     }
     mediasfuParameters.isWaitingModalVisible = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'isWaitingModalVisible', value);
+      widget.options.sourceParameters,
+      'isWaitingModalVisible',
+      value,
+    );
   }
 
   void updateIsCoHostModalVisible(bool value) {
     // Route to sidebar (desktop embedded or mobile modal)
     if (value) {
       final pushToStack = activeSidebarContent.value == SidebarContent.menu;
-      updateActiveSidebarContent(SidebarContent.coHost,
-          pushToStack: pushToStack);
+      updateActiveSidebarContent(
+        SidebarContent.coHost,
+        pushToStack: pushToStack,
+      );
       isCoHostModalVisible.value = false;
     } else {
       if (activeSidebarContent.value == SidebarContent.coHost) {
@@ -3886,15 +4449,20 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     }
     mediasfuParameters.isCoHostModalVisible = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'isCoHostModalVisible', value);
+      widget.options.sourceParameters,
+      'isCoHostModalVisible',
+      value,
+    );
   }
 
   void updateIsMediaSettingsModalVisible(bool value) {
     // Route to sidebar (desktop embedded or mobile modal)
     if (value) {
       final pushToStack = activeSidebarContent.value == SidebarContent.menu;
-      updateActiveSidebarContent(SidebarContent.mediaSettings,
-          pushToStack: pushToStack);
+      updateActiveSidebarContent(
+        SidebarContent.mediaSettings,
+        pushToStack: pushToStack,
+      );
       isMediaSettingsModalVisible.value = false;
     } else {
       if (activeSidebarContent.value == SidebarContent.mediaSettings) {
@@ -3904,15 +4472,20 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     }
     mediasfuParameters.isMediaSettingsModalVisible = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'isMediaSettingsModalVisible', value);
+      widget.options.sourceParameters,
+      'isMediaSettingsModalVisible',
+      value,
+    );
   }
 
   void updateIsDisplaySettingsModalVisible(bool value) {
     // Route to sidebar (desktop embedded or mobile modal)
     if (value) {
       final pushToStack = activeSidebarContent.value == SidebarContent.menu;
-      updateActiveSidebarContent(SidebarContent.displaySettings,
-          pushToStack: pushToStack);
+      updateActiveSidebarContent(
+        SidebarContent.displaySettings,
+        pushToStack: pushToStack,
+      );
       isDisplaySettingsModalVisible.value = false;
     } else {
       if (activeSidebarContent.value == SidebarContent.displaySettings) {
@@ -3921,8 +4494,11 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       isDisplaySettingsModalVisible.value = false;
     }
     mediasfuParameters.isDisplaySettingsModalVisible = value;
-    updateSpecificState(widget.options.sourceParameters,
-        'isDisplaySettingsModalVisible', value);
+    updateSpecificState(
+      widget.options.sourceParameters,
+      'isDisplaySettingsModalVisible',
+      value,
+    );
   }
 
   void updateIsTranslationSettingsModalVisible(bool value) {
@@ -3950,7 +4526,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     }
     mediasfuParameters.isParticipantsModalVisible = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'isParticipantsModalVisible', value);
+      widget.options.sourceParameters,
+      'isParticipantsModalVisible',
+      value,
+    );
   }
 
   void updateIsMessagesModalVisible(bool value) {
@@ -3966,21 +4545,30 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     }
     mediasfuParameters.isMessagesModalVisible = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'isMessagesModalVisible', value);
+      widget.options.sourceParameters,
+      'isMessagesModalVisible',
+      value,
+    );
   }
 
   void updateIsConfirmExitModalVisible(bool value) {
     isConfirmExitModalVisible.value = value;
     mediasfuParameters.isConfirmExitModalVisible = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'isConfirmExitModalVisible', value);
+      widget.options.sourceParameters,
+      'isConfirmExitModalVisible',
+      value,
+    );
   }
 
   void updateIsConfirmHereModalVisible(bool value) {
     isConfirmHereModalVisible.value = value;
     mediasfuParameters.isConfirmHereModalVisible = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'isConfirmHereModalVisible', value);
+      widget.options.sourceParameters,
+      'isConfirmHereModalVisible',
+      value,
+    );
   }
 
   void updateIsShareEventModalVisible(bool value) {
@@ -3996,26 +4584,38 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     }
     mediasfuParameters.isShareEventModalVisible = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'isShareEventModalVisible', value);
+      widget.options.sourceParameters,
+      'isShareEventModalVisible',
+      value,
+    );
   }
 
   void updateIsLoadingModalVisible(bool value) {
     isLoadingModalVisible.value = value;
     mediasfuParameters.isLoadingModalVisible = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'isLoadingModalVisible', value);
+      widget.options.sourceParameters,
+      'isLoadingModalVisible',
+      value,
+    );
   }
 
   void updateRecordingMediaOptions(String value) {
     recordingMediaOptions.value = value;
     mediasfuParameters.recordingMediaOptions = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordingMediaOptions', value);
+      widget.options.sourceParameters,
+      'recordingMediaOptions',
+      value,
+    );
 
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
     updateSpecificState(
-        widget.options.sourceParameters, 'clearedToRecord', false);
+      widget.options.sourceParameters,
+      'clearedToRecord',
+      false,
+    );
 
     recordUIChanged.value = !recordUIChanged.value;
     // Assuming 'recordUIChanged' is not part of mediasfuParameters
@@ -4025,12 +4625,18 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     recordingAudioOptions.value = value;
     mediasfuParameters.recordingAudioOptions = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordingAudioOptions', value);
+      widget.options.sourceParameters,
+      'recordingAudioOptions',
+      value,
+    );
 
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
     updateSpecificState(
-        widget.options.sourceParameters, 'clearedToRecord', false);
+      widget.options.sourceParameters,
+      'clearedToRecord',
+      false,
+    );
 
     recordUIChanged.value = !recordUIChanged.value;
   }
@@ -4039,12 +4645,18 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     recordingVideoOptions.value = value;
     mediasfuParameters.recordingVideoOptions = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordingVideoOptions', value);
+      widget.options.sourceParameters,
+      'recordingVideoOptions',
+      value,
+    );
 
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
     updateSpecificState(
-        widget.options.sourceParameters, 'clearedToRecord', false);
+      widget.options.sourceParameters,
+      'clearedToRecord',
+      false,
+    );
 
     recordUIChanged.value = !recordUIChanged.value;
   }
@@ -4053,12 +4665,18 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     recordingVideoType.value = value;
     mediasfuParameters.recordingVideoType = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordingVideoType', value);
+      widget.options.sourceParameters,
+      'recordingVideoType',
+      value,
+    );
 
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
     updateSpecificState(
-        widget.options.sourceParameters, 'clearedToRecord', false);
+      widget.options.sourceParameters,
+      'clearedToRecord',
+      false,
+    );
 
     recordUIChanged.value = !recordUIChanged.value;
   }
@@ -4067,12 +4685,18 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     recordingVideoOptimized.value = value;
     mediasfuParameters.recordingVideoOptimized = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordingVideoOptimized', value);
+      widget.options.sourceParameters,
+      'recordingVideoOptimized',
+      value,
+    );
 
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
     updateSpecificState(
-        widget.options.sourceParameters, 'clearedToRecord', false);
+      widget.options.sourceParameters,
+      'clearedToRecord',
+      false,
+    );
 
     recordUIChanged.value = !recordUIChanged.value;
   }
@@ -4081,12 +4705,18 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     recordingDisplayType.value = value;
     mediasfuParameters.recordingDisplayType = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordingDisplayType', value);
+      widget.options.sourceParameters,
+      'recordingDisplayType',
+      value,
+    );
 
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
     updateSpecificState(
-        widget.options.sourceParameters, 'clearedToRecord', false);
+      widget.options.sourceParameters,
+      'clearedToRecord',
+      false,
+    );
 
     recordUIChanged.value = !recordUIChanged.value;
   }
@@ -4095,12 +4725,18 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     recordingAddHLS.value = value;
     mediasfuParameters.recordingAddHLS = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordingAddHLS', value);
+      widget.options.sourceParameters,
+      'recordingAddHLS',
+      value,
+    );
 
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
     updateSpecificState(
-        widget.options.sourceParameters, 'clearedToRecord', false);
+      widget.options.sourceParameters,
+      'clearedToRecord',
+      false,
+    );
 
     recordUIChanged.value = !recordUIChanged.value;
   }
@@ -4109,12 +4745,18 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     recordingNameTags.value = value;
     mediasfuParameters.recordingNameTags = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordingNameTags', value);
+      widget.options.sourceParameters,
+      'recordingNameTags',
+      value,
+    );
 
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
     updateSpecificState(
-        widget.options.sourceParameters, 'clearedToRecord', false);
+      widget.options.sourceParameters,
+      'clearedToRecord',
+      false,
+    );
 
     recordUIChanged.value = !recordUIChanged.value;
   }
@@ -4123,12 +4765,18 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     recordingBackgroundColor.value = value;
     mediasfuParameters.recordingBackgroundColor = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordingBackgroundColor', value);
+      widget.options.sourceParameters,
+      'recordingBackgroundColor',
+      value,
+    );
 
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
     updateSpecificState(
-        widget.options.sourceParameters, 'clearedToRecord', false);
+      widget.options.sourceParameters,
+      'clearedToRecord',
+      false,
+    );
 
     recordUIChanged.value = !recordUIChanged.value;
   }
@@ -4137,12 +4785,18 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     recordingNameTagsColor.value = value;
     mediasfuParameters.recordingNameTagsColor = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordingNameTagsColor', value);
+      widget.options.sourceParameters,
+      'recordingNameTagsColor',
+      value,
+    );
 
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
     updateSpecificState(
-        widget.options.sourceParameters, 'clearedToRecord', false);
+      widget.options.sourceParameters,
+      'clearedToRecord',
+      false,
+    );
 
     recordUIChanged.value = !recordUIChanged.value;
   }
@@ -4151,12 +4805,18 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     recordingAddText.value = value;
     mediasfuParameters.recordingAddText = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordingAddText', value);
+      widget.options.sourceParameters,
+      'recordingAddText',
+      value,
+    );
 
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
     updateSpecificState(
-        widget.options.sourceParameters, 'clearedToRecord', false);
+      widget.options.sourceParameters,
+      'clearedToRecord',
+      false,
+    );
 
     recordUIChanged.value = !recordUIChanged.value;
   }
@@ -4165,12 +4825,18 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     recordingCustomText.value = value;
     mediasfuParameters.recordingCustomText = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordingCustomText', value);
+      widget.options.sourceParameters,
+      'recordingCustomText',
+      value,
+    );
 
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
     updateSpecificState(
-        widget.options.sourceParameters, 'clearedToRecord', false);
+      widget.options.sourceParameters,
+      'clearedToRecord',
+      false,
+    );
 
     recordUIChanged.value = !recordUIChanged.value;
   }
@@ -4179,12 +4845,18 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     recordingCustomTextPosition.value = value;
     mediasfuParameters.recordingCustomTextPosition = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordingCustomTextPosition', value);
+      widget.options.sourceParameters,
+      'recordingCustomTextPosition',
+      value,
+    );
 
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
     updateSpecificState(
-        widget.options.sourceParameters, 'clearedToRecord', false);
+      widget.options.sourceParameters,
+      'clearedToRecord',
+      false,
+    );
 
     recordUIChanged.value = !recordUIChanged.value;
   }
@@ -4193,12 +4865,18 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     recordingCustomTextColor.value = value;
     mediasfuParameters.recordingCustomTextColor = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordingCustomTextColor', value);
+      widget.options.sourceParameters,
+      'recordingCustomTextColor',
+      value,
+    );
 
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
     updateSpecificState(
-        widget.options.sourceParameters, 'clearedToRecord', false);
+      widget.options.sourceParameters,
+      'clearedToRecord',
+      false,
+    );
 
     recordUIChanged.value = !recordUIChanged.value;
   }
@@ -4207,12 +4885,18 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     recordingOrientationVideo.value = value;
     mediasfuParameters.recordingOrientationVideo = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'recordingOrientationVideo', value);
+      widget.options.sourceParameters,
+      'recordingOrientationVideo',
+      value,
+    );
 
     clearedToRecord.value = false;
     mediasfuParameters.clearedToRecord = false;
     updateSpecificState(
-        widget.options.sourceParameters, 'clearedToRecord', false);
+      widget.options.sourceParameters,
+      'clearedToRecord',
+      false,
+    );
 
     recordUIChanged.value = !recordUIChanged.value;
   }
@@ -4221,14 +4905,20 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     clearedToResume.value = value;
     mediasfuParameters.clearedToResume = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'clearedToResume', value);
+      widget.options.sourceParameters,
+      'clearedToResume',
+      value,
+    );
   }
 
   void updateClearedToRecord(bool value) {
     clearedToRecord.value = value;
     mediasfuParameters.clearedToRecord = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'clearedToRecord', value);
+      widget.options.sourceParameters,
+      'clearedToRecord',
+      value,
+    );
   }
 
   void updateRecordState(String value) {
@@ -4244,7 +4934,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       showRecordButtons.value = value;
       mediasfuParameters.showRecordButtons = value;
       updateSpecificState(
-          widget.options.sourceParameters, 'showRecordButtons', value);
+        widget.options.sourceParameters,
+        'showRecordButtons',
+        value,
+      );
     });
   }
 
@@ -4254,7 +4947,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       recordingProgressTime.value = value;
       mediasfuParameters.recordingProgressTime = value;
       updateSpecificState(
-          widget.options.sourceParameters, 'recordingProgressTime', value);
+        widget.options.sourceParameters,
+        'recordingProgressTime',
+        value,
+      );
     });
   }
 
@@ -4262,21 +4958,30 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     audioSwitching.value = value;
     mediasfuParameters.audioSwitching = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'audioSwitching', value);
+      widget.options.sourceParameters,
+      'audioSwitching',
+      value,
+    );
   }
 
   void updateVideoSwitching(bool value) {
     videoSwitching.value = value;
     mediasfuParameters.videoSwitching = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'videoSwitching', value);
+      widget.options.sourceParameters,
+      'videoSwitching',
+      value,
+    );
   }
 
   void updateVideoAlreadyOn(bool value) {
     videoAlreadyOn.value = value;
     mediasfuParameters.videoAlreadyOn = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'videoAlreadyOn', value);
+      widget.options.sourceParameters,
+      'videoAlreadyOn',
+      value,
+    );
 
     if (!mounted) return;
     setState(() {
@@ -4288,7 +4993,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     audioAlreadyOn.value = value;
     mediasfuParameters.audioAlreadyOn = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'audioAlreadyOn', value);
+      widget.options.sourceParameters,
+      'audioAlreadyOn',
+      value,
+    );
 
     if (!mounted) return;
     setState(() {
@@ -4297,15 +5005,18 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
 
     // Trigger prepopulate to update the video card mic indicator
     try {
-      _prepopulateUserMediaHandler(PrepopulateUserMediaOptions(
-        name: hostLabel.value,
-        parameters: mediasfuParameters,
-      ));
+      _prepopulateUserMediaHandler(
+        PrepopulateUserMediaOptions(
+          name: hostLabel.value,
+          parameters: mediasfuParameters,
+        ),
+      );
     } catch (error) {}
   }
 
   void updateComponentSizes(ComponentSizes sizes) {
-    final doUpdate = sizes.mainHeight != componentSizes.value.mainHeight ||
+    final doUpdate =
+        sizes.mainHeight != componentSizes.value.mainHeight ||
         sizes.otherHeight != componentSizes.value.otherHeight ||
         sizes.mainWidth != componentSizes.value.mainWidth ||
         sizes.otherWidth != componentSizes.value.otherWidth;
@@ -4314,24 +5025,31 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       componentSizes.value = sizes;
       mediasfuParameters.componentSizes = sizes;
       updateSpecificState(
-          widget.options.sourceParameters, 'componentSizes', sizes);
+        widget.options.sourceParameters,
+        'componentSizes',
+        sizes,
+      );
 
       try {
         _updateControlHeight();
       } catch (error) {}
 
       try {
-        onScreenChanges(OnScreenChangesOptions(
-          changed: true,
-          parameters: mediasfuParameters,
-        ));
+        onScreenChanges(
+          OnScreenChangesOptions(
+            changed: true,
+            parameters: mediasfuParameters,
+          ),
+        );
       } catch (error) {}
 
       try {
-        _prepopulateUserMediaHandler(PrepopulateUserMediaOptions(
-          name: hostLabel.value,
-          parameters: mediasfuParameters,
-        ));
+        _prepopulateUserMediaHandler(
+          PrepopulateUserMediaOptions(
+            name: hostLabel.value,
+            parameters: mediasfuParameters,
+          ),
+        );
       } catch (error) {}
     }
   }
@@ -4340,77 +5058,110 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     hasCameraPermission.value = value;
     mediasfuParameters.hasCameraPermission = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'hasCameraPermission', value);
+      widget.options.sourceParameters,
+      'hasCameraPermission',
+      value,
+    );
   }
 
   void updateHasAudioPermission(bool value) {
     hasAudioPermission.value = value;
     mediasfuParameters.hasAudioPermission = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'hasAudioPermission', value);
+      widget.options.sourceParameters,
+      'hasAudioPermission',
+      value,
+    );
   }
 
   void updateTransportCreated(bool value) {
     transportCreated.value = value;
     mediasfuParameters.transportCreated = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'transportCreated', value);
+      widget.options.sourceParameters,
+      'transportCreated',
+      value,
+    );
   }
 
   void updateLocalTransportCreated(bool value) {
     localTransportCreated!.value = value;
     mediasfuParameters.localTransportCreated = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'localTransportCreated', value);
+      widget.options.sourceParameters,
+      'localTransportCreated',
+      value,
+    );
   }
 
   void updateTransportCreatedVideo(bool value) {
     transportCreatedVideo.value = value;
     mediasfuParameters.transportCreatedVideo = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'transportCreatedVideo', value);
+      widget.options.sourceParameters,
+      'transportCreatedVideo',
+      value,
+    );
   }
 
   void updateTransportCreatedAudio(bool value) {
     transportCreatedAudio.value = value;
     mediasfuParameters.transportCreatedAudio = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'transportCreatedAudio', value);
+      widget.options.sourceParameters,
+      'transportCreatedAudio',
+      value,
+    );
   }
 
   void updateTransportCreatedScreen(bool value) {
     transportCreatedScreen.value = value;
     mediasfuParameters.transportCreatedScreen = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'transportCreatedScreen', value);
+      widget.options.sourceParameters,
+      'transportCreatedScreen',
+      value,
+    );
   }
 
   void updateProducerTransport(Transport? value) {
     producerTransport.value = value;
     mediasfuParameters.producerTransport = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'producerTransport', value);
+      widget.options.sourceParameters,
+      'producerTransport',
+      value,
+    );
   }
 
   void updateLocalProducerTransport(Transport? value) {
     localProducerTransport!.value = value;
     mediasfuParameters.localProducerTransport = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'localProducerTransport', value);
+      widget.options.sourceParameters,
+      'localProducerTransport',
+      value,
+    );
   }
 
   void updateVideoProducer(Producer? value) {
     videoProducer.value = value;
     mediasfuParameters.videoProducer = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'videoProducer', value);
+      widget.options.sourceParameters,
+      'videoProducer',
+      value,
+    );
   }
 
   void updateLocalVideoProducer(Producer? value) {
     localVideoProducer!.value = value;
     mediasfuParameters.localVideoProducer = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'localVideoProducer', value);
+      widget.options.sourceParameters,
+      'localVideoProducer',
+      value,
+    );
   }
 
   void updateParams(ProducerOptionsType? value) {
@@ -4435,35 +5186,50 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     audioProducer.value = value;
     mediasfuParameters.audioProducer = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'audioProducer', value);
+      widget.options.sourceParameters,
+      'audioProducer',
+      value,
+    );
   }
 
   void updateAudioLevel(double? value) {
     audioLevel.value = value ?? 0.0;
     mediasfuParameters.audioLevel = value ?? 0.0;
     updateSpecificState(
-        widget.options.sourceParameters, 'audioLevel', value ?? 0.0);
+      widget.options.sourceParameters,
+      'audioLevel',
+      value ?? 0.0,
+    );
   }
 
   void updateLocalAudioProducer(Producer? value) {
     localAudioProducer!.value = value;
     mediasfuParameters.localAudioProducer = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'localAudioProducer', value);
+      widget.options.sourceParameters,
+      'localAudioProducer',
+      value,
+    );
   }
 
   void updateConsumerTransports(List<TransportType> value) {
     consumerTransports.value = value;
     mediasfuParameters.consumerTransports = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'consumerTransports', value);
+      widget.options.sourceParameters,
+      'consumerTransports',
+      value,
+    );
   }
 
   void updateConsumingTransports(List<String> value) {
     consumingTransports.value = value;
     mediasfuParameters.consumingTransports = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'consumingTransports', value);
+      widget.options.sourceParameters,
+      'consumingTransports',
+      value,
+    );
   }
 
   void updatePolls(List<Poll> value) {
@@ -4482,8 +5248,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     // Route to sidebar (desktop embedded or mobile modal)
     if (value) {
       final pushToStack = activeSidebarContent.value == SidebarContent.menu;
-      updateActiveSidebarContent(SidebarContent.polls,
-          pushToStack: pushToStack);
+      updateActiveSidebarContent(
+        SidebarContent.polls,
+        pushToStack: pushToStack,
+      );
       isPollModalVisible.value = false;
     } else {
       if (activeSidebarContent.value == SidebarContent.polls) {
@@ -4493,42 +5261,60 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     }
     mediasfuParameters.isPollModalVisible = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'isPollModalVisible', value);
+      widget.options.sourceParameters,
+      'isPollModalVisible',
+      value,
+    );
   }
 
   void updateBreakoutRooms(List<List<BreakoutParticipant>> value) {
     breakoutRooms.value = value;
     mediasfuParameters.breakoutRooms = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'breakoutRooms', value);
+      widget.options.sourceParameters,
+      'breakoutRooms',
+      value,
+    );
   }
 
   void updateCurrentRoomIndex(int value) {
     currentRoomIndex.value = value;
     mediasfuParameters.currentRoomIndex = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'currentRoomIndex', value);
+      widget.options.sourceParameters,
+      'currentRoomIndex',
+      value,
+    );
   }
 
   void updateCanStartBreakout(bool value) {
     canStartBreakout.value = value;
     mediasfuParameters.canStartBreakout = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'canStartBreakout', value);
+      widget.options.sourceParameters,
+      'canStartBreakout',
+      value,
+    );
   }
 
   void updateBreakOutRoomStarted(bool value) {
     breakOutRoomStarted.value = value;
     mediasfuParameters.breakOutRoomStarted = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'breakOutRoomStarted', value);
+      widget.options.sourceParameters,
+      'breakOutRoomStarted',
+      value,
+    );
   }
 
   void updateBreakOutRoomEnded(bool value) {
     breakOutRoomEnded.value = value;
     mediasfuParameters.breakOutRoomEnded = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'breakOutRoomEnded', value);
+      widget.options.sourceParameters,
+      'breakOutRoomEnded',
+      value,
+    );
   }
 
   void updateHostNewRoom(int value) {
@@ -4541,14 +5327,20 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     limitedBreakRoom.value = value;
     mediasfuParameters.limitedBreakRoom = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'limitedBreakRoom', value);
+      widget.options.sourceParameters,
+      'limitedBreakRoom',
+      value,
+    );
   }
 
   void updateMainRoomsLength(int value) {
     mainRoomsLength.value = value;
     mediasfuParameters.mainRoomsLength = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'mainRoomsLength', value);
+      widget.options.sourceParameters,
+      'mainRoomsLength',
+      value,
+    );
   }
 
   void updateMemberRoom(int value) {
@@ -4561,8 +5353,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     // Route to sidebar (desktop embedded or mobile modal)
     if (value) {
       final pushToStack = activeSidebarContent.value == SidebarContent.menu;
-      updateActiveSidebarContent(SidebarContent.breakoutRooms,
-          pushToStack: pushToStack);
+      updateActiveSidebarContent(
+        SidebarContent.breakoutRooms,
+        pushToStack: pushToStack,
+      );
       isBreakoutRoomsModalVisible.value = false;
     } else {
       if (activeSidebarContent.value == SidebarContent.breakoutRooms) {
@@ -4572,10 +5366,13 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     }
     mediasfuParameters.isBreakoutRoomsModalVisible = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'isBreakoutRoomsModalVisible', value);
+      widget.options.sourceParameters,
+      'isBreakoutRoomsModalVisible',
+      value,
+    );
   }
 
-// Update functions
+  // Update functions
   void updateCustomImage(String? value) {
     customImage.value = value;
     mediasfuParameters.customImage = value;
@@ -4585,26 +5382,38 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   void updateCustomVideoCard(VideoCardType? value) {
     mediasfuParameters.customVideoCard = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'customVideoCard', value);
+      widget.options.sourceParameters,
+      'customVideoCard',
+      value,
+    );
   }
 
   void updateCustomAudioCard(AudioCardType? value) {
     mediasfuParameters.customAudioCard = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'customAudioCard', value);
+      widget.options.sourceParameters,
+      'customAudioCard',
+      value,
+    );
   }
 
   void updateCustomMiniCard(MiniCardType? value) {
     mediasfuParameters.customMiniCard = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'customMiniCard', value);
+      widget.options.sourceParameters,
+      'customMiniCard',
+      value,
+    );
   }
 
   void updateSelectedImage(String? value) {
     selectedImage.value = value;
     mediasfuParameters.selectedImage = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'selectedImage', value);
+      widget.options.sourceParameters,
+      'selectedImage',
+      value,
+    );
   }
 
   void updateSegmentVideo(MediaStream? value) {
@@ -4617,42 +5426,60 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     selfieSegmentation.value = value;
     mediasfuParameters.selfieSegmentation = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'selfieSegmentation', value);
+      widget.options.sourceParameters,
+      'selfieSegmentation',
+      value,
+    );
   }
 
   void updatePauseSegmentation(bool value) {
     pauseSegmentation.value = value;
     mediasfuParameters.pauseSegmentation = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'pauseSegmentation', value);
+      widget.options.sourceParameters,
+      'pauseSegmentation',
+      value,
+    );
   }
 
   void updateProcessedStream(MediaStream? value) {
     processedStream.value = value;
     mediasfuParameters.processedStream = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'processedStream', value);
+      widget.options.sourceParameters,
+      'processedStream',
+      value,
+    );
   }
 
   void updateKeepBackground(bool value) {
     keepBackground.value = value;
     mediasfuParameters.keepBackground = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'keepBackground', value);
+      widget.options.sourceParameters,
+      'keepBackground',
+      value,
+    );
   }
 
   void updateBackgroundHasChanged(bool value) {
     backgroundHasChanged.value = value;
     mediasfuParameters.backgroundHasChanged = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'backgroundHasChanged', value);
+      widget.options.sourceParameters,
+      'backgroundHasChanged',
+      value,
+    );
   }
 
   void updateVirtualStream(MediaStream? value) {
     virtualStream.value = value;
     mediasfuParameters.virtualStream = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'virtualStream', value);
+      widget.options.sourceParameters,
+      'virtualStream',
+      value,
+    );
   }
 
   void updateMainCanvas(dynamic value) {
@@ -4665,14 +5492,20 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     prevKeepBackground.value = value;
     mediasfuParameters.prevKeepBackground = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'prevKeepBackground', value);
+      widget.options.sourceParameters,
+      'prevKeepBackground',
+      value,
+    );
   }
 
   void updateAppliedBackground(bool value) {
     appliedBackground.value = value;
     mediasfuParameters.appliedBackground = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'appliedBackground', value);
+      widget.options.sourceParameters,
+      'appliedBackground',
+      value,
+    );
   }
 
   void updateIsBackgroundModalVisible(bool value) {
@@ -4688,21 +5521,30 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     }
     mediasfuParameters.isBackgroundModalVisible = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'isBackgroundModalVisible', value);
+      widget.options.sourceParameters,
+      'isBackgroundModalVisible',
+      value,
+    );
   }
 
   void updateAutoClickBackground(bool value) {
     autoClickBackground.value = value;
     mediasfuParameters.autoClickBackground = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'autoClickBackground', value);
+      widget.options.sourceParameters,
+      'autoClickBackground',
+      value,
+    );
   }
 
   void updateSelectedBackground(VirtualBackground? value) {
     selectedBackground.value = value;
     mediasfuParameters.selectedBackground = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'selectedBackground', value);
+      widget.options.sourceParameters,
+      'selectedBackground',
+      value,
+    );
   }
 
   /// Handle virtual background application
@@ -4784,10 +5626,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         }
 
         // Call onScreenChanges to trigger UI update (like React)
-        await onScreenChanges(OnScreenChangesOptions(
-          changed: true,
-          parameters: mediasfuParameters,
-        ));
+        await onScreenChanges(
+          OnScreenChangesOptions(
+            changed: true,
+            parameters: mediasfuParameters,
+          ),
+        );
       }
     }
 
@@ -4803,7 +5647,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     updateBackgroundHasChanged(false);
 
     // Show success message
-    final isNative = NativeVirtualBackground.isSupported &&
+    final isNative =
+        NativeVirtualBackground.isSupported &&
         _nativeVirtualBackground?.isEnabled == true;
     if (background.type != BackgroundType.none) {
       final suffix = isNative ? '' : ' (Local view only)';
@@ -4834,7 +5679,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   ///
   /// Returns true if native processing was successfully enabled.
   Future<bool> _applyNativeVirtualBackground(
-      VirtualBackground background) async {
+    VirtualBackground background,
+  ) async {
     try {
       _nativeVirtualBackground ??= NativeVirtualBackground();
       final native = _nativeVirtualBackground!;
@@ -4851,8 +5697,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           keepBackground.value == true) {
         // Get the video track ID
         final videoTracks = localStreamVideo.value?.getVideoTracks();
-        final trackId =
-            videoTracks?.isNotEmpty == true ? videoTracks!.first.id : null;
+        final trackId = videoTracks?.isNotEmpty == true
+            ? videoTracks!.first.id
+            : null;
         if (trackId == null) {
           return false;
         }
@@ -4891,7 +5738,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
 
   /// Apply virtual background using local-only processing (fallback).
   Future<void> _applyLocalVirtualBackground(
-      VirtualBackground background) async {
+    VirtualBackground background,
+  ) async {
     final processorService = BackgroundProcessorService();
 
     if (background.type != BackgroundType.none &&
@@ -4929,28 +5777,40 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     whiteboardUsers.value = value;
     mediasfuParameters.whiteboardUsers = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'whiteboardUsers', value);
+      widget.options.sourceParameters,
+      'whiteboardUsers',
+      value,
+    );
   }
 
   void updateCurrentWhiteboardIndex(int? value) {
     currentWhiteboardIndex.value = value;
     mediasfuParameters.currentWhiteboardIndex = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'currentWhiteboardIndex', value);
+      widget.options.sourceParameters,
+      'currentWhiteboardIndex',
+      value,
+    );
   }
 
   void updateCanStartWhiteboard(bool value) {
     canStartWhiteboard.value = value;
     mediasfuParameters.canStartWhiteboard = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'canStartWhiteboard', value);
+      widget.options.sourceParameters,
+      'canStartWhiteboard',
+      value,
+    );
   }
 
   void updateWhiteboardStarted(bool value) {
     whiteboardStarted.value = value;
     mediasfuParameters.whiteboardStarted = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'whiteboardStarted', value);
+      widget.options.sourceParameters,
+      'whiteboardStarted',
+      value,
+    );
     if (value || screenShareActive) {
       updateMainHeightWidth(84.0);
     }
@@ -4960,29 +5820,43 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     whiteboardEnded.value = value;
     mediasfuParameters.whiteboardEnded = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'whiteboardEnded', value);
+      widget.options.sourceParameters,
+      'whiteboardEnded',
+      value,
+    );
+    if (value && !screenShareActive) {
+      updateMainHeightWidth(0);
+    }
   }
 
   void updateWhiteboardLimit(int value) {
     whiteboardLimit.value = value;
     mediasfuParameters.whiteboardLimit = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'whiteboardLimit', value);
+      widget.options.sourceParameters,
+      'whiteboardLimit',
+      value,
+    );
   }
 
   void updateIsWhiteboardModalVisible(bool value) {
     isWhiteboardModalVisible.value = value;
     mediasfuParameters.isWhiteboardModalVisible = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'isWhiteboardModalVisible', value);
+      widget.options.sourceParameters,
+      'isWhiteboardModalVisible',
+      value,
+    );
   }
 
   void updateIsConfigureWhiteboardModalVisible(bool value) {
     // Route to sidebar (desktop embedded or mobile modal)
     if (value) {
       final pushToStack = activeSidebarContent.value == SidebarContent.menu;
-      updateActiveSidebarContent(SidebarContent.configureWhiteboard,
-          pushToStack: pushToStack);
+      updateActiveSidebarContent(
+        SidebarContent.configureWhiteboard,
+        pushToStack: pushToStack,
+      );
       isConfigureWhiteboardModalVisible.value = false;
     } else {
       if (activeSidebarContent.value == SidebarContent.configureWhiteboard) {
@@ -4991,8 +5865,11 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       isConfigureWhiteboardModalVisible.value = false;
     }
     mediasfuParameters.isConfigureWhiteboardModalVisible = value;
-    updateSpecificState(widget.options.sourceParameters,
-        'isConfigureWhiteboardModalVisible', value);
+    updateSpecificState(
+      widget.options.sourceParameters,
+      'isConfigureWhiteboardModalVisible',
+      value,
+    );
   }
 
   void updateShapes(List<WhiteboardShape> value) {
@@ -5005,7 +5882,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     useImageBackground.value = value;
     mediasfuParameters.useImageBackground = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'useImageBackground', value);
+      widget.options.sourceParameters,
+      'useImageBackground',
+      value,
+    );
   }
 
   void updateRedoStack(List<WhiteboardShape> value) {
@@ -5030,42 +5910,60 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     canvasWhiteboard.value = value;
     mediasfuParameters.canvasWhiteboard = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'canvasWhiteboard', value);
+      widget.options.sourceParameters,
+      'canvasWhiteboard',
+      value,
+    );
   }
 
   void updateCanvasScreenboard(dynamic value) {
     canvasScreenboard.value = value;
     mediasfuParameters.canvasScreenboard = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'canvasScreenboard', value);
+      widget.options.sourceParameters,
+      'canvasScreenboard',
+      value,
+    );
   }
 
   void updateProcessedScreenStream(MediaStream? value) {
     processedScreenStream.value = value;
     mediasfuParameters.processedScreenStream = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'processedScreenStream', value);
+      widget.options.sourceParameters,
+      'processedScreenStream',
+      value,
+    );
   }
 
   void updateAnnotateScreenStream(bool value) {
     annotateScreenStream.value = value;
     mediasfuParameters.annotateScreenStream = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'annotateScreenStream', value);
+      widget.options.sourceParameters,
+      'annotateScreenStream',
+      value,
+    );
   }
 
   void updateMainScreenCanvas(dynamic value) {
     mainScreenCanvas.value = value;
     mediasfuParameters.mainScreenCanvas = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'mainScreenCanvas', value);
+      widget.options.sourceParameters,
+      'mainScreenCanvas',
+      value,
+    );
   }
 
   void updateIsScreenboardModalVisible(bool value) {
     isScreenboardModalVisible.value = value;
     mediasfuParameters.isScreenboardModalVisible = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'isScreenboardModalVisible', value);
+      widget.options.sourceParameters,
+      'isScreenboardModalVisible',
+      value,
+    );
   }
 
   // Permissions update methods
@@ -5077,7 +5975,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     permissionConfig.value = value;
     mediasfuParameters.permissionConfig = value;
     updateSpecificState(
-        widget.options.sourceParameters, 'permissionConfig', value);
+      widget.options.sourceParameters,
+      'permissionConfig',
+      value,
+    );
   }
 
   // Panelists update methods
@@ -5138,17 +6039,18 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           // Action for the Record button
           launchRecording(
             LaunchRecordingOptions(
-                updateIsRecordingModalVisible: updateIsRecordingModalVisible,
-                isRecordingModalVisible: isRecordingModalVisible.value,
-                stopLaunchRecord: stopLaunchRecord.value,
-                canLaunchRecord: canLaunchRecord.value,
-                recordingAudioSupport: recordingAudioSupport.value,
-                recordingVideoSupport: recordingVideoSupport.value,
-                updateCanRecord: updateCanRecord,
-                updateClearedToRecord: updateClearedToRecord,
-                recordStarted: recordStarted.value,
-                recordPaused: recordPaused.value,
-                localUIMode: widget.options.useLocalUIMode == true),
+              updateIsRecordingModalVisible: updateIsRecordingModalVisible,
+              isRecordingModalVisible: isRecordingModalVisible.value,
+              stopLaunchRecord: stopLaunchRecord.value,
+              canLaunchRecord: canLaunchRecord.value,
+              recordingAudioSupport: recordingAudioSupport.value,
+              recordingVideoSupport: recordingVideoSupport.value,
+              updateCanRecord: updateCanRecord,
+              updateClearedToRecord: updateClearedToRecord,
+              recordStarted: recordStarted.value,
+              recordPaused: recordPaused.value,
+              localUIMode: widget.options.useLocalUIMode == true,
+            ),
           );
         },
         activeColor: const Color.fromARGB(255, 244, 3, 3),
@@ -5175,13 +6077,17 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         name: recordPaused.value ? 'Resume' : 'Pause',
         icon: Icons.play_circle_filled,
         active: !recordPaused.value,
-        onPress: () => updateRecording(UpdateRecordingOptions(
-          parameters: mediasfuParameters,
-        )),
-        activeColor:
-            MediasfuColors.controlButtonActive(darkMode: isDarkModeVal),
-        inActiveColor:
-            MediasfuColors.controlButtonInactive(darkMode: isDarkModeVal),
+        onPress: () => updateRecording(
+          UpdateRecordingOptions(
+            parameters: mediasfuParameters,
+          ),
+        ),
+        activeColor: MediasfuColors.controlButtonActive(
+          darkMode: isDarkModeVal,
+        ),
+        inActiveColor: MediasfuColors.controlButtonInactive(
+          darkMode: isDarkModeVal,
+        ),
         alternateIcon: Icons.pause_circle_filled,
         show: true,
       ),
@@ -5196,8 +6102,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           ),
         ),
         activeColor: MediasfuColors.success,
-        inActiveColor:
-            MediasfuColors.controlButtonInactive(darkMode: isDarkModeVal),
+        inActiveColor: MediasfuColors.controlButtonInactive(
+          darkMode: isDarkModeVal,
+        ),
         show: true,
       ),
       // Timer Display
@@ -5225,7 +6132,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                   value,
                   style: TextStyle(
                     color: MediasfuColors.controlTextColor(
-                        darkMode: isDarkModeVal),
+                      darkMode: isDarkModeVal,
+                    ),
                     backgroundColor: Colors.transparent,
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
@@ -5243,8 +6151,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         icon: Icons.circle,
         active: false,
         onPress: () => (),
-        activeColor:
-            MediasfuColors.controlButtonActive(darkMode: isDarkModeVal),
+        activeColor: MediasfuColors.controlButtonActive(
+          darkMode: isDarkModeVal,
+        ),
         inActiveColor: recordPaused.value == false
             ? MediasfuColors.danger
             : MediasfuColors.warning,
@@ -5267,26 +6176,28 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           }
           launchRecording(
             LaunchRecordingOptions(
-                updateIsRecordingModalVisible: updateIsRecordingModalVisible,
-                isRecordingModalVisible: isRecordingModalVisible.value,
-                stopLaunchRecord: stopLaunchRecord.value,
-                canLaunchRecord: canLaunchRecord.value,
-                recordingAudioSupport: recordingAudioSupport.value,
-                recordingVideoSupport: recordingVideoSupport.value,
-                updateCanRecord: updateCanRecord,
-                updateClearedToRecord: updateClearedToRecord,
-                recordStarted: recordStarted.value,
-                recordPaused: recordPaused.value,
-                localUIMode: widget.options.useLocalUIMode == true),
+              updateIsRecordingModalVisible: updateIsRecordingModalVisible,
+              isRecordingModalVisible: isRecordingModalVisible.value,
+              stopLaunchRecord: stopLaunchRecord.value,
+              canLaunchRecord: canLaunchRecord.value,
+              recordingAudioSupport: recordingAudioSupport.value,
+              recordingVideoSupport: recordingVideoSupport.value,
+              updateCanRecord: updateCanRecord,
+              updateClearedToRecord: updateClearedToRecord,
+              recordStarted: recordStarted.value,
+              recordPaused: recordPaused.value,
+              localUIMode: widget.options.useLocalUIMode == true,
+            ),
           );
         },
         activeColor: MediasfuColors.success,
         inActiveColor: !recordPaused.value
-            ? MediasfuColors.controlButtonInactive(darkMode: isDarkModeVal)
-                .withOpacity(0.4)
+            ? MediasfuColors.controlButtonInactive(
+                darkMode: isDarkModeVal,
+              ).withOpacity(0.4)
             : MediasfuColors.controlButtonInactive(darkMode: isDarkModeVal),
         show: true,
-      )
+      ),
     ];
   }
 
@@ -5295,17 +6206,22 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       // Play/Pause Button
       ButtonTouch(
         name: recordPaused.value ? 'Resume' : 'Pause',
-        semanticsLabel:
-            recordPaused.value ? 'Resume recording' : 'Pause recording',
+        semanticsLabel: recordPaused.value
+            ? 'Resume recording'
+            : 'Pause recording',
         icon: Icons.play_circle_filled,
         active: !recordPaused.value,
-        onPress: () => updateRecording(UpdateRecordingOptions(
-          parameters: mediasfuParameters,
-        )),
-        activeColor:
-            MediasfuColors.controlButtonActive(darkMode: isDarkModeVal),
-        inActiveColor:
-            MediasfuColors.controlButtonInactive(darkMode: isDarkModeVal),
+        onPress: () => updateRecording(
+          UpdateRecordingOptions(
+            parameters: mediasfuParameters,
+          ),
+        ),
+        activeColor: MediasfuColors.controlButtonActive(
+          darkMode: isDarkModeVal,
+        ),
+        inActiveColor: MediasfuColors.controlButtonInactive(
+          darkMode: isDarkModeVal,
+        ),
         alternateIcon: Icons.pause_circle_filled,
         show: true,
       ),
@@ -5321,8 +6237,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           ),
         ),
         activeColor: MediasfuColors.success,
-        inActiveColor:
-            MediasfuColors.controlButtonInactive(darkMode: isDarkModeVal),
+        inActiveColor: MediasfuColors.controlButtonInactive(
+          darkMode: isDarkModeVal,
+        ),
         show: true,
       ),
       // Timer Display
@@ -5339,8 +6256,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               return Text(
                 value,
                 style: TextStyle(
-                  color:
-                      MediasfuColors.controlTextColor(darkMode: isDarkModeVal),
+                  color: MediasfuColors.controlTextColor(
+                    darkMode: isDarkModeVal,
+                  ),
                   backgroundColor: Colors.transparent,
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
@@ -5360,8 +6278,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         icon: Icons.circle,
         active: false,
         onPress: () => (),
-        activeColor:
-            MediasfuColors.controlButtonActive(darkMode: isDarkModeVal),
+        activeColor: MediasfuColors.controlButtonActive(
+          darkMode: isDarkModeVal,
+        ),
         inActiveColor: recordPaused.value == false
             ? MediasfuColors.danger
             : MediasfuColors.warning,
@@ -5387,26 +6306,28 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           }
           launchRecording(
             LaunchRecordingOptions(
-                updateIsRecordingModalVisible: updateIsRecordingModalVisible,
-                isRecordingModalVisible: isRecordingModalVisible.value,
-                stopLaunchRecord: stopLaunchRecord.value,
-                canLaunchRecord: canLaunchRecord.value,
-                recordingAudioSupport: recordingAudioSupport.value,
-                recordingVideoSupport: recordingVideoSupport.value,
-                updateCanRecord: updateCanRecord,
-                updateClearedToRecord: updateClearedToRecord,
-                recordStarted: recordStarted.value,
-                recordPaused: recordPaused.value,
-                localUIMode: widget.options.useLocalUIMode == true),
+              updateIsRecordingModalVisible: updateIsRecordingModalVisible,
+              isRecordingModalVisible: isRecordingModalVisible.value,
+              stopLaunchRecord: stopLaunchRecord.value,
+              canLaunchRecord: canLaunchRecord.value,
+              recordingAudioSupport: recordingAudioSupport.value,
+              recordingVideoSupport: recordingVideoSupport.value,
+              updateCanRecord: updateCanRecord,
+              updateClearedToRecord: updateClearedToRecord,
+              recordStarted: recordStarted.value,
+              recordPaused: recordPaused.value,
+              localUIMode: widget.options.useLocalUIMode == true,
+            ),
           );
         },
         activeColor: MediasfuColors.success,
         inActiveColor: !recordPaused.value
-            ? MediasfuColors.controlButtonInactive(darkMode: isDarkModeVal)
-                .withOpacity(0.4)
+            ? MediasfuColors.controlButtonInactive(
+                darkMode: isDarkModeVal,
+              ).withOpacity(0.4)
             : MediasfuColors.controlButtonInactive(darkMode: isDarkModeVal),
         show: true,
-      )
+      ),
     ];
   }
 
@@ -5474,70 +6395,72 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                 scrollDirection: Axis.horizontal,
                 child: ControlButtonsAltComponent(
                   options: ControlButtonsAltComponentOptions(
-                      buttons: recordButtons,
-                      direction: 'horizontal',
-                      showAspect: true,
-                      location: 'bottom',
-                      position: 'middle',
-                      buttonBuilder: (context) {
-                        // Rebuild the button content to exclude the text label
-                        // but keep the icon and custom component logic
-                        Widget buttonContent;
+                    buttons: recordButtons,
+                    direction: 'horizontal',
+                    showAspect: true,
+                    location: 'bottom',
+                    position: 'middle',
+                    buttonBuilder: (context) {
+                      // Rebuild the button content to exclude the text label
+                      // but keep the icon and custom component logic
+                      Widget buttonContent;
 
-                        if (context.button.customComponent != null) {
-                          buttonContent = context.button.customComponent!;
-                        } else {
-                          // Recreate the icon logic from ControlButtonsAltComponent
-                          final bool isActive = context.button.active;
-                          final Color activeColor =
-                              context.button.activeColor ?? Colors.white;
-                          final Color inActiveColor =
-                              context.button.inActiveColor ?? Colors.grey;
-                          final IconData? icon = isActive
-                              ? (context.button.alternateIcon ??
+                      if (context.button.customComponent != null) {
+                        buttonContent = context.button.customComponent!;
+                      } else {
+                        // Recreate the icon logic from ControlButtonsAltComponent
+                        final bool isActive = context.button.active;
+                        final Color activeColor =
+                            context.button.activeColor ?? Colors.white;
+                        final Color inActiveColor =
+                            context.button.inActiveColor ?? Colors.grey;
+                        final IconData? icon = isActive
+                            ? (context.button.alternateIcon ??
                                   context.button.icon)
-                              : context.button.icon;
+                            : context.button.icon;
 
-                          buttonContent = Container(
-                            padding: const EdgeInsets.all(5),
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 3, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: isActive
-                                  ? (context.button.pressedBackgroundColor ??
-                                      Colors.grey)
-                                  : (context.button.defaultBackgroundColor ??
-                                      Colors.transparent),
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                            child: Icon(
-                              icon,
-                              color: isActive ? activeColor : inActiveColor,
-                              size: 24,
-                            ),
-                          );
-                        }
-
-                        return Tooltip(
-                          message: context.button.name ?? '',
+                        buttonContent = Container(
+                          padding: const EdgeInsets.all(5),
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 3,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
-                            color: isDarkMode.value
-                                ? Colors.white
-                                : Colors.black87,
-                            borderRadius: BorderRadius.circular(8),
+                            color: isActive
+                                ? (context.button.pressedBackgroundColor ??
+                                      Colors.grey)
+                                : (context.button.defaultBackgroundColor ??
+                                      Colors.transparent),
+                            borderRadius: BorderRadius.circular(5),
                           ),
-                          textStyle: TextStyle(
-                            color:
-                                isDarkMode.value ? Colors.black : Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          child: GestureDetector(
-                            onTap: context.button.onPress,
-                            child: buttonContent,
+                          child: Icon(
+                            icon,
+                            color: isActive ? activeColor : inActiveColor,
+                            size: 24,
                           ),
                         );
-                      }),
+                      }
+
+                      return Tooltip(
+                        message: context.button.name ?? '',
+                        decoration: BoxDecoration(
+                          color: isDarkMode.value
+                              ? Colors.white
+                              : Colors.black87,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        textStyle: TextStyle(
+                          color: isDarkMode.value ? Colors.black : Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        child: GestureDetector(
+                          onTap: context.button.onPress,
+                          child: buttonContent,
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
             ],
@@ -5574,10 +6497,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             ),
           );
         },
-        show: islevel.value == '2' ||
+        show:
+            islevel.value == '2' ||
             (coHost.value == member.value &&
-                coHostResponsibility.value
-                    .any((item) => item.name == 'media' && item.value == true)),
+                coHostResponsibility.value.any(
+                  (item) => item.name == 'media' && item.value == true,
+                )),
       ),
       // Waiting Button
       CustomButton(
@@ -5592,10 +6517,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             ),
           );
         },
-        show: islevel.value == '2' ||
+        show:
+            islevel.value == '2' ||
             (coHost.value == member.value &&
                 coHostResponsibility.value.any(
-                    (item) => item.name == 'waiting' && item.value == true)),
+                  (item) => item.name == 'waiting' && item.value == true,
+                )),
       ),
       // Co-host Button
       CustomButton(
@@ -5706,8 +6633,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         text: 'Permissions',
         action: () {
           // Action for the Permissions button - use sidebar system
-          updateActiveSidebarContent(SidebarContent.permissions,
-              pushToStack: true);
+          updateActiveSidebarContent(
+            SidebarContent.permissions,
+            pushToStack: true,
+          );
         },
         show: islevel.value == '2',
       ),
@@ -5717,8 +6646,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         text: 'Panelists',
         action: () {
           // Action for the Panelists button - use sidebar system
-          updateActiveSidebarContent(SidebarContent.panelists,
-              pushToStack: true);
+          updateActiveSidebarContent(
+            SidebarContent.panelists,
+            pushToStack: true,
+          );
         },
         show: islevel.value == '2',
       ),
@@ -5728,8 +6659,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         text: 'Translation',
         action: () {
           // Action for the Translation button - use sidebar system
-          updateActiveSidebarContent(SidebarContent.translation,
-              pushToStack: true);
+          updateActiveSidebarContent(
+            SidebarContent.translation,
+            pushToStack: true,
+          );
         },
         show: translationSupported.value,
       ),
@@ -5749,13 +6682,16 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         alternateIcon: Icons.dark_mode,
         active: isDarkModeVal,
         onPress: () => updateIsDarkMode(!isDarkMode.value),
-        activeColor:
-            MediasfuColors.controlButtonActive(darkMode: isDarkModeVal),
-        inActiveColor:
-            MediasfuColors.controlButtonInactive(darkMode: isDarkModeVal),
+        activeColor: MediasfuColors.controlButtonActive(
+          darkMode: isDarkModeVal,
+        ),
+        inActiveColor: MediasfuColors.controlButtonInactive(
+          darkMode: isDarkModeVal,
+        ),
         show: true,
-        semanticsLabel:
-            isDarkModeVal ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+        semanticsLabel: isDarkModeVal
+            ? 'Switch to Light Mode'
+            : 'Switch to Dark Mode',
       ),
 
       // Users button
@@ -5768,10 +6704,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             isParticipantsModalVisible: isParticipantsModalVisible.value,
           ),
         ),
-        activeColor:
-            MediasfuColors.controlButtonActive(darkMode: isDarkModeVal),
-        inActiveColor:
-            MediasfuColors.controlButtonInactive(darkMode: isDarkModeVal),
+        activeColor: MediasfuColors.controlButtonActive(
+          darkMode: isDarkModeVal,
+        ),
+        inActiveColor: MediasfuColors.controlButtonInactive(
+          darkMode: isDarkModeVal,
+        ),
         show: true,
         semanticsLabel: 'Participants',
       ),
@@ -5783,10 +6721,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         active: false,
         onPress: () =>
             updateIsShareEventModalVisible(!isShareEventModalVisible.value),
-        activeColor:
-            MediasfuColors.controlButtonActive(darkMode: isDarkModeVal),
-        inActiveColor:
-            MediasfuColors.controlButtonInactive(darkMode: isDarkModeVal),
+        activeColor: MediasfuColors.controlButtonActive(
+          darkMode: isDarkModeVal,
+        ),
+        inActiveColor: MediasfuColors.controlButtonInactive(
+          darkMode: isDarkModeVal,
+        ),
         show: true,
         semanticsLabel: 'Share',
       ),
@@ -5796,13 +6736,16 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         icon: forceFullDisplay.value ? Icons.compress : Icons.expand,
         active: forceFullDisplay.value,
         onPress: () => updateForceFullDisplay(!forceFullDisplay.value),
-        activeColor:
-            MediasfuColors.controlButtonActive(darkMode: isDarkModeVal),
-        inActiveColor:
-            MediasfuColors.controlButtonInactive(darkMode: isDarkModeVal),
+        activeColor: MediasfuColors.controlButtonActive(
+          darkMode: isDarkModeVal,
+        ),
+        inActiveColor: MediasfuColors.controlButtonInactive(
+          darkMode: isDarkModeVal,
+        ),
         show: islevel.value == '2' && videoActive,
-        semanticsLabel:
-            forceFullDisplay.value ? 'Exit Full Display' : 'Full Display',
+        semanticsLabel: forceFullDisplay.value
+            ? 'Exit Full Display'
+            : 'Full Display',
       ),
 
       // Custom component - Messages with badge
@@ -5813,8 +6756,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             Icon(
               Icons.comment,
               size: 20,
-              color:
-                  MediasfuColors.controlButtonInactive(darkMode: isDarkModeVal),
+              color: MediasfuColors.controlButtonInactive(
+                darkMode: isDarkModeVal,
+              ),
             ),
             // Conditionally render a badge
             if (showMessagesBadge.value)
@@ -5826,8 +6770,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                     color: Colors.red,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 4,
+                  ),
                   child: const Text(
                     '',
                     style: TextStyle(
@@ -5859,10 +6805,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             parameters: mediasfuParameters,
           ),
         ),
-        activeColor:
-            MediasfuColors.controlButtonActive(darkMode: isDarkModeVal),
-        inActiveColor:
-            MediasfuColors.controlButtonInactive(darkMode: isDarkModeVal),
+        activeColor: MediasfuColors.controlButtonActive(
+          darkMode: isDarkModeVal,
+        ),
+        inActiveColor: MediasfuColors.controlButtonInactive(
+          darkMode: isDarkModeVal,
+        ),
         show: islevel.value == '2',
         semanticsLabel: 'Switch Camera',
       ),
@@ -5926,10 +6874,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         active: false,
         onPress: () =>
             updateIsShareEventModalVisible(!isShareEventModalVisible.value),
-        activeColor:
-            MediasfuColors.controlButtonActive(darkMode: isDarkModeVal),
-        inActiveColor:
-            MediasfuColors.controlButtonInactive(darkMode: isDarkModeVal),
+        activeColor: MediasfuColors.controlButtonActive(
+          darkMode: isDarkModeVal,
+        ),
+        inActiveColor: MediasfuColors.controlButtonInactive(
+          darkMode: isDarkModeVal,
+        ),
         show: true,
       ),
       // Custom component - Messages with badge
@@ -5940,8 +6890,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             Icon(
               Icons.comment,
               size: 20,
-              color:
-                  MediasfuColors.controlButtonInactive(darkMode: isDarkModeVal),
+              color: MediasfuColors.controlButtonInactive(
+                darkMode: isDarkModeVal,
+              ),
             ),
             // Conditionally render a badge
             if (showMessagesBadge.value)
@@ -5953,8 +6904,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                     color: Colors.red,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 4,
+                  ),
                   child: const Text(
                     '',
                     style: TextStyle(
@@ -5984,10 +6937,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         onPress: () => switchVideoAlt(
           SwitchVideoAltOptions(parameters: mediasfuParameters),
         ),
-        activeColor:
-            MediasfuColors.controlButtonActive(darkMode: isDarkModeVal),
-        inActiveColor:
-            MediasfuColors.controlButtonInactive(darkMode: isDarkModeVal),
+        activeColor: MediasfuColors.controlButtonActive(
+          darkMode: isDarkModeVal,
+        ),
+        inActiveColor: MediasfuColors.controlButtonInactive(
+          darkMode: isDarkModeVal,
+        ),
         show: true,
       ),
       // Video button
@@ -6080,8 +7035,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         icon: Icons.desktop_windows_outlined,
         alternateIcon: Icons.desktop_access_disabled,
         active: screenShareActive,
-        onPress: () => clickScreenShare(ClickScreenShareOptions(
-            parameters: mediasfuParameters, context: context)),
+        onPress: () => clickScreenShare(
+          ClickScreenShareOptions(
+            parameters: mediasfuParameters,
+            context: context,
+          ),
+        ),
         activeColor: MediasfuColors.success,
         inActiveColor: MediasfuColors.danger,
         disabled: false,
@@ -6114,10 +7073,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             isParticipantsModalVisible: isParticipantsModalVisible.value,
           ),
         ),
-        activeColor:
-            MediasfuColors.controlButtonActive(darkMode: isDarkModeVal),
-        inActiveColor:
-            MediasfuColors.controlButtonInactive(darkMode: isDarkModeVal),
+        activeColor: MediasfuColors.controlButtonActive(
+          darkMode: isDarkModeVal,
+        ),
+        inActiveColor: MediasfuColors.controlButtonInactive(
+          darkMode: isDarkModeVal,
+        ),
         disabled: false,
         color: textColor,
       ),
@@ -6129,9 +7090,11 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             Stack(
               clipBehavior: Clip.none,
               children: [
-                Icon(Icons.menu,
-                    size: 20,
-                    color: MediasfuColors.themedIcon(darkMode: isDarkModeVal)),
+                Icon(
+                  Icons.menu,
+                  size: 20,
+                  color: MediasfuColors.themedIcon(darkMode: isDarkModeVal),
+                ),
                 if (totalReqWait.value > 0)
                   Positioned(
                     top: -4,
@@ -6142,13 +7105,16 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 4, vertical: 1),
+                        horizontal: 4,
+                        vertical: 1,
+                      ),
                       child: Text(
                         totalReqWait.value.toString(),
                         style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold),
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -6182,9 +7148,11 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             Stack(
               clipBehavior: Clip.none,
               children: [
-                Icon(Icons.chat_bubble_outline,
-                    size: 20,
-                    color: MediasfuColors.themedIcon(darkMode: isDarkModeVal)),
+                Icon(
+                  Icons.chat_bubble_outline,
+                  size: 20,
+                  color: MediasfuColors.themedIcon(darkMode: isDarkModeVal),
+                ),
                 if (showMessagesBadge.value)
                   Positioned(
                     top: -4,
@@ -6195,13 +7163,16 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 4, vertical: 1),
+                        horizontal: 4,
+                        vertical: 1,
+                      ),
                       child: const Text(
                         '*',
                         style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold),
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -6234,8 +7205,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       // Recording button (for hosts/co-hosts)
       if (islevel.value == '2' ||
           (youAreCoHost.value &&
-              coHostResponsibility.value
-                  .any((r) => r.name == 'media' && r.value))) {
+              coHostResponsibility.value.any(
+                (r) => r.name == 'media' && r.value,
+              ))) {
         if (recordStarted.value && !recordStopped.value) {
           controlButtons.add(
             ControlButton(
@@ -6254,8 +7226,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                         Text(
                           recordingProgressTime.value,
                           style: TextStyle(
-                            color:
-                                recordPaused.value ? Colors.yellow : Colors.red,
+                            color: recordPaused.value
+                                ? Colors.yellow
+                                : Colors.red,
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                           ),
@@ -6311,8 +7284,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                 updateActiveSidebarContent(SidebarContent.recording);
               },
               activeColor: MediasfuColors.danger,
-              inActiveColor:
-                  MediasfuColors.controlButtonInactive(darkMode: isDarkModeVal),
+              inActiveColor: MediasfuColors.controlButtonInactive(
+                darkMode: isDarkModeVal,
+              ),
               color: MediasfuColors.themedText(darkMode: isDarkModeVal),
             ),
           );
@@ -6327,8 +7301,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                 updateActiveSidebarContent(SidebarContent.recording);
               },
               activeColor: MediasfuColors.danger,
-              inActiveColor:
-                  MediasfuColors.controlButtonInactive(darkMode: isDarkModeVal),
+              inActiveColor: MediasfuColors.controlButtonInactive(
+                darkMode: isDarkModeVal,
+              ),
               color: MediasfuColors.themedText(darkMode: isDarkModeVal),
             ),
           );
@@ -6344,10 +7319,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           onPress: () {
             updateActiveSidebarContent(SidebarContent.mediaSettings);
           },
-          activeColor:
-              MediasfuColors.controlButtonActive(darkMode: isDarkModeVal),
-          inActiveColor:
-              MediasfuColors.controlButtonInactive(darkMode: isDarkModeVal),
+          activeColor: MediasfuColors.controlButtonActive(
+            darkMode: isDarkModeVal,
+          ),
+          inActiveColor: MediasfuColors.controlButtonInactive(
+            darkMode: isDarkModeVal,
+          ),
           color: MediasfuColors.themedText(darkMode: isDarkModeVal),
         ),
       );
@@ -6361,10 +7338,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           onPress: () {
             updateActiveSidebarContent(SidebarContent.displaySettings);
           },
-          activeColor:
-              MediasfuColors.controlButtonActive(darkMode: isDarkModeVal),
-          inActiveColor:
-              MediasfuColors.controlButtonInactive(darkMode: isDarkModeVal),
+          activeColor: MediasfuColors.controlButtonActive(
+            darkMode: isDarkModeVal,
+          ),
+          inActiveColor: MediasfuColors.controlButtonInactive(
+            darkMode: isDarkModeVal,
+          ),
           color: MediasfuColors.themedText(darkMode: isDarkModeVal),
         ),
       );
@@ -6372,8 +7351,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       // Requests button (for hosts/co-hosts with waiting room permissions)
       if (islevel.value == '2' ||
           (youAreCoHost.value &&
-              coHostResponsibility.value
-                  .any((r) => r.name == 'waiting' && r.value))) {
+              coHostResponsibility.value.any(
+                (r) => r.name == 'waiting' && r.value,
+              ))) {
         controlButtons.add(
           ControlButton(
             name: 'Requests',
@@ -6384,10 +7364,11 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                 Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    Icon(Icons.front_hand_outlined,
-                        size: 16,
-                        color:
-                            MediasfuColors.themedIcon(darkMode: isDarkModeVal)),
+                    Icon(
+                      Icons.front_hand_outlined,
+                      size: 16,
+                      color: MediasfuColors.themedIcon(darkMode: isDarkModeVal),
+                    ),
                     if (requestCounter.value > 0)
                       Positioned(
                         top: -4,
@@ -6398,13 +7379,16 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 3, vertical: 1),
+                            horizontal: 3,
+                            vertical: 1,
+                          ),
                           child: Text(
                             requestCounter.value.toString(),
                             style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold),
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
@@ -6424,10 +7408,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             onPress: () {
               updateActiveSidebarContent(SidebarContent.requests);
             },
-            activeColor:
-                MediasfuColors.controlButtonActive(darkMode: isDarkModeVal),
-            inActiveColor:
-                MediasfuColors.controlButtonInactive(darkMode: isDarkModeVal),
+            activeColor: MediasfuColors.controlButtonActive(
+              darkMode: isDarkModeVal,
+            ),
+            inActiveColor: MediasfuColors.controlButtonInactive(
+              darkMode: isDarkModeVal,
+            ),
           ),
         );
       }
@@ -6442,10 +7428,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             onPress: () {
               updateActiveSidebarContent(SidebarContent.polls);
             },
-            activeColor:
-                MediasfuColors.controlButtonActive(darkMode: isDarkModeVal),
-            inActiveColor:
-                MediasfuColors.controlButtonInactive(darkMode: isDarkModeVal),
+            activeColor: MediasfuColors.controlButtonActive(
+              darkMode: isDarkModeVal,
+            ),
+            inActiveColor: MediasfuColors.controlButtonInactive(
+              darkMode: isDarkModeVal,
+            ),
             color: MediasfuColors.themedText(darkMode: isDarkModeVal),
           ),
         );
@@ -6461,10 +7449,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             onPress: () {
               updateActiveSidebarContent(SidebarContent.eventSettings);
             },
-            activeColor:
-                MediasfuColors.controlButtonActive(darkMode: isDarkModeVal),
-            inActiveColor:
-                MediasfuColors.controlButtonInactive(darkMode: isDarkModeVal),
+            activeColor: MediasfuColors.controlButtonActive(
+              darkMode: isDarkModeVal,
+            ),
+            inActiveColor: MediasfuColors.controlButtonInactive(
+              darkMode: isDarkModeVal,
+            ),
             color: MediasfuColors.themedText(darkMode: isDarkModeVal),
           ),
         );
@@ -6510,19 +7500,20 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   void _handleOrientationChange({bool immediate = false}) {
     try {
       final mediaQuery = MediaQuery.of(context);
-      final safeAreaInsets = mediaQuery.padding;
-
-      // Calculate available height after safe area is removed (since we're in SafeArea)
       final availableHeight =
-          mediaQuery.size.height - safeAreaInsets.top - safeAreaInsets.bottom;
+          mediaQuery.size.height * widget.options.containerHeightFraction -
+          mediaQuery.padding.top -
+          mediaQuery.padding.bottom;
 
       // Account for sidebar width when calculating parent width
-      final screenWidth = mediaQuery.size.width;
+      final screenWidth =
+          mediaQuery.size.width * widget.options.containerWidthFraction;
       final sidebarWidth = getSidebarWidth(screenWidth);
       final effectiveWidth = screenWidth - sidebarWidth;
 
       final parentWidth = effectiveWidth * mainHeightWidth;
-      final showControls = (eventType.value == EventType.webinar) ||
+      final showControls =
+          (eventType.value == EventType.webinar) ||
           eventType.value == EventType.conference;
       final parentHeight = showControls
           ? availableHeight * 1.0 - controlHeight.value
@@ -6555,6 +7546,13 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
 
       final dimensions = computeDimensions();
 
+      // Keep estimates and screen-share/whiteboard grids aligned when the
+      // parent crosses the wide-screen breakpoint after an orientation change.
+      final previousWideScreen = this.isWideScreen.value;
+      if (isWideScreen != previousWideScreen) {
+        updateIsWideScreen(isWideScreen);
+      }
+
       // Update component sizes when parent dimensions, main size, or stacking mode changes
       if (immediate) {
         // Immediate update for responsive size changes
@@ -6563,6 +7561,20 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           updateComponentSizes(dimensions);
         });
+      }
+
+      if (isWideScreen != previousWideScreen &&
+          (shareScreenStarted.value ||
+              shared.value ||
+              (whiteboardStarted.value && !whiteboardEnded.value))) {
+        try {
+          onScreenChanges(
+            OnScreenChangesOptions(
+              changed: true,
+              parameters: mediasfuParameters,
+            ),
+          );
+        } catch (_) {}
       }
 
       _updateControlHeight();
@@ -6628,7 +7640,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                   appliedBackground.value = value,
               updateCurrentFacingMode: updateCurrentFacingMode,
             ),
-            checkConnect: widget.options.localLink!.isNotEmpty &&
+            checkConnect:
+                widget.options.localLink!.isNotEmpty &&
                 widget.options.connectMediaSFU == true &&
                 !link.value.contains('mediasfu.com'),
             localLink: widget.options.localLink,
@@ -6849,8 +7862,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       try {
         if (localStream.value != null) {
           // Create a copy of the list of tracks
-          List<MediaStreamTrack> tracksCopy =
-              List.from(localStream.value!.getTracks());
+          List<MediaStreamTrack> tracksCopy = List.from(
+            localStream.value!.getTracks(),
+          );
 
           // Iterate over the copy and stop each track from the original list
           for (var track in tracksCopy) {
@@ -6941,8 +7955,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             mySpokenLanguage = 'en';
             mySpokenLanguageEnabled = false;
             myDefaultOutputLanguage = null;
-            listenerTranslationPreferences =
-                ListenerTranslationPreferences(perSpeaker: {});
+            listenerTranslationPreferences = ListenerTranslationPreferences(
+              perSpeaker: {},
+            );
             translationProducerMap = {};
             speakerTranslationStates = {};
             listenerTranslationOverrides = {};
@@ -6998,11 +8013,15 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       updateIsLoadingModalVisible(false);
     }
 
-    Future<io.Socket?> connectsocket(String apiUserName, String token,
-        {bool skipSockets = false}) async {
+    Future<io.Socket?> connectsocket(
+      String apiUserName,
+      String token, {
+      bool skipSockets = false,
+    }) async {
       // Define socketDefault and socketAlt
       io.Socket? socketDefault = socket.value;
-      io.Socket? socketAlt = (widget.options.connectMediaSFU! &&
+      io.Socket? socketAlt =
+          (widget.options.connectMediaSFU! &&
               localSocket.value != null &&
               localSocket.value!.id != null)
           ? localSocket.value
@@ -7032,12 +8051,15 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           socketDefault.on('translation:roomConfig', (data) async {
             try {
               final configData = TranslationRoomConfigData.fromMap(
-                  Map<String, dynamic>.from(data));
-              await translationRoomConfig(TranslationRoomConfigOptions(
-                data: configData,
-                updateTranslationConfig: updateTranslationConfig,
-                updateTranslationSupported: updateTranslationSupported,
-              ));
+                Map<String, dynamic>.from(data),
+              );
+              await translationRoomConfig(
+                TranslationRoomConfigOptions(
+                  data: configData,
+                  updateTranslationConfig: updateTranslationConfig,
+                  updateTranslationSupported: updateTranslationSupported,
+                ),
+              );
 
               // If room doesn't support translation but user has personal translation eligibility,
               // automatically request personal translation from the server
@@ -7045,16 +8067,20 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                   widget.options.canUsePersonalTranslation &&
                   widget.options.personalTranslationUsername != null &&
                   widget.options.personalTranslationUsername!.isNotEmpty) {
-                socketDefault.emitWithAck('requestPersonalTranslation', {
-                  'roomName': roomName.value,
-                  'username': widget.options.personalTranslationUsername,
-                }, ack: (response) {
-                  if (response != null && response['success'] == true) {
-                    // Request accepted
-                  } else {
-                    // Request denied
-                  }
-                });
+                socketDefault.emitWithAck(
+                  'requestPersonalTranslation',
+                  {
+                    'roomName': roomName.value,
+                    'username': widget.options.personalTranslationUsername,
+                  },
+                  ack: (response) {
+                    if (response != null && response['success'] == true) {
+                      // Request accepted
+                    } else {
+                      // Request denied
+                    }
+                  },
+                );
               }
             } catch (_) {}
           });
@@ -7066,7 +8092,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               if (configMap['supportTranslation'] == true &&
                   configMap['translationConfig'] != null) {
                 final personalConfig = TranslationRoomConfig.fromMap(
-                    Map<String, dynamic>.from(configMap['translationConfig']));
+                  Map<String, dynamic>.from(configMap['translationConfig']),
+                );
                 updateTranslationConfig(personalConfig);
                 isPersonalTranslation.value =
                     configMap['isPersonalTranslation'] == true;
@@ -7083,46 +8110,58 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           socketDefault.on('translation:configUpdated', (data) async {
             try {
               final configData = TranslationConfigUpdatedData.fromMap(
-                  Map<String, dynamic>.from(data));
-              await translationConfigUpdated(TranslationConfigUpdatedOptions(
-                data: configData,
-                updateTranslationConfig: updateTranslationConfig,
-                showAlert: showAlert,
-              ));
+                Map<String, dynamic>.from(data),
+              );
+              await translationConfigUpdated(
+                TranslationConfigUpdatedOptions(
+                  data: configData,
+                  updateTranslationConfig: updateTranslationConfig,
+                  showAlert: showAlert,
+                ),
+              );
             } catch (_) {}
           });
 
           socketDefault.on('translation:languageSet', (data) async {
             try {
               final langData = TranslationLanguageSetData.fromMap(
-                  Map<String, dynamic>.from(data));
-              await translationLanguageSet(TranslationLanguageSetOptions(
-                data: langData,
-                updateMySpokenLanguage: updateMySpokenLanguage,
-                updateMySpokenLanguageEnabled: updateMySpokenLanguageEnabled,
-                showAlert: showAlert,
-              ));
+                Map<String, dynamic>.from(data),
+              );
+              await translationLanguageSet(
+                TranslationLanguageSetOptions(
+                  data: langData,
+                  updateMySpokenLanguage: updateMySpokenLanguage,
+                  updateMySpokenLanguageEnabled: updateMySpokenLanguageEnabled,
+                  showAlert: showAlert,
+                ),
+              );
             } catch (_) {}
           });
 
           socketDefault.on('translation:memberState', (data) async {
             try {
               final stateData = TranslationMemberStateData.fromMap(
-                  Map<String, dynamic>.from(data));
-              await translationMemberState(TranslationMemberStateOptions(
-                data: stateData,
-              ));
+                Map<String, dynamic>.from(data),
+              );
+              await translationMemberState(
+                TranslationMemberStateOptions(
+                  data: stateData,
+                ),
+              );
             } catch (_) {}
           });
 
           socketDefault.on('translation:error', (data) async {
             try {
-              final errorData =
-                  TranslationErrorData.fromMap(Map<String, dynamic>.from(data));
-              await translationError(TranslationErrorOptions(
-                data: errorData,
-                showAlert: showAlert,
-              ));
+              final errorData = TranslationErrorData.fromMap(
+                Map<String, dynamic>.from(data),
+              );
+              await translationError(
+                TranslationErrorOptions(
+                  data: errorData,
+                  showAlert: showAlert,
+                ),
+              );
             } catch (_) {}
           });
 
@@ -7162,7 +8201,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           socketDefault.on('translation:subscribed', (data) async {
             final options = TranslationSubscribedOptions(
               data: TranslationSubscribedData.fromMap(
-                  Map<String, dynamic>.from(data)),
+                Map<String, dynamic>.from(data),
+              ),
               updateListenPreferences: updateListenPreferencesWrapper,
               startConsumingTranslation: startConsumingTranslation,
               showAlert: showAlert,
@@ -7189,7 +8229,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             await translationUnsubscribed(
               TranslationUnsubscribedOptions(
                 data: TranslationUnsubscribedData.fromMap(
-                    Map<String, dynamic>.from(data)),
+                  Map<String, dynamic>.from(data),
+                ),
                 updateListenPreferences: updateListenPreferencesWrapper,
                 stopConsumingTranslation: stopConsumingTranslation,
               ),
@@ -7199,7 +8240,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           socketDefault.on('translation:producerReady', (data) async {
             final options = TranslationProducerReadyOptions(
               data: TranslationProducerReadyData.fromMap(
-                  Map<String, dynamic>.from(data)),
+                Map<String, dynamic>.from(data),
+              ),
               showAlert: showAlert,
             );
             await translationProducerReady(options);
@@ -7220,7 +8262,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           socketDefault.on('translation:producerClosed', (data) async {
             final options = TranslationProducerClosedOptions(
               data: TranslationProducerClosedData.fromMap(
-                  Map<String, dynamic>.from(data)),
+                Map<String, dynamic>.from(data),
+              ),
               stopConsumingTranslation: stopConsumingTranslationById,
               showAlert: showAlert,
             );
@@ -7233,7 +8276,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               final meta = translationProducerMap[closedData.producerId];
               if (meta != null) {
                 await resumeOriginalProducer(
-                    meta.originalProducerId, meta.speakerId);
+                  meta.originalProducerId,
+                  meta.speakerId,
+                );
               }
 
               setState(() {
@@ -7246,7 +8291,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             await translationChannelsAvailable(
               TranslationChannelsAvailableOptions(
                 data: TranslationChannelsAvailableData.fromMap(
-                    Map<String, dynamic>.from(data)),
+                  Map<String, dynamic>.from(data),
+                ),
                 updateAvailableTranslationChannels:
                     updateAvailableTranslationChannels,
               ),
@@ -7257,7 +8303,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             await translationSpeakerOutputChanged(
               TranslationSpeakerOutputChangedOptions(
                 data: TranslationSpeakerOutputChangedData.fromMap(
-                    Map<String, dynamic>.from(data)),
+                  Map<String, dynamic>.from(data),
+                ),
                 updateSpeakerTranslationState: updateSpeakerTranslationState,
                 pauseOriginalProducer: pauseOriginalProducer,
                 resumeOriginalProducer: resumeOriginalProducer,
@@ -7270,7 +8317,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
 
           socketDefault.on('translation:transcript', (data) async {
             final transcriptData = TranslationTranscriptData.fromMap(
-                Map<String, dynamic>.from(data));
+              Map<String, dynamic>.from(data),
+            );
             await translationTranscript(
               TranslationTranscriptOptions(
                 data: transcriptData,
@@ -7283,12 +8331,14 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             // re-notification of translationStreams to ensure the audio widget
             // is properly mounted and playing.
             if (transcriptData.speakerId.isNotEmpty &&
-                !translationFirstRenderForced
-                    .contains(transcriptData.speakerId)) {
+                !translationFirstRenderForced.contains(
+                  transcriptData.speakerId,
+                )) {
               translationFirstRenderForced.add(transcriptData.speakerId);
               // Force ValueNotifier to re-notify listeners (new list reference)
-              translationStreams.value =
-                  List<Widget>.from(translationStreams.value);
+              translationStreams.value = List<Widget>.from(
+                translationStreams.value,
+              );
             }
 
             // Update live subtitles if enabled
@@ -7306,26 +8356,34 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               if (transcriptData.speakerName.isNotEmpty &&
                   transcriptData.speakerName != transcriptData.speakerId) {
                 updateLiveSubtitleForSpeaker(
-                    transcriptData.speakerName, subtitle);
+                  transcriptData.speakerName,
+                  subtitle,
+                );
               }
 
               // Schedule cleanup of expired subtitles
               Future.delayed(
-                  Duration(
-                      milliseconds: subtitle.expiresAt
-                              .difference(DateTime.now())
-                              .inMilliseconds +
-                          100), () {
-                cleanupExpiredSubtitles();
-              });
+                Duration(
+                  milliseconds:
+                      subtitle.expiresAt
+                          .difference(DateTime.now())
+                          .inMilliseconds +
+                      100,
+                ),
+                () {
+                  cleanupExpiredSubtitles();
+                },
+              );
             }
           });
 
-          socketDefault.on('translation:listenerPreferencesUpdated',
-              (data) async {
+          socketDefault.on('translation:listenerPreferencesUpdated', (
+            data,
+          ) async {
             if (data != null) {
               updateListenerTranslationPreferences(
-                  ListenerTranslationPreferences.fromMap(data));
+                ListenerTranslationPreferences.fromMap(data),
+              );
             }
           });
 
@@ -7418,21 +8476,24 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           socketDefault.on('allMembersRest', (membersData) async {
             // Handle 'allMembersRest' event
             try {
-              AllMembersRestData response =
-                  AllMembersRestData.fromJson(membersData);
+              AllMembersRestData response = AllMembersRestData.fromJson(
+                membersData,
+              );
               if (membersData != null) {
-                await allMembersRest(AllMembersRestOptions(
-                  apiUserName: apiUserName,
-                  apiKey:
-                      'null', //not recommended - use apiToken instead. Use for testing/development only
-                  members: response.members,
-                  apiToken: token,
-                  settings: response.settings,
-                  coHost: response.coHost ?? coHost.value,
-                  coHostRes: response.coHostResponsibilities,
-                  parameters: mediasfuParameters,
-                  consumeSockets: consumeSockets.value,
-                ));
+                await allMembersRest(
+                  AllMembersRestOptions(
+                    apiUserName: apiUserName,
+                    apiKey:
+                        'null', //not recommended - use apiToken instead. Use for testing/development only
+                    members: response.members,
+                    apiToken: token,
+                    settings: response.settings,
+                    coHost: response.coHost ?? coHost.value,
+                    coHostRes: response.coHostResponsibilities,
+                    parameters: mediasfuParameters,
+                    consumeSockets: consumeSockets.value,
+                  ),
+                );
               }
             } catch (error) {
               if (kDebugMode) {
@@ -7480,7 +8541,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               List<WaitingRoomParticipant> waitingParticipants = [];
               if (waitingData['waitingParticipants'] != null ||
                   waitingData['waitingParticipantss'] != null) {
-                dynamic waitingList = waitingData['waitingParticipants'] ??
+                dynamic waitingList =
+                    waitingData['waitingParticipants'] ??
                     waitingData['waitingParticipantss'] ??
                     waitingData['waitingParticipants'];
                 // Convert waitingParticipants to a List of WaitingRoomParticipant objects
@@ -7530,8 +8592,11 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               if (data['coHostResponsibilities'] != null) {
                 coHostResponsibilities =
                     (data['coHostResponsibilities'] as List<dynamic>)
-                        .map((item) => CoHostResponsibility.fromMap(
-                            item as Map<String, dynamic>))
+                        .map(
+                          (item) => CoHostResponsibility.fromMap(
+                            item as Map<String, dynamic>,
+                          ),
+                        )
                         .toList();
               } else {
                 coHostResponsibilities = coHostResponsibility.value;
@@ -7581,17 +8646,19 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           socketDefault.on('screenProducerId', (data) async {
             // Handle 'screenProducerId' event
             try {
-              screenProducerId(ScreenProducerIdOptions(
-                producerId: data['producerId'],
-                screenId: screenId.value,
-                membersReceived: membersReceived.value,
-                shareScreenStarted: shareScreenStarted.value,
-                deferScreenReceived: deferScreenReceived.value,
-                participants: participants.value,
-                updateScreenId: updateScreenId,
-                updateShareScreenStarted: updateShareScreenStarted,
-                updateDeferScreenReceived: updateDeferScreenReceived,
-              ));
+              screenProducerId(
+                ScreenProducerIdOptions(
+                  producerId: data['producerId'],
+                  screenId: screenId.value,
+                  membersReceived: membersReceived.value,
+                  shareScreenStarted: shareScreenStarted.value,
+                  deferScreenReceived: deferScreenReceived.value,
+                  participants: participants.value,
+                  updateScreenId: updateScreenId,
+                  updateShareScreenStarted: updateShareScreenStarted,
+                  updateDeferScreenReceived: updateDeferScreenReceived,
+                ),
+              );
             } catch (error) {
               if (kDebugMode) {
                 // print('Error handling screenProducerId event: $error');
@@ -7642,9 +8709,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             try {
               await producerMediaResumed(
                 ProducerMediaResumedOptions(
-                    kind: data['kind'],
-                    name: data['name'],
-                    parameters: mediasfuParameters),
+                  kind: data['kind'],
+                  name: data['name'],
+                  parameters: mediasfuParameters,
+                ),
               );
             } catch (error) {
               if (kDebugMode) {
@@ -7673,10 +8741,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           socketDefault.on('controlMediaHost', (data) async {
             // Handle 'controlMediaHost' event
             try {
-              controlMediaHost(ControlMediaHostOptions(
-                type: data['type'],
-                parameters: mediasfuParameters,
-              ));
+              controlMediaHost(
+                ControlMediaHostOptions(
+                  type: data['type'],
+                  parameters: mediasfuParameters,
+                ),
+              );
             } catch (error) {
               if (kDebugMode) {
                 // print('Error handling controlMediaHost event: $error');
@@ -7691,13 +8761,14 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             } catch (e) {}
 
             await meetingEnded(
-                options: MeetingEndedOptions(
-              showAlert: showAlert,
-              redirectURL: redirectURL.value,
-              updateValidated: updateValidated,
-              onWeb: kIsWeb,
-              eventType: eventType.value,
-            ));
+              options: MeetingEndedOptions(
+                showAlert: showAlert,
+                redirectURL: redirectURL.value,
+                updateValidated: updateValidated,
+                onWeb: kIsWeb,
+                eventType: eventType.value,
+              ),
+            );
           });
 
           socketDefault.on('disconnectUserSelf', (_) async {
@@ -7746,9 +8817,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             try {
               await meetingTimeRemaining(
                 options: MeetingTimeRemainingOptions(
-                    timeRemaining: data['timeRemaining'],
-                    eventType: eventType.value,
-                    showAlert: showAlert),
+                  timeRemaining: data['timeRemaining'],
+                  eventType: eventType.value,
+                  showAlert: showAlert,
+                ),
               );
             } catch (error) {
               if (kDebugMode) {
@@ -7762,10 +8834,11 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             if (_suppressConfirmHere) return;
             try {
               await meetingStillThere(
-                  options: MeetingStillThereOptions(
-                updateIsConfirmHereModalVisible:
-                    updateIsConfirmHereModalVisible,
-              ));
+                options: MeetingStillThereOptions(
+                  updateIsConfirmHereModalVisible:
+                      updateIsConfirmHereModalVisible,
+                ),
+              );
             } catch (error) {
               if (kDebugMode) {
                 // print('Error handling meetingStillThere event: $error');
@@ -7779,14 +8852,16 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               UpdateConsumingDomainsData updateConsumingDomainsData =
                   UpdateConsumingDomainsData.fromJson(data);
 
-              updateConsumingDomains(UpdateConsumingDomainsOptions(
-                domains: updateConsumingDomainsData.domains,
-                altDomains: updateConsumingDomainsData.altDomains,
-                apiUserName: apiUserName,
-                apiToken: token,
-                apiKey: "",
-                parameters: mediasfuParameters,
-              ));
+              updateConsumingDomains(
+                UpdateConsumingDomainsOptions(
+                  domains: updateConsumingDomainsData.domains,
+                  altDomains: updateConsumingDomainsData.altDomains,
+                  apiUserName: apiUserName,
+                  apiToken: token,
+                  apiKey: "",
+                  parameters: mediasfuParameters,
+                ),
+              );
             } catch (error) {
               if (kDebugMode) {
                 // print('Error handling updateConsumingDomains event: $error');
@@ -7797,8 +8872,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           socketDefault.on('hostRequestResponse', (data) async {
             // Handle 'hostRequestResponse' event
             try {
-              RequestResponse requestResponse =
-                  RequestResponse.fromMap(data['requestResponse']);
+              RequestResponse requestResponse = RequestResponse.fromMap(
+                data['requestResponse'],
+              );
               hostRequestResponse(
                 HostRequestResponseOptions(
                   requestResponse: requestResponse,
@@ -7832,17 +8908,19 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             try {
               PollUpdatedData pollUpdatedData = PollUpdatedData.fromMap(data);
 
-              await pollUpdated(PollUpdatedOptions(
-                data: pollUpdatedData,
-                polls: polls.value,
-                poll: poll.value,
-                member: member.value,
-                islevel: islevel.value,
-                showAlert: showAlert,
-                updatePolls: updatePolls,
-                updatePoll: updatePoll,
-                updateIsPollModalVisible: updateIsPollModalVisible,
-              ));
+              await pollUpdated(
+                PollUpdatedOptions(
+                  data: pollUpdatedData,
+                  polls: polls.value,
+                  poll: poll.value,
+                  member: member.value,
+                  islevel: islevel.value,
+                  showAlert: showAlert,
+                  updatePolls: updatePolls,
+                  updatePoll: updatePoll,
+                  updateIsPollModalVisible: updateIsPollModalVisible,
+                ),
+              );
             } catch (error) {
               if (kDebugMode) {
                 // print('Error handling pollUpdated event: $error');
@@ -7855,10 +8933,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               BreakoutRoomUpdatedData breakoutRoomUpdatedData =
                   BreakoutRoomUpdatedData.fromMap(data);
 
-              await breakoutRoomUpdated(BreakoutRoomUpdatedOptions(
-                data: breakoutRoomUpdatedData,
-                parameters: mediasfuParameters,
-              ));
+              await breakoutRoomUpdated(
+                BreakoutRoomUpdatedOptions(
+                  data: breakoutRoomUpdatedData,
+                  parameters: mediasfuParameters,
+                ),
+              );
             } catch (error) {
               if (kDebugMode) {
                 // print('Error handling breakoutRoomUpdated event: $error');
@@ -7872,11 +8952,13 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               PermissionUpdatedData permissionData =
                   PermissionUpdatedData.fromMap(data);
 
-              await permissionUpdated(PermissionUpdatedOptions(
-                data: permissionData,
-                showAlert: showAlert,
-                updateIslevel: updateIslevel,
-              ));
+              await permissionUpdated(
+                PermissionUpdatedOptions(
+                  data: permissionData,
+                  showAlert: showAlert,
+                  updateIslevel: updateIslevel,
+                ),
+              );
             } catch (error) {
               if (kDebugMode) {
                 // print('Error handling permissionUpdated event: $error');
@@ -7889,10 +8971,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               PermissionConfigUpdatedData configData =
                   PermissionConfigUpdatedData.fromMap(data);
 
-              await permissionConfigUpdated(PermissionConfigUpdatedOptions(
-                data: configData,
-                updatePermissionConfig: updatePermissionConfig,
-              ));
+              await permissionConfigUpdated(
+                PermissionConfigUpdatedOptions(
+                  data: configData,
+                  updatePermissionConfig: updatePermissionConfig,
+                ),
+              );
             } catch (error) {
               if (kDebugMode) {
                 //print('Error handling permissionConfigUpdated event: $error');
@@ -7903,13 +8987,16 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           // Panelists socket listeners
           socketDefault.on('panelistsUpdated', (data) async {
             try {
-              PanelistsUpdatedData panelistsData =
-                  PanelistsUpdatedData.fromMap(data);
+              PanelistsUpdatedData panelistsData = PanelistsUpdatedData.fromMap(
+                data,
+              );
 
-              await panelistsUpdated(PanelistsUpdatedOptions(
-                data: panelistsData,
-                updatePanelists: updatePanelists,
-              ));
+              await panelistsUpdated(
+                PanelistsUpdatedOptions(
+                  data: panelistsData,
+                  updatePanelists: updatePanelists,
+                ),
+              );
             } catch (error) {
               if (kDebugMode) {
                 // print('Error handling panelistsUpdated event: $error');
@@ -7924,26 +9011,31 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
 
               // Capture current values before update for comparison
               final currentFocused = panelistsFocused.value;
-              final currentPanelistList =
-                  List<Participant>.from(panelists.value);
+              final currentPanelistList = List<Participant>.from(
+                panelists.value,
+              );
 
-              await panelistFocusChanged(PanelistFocusChangedOptions(
-                data: focusData,
-                updatePanelistsFocused: updatePanelistsFocused,
-                updateMuteOthersMic: updateMuteOthersMic,
-                updateMuteOthersCamera: updateMuteOthersCamera,
-                updatePanelists: updatePanelists,
-                // Pass current values for comparison
-                currentPanelistsFocused: currentFocused,
-                currentPanelists: currentPanelistList,
-                // Trigger screen rerender if focus/panelists changed
-                onScreenChanges: () async {
-                  await onScreenChanges(OnScreenChangesOptions(
-                    changed: true,
-                    parameters: mediasfuParameters,
-                  ));
-                },
-              ));
+              await panelistFocusChanged(
+                PanelistFocusChangedOptions(
+                  data: focusData,
+                  updatePanelistsFocused: updatePanelistsFocused,
+                  updateMuteOthersMic: updateMuteOthersMic,
+                  updateMuteOthersCamera: updateMuteOthersCamera,
+                  updatePanelists: updatePanelists,
+                  // Pass current values for comparison
+                  currentPanelistsFocused: currentFocused,
+                  currentPanelists: currentPanelistList,
+                  // Trigger screen rerender if focus/panelists changed
+                  onScreenChanges: () async {
+                    await onScreenChanges(
+                      OnScreenChangesOptions(
+                        changed: true,
+                        parameters: mediasfuParameters,
+                      ),
+                    );
+                  },
+                ),
+              );
             } catch (error) {
               if (kDebugMode) {
                 // print('Error handling panelistFocusChanged event: $error');
@@ -7955,16 +9047,20 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             try {
               ControlMediaData controlData = ControlMediaData.fromMap(data);
 
-              await controlMedia(ControlMediaOptions(
-                data: controlData,
-                showAlert: showAlert,
-                clickAudio: () => clickAudio(
-                    ClickAudioOptions(parameters: mediasfuParameters)),
-                clickVideo: () => clickVideo(
-                    ClickVideoOptions(parameters: mediasfuParameters)),
-                audioAlreadyOn: audioAlreadyOn.value,
-                videoAlreadyOn: videoAlreadyOn.value,
-              ));
+              await controlMedia(
+                ControlMediaOptions(
+                  data: controlData,
+                  showAlert: showAlert,
+                  clickAudio: () => clickAudio(
+                    ClickAudioOptions(parameters: mediasfuParameters),
+                  ),
+                  clickVideo: () => clickVideo(
+                    ClickVideoOptions(parameters: mediasfuParameters),
+                  ),
+                  audioAlreadyOn: audioAlreadyOn.value,
+                  videoAlreadyOn: videoAlreadyOn.value,
+                ),
+              );
             } catch (error) {
               if (kDebugMode) {
                 // print('Error handling controlMedia event: $error');
@@ -7974,13 +9070,16 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
 
           socketDefault.on('addedAsPanelist', (data) async {
             try {
-              AddedAsPanelistData panelistData =
-                  AddedAsPanelistData.fromMap(data);
+              AddedAsPanelistData panelistData = AddedAsPanelistData.fromMap(
+                data,
+              );
 
-              await addedAsPanelist(AddedAsPanelistOptions(
-                data: panelistData,
-                showAlert: showAlert,
-              ));
+              await addedAsPanelist(
+                AddedAsPanelistOptions(
+                  data: panelistData,
+                  showAlert: showAlert,
+                ),
+              );
             } catch (error) {
               if (kDebugMode) {
                 // print('Error handling addedAsPanelist event: $error');
@@ -7993,10 +9092,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               RemovedFromPanelistsData removedData =
                   RemovedFromPanelistsData.fromMap(data);
 
-              await removedFromPanelists(RemovedFromPanelistsOptions(
-                data: removedData,
-                showAlert: showAlert,
-              ));
+              await removedFromPanelists(
+                RemovedFromPanelistsOptions(
+                  data: removedData,
+                  showAlert: showAlert,
+                ),
+              );
             } catch (error) {
               if (kDebugMode) {
                 // print('Error handling removedFromPanelists event: $error');
@@ -8023,13 +9124,15 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
 
         socketAlt!.on('roomRecordParams', (data) async {
           try {
-            RecordParameters roomRecordParameters =
-                RecordParameters.fromMap(data);
+            RecordParameters roomRecordParameters = RecordParameters.fromMap(
+              data,
+            );
             // Handle 'roomRecordParams' event
             roomRecordParams(
               RoomRecordParamsOptions(
-                  recordParams: roomRecordParameters,
-                  parameters: mediasfuParameters),
+                recordParams: roomRecordParameters,
+                parameters: mediasfuParameters,
+              ),
             );
           } catch (error) {
             if (kDebugMode) {
@@ -8080,19 +9183,22 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             if (data.containsKey('userRecordingParam') &&
                 (data['userRecordingParam'] != null &&
                     data['userRecordingParam'].isNotEmpty)) {
-              userRecording =
-                  UserRecordingParams.fromMap(data['userRecordingParam']);
+              userRecording = UserRecordingParams.fromMap(
+                data['userRecordingParam'],
+              );
             } else {
               userRecording = userRecordingParams.value;
             }
 
-            await recordingNotice(RecordingNoticeOptions(
-              state: data['state'],
-              userRecordingParam: userRecording,
-              pauseCount: data['pauseCount'] ?? 0,
-              timeDone: data['timeDone'] ?? 0,
-              parameters: mediasfuParameters,
-            ));
+            await recordingNotice(
+              RecordingNoticeOptions(
+                state: data['state'],
+                userRecordingParam: userRecording,
+                pauseCount: data['pauseCount'] ?? 0,
+                timeDone: data['timeDone'] ?? 0,
+                parameters: mediasfuParameters,
+              ),
+            );
           } catch (error) {
             if (kDebugMode) {
               //print('Error handling RecordingNotice event: $error');
@@ -8103,10 +9209,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         socketAlt.on('timeLeftRecording', (data) async {
           // Handle 'timeLeftRecording' event
           try {
-            timeLeftRecording(TimeLeftRecordingOptions(
-              timeLeft: data['timeLeft'],
-              showAlert: showAlert,
-            ));
+            timeLeftRecording(
+              TimeLeftRecordingOptions(
+                timeLeft: data['timeLeft'],
+                showAlert: showAlert,
+              ),
+            );
           } catch (error) {
             if (kDebugMode) {
               // print('Error handling timeLeftRecording event: $error');
@@ -8117,10 +9225,13 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         socketAlt.on('stoppedRecording', (data) async {
           // Handle 'stoppedRecording' event
           try {
-            stoppedRecording(StoppedRecordingOptions(
+            stoppedRecording(
+              StoppedRecordingOptions(
                 state: data['state'],
                 reason: data['reason'],
-                showAlert: showAlert));
+                showAlert: showAlert,
+              ),
+            );
           } catch (error) {
             if (kDebugMode) {
               // print('Error handling stoppedRecording event: $error');
@@ -8167,11 +9278,13 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             );
           }
 
-          await receiveRoomMessages(ReceiveRoomMessagesOptions(
-            socket: socketDefault,
-            roomName: roomName.value,
-            updateMessages: updateMessages,
-          ));
+          await receiveRoomMessages(
+            ReceiveRoomMessagesOptions(
+              socket: socketDefault,
+              roomName: roomName.value,
+              updateMessages: updateMessages,
+            ),
+          );
 
           if (!skipSockets) {
             _prepopulateUserMediaHandler(
@@ -8189,15 +9302,16 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     }
 
     if (validated) {
-      updateAllVideoStreams(
-          [Stream(id: 'youyou', name: 'youyou', producerId: 'youyou')]);
+      updateAllVideoStreams([
+        Stream(id: 'youyou', name: 'youyou', producerId: 'youyou'),
+      ]);
 
       updateStreamNames([
         Stream(
           id: 'youyou',
           name: 'youyou',
           producerId: 'youyou',
-        )
+        ),
       ]);
 
       Future<void> connectAndAddSocketMethods() async {
@@ -8210,20 +9324,23 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       try {
         if (widget.options.useLocalUIMode != true) {
           updateIsLoadingModalVisible(true);
-          connectAndAddSocketMethods().then((_) {
-            startMeetingProgressTimer(
-                options: StartMeetingProgressTimerOptions(
-              startTime: DateTime.now().millisecondsSinceEpoch ~/ 1000,
-              parameters: mediasfuParameters,
-            ));
-            Future.delayed(const Duration(milliseconds: 500));
-            updateIsLoadingModalVisible(false);
-          }).catchError((error, stackTrace) {
-            updateIsLoadingModalVisible(false);
-            if (kDebugMode) {
-              // print('error in startMeetingProgressTimer: $error');
-            }
-          });
+          connectAndAddSocketMethods()
+              .then((_) {
+                startMeetingProgressTimer(
+                  options: StartMeetingProgressTimerOptions(
+                    startTime: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+                    parameters: mediasfuParameters,
+                  ),
+                );
+                Future.delayed(const Duration(milliseconds: 500));
+                updateIsLoadingModalVisible(false);
+              })
+              .catchError((error, stackTrace) {
+                updateIsLoadingModalVisible(false);
+                if (kDebugMode) {
+                  // print('error in startMeetingProgressTimer: $error');
+                }
+              });
         } else {
           updateIsLoadingModalVisible(false);
           io.Socket? socket_ = io.io("https://example.com", <String, dynamic>{
@@ -8247,853 +9364,853 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     super.initState();
     _hydrateUiOverrides();
     mediasfuParameters = MediasfuParameters(
-        updateMiniCardsGrid: updateMiniCardsGrid,
-        mixStreams: mixStreams,
-        dispStreams: dispStreams,
-        stopShareScreen: stopShareScreen,
-        checkScreenShare: checkScreenShare,
-        startShareScreen: startShareScreen,
-        requestScreenShare: requestScreenShare,
-        reorderStreams: reorderStreams,
-        prepopulateUserMedia: _prepopulateUserMediaHandler,
-        getVideos: getVideos,
-        rePort: rePort,
-        trigger: trigger,
-        consumerResume: _consumerResumeHandler,
-        connectSendTransport: connectSendTransport,
-        connectSendTransportAudio: connectSendTransportAudio,
-        connectSendTransportVideo: connectSendTransportVideo,
-        connectSendTransportScreen: connectSendTransportScreen,
-        processConsumerTransports: processConsumerTransports,
-        resumePauseStreams: resumePauseStreams,
-        readjust: readjust,
-        checkGrid: checkGrid,
-        getEstimate: getEstimate,
-        calculateRowsAndColumns: calculateRowsAndColumns,
-        addVideosGrid: _addVideosGridHandler,
-        onScreenChanges: onScreenChanges,
-        sleep: sleep,
-        changeVids: changeVids,
-        compareActiveNames: compareActiveNames,
-        compareScreenStates: compareScreenStates,
-        createSendTransport: createSendTransport,
-        resumeSendTransportAudio: resumeSendTransportAudio,
-        receiveAllPipedTransports: receiveAllPipedTransports,
-        disconnectSendTransportVideo: disconnectSendTransportVideo,
-        disconnectSendTransportAudio: disconnectSendTransportAudio,
-        disconnectSendTransportScreen: disconnectSendTransportScreen,
-        getPipedProducersAlt: getPipedProducersAlt,
-        signalNewConsumerTransport: signalNewConsumerTransport,
-        connectRecvTransport: connectRecvTransport,
-        reUpdateInter: reUpdateInter,
-        updateParticipantAudioDecibels: updateParticipantAudioDecibels,
-        closeAndResize: closeAndResize,
-        autoAdjust: autoAdjust,
-        switchUserVideoAlt: switchUserVideoAlt,
-        switchUserVideo: switchUserVideo,
-        switchUserAudio: switchUserAudio,
-        getDomains: getDomains,
-        formatNumber: formatNumber,
-        getMediaDevicesList: getMediaDevicesList,
-        getParticipantMedia: getParticipantMedia,
-        connectIps: connectIps,
-        connectLocalIps: connectLocalIps,
-        createDeviceClient: createDeviceClient,
-        handleCreatePoll: handleCreatePoll,
-        handleVotePoll: handleVotePoll,
-        handleEndPoll: handleEndPoll,
-        resumePauseAudioStreams: resumePauseAudioStreams,
-        processConsumerTransportsAudio: processConsumerTransportsAudio,
-        checkPermission: checkPermission,
-        streamSuccessVideo: streamSuccessVideo,
-        streamSuccessAudio: streamSuccessAudio,
-        streamSuccessScreen: streamSuccessScreen,
-        streamSuccessAudioSwitch: streamSuccessAudioSwitch,
-        clickVideo: clickVideo,
-        clickAudio: clickAudio,
-        clickScreenShare: clickScreenShare,
-        switchVideoAlt: switchVideoAlt,
-        requestPermissionCamera: requestPermissionCamera,
-        requestPermissionAudio: requestPermissionAudio,
-        localUIMode: widget.options.useLocalUIMode == true,
+      updateMiniCardsGrid: updateMiniCardsGrid,
+      mixStreams: mixStreams,
+      dispStreams: dispStreams,
+      stopShareScreen: stopShareScreen,
+      checkScreenShare: checkScreenShare,
+      startShareScreen: startShareScreen,
+      requestScreenShare: requestScreenShare,
+      reorderStreams: reorderStreams,
+      prepopulateUserMedia: _prepopulateUserMediaHandler,
+      getVideos: getVideos,
+      rePort: rePort,
+      trigger: trigger,
+      consumerResume: _consumerResumeHandler,
+      connectSendTransport: connectSendTransport,
+      connectSendTransportAudio: connectSendTransportAudio,
+      connectSendTransportVideo: connectSendTransportVideo,
+      connectSendTransportScreen: connectSendTransportScreen,
+      processConsumerTransports: processConsumerTransports,
+      resumePauseStreams: resumePauseStreams,
+      readjust: readjust,
+      checkGrid: checkGrid,
+      getEstimate: getEstimate,
+      calculateRowsAndColumns: calculateRowsAndColumns,
+      addVideosGrid: _addVideosGridHandler,
+      onScreenChanges: onScreenChanges,
+      sleep: sleep,
+      changeVids: changeVids,
+      compareActiveNames: compareActiveNames,
+      compareScreenStates: compareScreenStates,
+      createSendTransport: createSendTransport,
+      resumeSendTransportAudio: resumeSendTransportAudio,
+      receiveAllPipedTransports: receiveAllPipedTransports,
+      disconnectSendTransportVideo: disconnectSendTransportVideo,
+      disconnectSendTransportAudio: disconnectSendTransportAudio,
+      disconnectSendTransportScreen: disconnectSendTransportScreen,
+      getPipedProducersAlt: getPipedProducersAlt,
+      signalNewConsumerTransport: signalNewConsumerTransport,
+      connectRecvTransport: connectRecvTransport,
+      reUpdateInter: reUpdateInter,
+      updateParticipantAudioDecibels: updateParticipantAudioDecibels,
+      closeAndResize: closeAndResize,
+      autoAdjust: autoAdjust,
+      switchUserVideoAlt: switchUserVideoAlt,
+      switchUserVideo: switchUserVideo,
+      switchUserAudio: switchUserAudio,
+      getDomains: getDomains,
+      formatNumber: formatNumber,
+      getMediaDevicesList: getMediaDevicesList,
+      getParticipantMedia: getParticipantMedia,
+      connectIps: connectIps,
+      connectLocalIps: connectLocalIps,
+      createDeviceClient: createDeviceClient,
+      handleCreatePoll: handleCreatePoll,
+      handleVotePoll: handleVotePoll,
+      handleEndPoll: handleEndPoll,
+      resumePauseAudioStreams: resumePauseAudioStreams,
+      processConsumerTransportsAudio: processConsumerTransportsAudio,
+      checkPermission: checkPermission,
+      streamSuccessVideo: streamSuccessVideo,
+      streamSuccessAudio: streamSuccessAudio,
+      streamSuccessScreen: streamSuccessScreen,
+      streamSuccessAudioSwitch: streamSuccessAudioSwitch,
+      clickVideo: clickVideo,
+      clickAudio: clickAudio,
+      clickScreenShare: clickScreenShare,
+      switchVideoAlt: switchVideoAlt,
+      requestPermissionCamera: requestPermissionCamera,
+      requestPermissionAudio: requestPermissionAudio,
+      localUIMode: widget.options.useLocalUIMode == true,
 
-        // Room Details
-        roomName: roomName.value,
-        member: member.value,
-        adminPasscode: adminPasscode.value,
-        youAreCoHost: youAreCoHost.value,
-        youAreHost: youAreHost.value,
-        islevel: islevel.value,
-        confirmedToRecord: confirmedToRecord.value,
-        meetingDisplayType: meetingDisplayType.value,
-        meetingVideoOptimized: meetingVideoOptimized.value,
-        eventType: eventType.value,
-        participants: participants.value,
-        filteredParticipants: filteredParticipants.value,
-        participantsCounter: participantsCounter.value,
-        participantsFilter: participantsFilter.value,
-        uiOverrides: _uiOverrides,
-        containerStyle: _containerStyle,
+      // Room Details
+      roomName: roomName.value,
+      member: member.value,
+      adminPasscode: adminPasscode.value,
+      youAreCoHost: youAreCoHost.value,
+      youAreHost: youAreHost.value,
+      islevel: islevel.value,
+      confirmedToRecord: confirmedToRecord.value,
+      meetingDisplayType: meetingDisplayType.value,
+      meetingVideoOptimized: meetingVideoOptimized.value,
+      eventType: eventType.value,
+      participants: participants.value,
+      filteredParticipants: filteredParticipants.value,
+      participantsCounter: participantsCounter.value,
+      participantsFilter: participantsFilter.value,
+      uiOverrides: _uiOverrides,
+      containerStyle: _containerStyle,
 
-        // More room details - media
-        consumeSockets: consumeSockets.value,
-        rtpCapabilities: rtpCapabilities.value,
-        roomRecvIPs: roomRecvIPs.value,
-        meetingRoomParams: meetingRoomParams.value,
-        itemPageLimit: itemPageLimit.value,
-        audioOnlyRoom: audioOnlyRoom.value,
-        addForBasic: addForBasic.value,
-        screenPageLimit: screenPageLimit.value,
-        shareScreenStarted: shareScreenStarted.value,
-        shared: shared.value,
-        targetOrientation: targetOrientation.value,
-        targetResolution: targetResolution.value,
-        targetResolutionHost: targetResolutionHost.value,
-        vidCons: vidCons.value,
-        frameRate: frameRate.value,
-        hParams: hParams.value,
-        vParams: vParams.value,
-        screenParams: screenParams.value,
-        aParams: aParams.value,
+      // More room details - media
+      consumeSockets: consumeSockets.value,
+      rtpCapabilities: rtpCapabilities.value,
+      roomRecvIPs: roomRecvIPs.value,
+      meetingRoomParams: meetingRoomParams.value,
+      itemPageLimit: itemPageLimit.value,
+      audioOnlyRoom: audioOnlyRoom.value,
+      addForBasic: addForBasic.value,
+      screenPageLimit: screenPageLimit.value,
+      shareScreenStarted: shareScreenStarted.value,
+      shared: shared.value,
+      targetOrientation: targetOrientation.value,
+      targetResolution: targetResolution.value,
+      targetResolutionHost: targetResolutionHost.value,
+      vidCons: vidCons.value,
+      frameRate: frameRate.value,
+      hParams: hParams.value,
+      vParams: vParams.value,
+      screenParams: screenParams.value,
+      aParams: aParams.value,
 
-        // More room details - recording
-        recordingAudioPausesLimit: recordingAudioPausesLimit.value,
-        recordingAudioPausesCount: recordingAudioPausesCount.value,
-        recordingAudioSupport: recordingAudioSupport.value,
-        recordingAudioPeopleLimit: recordingAudioPeopleLimit.value,
-        recordingAudioParticipantsTimeLimit:
-            recordingAudioParticipantsTimeLimit.value,
-        recordingVideoPausesCount: recordingVideoPausesCount.value,
-        recordingVideoPausesLimit: recordingVideoPausesLimit.value,
-        recordingVideoSupport: recordingVideoSupport.value,
-        recordingVideoPeopleLimit: recordingVideoPeopleLimit.value,
-        recordingVideoParticipantsTimeLimit:
-            recordingVideoParticipantsTimeLimit.value,
-        recordingAllParticipantsSupport: recordingAllParticipantsSupport.value,
-        recordingVideoParticipantsSupport:
-            recordingVideoParticipantsSupport.value,
-        recordingAllParticipantsFullRoomSupport:
-            recordingAllParticipantsFullRoomSupport.value,
-        recordingVideoParticipantsFullRoomSupport:
-            recordingVideoParticipantsFullRoomSupport.value,
-        recordingPreferredOrientation: recordingPreferredOrientation.value,
-        recordingSupportForOtherOrientation:
-            recordingSupportForOtherOrientation.value,
-        recordingMultiFormatsSupport: recordingMultiFormatsSupport.value,
-        userRecordingParams: userRecordingParams.value,
-        canRecord: canRecord.value,
-        startReport: startReport.value,
-        endReport: endReport.value,
-        recordTimerInterval: recordTimerInterval.value,
-        recordStartTime: recordStartTime.value,
-        recordElapsedTime: recordElapsedTime.value,
-        isTimerRunning: isTimerRunning.value,
-        canPauseResume: canPauseResume.value,
-        recordChangeSeconds: recordChangeSeconds.value,
-        pauseLimit: pauseLimit.value,
-        pauseRecordCount: pauseRecordCount.value,
-        canLaunchRecord: canLaunchRecord.value,
-        stopLaunchRecord: stopLaunchRecord.value,
-        participantsAll: participantsAll.value,
-        firstAll: firstAll.value,
-        updateMainWindow: updateMainWindow.value,
-        firstRound: firstRound.value,
-        landScaped: landScaped.value,
-        lockScreen: lockScreen.value,
-        screenId: screenId.value,
-        allVideoStreams: allVideoStreams.value,
-        newLimitedStreams: newLimitedStreams.value,
-        newLimitedStreamsIDs: newLimitedStreamsIDs.value,
-        activeSounds: activeSounds.value,
-        screenShareIDStream: screenShareIDStream.value,
-        screenShareNameStream: screenShareNameStream.value,
-        adminIDStream: adminIDStream.value,
-        adminNameStream: adminNameStream.value,
-        youYouStream: youYouStream.value,
-        youYouStreamIDs: youYouStreamIDs.value,
-        localStream: localStream.value,
-        recordStarted: recordStarted.value,
-        recordResumed: recordResumed.value,
-        recordPaused: recordPaused.value,
-        recordStopped: recordStopped.value,
-        adminRestrictSetting: adminRestrictSetting.value,
-        videoRequestState: videoRequestState.value,
-        videoRequestTime: videoRequestTime.value,
-        videoAction: videoAction.value,
-        localStreamVideo: localStreamVideo.value,
-        userDefaultVideoInputDevice: userDefaultVideoInputDevice.value,
-        currentFacingMode: currentFacingMode.value,
-        prevFacingMode: prevFacingMode.value,
-        defVideoID: defVideoID.value,
-        allowed: allowed.value,
-        dispActiveNames: dispActiveNames.value,
-        pDispActiveNames: pDispActiveNames.value,
-        activeNames: activeNames.value,
-        prevActiveNames: prevActiveNames.value,
-        pActiveNames: pActiveNames.value,
-        membersReceived: membersReceived.value,
-        deferScreenReceived: deferScreenReceived.value,
-        hostFirstSwitch: hostFirstSwitch.value,
-        micAction: micAction.value,
-        screenAction: screenAction.value,
-        chatAction: chatAction.value,
-        audioRequestState: audioRequestState.value,
-        screenRequestState: screenRequestState.value,
-        chatRequestState: chatRequestState.value,
-        audioRequestTime: audioRequestTime.value,
-        screenRequestTime: screenRequestTime.value,
-        chatRequestTime: chatRequestTime.value,
-        updateRequestIntervalSeconds: updateRequestIntervalSeconds.value,
-        oldSoundIds: oldSoundIds.value,
-        hostLabel: hostLabel.value,
-        mainScreenFilled: mainScreenFilled.value,
-        localStreamScreen: localStreamScreen.value,
-        screenAlreadyOn: screenAlreadyOn.value,
-        chatAlreadyOn: chatAlreadyOn.value,
-        redirectURL: redirectURL.value,
-        oldAllStreams: oldAllStreams.value,
-        adminVidID: adminVidID.value,
-        streamNames: streamNames.value,
-        nonAlVideoStreams: nonAlVideoStreams.value,
-        sortAudioLoudness: sortAudioLoudness.value,
-        audioDecibels: audioDecibels.value,
-        mixedAlVideoStreams: mixedAlVideoStreams.value,
-        nonAlVideoStreamsMuted: nonAlVideoStreamsMuted.value,
-        paginatedStreams: paginatedStreams.value,
-        localStreamAudio: localStreamAudio.value,
-        defAudioID: defAudioID.value,
-        userDefaultAudioInputDevice: userDefaultAudioInputDevice.value,
-        userDefaultAudioOutputDevice: userDefaultAudioOutputDevice.value,
-        isSpeakerphoneOn: isSpeakerphoneOn.value,
-        prevAudioInputDevice: prevAudioInputDevice.value,
-        prevVideoInputDevice: prevVideoInputDevice.value,
-        audioPaused: audioPaused.value,
-        mainScreenPerson: mainScreenPerson.value,
-        adminOnMainScreen: adminOnMainScreen.value,
-        screenStates: screenStates.value,
-        prevScreenStates: prevScreenStates.value,
-        updateDateState: updateDateState.value,
-        lastUpdate: lastUpdate.value,
-        nForReadjustRecord: nForReadjustRecord.value,
-        fixedPageLimit: fixedPageLimit.value,
-        removeAltGrid: removeAltGrid.value,
-        nForReadjust: nForReadjust.value,
-        lastReorderTime: lastReorderTime.value,
-        reorderInterval: reorderInterval.value,
-        fastReorderInterval: fastReorderInterval.value,
-        audStreamNames: audStreamNames.value,
-        currentUserPage: currentUserPage.value,
-        mainHeightWidth: mainHeightWidth,
-        prevMainHeightWidth: prevMainHeightWidth.value,
-        prevDoPaginate: prevDoPaginate.value,
-        doPaginate: doPaginate.value,
-        shareEnded: shareEnded.value,
-        lStreams: lStreams.value,
-        chatRefStreams: chatRefStreams.value,
-        controlHeight: controlHeight.value,
-        isWideScreen: isWideScreen.value,
-        isMediumScreen: isMediumScreen.value,
-        isSmallScreen: isSmallScreen.value,
-        addGrid: addGrid.value,
-        addAltGrid: addAltGrid.value,
-        gridRows: gridRows.value,
-        gridCols: gridCols.value,
-        altGridRows: altGridRows.value,
-        altGridCols: altGridCols.value,
-        numberPages: numberPages.value,
-        currentStreams: currentStreams.value,
-        showMiniView: showMiniView.value,
-        nStream: nStream.value,
-        deferReceive: deferReceive.value,
-        allAudioStreams: allAudioStreams.value,
-        screenProducer: screenProducer.value,
-        localScreenProducer: localScreenProducer!.value,
-        remoteScreenStream: remoteScreenStream.value,
-        gotAllVids: gotAllVids.value,
-        paginationHeightWidth: paginationHeightWidth.value,
-        paginationDirection: paginationDirection.value,
-        gridSizes: gridSizes.value,
-        screenForceFullDisplay: screenForceFullDisplay.value,
-        mainGridStream: mainGridStream.value,
-        otherGridStreams: otherGridStreams,
-        audioOnlyStreams: audioOnlyStreams.value,
-        videoInputs: videoInputs.value,
-        audioInputs: audioInputs.value,
-        meetingProgressTime: meetingProgressTime.value,
-        meetingElapsedTime: meetingElapsedTime.value,
-        refParticipants: refParticipants.value,
-        messages: messages.value,
-        startDirectMessage: startDirectMessage.value,
-        directMessageDetails: directMessageDetails.value,
-        showMessagesBadge: showMessagesBadge.value,
-        coHost: coHost.value,
-        coHostResponsibility: coHostResponsibility.value,
-        audioSetting: audioSetting.value,
-        videoSetting: videoSetting.value,
-        screenshareSetting: screenshareSetting.value,
-        chatSetting: chatSetting.value,
-        permissionConfig: permissionConfig.value,
-        panelists: panelists.value,
-        panelistFocusChanged: panelistFocusChangedValue.value,
-        panellistFocused: panelistsFocused.value,
-        muteOthersMic: muteOthersMic.value,
-        muteOthersCamera: muteOthersCamera.value,
-        autoWave: autoWave.value,
-        forceFullDisplay: forceFullDisplay.value,
-        prevForceFullDisplay: prevForceFullDisplay.value,
-        selfViewForceFull: selfViewForceFull.value,
-        prevMeetingDisplayType: prevMeetingDisplayType.value,
-        waitingRoomFilter: waitingRoomFilter.value,
-        waitingRoomList: waitingRoomList.value,
-        waitingRoomCounter: waitingRoomCounter.value,
-        filteredWaitingRoomList: filteredWaitingRoomList.value,
-        requestFilter: requestFilter.value,
-        requestList: requestList.value,
-        requestCounter: requestCounter.value,
-        filteredRequestList: filteredRequestList.value,
-        totalReqWait: totalReqWait.value,
-        alertVisible: alertVisible.value,
-        alertMessage: alertMessage.value,
-        alertType: alertType.value,
-        alertDuration: alertDuration.value,
-        progressTimerVisible: progressTimerVisible.value,
-        progressTimerValue: progressTimerValue.value,
-        isMenuModalVisible: isMenuModalVisible.value,
-        isRecordingModalVisible: isRecordingModalVisible.value,
-        isSettingsModalVisible: isSettingsModalVisible.value,
-        isRequestsModalVisible: isRequestsModalVisible.value,
-        isWaitingModalVisible: isWaitingModalVisible.value,
-        isCoHostModalVisible: isCoHostModalVisible.value,
-        isMediaSettingsModalVisible: isMediaSettingsModalVisible.value,
-        isDisplaySettingsModalVisible: isDisplaySettingsModalVisible.value,
-        isParticipantsModalVisible: isParticipantsModalVisible.value,
-        isMessagesModalVisible: isMessagesModalVisible.value,
-        isConfirmExitModalVisible: isConfirmExitModalVisible.value,
-        isConfirmHereModalVisible: isConfirmHereModalVisible.value,
-        isShareEventModalVisible: isShareEventModalVisible.value,
-        isLoadingModalVisible: isLoadingModalVisible.value,
+      // More room details - recording
+      recordingAudioPausesLimit: recordingAudioPausesLimit.value,
+      recordingAudioPausesCount: recordingAudioPausesCount.value,
+      recordingAudioSupport: recordingAudioSupport.value,
+      recordingAudioPeopleLimit: recordingAudioPeopleLimit.value,
+      recordingAudioParticipantsTimeLimit:
+          recordingAudioParticipantsTimeLimit.value,
+      recordingVideoPausesCount: recordingVideoPausesCount.value,
+      recordingVideoPausesLimit: recordingVideoPausesLimit.value,
+      recordingVideoSupport: recordingVideoSupport.value,
+      recordingVideoPeopleLimit: recordingVideoPeopleLimit.value,
+      recordingVideoParticipantsTimeLimit:
+          recordingVideoParticipantsTimeLimit.value,
+      recordingAllParticipantsSupport: recordingAllParticipantsSupport.value,
+      recordingVideoParticipantsSupport:
+          recordingVideoParticipantsSupport.value,
+      recordingAllParticipantsFullRoomSupport:
+          recordingAllParticipantsFullRoomSupport.value,
+      recordingVideoParticipantsFullRoomSupport:
+          recordingVideoParticipantsFullRoomSupport.value,
+      recordingPreferredOrientation: recordingPreferredOrientation.value,
+      recordingSupportForOtherOrientation:
+          recordingSupportForOtherOrientation.value,
+      recordingMultiFormatsSupport: recordingMultiFormatsSupport.value,
+      userRecordingParams: userRecordingParams.value,
+      canRecord: canRecord.value,
+      startReport: startReport.value,
+      endReport: endReport.value,
+      recordTimerInterval: recordTimerInterval.value,
+      recordStartTime: recordStartTime.value,
+      recordElapsedTime: recordElapsedTime.value,
+      isTimerRunning: isTimerRunning.value,
+      canPauseResume: canPauseResume.value,
+      recordChangeSeconds: recordChangeSeconds.value,
+      pauseLimit: pauseLimit.value,
+      pauseRecordCount: pauseRecordCount.value,
+      canLaunchRecord: canLaunchRecord.value,
+      stopLaunchRecord: stopLaunchRecord.value,
+      participantsAll: participantsAll.value,
+      firstAll: firstAll.value,
+      updateMainWindow: updateMainWindow.value,
+      firstRound: firstRound.value,
+      landScaped: landScaped.value,
+      lockScreen: lockScreen.value,
+      screenId: screenId.value,
+      allVideoStreams: allVideoStreams.value,
+      newLimitedStreams: newLimitedStreams.value,
+      newLimitedStreamsIDs: newLimitedStreamsIDs.value,
+      activeSounds: activeSounds.value,
+      screenShareIDStream: screenShareIDStream.value,
+      screenShareNameStream: screenShareNameStream.value,
+      adminIDStream: adminIDStream.value,
+      adminNameStream: adminNameStream.value,
+      youYouStream: youYouStream.value,
+      youYouStreamIDs: youYouStreamIDs.value,
+      localStream: localStream.value,
+      recordStarted: recordStarted.value,
+      recordResumed: recordResumed.value,
+      recordPaused: recordPaused.value,
+      recordStopped: recordStopped.value,
+      adminRestrictSetting: adminRestrictSetting.value,
+      videoRequestState: videoRequestState.value,
+      videoRequestTime: videoRequestTime.value,
+      videoAction: videoAction.value,
+      localStreamVideo: localStreamVideo.value,
+      userDefaultVideoInputDevice: userDefaultVideoInputDevice.value,
+      currentFacingMode: currentFacingMode.value,
+      prevFacingMode: prevFacingMode.value,
+      defVideoID: defVideoID.value,
+      allowed: allowed.value,
+      dispActiveNames: dispActiveNames.value,
+      pDispActiveNames: pDispActiveNames.value,
+      activeNames: activeNames.value,
+      prevActiveNames: prevActiveNames.value,
+      pActiveNames: pActiveNames.value,
+      membersReceived: membersReceived.value,
+      deferScreenReceived: deferScreenReceived.value,
+      hostFirstSwitch: hostFirstSwitch.value,
+      micAction: micAction.value,
+      screenAction: screenAction.value,
+      chatAction: chatAction.value,
+      audioRequestState: audioRequestState.value,
+      screenRequestState: screenRequestState.value,
+      chatRequestState: chatRequestState.value,
+      audioRequestTime: audioRequestTime.value,
+      screenRequestTime: screenRequestTime.value,
+      chatRequestTime: chatRequestTime.value,
+      updateRequestIntervalSeconds: updateRequestIntervalSeconds.value,
+      oldSoundIds: oldSoundIds.value,
+      hostLabel: hostLabel.value,
+      mainScreenFilled: mainScreenFilled.value,
+      localStreamScreen: localStreamScreen.value,
+      screenAlreadyOn: screenAlreadyOn.value,
+      chatAlreadyOn: chatAlreadyOn.value,
+      redirectURL: redirectURL.value,
+      oldAllStreams: oldAllStreams.value,
+      adminVidID: adminVidID.value,
+      streamNames: streamNames.value,
+      nonAlVideoStreams: nonAlVideoStreams.value,
+      sortAudioLoudness: sortAudioLoudness.value,
+      audioDecibels: audioDecibels.value,
+      mixedAlVideoStreams: mixedAlVideoStreams.value,
+      nonAlVideoStreamsMuted: nonAlVideoStreamsMuted.value,
+      paginatedStreams: paginatedStreams.value,
+      localStreamAudio: localStreamAudio.value,
+      defAudioID: defAudioID.value,
+      userDefaultAudioInputDevice: userDefaultAudioInputDevice.value,
+      userDefaultAudioOutputDevice: userDefaultAudioOutputDevice.value,
+      isSpeakerphoneOn: isSpeakerphoneOn.value,
+      prevAudioInputDevice: prevAudioInputDevice.value,
+      prevVideoInputDevice: prevVideoInputDevice.value,
+      audioPaused: audioPaused.value,
+      mainScreenPerson: mainScreenPerson.value,
+      adminOnMainScreen: adminOnMainScreen.value,
+      screenStates: screenStates.value,
+      prevScreenStates: prevScreenStates.value,
+      updateDateState: updateDateState.value,
+      lastUpdate: lastUpdate.value,
+      nForReadjustRecord: nForReadjustRecord.value,
+      fixedPageLimit: fixedPageLimit.value,
+      removeAltGrid: removeAltGrid.value,
+      nForReadjust: nForReadjust.value,
+      lastReorderTime: lastReorderTime.value,
+      reorderInterval: reorderInterval.value,
+      fastReorderInterval: fastReorderInterval.value,
+      audStreamNames: audStreamNames.value,
+      currentUserPage: currentUserPage.value,
+      mainHeightWidth: mainHeightWidth,
+      prevMainHeightWidth: prevMainHeightWidth.value,
+      prevDoPaginate: prevDoPaginate.value,
+      doPaginate: doPaginate.value,
+      shareEnded: shareEnded.value,
+      lStreams: lStreams.value,
+      chatRefStreams: chatRefStreams.value,
+      controlHeight: controlHeight.value,
+      isWideScreen: isWideScreen.value,
+      isMediumScreen: isMediumScreen.value,
+      isSmallScreen: isSmallScreen.value,
+      addGrid: addGrid.value,
+      addAltGrid: addAltGrid.value,
+      gridRows: gridRows.value,
+      gridCols: gridCols.value,
+      altGridRows: altGridRows.value,
+      altGridCols: altGridCols.value,
+      numberPages: numberPages.value,
+      currentStreams: currentStreams.value,
+      showMiniView: showMiniView.value,
+      nStream: nStream.value,
+      deferReceive: deferReceive.value,
+      allAudioStreams: allAudioStreams.value,
+      screenProducer: screenProducer.value,
+      localScreenProducer: localScreenProducer!.value,
+      remoteScreenStream: remoteScreenStream.value,
+      gotAllVids: gotAllVids.value,
+      paginationHeightWidth: paginationHeightWidth.value,
+      paginationDirection: paginationDirection.value,
+      gridSizes: gridSizes.value,
+      screenForceFullDisplay: screenForceFullDisplay.value,
+      mainGridStream: mainGridStream.value,
+      otherGridStreams: otherGridStreams,
+      audioOnlyStreams: audioOnlyStreams.value,
+      videoInputs: videoInputs.value,
+      audioInputs: audioInputs.value,
+      meetingProgressTime: meetingProgressTime.value,
+      meetingElapsedTime: meetingElapsedTime.value,
+      refParticipants: refParticipants.value,
+      messages: messages.value,
+      startDirectMessage: startDirectMessage.value,
+      directMessageDetails: directMessageDetails.value,
+      showMessagesBadge: showMessagesBadge.value,
+      coHost: coHost.value,
+      coHostResponsibility: coHostResponsibility.value,
+      audioSetting: audioSetting.value,
+      videoSetting: videoSetting.value,
+      screenshareSetting: screenshareSetting.value,
+      chatSetting: chatSetting.value,
+      permissionConfig: permissionConfig.value,
+      panelists: panelists.value,
+      panelistFocusChanged: panelistFocusChangedValue.value,
+      panellistFocused: panelistsFocused.value,
+      muteOthersMic: muteOthersMic.value,
+      muteOthersCamera: muteOthersCamera.value,
+      autoWave: autoWave.value,
+      forceFullDisplay: forceFullDisplay.value,
+      prevForceFullDisplay: prevForceFullDisplay.value,
+      selfViewForceFull: selfViewForceFull.value,
+      prevMeetingDisplayType: prevMeetingDisplayType.value,
+      waitingRoomFilter: waitingRoomFilter.value,
+      waitingRoomList: waitingRoomList.value,
+      waitingRoomCounter: waitingRoomCounter.value,
+      filteredWaitingRoomList: filteredWaitingRoomList.value,
+      requestFilter: requestFilter.value,
+      requestList: requestList.value,
+      requestCounter: requestCounter.value,
+      filteredRequestList: filteredRequestList.value,
+      totalReqWait: totalReqWait.value,
+      alertVisible: alertVisible.value,
+      alertMessage: alertMessage.value,
+      alertType: alertType.value,
+      alertDuration: alertDuration.value,
+      progressTimerVisible: progressTimerVisible.value,
+      progressTimerValue: progressTimerValue.value,
+      isMenuModalVisible: isMenuModalVisible.value,
+      isRecordingModalVisible: isRecordingModalVisible.value,
+      isSettingsModalVisible: isSettingsModalVisible.value,
+      isRequestsModalVisible: isRequestsModalVisible.value,
+      isWaitingModalVisible: isWaitingModalVisible.value,
+      isCoHostModalVisible: isCoHostModalVisible.value,
+      isMediaSettingsModalVisible: isMediaSettingsModalVisible.value,
+      isDisplaySettingsModalVisible: isDisplaySettingsModalVisible.value,
+      isParticipantsModalVisible: isParticipantsModalVisible.value,
+      isMessagesModalVisible: isMessagesModalVisible.value,
+      isConfirmExitModalVisible: isConfirmExitModalVisible.value,
+      isConfirmHereModalVisible: isConfirmHereModalVisible.value,
+      isShareEventModalVisible: isShareEventModalVisible.value,
+      isLoadingModalVisible: isLoadingModalVisible.value,
 
-        // Recording Options
-        recordingMediaOptions: recordingMediaOptions.value,
-        recordingAudioOptions: recordingAudioOptions.value,
-        recordingVideoOptions: recordingVideoOptions.value,
-        recordingVideoType: recordingVideoType.value,
-        recordingVideoOptimized: recordingVideoOptimized.value,
-        recordingDisplayType: recordingDisplayType.value,
-        recordingAddHLS: recordingAddHLS.value,
-        recordingAddText: recordingAddText.value,
-        recordingCustomText: recordingCustomText.value,
-        recordingCustomTextPosition: recordingCustomTextPosition.value,
-        recordingCustomTextColor: recordingCustomTextColor.value,
-        recordingNameTags: recordingNameTags.value,
-        recordingBackgroundColor: recordingBackgroundColor.value,
-        recordingNameTagsColor: recordingNameTagsColor.value,
-        recordingOrientationVideo: recordingOrientationVideo.value,
-        clearedToResume: clearedToResume.value,
-        clearedToRecord: clearedToRecord.value,
-        recordState: recordState,
-        showRecordButtons: showRecordButtons.value,
-        recordingProgressTime: recordingProgressTime.value,
-        audioSwitching: audioSwitching.value,
-        videoSwitching: videoSwitching.value,
-        videoAlreadyOn: videoAlreadyOn.value,
-        audioAlreadyOn: audioAlreadyOn.value,
-        componentSizes: componentSizes.value,
-        hasCameraPermission: hasCameraPermission.value,
-        hasAudioPermission: hasAudioPermission.value,
-        transportCreated: transportCreated.value,
-        localTransportCreated: localTransportCreated!.value,
-        transportCreatedVideo: transportCreatedVideo.value,
-        transportCreatedAudio: transportCreatedAudio.value,
-        transportCreatedScreen: transportCreatedScreen.value,
-        producerTransport: producerTransport.value,
-        localProducerTransport: localProducerTransport!.value,
-        videoProducer: videoProducer.value,
-        localVideoProducer: localVideoProducer!.value,
-        params: params.value,
-        videoParams: videoParams.value,
-        audioParams: audioParams.value,
-        audioProducer: audioProducer.value,
-        audioLevel: audioLevel.value,
-        localAudioProducer: localAudioProducer!.value,
-        consumerTransports: consumerTransports.value,
-        consumingTransports: consumingTransports.value,
-        // Polls
-        polls: polls.value,
-        poll: poll.value,
-        isPollModalVisible: isPollModalVisible.value,
+      // Recording Options
+      recordingMediaOptions: recordingMediaOptions.value,
+      recordingAudioOptions: recordingAudioOptions.value,
+      recordingVideoOptions: recordingVideoOptions.value,
+      recordingVideoType: recordingVideoType.value,
+      recordingVideoOptimized: recordingVideoOptimized.value,
+      recordingDisplayType: recordingDisplayType.value,
+      recordingAddHLS: recordingAddHLS.value,
+      recordingAddText: recordingAddText.value,
+      recordingCustomText: recordingCustomText.value,
+      recordingCustomTextPosition: recordingCustomTextPosition.value,
+      recordingCustomTextColor: recordingCustomTextColor.value,
+      recordingNameTags: recordingNameTags.value,
+      recordingBackgroundColor: recordingBackgroundColor.value,
+      recordingNameTagsColor: recordingNameTagsColor.value,
+      recordingOrientationVideo: recordingOrientationVideo.value,
+      clearedToResume: clearedToResume.value,
+      clearedToRecord: clearedToRecord.value,
+      recordState: recordState,
+      showRecordButtons: showRecordButtons.value,
+      recordingProgressTime: recordingProgressTime.value,
+      audioSwitching: audioSwitching.value,
+      videoSwitching: videoSwitching.value,
+      videoAlreadyOn: videoAlreadyOn.value,
+      audioAlreadyOn: audioAlreadyOn.value,
+      componentSizes: componentSizes.value,
+      hasCameraPermission: hasCameraPermission.value,
+      hasAudioPermission: hasAudioPermission.value,
+      transportCreated: transportCreated.value,
+      localTransportCreated: localTransportCreated!.value,
+      transportCreatedVideo: transportCreatedVideo.value,
+      transportCreatedAudio: transportCreatedAudio.value,
+      transportCreatedScreen: transportCreatedScreen.value,
+      producerTransport: producerTransport.value,
+      localProducerTransport: localProducerTransport!.value,
+      videoProducer: videoProducer.value,
+      localVideoProducer: localVideoProducer!.value,
+      params: params.value,
+      videoParams: videoParams.value,
+      audioParams: audioParams.value,
+      audioProducer: audioProducer.value,
+      audioLevel: audioLevel.value,
+      localAudioProducer: localAudioProducer!.value,
+      consumerTransports: consumerTransports.value,
+      consumingTransports: consumingTransports.value,
+      // Polls
+      polls: polls.value,
+      poll: poll.value,
+      isPollModalVisible: isPollModalVisible.value,
 
-        // Breakout rooms
-        breakoutRooms: breakoutRooms.value,
-        currentRoomIndex: currentRoomIndex.value,
-        canStartBreakout: canStartBreakout.value,
-        breakOutRoomStarted: breakOutRoomStarted.value,
-        breakOutRoomEnded: breakOutRoomEnded.value,
-        hostNewRoom: hostNewRoom.value,
-        limitedBreakRoom: limitedBreakRoom.value,
-        mainRoomsLength: mainRoomsLength.value,
-        memberRoom: memberRoom.value,
-        isBreakoutRoomsModalVisible: isBreakoutRoomsModalVisible.value,
-        validated: validated,
-        device: device.value,
-        socket: socket.value,
-        localSocket: localSocket.value,
-        checkMediaPermission: !kIsWeb,
-        onWeb: kIsWeb,
+      // Breakout rooms
+      breakoutRooms: breakoutRooms.value,
+      currentRoomIndex: currentRoomIndex.value,
+      canStartBreakout: canStartBreakout.value,
+      breakOutRoomStarted: breakOutRoomStarted.value,
+      breakOutRoomEnded: breakOutRoomEnded.value,
+      hostNewRoom: hostNewRoom.value,
+      limitedBreakRoom: limitedBreakRoom.value,
+      mainRoomsLength: mainRoomsLength.value,
+      memberRoom: memberRoom.value,
+      isBreakoutRoomsModalVisible: isBreakoutRoomsModalVisible.value,
+      validated: validated,
+      device: device.value,
+      socket: socket.value,
+      localSocket: localSocket.value,
+      checkMediaPermission: !kIsWeb,
+      onWeb: kIsWeb,
 
-        // Update functions for Room Details
-        updateRoomName: updateRoomName,
-        updateMember: updateMember,
-        updateAdminPasscode: updateAdminPasscode,
-        updateYouAreCoHost: updateYouAreCoHost,
-        updateYouAreHost: updateYouAreHost,
-        updateIslevel: updateIslevel,
-        updateCoHost: updateCoHost,
-        updateCoHostResponsibility: updateCoHostResponsibility,
-        updateConfirmedToRecord: updateConfirmedToRecord,
-        updateMeetingDisplayType: updateMeetingDisplayType,
-        updateMeetingVideoOptimized: updateMeetingVideoOptimized,
-        updateEventType: updateEventType,
-        updateParticipants: updateParticipants,
-        updateParticipantsCounter: updateParticipantsCounter,
-        updateParticipantsFilter: updateParticipantsFilter,
+      // Update functions for Room Details
+      updateRoomName: updateRoomName,
+      updateMember: updateMember,
+      updateAdminPasscode: updateAdminPasscode,
+      updateYouAreCoHost: updateYouAreCoHost,
+      updateYouAreHost: updateYouAreHost,
+      updateIslevel: updateIslevel,
+      updateCoHost: updateCoHost,
+      updateCoHostResponsibility: updateCoHostResponsibility,
+      updateConfirmedToRecord: updateConfirmedToRecord,
+      updateMeetingDisplayType: updateMeetingDisplayType,
+      updateMeetingVideoOptimized: updateMeetingVideoOptimized,
+      updateEventType: updateEventType,
+      updateParticipants: updateParticipants,
+      updateParticipantsCounter: updateParticipantsCounter,
+      updateParticipantsFilter: updateParticipantsFilter,
 
-        // Update functions for more room details - media
-        updateConsumeSockets: updateConsumeSockets,
-        updateRtpCapabilities: updateRtpCapabilities,
-        updateRoomRecvIPs: updateRoomRecvIPs,
-        updateMeetingRoomParams: updateMeetingRoomParams,
-        updateItemPageLimit: updateItemPageLimit,
-        updateAudioOnlyRoom: updateAudioOnlyRoom,
-        updateAddForBasic: updateAddForBasic,
-        updateScreenPageLimit: updateScreenPageLimit,
-        updateShareScreenStarted: updateShareScreenStarted,
-        updateShared: updateShared,
-        updateTargetOrientation: updateTargetOrientation,
-        updateTargetResolution: updateTargetResolution,
-        updateTargetResolutionHost: updateTargetResolutionHost,
-        updateVidCons: updateVidCons,
-        updateFrameRate: updateFrameRate,
-        updateHParams: updateHParams,
-        updateVParams: updateVParams,
-        updateScreenParams: updateScreenParams,
-        updateAParams: updateAParams,
+      // Update functions for more room details - media
+      updateConsumeSockets: updateConsumeSockets,
+      updateRtpCapabilities: updateRtpCapabilities,
+      updateRoomRecvIPs: updateRoomRecvIPs,
+      updateMeetingRoomParams: updateMeetingRoomParams,
+      updateItemPageLimit: updateItemPageLimit,
+      updateAudioOnlyRoom: updateAudioOnlyRoom,
+      updateAddForBasic: updateAddForBasic,
+      updateScreenPageLimit: updateScreenPageLimit,
+      updateShareScreenStarted: updateShareScreenStarted,
+      updateShared: updateShared,
+      updateTargetOrientation: updateTargetOrientation,
+      updateTargetResolution: updateTargetResolution,
+      updateTargetResolutionHost: updateTargetResolutionHost,
+      updateVidCons: updateVidCons,
+      updateFrameRate: updateFrameRate,
+      updateHParams: updateHParams,
+      updateVParams: updateVParams,
+      updateScreenParams: updateScreenParams,
+      updateAParams: updateAParams,
 
-        // Update functions for more room details - recording
-        updateRecordingAudioPausesLimit: updateRecordingAudioPausesLimit,
-        updateRecordingAudioPausesCount: updateRecordingAudioPausesCount,
-        updateRecordingAudioSupport: updateRecordingAudioSupport,
-        updateRecordingAudioPeopleLimit: updateRecordingAudioPeopleLimit,
-        updateRecordingAudioParticipantsTimeLimit:
-            updateRecordingAudioParticipantsTimeLimit,
-        updateRecordingVideoPausesCount: updateRecordingVideoPausesCount,
-        updateRecordingVideoPausesLimit: updateRecordingVideoPausesLimit,
-        updateRecordingVideoSupport: updateRecordingVideoSupport,
-        updateRecordingVideoPeopleLimit: updateRecordingVideoPeopleLimit,
-        updateRecordingVideoParticipantsTimeLimit:
-            updateRecordingVideoParticipantsTimeLimit,
-        updateRecordingAllParticipantsSupport:
-            updateRecordingAllParticipantsSupport,
-        updateRecordingVideoParticipantsSupport:
-            updateRecordingVideoParticipantsSupport,
-        updateRecordingAllParticipantsFullRoomSupport:
-            updateRecordingAllParticipantsFullRoomSupport,
-        updateRecordingVideoParticipantsFullRoomSupport:
-            updateRecordingVideoParticipantsFullRoomSupport,
-        updateRecordingPreferredOrientation:
-            updateRecordingPreferredOrientation,
-        updateRecordingSupportForOtherOrientation:
-            updateRecordingSupportForOtherOrientation,
-        updateRecordingMultiFormatsSupport: updateRecordingMultiFormatsSupport,
+      // Update functions for more room details - recording
+      updateRecordingAudioPausesLimit: updateRecordingAudioPausesLimit,
+      updateRecordingAudioPausesCount: updateRecordingAudioPausesCount,
+      updateRecordingAudioSupport: updateRecordingAudioSupport,
+      updateRecordingAudioPeopleLimit: updateRecordingAudioPeopleLimit,
+      updateRecordingAudioParticipantsTimeLimit:
+          updateRecordingAudioParticipantsTimeLimit,
+      updateRecordingVideoPausesCount: updateRecordingVideoPausesCount,
+      updateRecordingVideoPausesLimit: updateRecordingVideoPausesLimit,
+      updateRecordingVideoSupport: updateRecordingVideoSupport,
+      updateRecordingVideoPeopleLimit: updateRecordingVideoPeopleLimit,
+      updateRecordingVideoParticipantsTimeLimit:
+          updateRecordingVideoParticipantsTimeLimit,
+      updateRecordingAllParticipantsSupport:
+          updateRecordingAllParticipantsSupport,
+      updateRecordingVideoParticipantsSupport:
+          updateRecordingVideoParticipantsSupport,
+      updateRecordingAllParticipantsFullRoomSupport:
+          updateRecordingAllParticipantsFullRoomSupport,
+      updateRecordingVideoParticipantsFullRoomSupport:
+          updateRecordingVideoParticipantsFullRoomSupport,
+      updateRecordingPreferredOrientation: updateRecordingPreferredOrientation,
+      updateRecordingSupportForOtherOrientation:
+          updateRecordingSupportForOtherOrientation,
+      updateRecordingMultiFormatsSupport: updateRecordingMultiFormatsSupport,
 
-        // Update functions for user recording params
-        updateUserRecordingParams: updateUserRecordingParams,
-        updateCanRecord: updateCanRecord,
-        updateStartReport: updateStartReport,
-        updateEndReport: updateEndReport,
-        updateRecordTimerInterval: updateRecordTimerInterval,
-        updateRecordStartTime: updateRecordStartTime,
-        updateRecordElapsedTime: updateRecordElapsedTime,
-        updateIsTimerRunning: updateIsTimerRunning,
-        updateCanPauseResume: updateCanPauseResume,
-        updateRecordChangeSeconds: updateRecordChangeSeconds,
-        updatePauseLimit: updatePauseLimit,
-        updatePauseRecordCount: updatePauseRecordCount,
-        updateCanLaunchRecord: updateCanLaunchRecord,
-        updateStopLaunchRecord: updateStopLaunchRecord,
+      // Update functions for user recording params
+      updateUserRecordingParams: updateUserRecordingParams,
+      updateCanRecord: updateCanRecord,
+      updateStartReport: updateStartReport,
+      updateEndReport: updateEndReport,
+      updateRecordTimerInterval: updateRecordTimerInterval,
+      updateRecordStartTime: updateRecordStartTime,
+      updateRecordElapsedTime: updateRecordElapsedTime,
+      updateIsTimerRunning: updateIsTimerRunning,
+      updateCanPauseResume: updateCanPauseResume,
+      updateRecordChangeSeconds: updateRecordChangeSeconds,
+      updatePauseLimit: updatePauseLimit,
+      updatePauseRecordCount: updatePauseRecordCount,
+      updateCanLaunchRecord: updateCanLaunchRecord,
+      updateStopLaunchRecord: updateStopLaunchRecord,
 
-        // Update function for participants all
-        updateParticipantsAll: updateParticipantsAll,
-        updateFirstAll: updateFirstAll,
-        updateUpdateMainWindow: updateUpdateMainWindow,
-        updateFirstRound: updateFirstRound,
-        updateLandScaped: updateLandScaped,
-        updateLockScreen: updateLockScreen,
-        updateScreenId: updateScreenId,
-        updateAllVideoStreams: updateAllVideoStreams,
-        updateNewLimitedStreams: updateNewLimitedStreams,
-        updateNewLimitedStreamsIDs: updateNewLimitedStreamsIDs,
-        updateActiveSounds: updateActiveSounds,
-        updateScreenShareIDStream: updateScreenShareIDStream,
-        updateScreenShareNameStream: updateScreenShareNameStream,
-        updateAdminIDStream: updateAdminIDStream,
-        updateAdminNameStream: updateAdminNameStream,
-        updateYouYouStream: updateYouYouStream,
-        updateYouYouStreamIDs: updateYouYouStreamIDs,
-        updateLocalStream: updateLocalStream,
-        updateRecordStarted: updateRecordStarted,
-        updateRecordResumed: updateRecordResumed,
-        updateRecordPaused: updateRecordPaused,
-        updateRecordStopped: updateRecordStopped,
-        updateAdminRestrictSetting: updateAdminRestrictSetting,
-        updateVideoRequestState: updateVideoRequestState,
-        updateVideoRequestTime: updateVideoRequestTime,
-        updateVideoAction: updateVideoAction,
-        updateLocalStreamVideo: updateLocalStreamVideo,
-        updateUserDefaultVideoInputDevice: updateUserDefaultVideoInputDevice,
-        updateCurrentFacingMode: updateCurrentFacingMode,
-        updateRefParticipants: updateRefParticipants,
-        updateDefVideoID: updateDefVideoID,
-        updateAllowed: updateAllowed,
-        updateDispActiveNames: updateDispActiveNames,
-        updatePDispActiveNames: updatePDispActiveNames,
-        updateActiveNames: updateActiveNames,
-        updatePrevActiveNames: updatePrevActiveNames,
-        updatePActiveNames: updatePActiveNames,
-        updateMembersReceived: updateMembersReceived,
-        updateDeferScreenReceived: updateDeferScreenReceived,
-        updateHostFirstSwitch: updateHostFirstSwitch,
-        updateMicAction: updateMicAction,
-        updateScreenAction: updateScreenAction,
-        updateChatAction: updateChatAction,
-        updateAudioRequestState: updateAudioRequestState,
-        updateScreenRequestState: updateScreenRequestState,
-        updateChatRequestState: updateChatRequestState,
-        updateAudioRequestTime: updateAudioRequestTime,
-        updateScreenRequestTime: updateScreenRequestTime,
-        updateChatRequestTime: updateChatRequestTime,
-        updateOldSoundIds: updateOldSoundIds,
-        updateHostLabel: updateHostLabel,
-        updateMainScreenFilled: updateMainScreenFilled,
-        updateLocalStreamScreen: updateLocalStreamScreen,
-        updateScreenAlreadyOn: updateScreenAlreadyOn,
-        updateChatAlreadyOn: updateChatAlreadyOn,
-        updateRedirectURL: updateRedirectURL,
-        updateOldAllStreams: updateOldAllStreams,
-        updateAdminVidID: updateAdminVidID,
-        updateStreamNames: updateStreamNames,
-        updateNonAlVideoStreams: updateNonAlVideoStreams,
-        updateSortAudioLoudness: updateSortAudioLoudness,
-        updateAudioDecibels: updateAudioDecibels,
-        updateMixedAlVideoStreams: updateMixedAlVideoStreams,
-        updateNonAlVideoStreamsMuted: updateNonAlVideoStreamsMuted,
-        updatePaginatedStreams: updatePaginatedStreams,
-        updateLocalStreamAudio: updateLocalStreamAudio,
-        updateDefAudioID: updateDefAudioID,
-        updateUserDefaultAudioInputDevice: updateUserDefaultAudioInputDevice,
-        updateUserDefaultAudioOutputDevice: updateUserDefaultAudioOutputDevice,
-        updateIsSpeakerphoneOn: updateIsSpeakerphoneOn,
-        updatePrevAudioInputDevice: updatePrevAudioInputDevice,
-        updatePrevVideoInputDevice: updatePrevVideoInputDevice,
-        updateAudioPaused: updateAudioPaused,
-        updateMainScreenPerson: updateMainScreenPerson,
-        updateAdminOnMainScreen: updateAdminOnMainScreen,
-        updateScreenStates: updateScreenStates,
-        updatePrevScreenStates: updatePrevScreenStates,
-        updateUpdateDateState: updateUpdateDateState,
-        updateLastUpdate: updateLastUpdate,
-        updateNForReadjustRecord: updateNForReadjustRecord,
-        updateFixedPageLimit: updateFixedPageLimit,
-        updateRemoveAltGrid: updateRemoveAltGrid,
-        updateNForReadjust: updateNForReadjust,
-        updateLastReorderTime: updateLastReorderTime,
-        updateAudStreamNames: updateAudStreamNames,
-        updateCurrentUserPage: updateCurrentUserPage,
-        updatePrevFacingMode: updatePrevFacingMode,
-        updateMainHeightWidth: updateMainHeightWidth,
-        updatePrevMainHeightWidth: updatePrevMainHeightWidth,
-        updatePrevDoPaginate: updatePrevDoPaginate,
-        updateDoPaginate: updateDoPaginate,
-        updateShareEnded: updateShareEnded,
-        updateLStreams: updateLStreams,
-        updateChatRefStreams: updateChatRefStreams,
-        updateControlHeight: updateControlHeight,
-        updateIsWideScreen: updateIsWideScreen,
-        updateIsMediumScreen: updateIsMediumScreen,
-        updateIsSmallScreen: updateIsSmallScreen,
-        updateAddGrid: updateAddGrid,
-        updateAddAltGrid: updateAddAltGrid,
-        updateGridRows: updateGridRows,
-        updateGridCols: updateGridCols,
-        updateAltGridRows: updateAltGridRows,
-        updateAltGridCols: updateAltGridCols,
-        updateNumberPages: updateNumberPages,
-        updateCurrentStreams: updateCurrentStreams,
-        updateShowMiniView: updateShowMiniView,
-        updateNStream: updateNStream,
-        updateDeferReceive: updateDeferReceive,
-        updateAllAudioStreams: updateAllAudioStreams,
-        updateRemoteScreenStream: updateRemoteScreenStream,
-        updateScreenProducer: updateScreenProducer,
-        updateLocalScreenProducer: updateLocalScreenProducer,
-        updateGotAllVids: updateGotAllVids,
-        updatePaginationHeightWidth: updatePaginationHeightWidth,
-        updatePaginationDirection: updatePaginationDirection,
-        updateGridSizes: updateGridSizes,
-        updateScreenForceFullDisplay: updateScreenForceFullDisplay,
-        updateMainGridStream: updateMainGridStream,
-        updateOtherGridStreams: updateOtherGridStreams,
-        updateAudioOnlyStreams: updateAudioOnlyStreams,
-        updateVideoInputs: updateVideoInputs,
-        updateAudioInputs: updateAudioInputs,
-        updateMeetingProgressTime: updateMeetingProgressTime,
-        updateMeetingElapsedTime: updateMeetingElapsedTime,
+      // Update function for participants all
+      updateParticipantsAll: updateParticipantsAll,
+      updateFirstAll: updateFirstAll,
+      updateUpdateMainWindow: updateUpdateMainWindow,
+      updateFirstRound: updateFirstRound,
+      updateLandScaped: updateLandScaped,
+      updateLockScreen: updateLockScreen,
+      updateScreenId: updateScreenId,
+      updateAllVideoStreams: updateAllVideoStreams,
+      updateNewLimitedStreams: updateNewLimitedStreams,
+      updateNewLimitedStreamsIDs: updateNewLimitedStreamsIDs,
+      updateActiveSounds: updateActiveSounds,
+      updateScreenShareIDStream: updateScreenShareIDStream,
+      updateScreenShareNameStream: updateScreenShareNameStream,
+      updateAdminIDStream: updateAdminIDStream,
+      updateAdminNameStream: updateAdminNameStream,
+      updateYouYouStream: updateYouYouStream,
+      updateYouYouStreamIDs: updateYouYouStreamIDs,
+      updateLocalStream: updateLocalStream,
+      updateRecordStarted: updateRecordStarted,
+      updateRecordResumed: updateRecordResumed,
+      updateRecordPaused: updateRecordPaused,
+      updateRecordStopped: updateRecordStopped,
+      updateAdminRestrictSetting: updateAdminRestrictSetting,
+      updateVideoRequestState: updateVideoRequestState,
+      updateVideoRequestTime: updateVideoRequestTime,
+      updateVideoAction: updateVideoAction,
+      updateLocalStreamVideo: updateLocalStreamVideo,
+      updateUserDefaultVideoInputDevice: updateUserDefaultVideoInputDevice,
+      updateCurrentFacingMode: updateCurrentFacingMode,
+      updateRefParticipants: updateRefParticipants,
+      updateDefVideoID: updateDefVideoID,
+      updateAllowed: updateAllowed,
+      updateDispActiveNames: updateDispActiveNames,
+      updatePDispActiveNames: updatePDispActiveNames,
+      updateActiveNames: updateActiveNames,
+      updatePrevActiveNames: updatePrevActiveNames,
+      updatePActiveNames: updatePActiveNames,
+      updateMembersReceived: updateMembersReceived,
+      updateDeferScreenReceived: updateDeferScreenReceived,
+      updateHostFirstSwitch: updateHostFirstSwitch,
+      updateMicAction: updateMicAction,
+      updateScreenAction: updateScreenAction,
+      updateChatAction: updateChatAction,
+      updateAudioRequestState: updateAudioRequestState,
+      updateScreenRequestState: updateScreenRequestState,
+      updateChatRequestState: updateChatRequestState,
+      updateAudioRequestTime: updateAudioRequestTime,
+      updateScreenRequestTime: updateScreenRequestTime,
+      updateChatRequestTime: updateChatRequestTime,
+      updateOldSoundIds: updateOldSoundIds,
+      updateHostLabel: updateHostLabel,
+      updateMainScreenFilled: updateMainScreenFilled,
+      updateLocalStreamScreen: updateLocalStreamScreen,
+      updateScreenAlreadyOn: updateScreenAlreadyOn,
+      updateChatAlreadyOn: updateChatAlreadyOn,
+      updateRedirectURL: updateRedirectURL,
+      updateOldAllStreams: updateOldAllStreams,
+      updateAdminVidID: updateAdminVidID,
+      updateStreamNames: updateStreamNames,
+      updateNonAlVideoStreams: updateNonAlVideoStreams,
+      updateSortAudioLoudness: updateSortAudioLoudness,
+      updateAudioDecibels: updateAudioDecibels,
+      updateMixedAlVideoStreams: updateMixedAlVideoStreams,
+      updateNonAlVideoStreamsMuted: updateNonAlVideoStreamsMuted,
+      updatePaginatedStreams: updatePaginatedStreams,
+      updateLocalStreamAudio: updateLocalStreamAudio,
+      updateDefAudioID: updateDefAudioID,
+      updateUserDefaultAudioInputDevice: updateUserDefaultAudioInputDevice,
+      updateUserDefaultAudioOutputDevice: updateUserDefaultAudioOutputDevice,
+      updateIsSpeakerphoneOn: updateIsSpeakerphoneOn,
+      updatePrevAudioInputDevice: updatePrevAudioInputDevice,
+      updatePrevVideoInputDevice: updatePrevVideoInputDevice,
+      updateAudioPaused: updateAudioPaused,
+      updateMainScreenPerson: updateMainScreenPerson,
+      updateAdminOnMainScreen: updateAdminOnMainScreen,
+      updateScreenStates: updateScreenStates,
+      updatePrevScreenStates: updatePrevScreenStates,
+      updateUpdateDateState: updateUpdateDateState,
+      updateLastUpdate: updateLastUpdate,
+      updateNForReadjustRecord: updateNForReadjustRecord,
+      updateFixedPageLimit: updateFixedPageLimit,
+      updateRemoveAltGrid: updateRemoveAltGrid,
+      updateNForReadjust: updateNForReadjust,
+      updateLastReorderTime: updateLastReorderTime,
+      updateAudStreamNames: updateAudStreamNames,
+      updateCurrentUserPage: updateCurrentUserPage,
+      updatePrevFacingMode: updatePrevFacingMode,
+      updateMainHeightWidth: updateMainHeightWidth,
+      updatePrevMainHeightWidth: updatePrevMainHeightWidth,
+      updatePrevDoPaginate: updatePrevDoPaginate,
+      updateDoPaginate: updateDoPaginate,
+      updateShareEnded: updateShareEnded,
+      updateLStreams: updateLStreams,
+      updateChatRefStreams: updateChatRefStreams,
+      updateControlHeight: updateControlHeight,
+      updateIsWideScreen: updateIsWideScreen,
+      updateIsMediumScreen: updateIsMediumScreen,
+      updateIsSmallScreen: updateIsSmallScreen,
+      updateAddGrid: updateAddGrid,
+      updateAddAltGrid: updateAddAltGrid,
+      updateGridRows: updateGridRows,
+      updateGridCols: updateGridCols,
+      updateAltGridRows: updateAltGridRows,
+      updateAltGridCols: updateAltGridCols,
+      updateNumberPages: updateNumberPages,
+      updateCurrentStreams: updateCurrentStreams,
+      updateShowMiniView: updateShowMiniView,
+      updateNStream: updateNStream,
+      updateDeferReceive: updateDeferReceive,
+      updateAllAudioStreams: updateAllAudioStreams,
+      updateRemoteScreenStream: updateRemoteScreenStream,
+      updateScreenProducer: updateScreenProducer,
+      updateLocalScreenProducer: updateLocalScreenProducer,
+      updateGotAllVids: updateGotAllVids,
+      updatePaginationHeightWidth: updatePaginationHeightWidth,
+      updatePaginationDirection: updatePaginationDirection,
+      updateGridSizes: updateGridSizes,
+      updateScreenForceFullDisplay: updateScreenForceFullDisplay,
+      updateMainGridStream: updateMainGridStream,
+      updateOtherGridStreams: updateOtherGridStreams,
+      updateAudioOnlyStreams: updateAudioOnlyStreams,
+      updateVideoInputs: updateVideoInputs,
+      updateAudioInputs: updateAudioInputs,
+      updateMeetingProgressTime: updateMeetingProgressTime,
+      updateMeetingElapsedTime: updateMeetingElapsedTime,
 
-        // Update functions for messages
-        updateMessages: updateMessages,
-        updateStartDirectMessage: updateStartDirectMessage,
-        updateDirectMessageDetails: updateDirectMessageDetails,
-        updateShowMessagesBadge: updateShowMessagesBadge,
+      // Update functions for messages
+      updateMessages: updateMessages,
+      updateStartDirectMessage: updateStartDirectMessage,
+      updateDirectMessageDetails: updateDirectMessageDetails,
+      updateShowMessagesBadge: updateShowMessagesBadge,
 
-        // Event settings
-        updateAudioSetting: updateAudioSetting,
-        updateVideoSetting: updateVideoSetting,
-        updateScreenshareSetting: updateScreenshareSetting,
-        updateChatSetting: updateChatSetting,
-        updatePermissionConfig: updatePermissionConfig,
-        updatePanelists: updatePanelists,
-        updatePanelistFocusChanged: updatePanelistFocusChanged,
-        updatePanelistsFocused: updatePanelistsFocused,
-        updateMuteOthersMic: updateMuteOthersMic,
-        updateMuteOthersCamera: updateMuteOthersCamera,
+      // Event settings
+      updateAudioSetting: updateAudioSetting,
+      updateVideoSetting: updateVideoSetting,
+      updateScreenshareSetting: updateScreenshareSetting,
+      updateChatSetting: updateChatSetting,
+      updatePermissionConfig: updatePermissionConfig,
+      updatePanelists: updatePanelists,
+      updatePanelistFocusChanged: updatePanelistFocusChanged,
+      updatePanelistsFocused: updatePanelistsFocused,
+      updateMuteOthersMic: updateMuteOthersMic,
+      updateMuteOthersCamera: updateMuteOthersCamera,
 
-        // Display settings
-        updateAutoWave: updateAutoWave,
-        updateForceFullDisplay: updateForceFullDisplay,
-        updatePrevForceFullDisplay: updatePrevForceFullDisplay,
-        updateSelfViewForceFull: updateSelfViewForceFull,
-        updatePrevMeetingDisplayType: updatePrevMeetingDisplayType,
+      // Display settings
+      updateAutoWave: updateAutoWave,
+      updateForceFullDisplay: updateForceFullDisplay,
+      updatePrevForceFullDisplay: updatePrevForceFullDisplay,
+      updateSelfViewForceFull: updateSelfViewForceFull,
+      updatePrevMeetingDisplayType: updatePrevMeetingDisplayType,
 
-        // Waiting room
-        updateWaitingRoomFilter: updateWaitingRoomFilter,
-        updateWaitingRoomList: updateWaitingRoomList,
-        updateWaitingRoomCounter: updateWaitingRoomCounter,
+      // Waiting room
+      updateWaitingRoomFilter: updateWaitingRoomFilter,
+      updateWaitingRoomList: updateWaitingRoomList,
+      updateWaitingRoomCounter: updateWaitingRoomCounter,
 
-        // Requests
-        updateRequestFilter: updateRequestFilter,
-        updateRequestList: updateRequestList,
-        updateRequestCounter: updateRequestCounter,
+      // Requests
+      updateRequestFilter: updateRequestFilter,
+      updateRequestList: updateRequestList,
+      updateRequestCounter: updateRequestCounter,
 
-        // Total requests and waiting room
-        updateTotalReqWait: updateTotalReqWait,
+      // Total requests and waiting room
+      updateTotalReqWait: updateTotalReqWait,
 
-        // Show Alert modal
-        updateIsMenuModalVisible: updateIsMenuModalVisible,
-        updateIsRecordingModalVisible: updateIsRecordingModalVisible,
-        updateIsSettingsModalVisible: updateIsSettingsModalVisible,
-        updateIsRequestsModalVisible: updateIsRequestsModalVisible,
-        updateIsWaitingModalVisible: updateIsWaitingModalVisible,
-        updateIsCoHostModalVisible: updateIsCoHostModalVisible,
-        updateIsMediaSettingsModalVisible: updateIsMediaSettingsModalVisible,
-        updateIsDisplaySettingsModalVisible:
-            updateIsDisplaySettingsModalVisible,
+      // Show Alert modal
+      updateIsMenuModalVisible: updateIsMenuModalVisible,
+      updateIsRecordingModalVisible: updateIsRecordingModalVisible,
+      updateIsSettingsModalVisible: updateIsSettingsModalVisible,
+      updateIsRequestsModalVisible: updateIsRequestsModalVisible,
+      updateIsWaitingModalVisible: updateIsWaitingModalVisible,
+      updateIsCoHostModalVisible: updateIsCoHostModalVisible,
+      updateIsMediaSettingsModalVisible: updateIsMediaSettingsModalVisible,
+      updateIsDisplaySettingsModalVisible: updateIsDisplaySettingsModalVisible,
 
-        // Other Modals
-        updateIsParticipantsModalVisible: updateIsParticipantsModalVisible,
-        updateIsMessagesModalVisible: updateIsMessagesModalVisible,
-        updateIsConfirmExitModalVisible: updateIsConfirmExitModalVisible,
-        updateIsConfirmHereModalVisible: updateIsConfirmHereModalVisible,
-        updateIsLoadingModalVisible: updateIsLoadingModalVisible,
+      // Other Modals
+      updateIsParticipantsModalVisible: updateIsParticipantsModalVisible,
+      updateIsMessagesModalVisible: updateIsMessagesModalVisible,
+      updateIsConfirmExitModalVisible: updateIsConfirmExitModalVisible,
+      updateIsConfirmHereModalVisible: updateIsConfirmHereModalVisible,
+      updateIsLoadingModalVisible: updateIsLoadingModalVisible,
 
-        // Recording Options
-        updateRecordingMediaOptions: updateRecordingMediaOptions,
-        updateRecordingAudioOptions: updateRecordingAudioOptions,
-        updateRecordingVideoOptions: updateRecordingVideoOptions,
-        updateRecordingVideoType: updateRecordingVideoType,
-        updateRecordingVideoOptimized: updateRecordingVideoOptimized,
-        updateRecordingDisplayType: updateRecordingDisplayType,
-        updateRecordingAddHLS: updateRecordingAddHLS,
-        updateRecordingAddText: updateRecordingAddText,
-        updateRecordingCustomText: updateRecordingCustomText,
-        updateRecordingCustomTextPosition: updateRecordingCustomTextPosition,
-        updateRecordingCustomTextColor: updateRecordingCustomTextColor,
-        updateRecordingNameTags: updateRecordingNameTags,
-        updateRecordingBackgroundColor: updateRecordingBackgroundColor,
-        updateRecordingNameTagsColor: updateRecordingNameTagsColor,
-        updateRecordingOrientationVideo: updateRecordingOrientationVideo,
-        updateClearedToResume: updateClearedToResume,
-        updateClearedToRecord: updateClearedToRecord,
-        updateRecordState: updateRecordState,
-        updateShowRecordButtons: updateShowRecordButtons,
-        updateRecordingProgressTime: updateRecordingProgressTime,
-        updateAudioSwitching: updateAudioSwitching,
-        updateVideoSwitching: updateVideoSwitching,
+      // Recording Options
+      updateRecordingMediaOptions: updateRecordingMediaOptions,
+      updateRecordingAudioOptions: updateRecordingAudioOptions,
+      updateRecordingVideoOptions: updateRecordingVideoOptions,
+      updateRecordingVideoType: updateRecordingVideoType,
+      updateRecordingVideoOptimized: updateRecordingVideoOptimized,
+      updateRecordingDisplayType: updateRecordingDisplayType,
+      updateRecordingAddHLS: updateRecordingAddHLS,
+      updateRecordingAddText: updateRecordingAddText,
+      updateRecordingCustomText: updateRecordingCustomText,
+      updateRecordingCustomTextPosition: updateRecordingCustomTextPosition,
+      updateRecordingCustomTextColor: updateRecordingCustomTextColor,
+      updateRecordingNameTags: updateRecordingNameTags,
+      updateRecordingBackgroundColor: updateRecordingBackgroundColor,
+      updateRecordingNameTagsColor: updateRecordingNameTagsColor,
+      updateRecordingOrientationVideo: updateRecordingOrientationVideo,
+      updateClearedToResume: updateClearedToResume,
+      updateClearedToRecord: updateClearedToRecord,
+      updateRecordState: updateRecordState,
+      updateShowRecordButtons: updateShowRecordButtons,
+      updateRecordingProgressTime: updateRecordingProgressTime,
+      updateAudioSwitching: updateAudioSwitching,
+      updateVideoSwitching: updateVideoSwitching,
 
-        // Media states
-        updateVideoAlreadyOn: updateVideoAlreadyOn,
-        updateAudioAlreadyOn: updateAudioAlreadyOn,
-        updateComponentSizes: updateComponentSizes,
+      // Media states
+      updateVideoAlreadyOn: updateVideoAlreadyOn,
+      updateAudioAlreadyOn: updateAudioAlreadyOn,
+      updateComponentSizes: updateComponentSizes,
 
-        // Permissions
-        updateHasCameraPermission: updateHasCameraPermission,
-        updateHasAudioPermission: updateHasAudioPermission,
+      // Permissions
+      updateHasCameraPermission: updateHasCameraPermission,
+      updateHasAudioPermission: updateHasAudioPermission,
 
-        // Transports
-        updateTransportCreated: updateTransportCreated,
-        updateLocalTransportCreated: updateLocalTransportCreated,
-        updateTransportCreatedVideo: updateTransportCreatedVideo,
-        updateTransportCreatedAudio: updateTransportCreatedAudio,
-        updateTransportCreatedScreen: updateTransportCreatedScreen,
-        updateProducerTransport: updateProducerTransport,
-        updateLocalProducerTransport: updateLocalProducerTransport,
-        updateVideoProducer: updateVideoProducer,
-        updateLocalVideoProducer: updateLocalVideoProducer,
-        updateParams: updateParams,
-        updateVideoParams: updateVideoParams,
-        updateAudioParams: updateAudioParams,
-        updateAudioProducer: updateAudioProducer,
-        updateAudioLevel: updateAudioLevel,
-        updateLocalAudioProducer: updateLocalAudioProducer,
-        updateConsumerTransports: updateConsumerTransports,
-        updateConsumingTransports: updateConsumingTransports,
+      // Transports
+      updateTransportCreated: updateTransportCreated,
+      updateLocalTransportCreated: updateLocalTransportCreated,
+      updateTransportCreatedVideo: updateTransportCreatedVideo,
+      updateTransportCreatedAudio: updateTransportCreatedAudio,
+      updateTransportCreatedScreen: updateTransportCreatedScreen,
+      updateProducerTransport: updateProducerTransport,
+      updateLocalProducerTransport: updateLocalProducerTransport,
+      updateVideoProducer: updateVideoProducer,
+      updateLocalVideoProducer: updateLocalVideoProducer,
+      updateParams: updateParams,
+      updateVideoParams: updateVideoParams,
+      updateAudioParams: updateAudioParams,
+      updateAudioProducer: updateAudioProducer,
+      updateAudioLevel: updateAudioLevel,
+      updateLocalAudioProducer: updateLocalAudioProducer,
+      updateConsumerTransports: updateConsumerTransports,
+      updateConsumingTransports: updateConsumingTransports,
 
-        //polls
-        updatePolls: updatePolls,
-        updatePoll: updatePoll,
-        updateIsPollModalVisible: updateIsPollModalVisible,
+      //polls
+      updatePolls: updatePolls,
+      updatePoll: updatePoll,
+      updateIsPollModalVisible: updateIsPollModalVisible,
 
-        //breakout rooms
-        updateBreakoutRooms: updateBreakoutRooms,
-        updateCurrentRoomIndex: updateCurrentRoomIndex,
-        updateCanStartBreakout: updateCanStartBreakout,
-        updateBreakOutRoomStarted: updateBreakOutRoomStarted,
-        updateBreakOutRoomEnded: updateBreakOutRoomEnded,
-        updateHostNewRoom: updateHostNewRoom,
-        updateLimitedBreakRoom: updateLimitedBreakRoom,
-        updateMainRoomsLength: updateMainRoomsLength,
-        updateMemberRoom: updateMemberRoom,
-        updateIsBreakoutRoomsModalVisible: updateIsBreakoutRoomsModalVisible,
-        checkOrientation: checkOrientation,
-        roomData: ResponseJoinRoom(),
-        updateDevice: updateDevice,
-        updateSocket: updateSocket,
-        updateValidated: updateValidated,
-        showAlert: showAlert,
-        customImage: customImage.value,
-        selectedImage: selectedImage.value,
-        segmentVideo: segmentVideo.value,
-        selfieSegmentation: selfieSegmentation.value,
-        pauseSegmentation: pauseSegmentation.value,
-        processedStream: processedStream.value,
-        keepBackground: keepBackground.value,
-        backgroundHasChanged: backgroundHasChanged.value,
-        virtualStream: virtualStream.value,
-        mainCanvas: mainCanvas.value,
-        prevKeepBackground: prevKeepBackground.value,
-        appliedBackground: appliedBackground.value,
-        isBackgroundModalVisible: isBackgroundModalVisible.value,
-        autoClickBackground: autoClickBackground.value,
-        selectedBackground: selectedBackground.value,
-        onBackgroundApply: handleBackgroundApply,
+      //breakout rooms
+      updateBreakoutRooms: updateBreakoutRooms,
+      updateCurrentRoomIndex: updateCurrentRoomIndex,
+      updateCanStartBreakout: updateCanStartBreakout,
+      updateBreakOutRoomStarted: updateBreakOutRoomStarted,
+      updateBreakOutRoomEnded: updateBreakOutRoomEnded,
+      updateHostNewRoom: updateHostNewRoom,
+      updateLimitedBreakRoom: updateLimitedBreakRoom,
+      updateMainRoomsLength: updateMainRoomsLength,
+      updateMemberRoom: updateMemberRoom,
+      updateIsBreakoutRoomsModalVisible: updateIsBreakoutRoomsModalVisible,
+      checkOrientation: checkOrientation,
+      roomData: ResponseJoinRoom(),
+      updateDevice: updateDevice,
+      updateSocket: updateSocket,
+      updateValidated: updateValidated,
+      showAlert: showAlert,
+      customImage: customImage.value,
+      selectedImage: selectedImage.value,
+      segmentVideo: segmentVideo.value,
+      selfieSegmentation: selfieSegmentation.value,
+      pauseSegmentation: pauseSegmentation.value,
+      processedStream: processedStream.value,
+      keepBackground: keepBackground.value,
+      backgroundHasChanged: backgroundHasChanged.value,
+      virtualStream: virtualStream.value,
+      mainCanvas: mainCanvas.value,
+      prevKeepBackground: prevKeepBackground.value,
+      appliedBackground: appliedBackground.value,
+      isBackgroundModalVisible: isBackgroundModalVisible.value,
+      autoClickBackground: autoClickBackground.value,
+      selectedBackground: selectedBackground.value,
+      onBackgroundApply: handleBackgroundApply,
 
-        // Update functions
-        updateCustomImage: updateCustomImage,
-        updateSelectedImage: updateSelectedImage,
-        updateSegmentVideo: updateSegmentVideo,
-        updateSelfieSegmentation: updateSelfieSegmentation,
-        updatePauseSegmentation: updatePauseSegmentation,
-        updateProcessedStream: updateProcessedStream,
-        updateKeepBackground: updateKeepBackground,
-        updateBackgroundHasChanged: updateBackgroundHasChanged,
-        updateVirtualStream: updateVirtualStream,
-        updateMainCanvas: updateMainCanvas,
-        updatePrevKeepBackground: updatePrevKeepBackground,
-        updateAppliedBackground: updateAppliedBackground,
-        updateIsBackgroundModalVisible: updateIsBackgroundModalVisible,
-        updateAutoClickBackground: updateAutoClickBackground,
-        updateSelectedBackground: updateSelectedBackground,
+      // Update functions
+      updateCustomImage: updateCustomImage,
+      updateSelectedImage: updateSelectedImage,
+      updateSegmentVideo: updateSegmentVideo,
+      updateSelfieSegmentation: updateSelfieSegmentation,
+      updatePauseSegmentation: updatePauseSegmentation,
+      updateProcessedStream: updateProcessedStream,
+      updateKeepBackground: updateKeepBackground,
+      updateBackgroundHasChanged: updateBackgroundHasChanged,
+      updateVirtualStream: updateVirtualStream,
+      updateMainCanvas: updateMainCanvas,
+      updatePrevKeepBackground: updatePrevKeepBackground,
+      updateAppliedBackground: updateAppliedBackground,
+      updateIsBackgroundModalVisible: updateIsBackgroundModalVisible,
+      updateAutoClickBackground: updateAutoClickBackground,
+      updateSelectedBackground: updateSelectedBackground,
 
-        // Theme support
-        isDarkModeValue: isDarkMode.value,
-        updateIsDarkModeValue: (val) => isDarkMode.value = val,
+      // Theme support
+      isDarkModeValue: isDarkMode.value,
+      updateIsDarkModeValue: (val) => isDarkMode.value = val,
 
-        // Whiteboard-related variables
-        whiteboardUsers: whiteboardUsers.value,
-        currentWhiteboardIndex: currentWhiteboardIndex.value,
-        canStartWhiteboard: canStartWhiteboard.value,
-        whiteboardStarted: whiteboardStarted.value,
-        whiteboardEnded: whiteboardEnded.value,
-        whiteboardLimit: whiteboardLimit.value,
-        isWhiteboardModalVisible: isWhiteboardModalVisible.value,
-        isConfigureWhiteboardModalVisible:
-            isConfigureWhiteboardModalVisible.value,
-        shapes: shapes.value,
-        useImageBackground: useImageBackground.value,
-        redoStack: redoStack.value,
-        undoStack: undoStack.value,
-        canvasStream: canvasStream.value,
-        canvasWhiteboard: canvasWhiteboard.value,
+      // Whiteboard-related variables
+      whiteboardUsers: whiteboardUsers.value,
+      currentWhiteboardIndex: currentWhiteboardIndex.value,
+      canStartWhiteboard: canStartWhiteboard.value,
+      whiteboardStarted: whiteboardStarted.value,
+      whiteboardEnded: whiteboardEnded.value,
+      whiteboardLimit: whiteboardLimit.value,
+      isWhiteboardModalVisible: isWhiteboardModalVisible.value,
+      isConfigureWhiteboardModalVisible:
+          isConfigureWhiteboardModalVisible.value,
+      shapes: shapes.value,
+      useImageBackground: useImageBackground.value,
+      redoStack: redoStack.value,
+      undoStack: undoStack.value,
+      canvasStream: canvasStream.value,
+      canvasWhiteboard: canvasWhiteboard.value,
 
-        // Screenboard-related variables
-        canvasScreenboard: canvasScreenboard.value,
-        processedScreenStream: processedScreenStream.value,
-        annotateScreenStream: annotateScreenStream.value,
-        mainScreenCanvas: mainScreenCanvas.value,
-        isScreenboardModalVisible: isScreenboardModalVisible.value,
+      // Screenboard-related variables
+      canvasScreenboard: canvasScreenboard.value,
+      processedScreenStream: processedScreenStream.value,
+      annotateScreenStream: annotateScreenStream.value,
+      mainScreenCanvas: mainScreenCanvas.value,
+      isScreenboardModalVisible: isScreenboardModalVisible.value,
 
-        // Whiteboard update functions
-        updateWhiteboardUsers: updateWhiteboardUsers,
-        updateCurrentWhiteboardIndex: updateCurrentWhiteboardIndex,
-        updateCanStartWhiteboard: updateCanStartWhiteboard,
-        updateWhiteboardStarted: updateWhiteboardStarted,
-        updateWhiteboardEnded: updateWhiteboardEnded,
-        updateWhiteboardLimit: updateWhiteboardLimit,
-        updateIsWhiteboardModalVisible: updateIsWhiteboardModalVisible,
-        updateIsConfigureWhiteboardModalVisible:
-            updateIsConfigureWhiteboardModalVisible,
-        updateShapes: updateShapes,
-        updateUseImageBackground: updateUseImageBackground,
-        updateRedoStack: updateRedoStack,
-        updateUndoStack: updateUndoStack,
-        updateCanvasStream: updateCanvasStream,
-        updateCanvasWhiteboard: updateCanvasWhiteboard,
-        updateCanvasScreenboard: updateCanvasScreenboard,
-        updateProcessedScreenStream: updateProcessedScreenStream,
-        updateAnnotateScreenStream: updateAnnotateScreenStream,
-        updateMainScreenCanvas: updateMainScreenCanvas,
-        updateIsScreenboardModalVisible: updateIsScreenboardModalVisible,
+      // Whiteboard update functions
+      updateWhiteboardUsers: updateWhiteboardUsers,
+      updateCurrentWhiteboardIndex: updateCurrentWhiteboardIndex,
+      updateCanStartWhiteboard: updateCanStartWhiteboard,
+      updateWhiteboardStarted: updateWhiteboardStarted,
+      updateWhiteboardEnded: updateWhiteboardEnded,
+      updateWhiteboardLimit: updateWhiteboardLimit,
+      updateIsWhiteboardModalVisible: updateIsWhiteboardModalVisible,
+      updateIsConfigureWhiteboardModalVisible:
+          updateIsConfigureWhiteboardModalVisible,
+      updateShapes: updateShapes,
+      updateUseImageBackground: updateUseImageBackground,
+      updateRedoStack: updateRedoStack,
+      updateUndoStack: updateUndoStack,
+      updateCanvasStream: updateCanvasStream,
+      updateCanvasWhiteboard: updateCanvasWhiteboard,
+      updateCanvasScreenboard: updateCanvasScreenboard,
+      updateProcessedScreenStream: updateProcessedScreenStream,
+      updateAnnotateScreenStream: updateAnnotateScreenStream,
+      updateMainScreenCanvas: updateMainScreenCanvas,
+      updateIsScreenboardModalVisible: updateIsScreenboardModalVisible,
 
-        // Custom builders
-        customVideoCard: widget.options.customVideoCard,
-        customAudioCard: widget.options.customAudioCard,
-        customMiniCard: widget.options.customMiniCard,
-        miniAudioPlayerComponent: _miniAudioPlayerHandler,
+      // Custom builders
+      customVideoCard: widget.options.customVideoCard,
+      customAudioCard: widget.options.customAudioCard,
+      customMiniCard: widget.options.customMiniCard,
+      miniAudioPlayerComponent: _miniAudioPlayerHandler,
 
-        // Custom builder update functions
-        updateCustomVideoCard: updateCustomVideoCard,
-        updateCustomAudioCard: updateCustomAudioCard,
-        updateCustomMiniCard: updateCustomMiniCard,
-        // Translation
-        listenerTranslationPreferences: listenerTranslationPreferences,
-        listenerTranslationOverrides: listenerTranslationOverrides,
-        translationProducerMap: translationProducerMap,
-        speakerTranslationStates: speakerTranslationStates,
-        activeTranslationProducerIds: activeTranslationProducerIds,
-        translationSubscriptions: translationSubscriptions,
-        addTranslationStream: addTranslationStream,
-        removeTranslationStream: removeTranslationStream,
-        updateListenerTranslationPreferences:
-            updateListenerTranslationPreferences,
-        updateListenerTranslationOverrides: updateListenerTranslationOverrides,
-        updateTranslationProducerMap: updateTranslationProducerMap,
-        updateSpeakerTranslationStates: updateSpeakerTranslationStates,
+      // Custom builder update functions
+      updateCustomVideoCard: updateCustomVideoCard,
+      updateCustomAudioCard: updateCustomAudioCard,
+      updateCustomMiniCard: updateCustomMiniCard,
+      // Translation
+      listenerTranslationPreferences: listenerTranslationPreferences,
+      listenerTranslationOverrides: listenerTranslationOverrides,
+      translationProducerMap: translationProducerMap,
+      speakerTranslationStates: speakerTranslationStates,
+      activeTranslationProducerIds: activeTranslationProducerIds,
+      translationSubscriptions: translationSubscriptions,
+      addTranslationStream: addTranslationStream,
+      removeTranslationStream: removeTranslationStream,
+      updateListenerTranslationPreferences:
+          updateListenerTranslationPreferences,
+      updateListenerTranslationOverrides: updateListenerTranslationOverrides,
+      updateTranslationProducerMap: updateTranslationProducerMap,
+      updateSpeakerTranslationStates: updateSpeakerTranslationStates,
 
-        // Live subtitles
-        showSubtitlesOnCards: showSubtitlesOnCards.value,
-        showSubtitlesOnCardsNotifier: showSubtitlesOnCards,
-        liveSubtitles: liveSubtitles,
-        updateShowSubtitlesOnCards: updateShowSubtitlesOnCards,
-        getUpdatedAllParams: () => mediasfuParameters);
+      // Live subtitles
+      showSubtitlesOnCards: showSubtitlesOnCards.value,
+      showSubtitlesOnCardsNotifier: showSubtitlesOnCards,
+      liveSubtitles: liveSubtitles,
+      updateShowSubtitlesOnCards: updateShowSubtitlesOnCards,
+      getUpdatedAllParams: () => mediasfuParameters,
+      getCurrentParams: () => mediasfuParameters,
+    );
 
     if (widget.options.returnUI != null && widget.options.returnUI == false) {
       try {
@@ -9111,7 +10228,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         updateMember(widget.options.seedData!.member!);
         updateParticipants(widget.options.seedData!.participants!);
         updateParticipantsCounter(
-            widget.options.seedData!.participants!.length);
+          widget.options.seedData!.participants!.length,
+        );
         updateFilteredParticipants(widget.options.seedData!.participants!);
         updateMessages(widget.options.seedData!.messages!);
         updateEventType(widget.options.seedData!.eventType!);
@@ -9140,17 +10258,21 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     _handleOrientationChange();
   }
 
-  void updateStatesToInitialValues(MediasfuParameters mediasfuParameters,
-      Map<String, dynamic> initialValues) async {
+  void updateStatesToInitialValues(
+    MediasfuParameters mediasfuParameters,
+    Map<String, dynamic> initialValues,
+  ) async {
     for (String key in initialValues.keys) {
       try {
         String updateFunctionName =
             'update${key[0].toUpperCase()}${key.substring(1)}';
-        if (mediasfuParameters.updateFunctions
-            .containsKey(updateFunctionName)) {
+        if (mediasfuParameters.updateFunctions.containsKey(
+          updateFunctionName,
+        )) {
           // Call the appropriate update function with the value from initialValues
-          mediasfuParameters.updateFunctions[updateFunctionName]
-              ?.call(initialValues[key]);
+          mediasfuParameters.updateFunctions[updateFunctionName]?.call(
+            initialValues[key],
+          );
         }
       } catch (error) {
         if (kDebugMode) {
@@ -9160,20 +10282,27 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     }
   }
 
+  bool _sourcePublishQueued = false;
+
   void updateSpecificState(
-      MediasfuParameters? sourceParameters, String key, dynamic value) {
-    // providing a blanket update function for all states
-    // will modify later to provide specific update functions
-    try {
-      if (widget.options.updateSourceParameters != null) {
-        widget.options.sourceParameters = mediasfuParameters;
-        widget.options.updateSourceParameters!(mediasfuParameters);
+    MediasfuParameters? sourceParameters,
+    String key,
+    dynamic value,
+  ) {
+    if (widget.options.updateSourceParameters == null) return;
+
+    widget.options.sourceParameters = mediasfuParameters;
+    if (_sourcePublishQueued) return;
+    _sourcePublishQueued = true;
+    Future<void>.delayed(Duration.zero, () {
+      _sourcePublishQueued = false;
+      if (!mounted) return;
+      try {
+        widget.options.updateSourceParameters?.call(mediasfuParameters);
+      } catch (_) {
+        // A consumer observer must never break the room state path.
       }
-    } catch (error) {
-      // if (kDebugMode) {
-      //   print('Error updating $key: $error');
-      // }
-    }
+    });
   }
 
   @override
@@ -9181,8 +10310,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     // Get safe area padding for manual handling
     final mediaQuery = MediaQuery.of(context);
     final topPadding = mediaQuery.padding.top;
-    // ignore: unused_local_variable
-    final bottomPadding = mediaQuery.padding.bottom;
+    final isIOS = !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
@@ -9203,8 +10331,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                 if (topPadding > 0)
                   Container(
                     height: topPadding,
-                    color: Colors.black
-                        .withOpacity(0.5), // Semi-transparent dark background
+                    color: isIOS
+                        ? Colors.black.withOpacity(0.5)
+                        : Colors.transparent,
                   ),
                 // Main content - takes remaining space
                 Expanded(
@@ -9234,157 +10363,189 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           data: isDarkModeVal ? MediasfuTheme.dark() : MediasfuTheme.light(),
           child:
               validated &&
-                      widget.options.returnUI != null &&
-                      widget.options.returnUI == true
-                  ? _mainContainerBuilder(
-                      context,
-                      MainContainerComponentOptions(
-                        backgroundColor: _containerStyle.backgroundColor ??
-                            MediasfuColors.themedSurface(
-                                darkMode: isDarkModeVal),
-                        containerWidthFraction:
-                            _containerStyle.widthFraction ?? 1.0,
-                        containerHeightFraction:
-                            _containerStyle.heightFraction ?? 1.0,
-                        margin: _containerStyle.margin,
-                        padding: _containerStyle.padding,
-                        decoration: _containerStyle.decoration,
-                        alignment: _containerStyle.alignment,
-                        clipBehavior: _containerStyle.clipBehavior,
-                        children: [
-                          _mainAspectBuilder(
-                            context,
-                            MainAspectComponentOptions(
-                              backgroundColor: MediasfuColors.themedSurface(
-                                  darkMode: isDarkModeVal),
-                              updateIsWideScreen: updateIsWideScreen,
-                              updateIsMediumScreen: updateIsMediumScreen,
-                              updateIsSmallScreen: updateIsSmallScreen,
-                              defaultFraction: 1 - controlHeight.value,
-                              showControls:
-                                  eventType.value == EventType.webinar ||
-                                      eventType.value == EventType.conference,
-                              children: [
-                                // Listen to sidebar changes to recalculate containerWidthFraction
-                                ValueListenableBuilder<SidebarContent>(
-                                  valueListenable: activeSidebarContent,
-                                  builder: (context, sidebarContent, _) {
-                                    final isSidebarVisible =
-                                        sidebarContent != SidebarContent.none;
-                                    final screenWidth =
-                                        MediaQuery.of(context).size.width;
-                                    final sidebarWidth =
-                                        getSidebarWidth(screenWidth);
+                  widget.options.returnUI != null &&
+                  widget.options.returnUI == true
+              ? _mainContainerBuilder(
+                  context,
+                  MainContainerComponentOptions(
+                    backgroundColor:
+                        _containerStyle.backgroundColor ??
+                        MediasfuColors.themedSurface(darkMode: isDarkModeVal),
+                    containerWidthFraction:
+                        widget.options.containerWidthFraction,
+                    containerHeightFraction:
+                        widget.options.containerHeightFraction,
+                    margin: _containerStyle.margin,
+                    padding: _containerStyle.padding,
+                    decoration: _containerStyle.decoration,
+                    alignment: _containerStyle.alignment,
+                    clipBehavior: _containerStyle.clipBehavior,
+                    children: [
+                      _mainAspectBuilder(
+                        context,
+                        MainAspectComponentOptions(
+                          backgroundColor: MediasfuColors.themedSurface(
+                            darkMode: isDarkModeVal,
+                          ),
+                          updateIsWideScreen: updateIsWideScreen,
+                          updateIsMediumScreen: updateIsMediumScreen,
+                          updateIsSmallScreen: updateIsSmallScreen,
+                          defaultFraction: 1 - controlHeight.value,
+                          containerWidthFraction:
+                              widget.options.containerWidthFraction,
+                          containerHeightFraction:
+                              widget.options.containerHeightFraction,
+                          showControls:
+                              eventType.value == EventType.webinar ||
+                              eventType.value == EventType.conference,
+                          children: [
+                            // Listen to sidebar changes to recalculate containerWidthFraction
+                            ValueListenableBuilder<SidebarContent>(
+                              valueListenable: activeSidebarContent,
+                              builder: (context, sidebarContent, _) {
+                                final isSidebarVisible =
+                                    sidebarContent != SidebarContent.none;
+                                final screenWidth = MediaQuery.of(
+                                  context,
+                                ).size.width;
+                                final sidebarWidth = getSidebarWidth(
+                                  screenWidth,
+                                );
 
-                                    return Row(
-                                      children: [
-                                        // Main content area
-                                        Expanded(
-                                          child:
-                                              ValueListenableBuilder<
-                                                      ComponentSizes>(
-                                                  valueListenable:
-                                                      componentSizes,
-                                                  builder: (context,
-                                                      componentSizes, child) {
-                                                    // Calculate containerWidthFraction to account for sidebar
-                                                    final containerWidthFraction =
-                                                        sidebarWidth > 0
-                                                            ? (screenWidth -
-                                                                    sidebarWidth) /
-                                                                screenWidth
-                                                            : 1.0;
+                                return Row(
+                                  children: [
+                                    // Main content area
+                                    Expanded(
+                                      child: ValueListenableBuilder<ComponentSizes>(
+                                        valueListenable: componentSizes,
+                                        builder: (context, componentSizes, child) {
+                                          // Calculate containerWidthFraction to account for sidebar
+                                          final sidebarWidthFraction =
+                                              sidebarWidth > 0
+                                              ? (screenWidth - sidebarWidth) /
+                                                    screenWidth
+                                              : 1.0;
+                                          final containerWidthFraction =
+                                              widget
+                                                  .options
+                                                  .containerWidthFraction *
+                                              sidebarWidthFraction;
 
-                                                    return _mainScreenBuilder(
-                                                      context,
-                                                      MainScreenComponentOptions(
-                                                        doStack: true,
-                                                        mainSize:
-                                                            mainHeightWidth,
-                                                        updateComponentSizes:
-                                                            updateComponentSizes,
-                                                        containerWidthFraction:
-                                                            containerWidthFraction,
-                                                        defaultFraction: 1 -
-                                                            controlHeight.value,
-                                                        showControls: eventType
-                                                                    .value ==
-                                                                EventType
-                                                                    .webinar ||
-                                                            eventType.value ==
-                                                                EventType
-                                                                    .conference,
-                                                        children: [
-                                                          ValueListenableBuilder<
-                                                              GridSizes>(
-                                                            valueListenable:
-                                                                gridSizes,
-                                                            builder: (context,
-                                                                gridSizes,
-                                                                child) {
-                                                              // Wrap in ValueListenableBuilder for meetingProgressTime to ensure timer updates
-                                                              return ValueListenableBuilder<
-                                                                  String>(
+                                          return _mainScreenBuilder(
+                                            context,
+                                            MainScreenComponentOptions(
+                                              doStack: true,
+                                              mainSize: mainHeightWidth,
+                                              updateComponentSizes:
+                                                  updateComponentSizes,
+                                              containerWidthFraction:
+                                                  containerWidthFraction,
+                                              containerHeightFraction: widget
+                                                  .options
+                                                  .containerHeightFraction,
+                                              defaultFraction:
+                                                  1 - controlHeight.value,
+                                              showControls:
+                                                  eventType.value ==
+                                                      EventType.webinar ||
+                                                  eventType.value ==
+                                                      EventType.conference,
+                                              children: [
+                                                ValueListenableBuilder<
+                                                  GridSizes
+                                                >(
+                                                  valueListenable: gridSizes,
+                                                  builder: (context, gridSizes, child) {
+                                                    // Wrap in ValueListenableBuilder for meetingProgressTime to ensure timer updates
+                                                    return ValueListenableBuilder<
+                                                      String
+                                                    >(
+                                                      valueListenable:
+                                                          meetingProgressTime,
+                                                      builder: (context, progressTime, _) {
+                                                        return _mainGridBuilder(
+                                                          context,
+                                                          MainGridComponentOptions(
+                                                            height:
+                                                                componentSizes
+                                                                    .mainHeight,
+                                                            width:
+                                                                componentSizes
+                                                                    .mainWidth,
+                                                            backgroundColor:
+                                                                MediasfuColors.themedSurface(
+                                                                  darkMode:
+                                                                      isDarkModeVal,
+                                                                ),
+                                                            mainSize:
+                                                                mainHeightWidth,
+                                                            showAspect:
+                                                                mainHeightWidth >
+                                                                0,
+                                                            timeBackgroundColor:
+                                                                recordState ==
+                                                                    'green'
+                                                                ? Colors.green
+                                                                : recordState ==
+                                                                      'yellow'
+                                                                ? Colors.yellow
+                                                                : Colors.red,
+                                                            meetingProgressTime:
+                                                                progressTime,
+                                                            showTimer: false,
+                                                            children: [
+                                                              ValueListenableBuilder<
+                                                                bool
+                                                              >(
                                                                 valueListenable:
-                                                                    meetingProgressTime,
-                                                                builder: (context,
-                                                                    progressTime,
-                                                                    _) {
-                                                                  return _mainGridBuilder(
-                                                                    context,
-                                                                    MainGridComponentOptions(
-                                                                      height: componentSizes
-                                                                          .mainHeight,
-                                                                      width: componentSizes
-                                                                          .mainWidth,
-                                                                      backgroundColor:
-                                                                          MediasfuColors.themedSurface(
-                                                                              darkMode: isDarkModeVal),
-                                                                      mainSize:
-                                                                          mainHeightWidth,
-                                                                      showAspect:
-                                                                          mainHeightWidth >
-                                                                              0,
-                                                                      timeBackgroundColor: recordState ==
-                                                                              'green'
-                                                                          ? Colors
-                                                                              .green
-                                                                          : recordState == 'yellow'
-                                                                              ? Colors.yellow
-                                                                              : Colors.red,
-                                                                      meetingProgressTime:
-                                                                          progressTime,
-                                                                      showTimer:
-                                                                          false,
-                                                                      children: [
-                                                                        ValueListenableBuilder<
-                                                                            bool>(
-                                                                          valueListenable:
-                                                                              whiteboardStarted,
-                                                                          builder: (context,
-                                                                              wbStarted,
-                                                                              _) {
-                                                                            return ValueListenableBuilder<bool>(
-                                                                              valueListenable: whiteboardEnded,
-                                                                              builder: (context, wbEnded, _) {
-                                                                                return _flexibleVideoBuilder(
-                                                                                    context,
-                                                                                    FlexibleVideoOptions(
-                                                                                      backgroundColor: MediasfuColors.themedSurface(darkMode: isDarkModeVal),
-                                                                                      customWidth: componentSizes.mainWidth,
-                                                                                      customHeight: componentSizes.mainHeight,
-                                                                                      rows: 1,
-                                                                                      columns: 1,
-                                                                                      componentsToRender: mainGridStream.value,
-                                                                                      showAspect: mainGridStream.value.isNotEmpty && !(wbStarted && !wbEnded),
-                                                                                      localStreamScreen: localStreamScreen.value,
-                                                                                      annotateScreenStream: annotateScreenStream.value,
-                                                                                      // Pass Screenboard as prop when shared
-                                                                                      // Wrap in ValueListenableBuilder to rebuild when annotateScreenStream changes
-                                                                                      screenboard: shared.value
-                                                                                          ? ValueListenableBuilder<bool>(
-                                                                                              valueListenable: annotateScreenStream,
-                                                                                              builder: (context, annotateValue, _) {
+                                                                    whiteboardStarted,
+                                                                builder:
+                                                                    (
+                                                                      context,
+                                                                      wbStarted,
+                                                                      _,
+                                                                    ) {
+                                                                      return ValueListenableBuilder<
+                                                                        bool
+                                                                      >(
+                                                                        valueListenable:
+                                                                            whiteboardEnded,
+                                                                        builder:
+                                                                            (
+                                                                              context,
+                                                                              wbEnded,
+                                                                              _,
+                                                                            ) {
+                                                                              return _flexibleVideoBuilder(
+                                                                                context,
+                                                                                FlexibleVideoOptions(
+                                                                                  backgroundColor: MediasfuColors.themedSurface(
+                                                                                    darkMode: isDarkModeVal,
+                                                                                  ),
+                                                                                  customWidth: componentSizes.mainWidth,
+                                                                                  customHeight: componentSizes.mainHeight,
+                                                                                  rows: 1,
+                                                                                  columns: 1,
+                                                                                  componentsToRender: mainGridStream.value,
+                                                                                  showAspect:
+                                                                                      mainGridStream.value.isNotEmpty &&
+                                                                                      !(wbStarted &&
+                                                                                          !wbEnded),
+                                                                                  localStreamScreen: localStreamScreen.value,
+                                                                                  annotateScreenStream: annotateScreenStream.value,
+                                                                                  // Pass Screenboard as prop when shared
+                                                                                  // Wrap in ValueListenableBuilder to rebuild when annotateScreenStream changes
+                                                                                  screenboard: shared.value
+                                                                                      ? ValueListenableBuilder<
+                                                                                          bool
+                                                                                        >(
+                                                                                          valueListenable: annotateScreenStream,
+                                                                                          builder:
+                                                                                              (
+                                                                                                context,
+                                                                                                annotateValue,
+                                                                                                _,
+                                                                                              ) {
                                                                                                 return _screenboardBuilder(
                                                                                                   context,
                                                                                                   ScreenboardOptions(
@@ -9395,553 +10556,843 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                                                                                                   ),
                                                                                                 );
                                                                                               },
-                                                                                            )
-                                                                                          : null,
-                                                                                    ));
-                                                                              },
-                                                                            );
-                                                                          },
-                                                                        ),
-                                                                        // Whiteboard component - conditionally rendered
-                                                                        ValueListenableBuilder<
-                                                                            bool>(
-                                                                          valueListenable:
-                                                                              whiteboardStarted,
-                                                                          builder: (context,
-                                                                              wbStarted,
-                                                                              _) {
-                                                                            return ValueListenableBuilder<bool>(
-                                                                              valueListenable: whiteboardEnded,
-                                                                              builder: (context, wbEnded, _) {
-                                                                                return _whiteboardBuilder(
-                                                                                  context,
-                                                                                  WhiteboardOptions(
-                                                                                    customWidth: componentSizes.mainWidth,
-                                                                                    customHeight: componentSizes.mainHeight,
-                                                                                    parameters: mediasfuParameters,
-                                                                                    showAspect: wbStarted && !wbEnded,
-                                                                                  ),
-                                                                                );
-                                                                              },
-                                                                            );
-                                                                          },
-                                                                        ),
-                                                                        _controlButtonsTouchBuilder(
-                                                                            context,
-                                                                            ControlButtonsComponentTouchOptions(
-                                                                              buttons: controlBroadcastButtons,
-                                                                              direction: 'vertical',
-                                                                              showAspect: eventType.value == EventType.broadcast,
-                                                                              location: 'bottom',
-                                                                              position: 'right',
-                                                                            )),
-                                                                        _controlButtonsTouchBuilder(
-                                                                            context,
-                                                                            ControlButtonsComponentTouchOptions(
-                                                                              buttons: recordButton,
-                                                                              direction: 'horizontal',
-                                                                              showAspect: eventType.value == EventType.broadcast && !showRecordButtons.value && islevel.value == '2',
-                                                                              location: 'bottom',
-                                                                              position: 'middle',
-                                                                            )),
-                                                                        if (eventType.value ==
-                                                                                EventType.broadcast &&
-                                                                            showRecordButtons.value &&
-                                                                            islevel.value == '2')
-                                                                          Align(
-                                                                            alignment:
-                                                                                Alignment.bottomCenter,
-                                                                            child:
-                                                                                Container(
-                                                                              margin: const EdgeInsets.only(bottom: 10),
-                                                                              decoration: BoxDecoration(
-                                                                                color: isDarkMode.value ? Colors.black.withOpacity(0.35) : Colors.white.withOpacity(0.35),
-                                                                                borderRadius: BorderRadius.circular(12),
-                                                                              ),
-                                                                              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-                                                                              child: Stack(
-                                                                                clipBehavior: Clip.none,
-                                                                                children: [
-                                                                                  Positioned(
-                                                                                    top: -4,
-                                                                                    right: 0,
-                                                                                    child: Text(
-                                                                                      'Recording Controls',
-                                                                                      style: TextStyle(
-                                                                                        fontSize: 9,
-                                                                                        fontWeight: FontWeight.w500,
-                                                                                        color: isDarkMode.value ? Colors.white.withOpacity(0.6) : Colors.black.withOpacity(0.5),
-                                                                                        letterSpacing: 0.5,
-                                                                                      ),
-                                                                                    ),
-                                                                                  ),
-                                                                                  SingleChildScrollView(
-                                                                                    scrollDirection: Axis.horizontal,
-                                                                                    child: ControlButtonsAltComponent(
-                                                                                      options: ControlButtonsAltComponentOptions(
-                                                                                        buttons: recordButtons,
-                                                                                        direction: 'horizontal',
-                                                                                        showAspect: true,
-                                                                                        location: 'bottom',
-                                                                                        position: 'center',
-                                                                                        containerBuilder: (context) => context.child,
-                                                                                        layoutBuilder: (context) => Row(
-                                                                                          mainAxisSize: MainAxisSize.min,
-                                                                                          mainAxisAlignment: MainAxisAlignment.center,
-                                                                                          children: context.buttons,
-                                                                                        ),
-                                                                                        buttonBuilder: (context) {
-                                                                                          if (context.button.customComponent != null) {
-                                                                                            return context.button.customComponent!;
-                                                                                          }
-
-                                                                                          final bool isActive = context.button.active;
-                                                                                          final Color activeColor = context.button.activeColor ?? Colors.white;
-                                                                                          final Color inActiveColor = context.button.inActiveColor ?? Colors.grey;
-                                                                                          final IconData? icon = isActive ? (context.button.alternateIcon ?? context.button.icon) : context.button.icon;
-
-                                                                                          final Widget buttonContent = Container(
-                                                                                            padding: const EdgeInsets.all(5),
-                                                                                            margin: const EdgeInsets.symmetric(horizontal: 3, vertical: 3),
-                                                                                            decoration: BoxDecoration(
-                                                                                              color: isActive ? (context.button.pressedBackgroundColor ?? Colors.grey) : (context.button.defaultBackgroundColor ?? Colors.transparent),
-                                                                                              borderRadius: BorderRadius.circular(5),
-                                                                                            ),
-                                                                                            child: Icon(
-                                                                                              icon,
-                                                                                              color: isActive ? activeColor : inActiveColor,
-                                                                                              size: 24,
-                                                                                            ),
-                                                                                          );
-
-                                                                                          return Tooltip(
-                                                                                            message: context.button.name ?? '',
-                                                                                            decoration: BoxDecoration(
-                                                                                              color: isDarkMode.value ? Colors.white : Colors.black87,
-                                                                                              borderRadius: BorderRadius.circular(8),
-                                                                                            ),
-                                                                                            textStyle: TextStyle(
-                                                                                              color: isDarkMode.value ? Colors.black : Colors.white,
-                                                                                              fontSize: 12,
-                                                                                              fontWeight: FontWeight.w500,
-                                                                                            ),
-                                                                                            child: GestureDetector(
-                                                                                              onTap: context.button.onPress,
-                                                                                              child: buttonContent,
-                                                                                            ),
-                                                                                          );
-                                                                                        },
-                                                                                      ),
-                                                                                    ),
-                                                                                  ),
-                                                                                ],
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                        ValueListenableBuilder<
-                                                                                String>(
-                                                                            valueListenable:
-                                                                                meetingProgressTime,
-                                                                            builder: (context,
-                                                                                meetingProgressTime,
-                                                                                child) {
-                                                                              return RepaintBoundary(
-                                                                                child: _meetingProgressTimerBuilder(
-                                                                                    context,
-                                                                                    MeetingProgressTimerOptions(
-                                                                                      meetingProgressTime: meetingProgressTime,
-                                                                                      initialBackgroundColor: recordState == 'green'
-                                                                                          ? Colors.green
-                                                                                          : recordState == 'yellow'
-                                                                                              ? Colors.yellow
-                                                                                              : Colors.red,
-                                                                                      showTimer: true,
-                                                                                    )),
-                                                                              );
-                                                                            }),
-                                                                        // Participants counter badge
-                                                                        ValueListenableBuilder<
-                                                                                int>(
-                                                                            valueListenable:
-                                                                                participantsCounter,
-                                                                            builder: (context,
-                                                                                count,
-                                                                                child) {
-                                                                              return ParticipantsCounterBadge(
-                                                                                options: ParticipantsCounterBadgeOptions(
-                                                                                  participantsCount: count,
-                                                                                  position: 'bottomLeft',
-                                                                                  positionOverride: const ParticipantsCounterBadgePositionOverride(
-                                                                                    bottom: 12,
-                                                                                    left: 12,
-                                                                                  ),
-                                                                                  showBadge: true,
+                                                                                        )
+                                                                                      : null,
                                                                                 ),
                                                                               );
-                                                                            }),
+                                                                            },
+                                                                      );
+                                                                    },
+                                                              ),
+                                                              // Whiteboard component - conditionally rendered
+                                                              ValueListenableBuilder<
+                                                                bool
+                                                              >(
+                                                                valueListenable:
+                                                                    whiteboardStarted,
+                                                                builder:
+                                                                    (
+                                                                      context,
+                                                                      wbStarted,
+                                                                      _,
+                                                                    ) {
+                                                                      return ValueListenableBuilder<
+                                                                        bool
+                                                                      >(
+                                                                        valueListenable:
+                                                                            whiteboardEnded,
+                                                                        builder:
+                                                                            (
+                                                                              context,
+                                                                              wbEnded,
+                                                                              _,
+                                                                            ) {
+                                                                              return _whiteboardBuilder(
+                                                                                context,
+                                                                                WhiteboardOptions(
+                                                                                  customWidth: componentSizes.mainWidth,
+                                                                                  customHeight: componentSizes.mainHeight,
+                                                                                  parameters: mediasfuParameters,
+                                                                                  showAspect:
+                                                                                      wbStarted &&
+                                                                                      !wbEnded,
+                                                                                ),
+                                                                              );
+                                                                            },
+                                                                      );
+                                                                    },
+                                                              ),
+                                                              _controlButtonsTouchBuilder(
+                                                                context,
+                                                                ControlButtonsComponentTouchOptions(
+                                                                  buttons:
+                                                                      controlBroadcastButtons,
+                                                                  direction:
+                                                                      'vertical',
+                                                                  showAspect:
+                                                                      eventType
+                                                                          .value ==
+                                                                      EventType
+                                                                          .broadcast,
+                                                                  location:
+                                                                      'bottom',
+                                                                  position:
+                                                                      'right',
+                                                                ),
+                                                              ),
+                                                              _controlButtonsTouchBuilder(
+                                                                context,
+                                                                ControlButtonsComponentTouchOptions(
+                                                                  buttons:
+                                                                      recordButton,
+                                                                  direction:
+                                                                      'horizontal',
+                                                                  showAspect:
+                                                                      eventType
+                                                                              .value ==
+                                                                          EventType
+                                                                              .broadcast &&
+                                                                      !showRecordButtons
+                                                                          .value &&
+                                                                      islevel.value ==
+                                                                          '2',
+                                                                  location:
+                                                                      'bottom',
+                                                                  position:
+                                                                      'middle',
+                                                                ),
+                                                              ),
+                                                              if (eventType
+                                                                          .value ==
+                                                                      EventType
+                                                                          .broadcast &&
+                                                                  showRecordButtons
+                                                                      .value &&
+                                                                  islevel.value ==
+                                                                      '2')
+                                                                Align(
+                                                                  alignment:
+                                                                      Alignment
+                                                                          .bottomCenter,
+                                                                  child: Container(
+                                                                    margin:
+                                                                        const EdgeInsets.only(
+                                                                          bottom:
+                                                                              10,
+                                                                        ),
+                                                                    decoration: BoxDecoration(
+                                                                      color:
+                                                                          isDarkMode
+                                                                              .value
+                                                                          ? Colors.black.withOpacity(
+                                                                              0.35,
+                                                                            )
+                                                                          : Colors.white.withOpacity(
+                                                                              0.35,
+                                                                            ),
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                            12,
+                                                                          ),
+                                                                    ),
+                                                                    padding:
+                                                                        const EdgeInsets.fromLTRB(
+                                                                          12,
+                                                                          8,
+                                                                          12,
+                                                                          8,
+                                                                        ),
+                                                                    child: Stack(
+                                                                      clipBehavior:
+                                                                          Clip.none,
+                                                                      children: [
+                                                                        Positioned(
+                                                                          top:
+                                                                              -4,
+                                                                          right:
+                                                                              0,
+                                                                          child: Text(
+                                                                            'Recording Controls',
+                                                                            style: TextStyle(
+                                                                              fontSize: 9,
+                                                                              fontWeight: FontWeight.w500,
+                                                                              color: isDarkMode.value
+                                                                                  ? Colors.white.withOpacity(
+                                                                                      0.6,
+                                                                                    )
+                                                                                  : Colors.black.withOpacity(
+                                                                                      0.5,
+                                                                                    ),
+                                                                              letterSpacing: 0.5,
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                        SingleChildScrollView(
+                                                                          scrollDirection:
+                                                                              Axis.horizontal,
+                                                                          child: ControlButtonsAltComponent(
+                                                                            options: ControlButtonsAltComponentOptions(
+                                                                              buttons: recordButtons,
+                                                                              direction: 'horizontal',
+                                                                              showAspect: true,
+                                                                              location: 'bottom',
+                                                                              position: 'center',
+                                                                              containerBuilder:
+                                                                                  (
+                                                                                    context,
+                                                                                  ) => context.child,
+                                                                              layoutBuilder:
+                                                                                  (
+                                                                                    context,
+                                                                                  ) => Row(
+                                                                                    mainAxisSize: MainAxisSize.min,
+                                                                                    mainAxisAlignment: MainAxisAlignment.center,
+                                                                                    children: context.buttons,
+                                                                                  ),
+                                                                              buttonBuilder:
+                                                                                  (
+                                                                                    context,
+                                                                                  ) {
+                                                                                    if (context.button.customComponent !=
+                                                                                        null) {
+                                                                                      return context.button.customComponent!;
+                                                                                    }
+
+                                                                                    final bool isActive = context.button.active;
+                                                                                    final Color activeColor =
+                                                                                        context.button.activeColor ??
+                                                                                        Colors.white;
+                                                                                    final Color inActiveColor =
+                                                                                        context.button.inActiveColor ??
+                                                                                        Colors.grey;
+                                                                                    final IconData? icon = isActive
+                                                                                        ? (context.button.alternateIcon ??
+                                                                                              context.button.icon)
+                                                                                        : context.button.icon;
+
+                                                                                    final Widget buttonContent = Container(
+                                                                                      padding: const EdgeInsets.all(
+                                                                                        5,
+                                                                                      ),
+                                                                                      margin: const EdgeInsets.symmetric(
+                                                                                        horizontal: 3,
+                                                                                        vertical: 3,
+                                                                                      ),
+                                                                                      decoration: BoxDecoration(
+                                                                                        color: isActive
+                                                                                            ? (context.button.pressedBackgroundColor ??
+                                                                                                  Colors.grey)
+                                                                                            : (context.button.defaultBackgroundColor ??
+                                                                                                  Colors.transparent),
+                                                                                        borderRadius: BorderRadius.circular(
+                                                                                          5,
+                                                                                        ),
+                                                                                      ),
+                                                                                      child: Icon(
+                                                                                        icon,
+                                                                                        color: isActive
+                                                                                            ? activeColor
+                                                                                            : inActiveColor,
+                                                                                        size: 24,
+                                                                                      ),
+                                                                                    );
+
+                                                                                    return Tooltip(
+                                                                                      message:
+                                                                                          context.button.name ??
+                                                                                          '',
+                                                                                      decoration: BoxDecoration(
+                                                                                        color: isDarkMode.value
+                                                                                            ? Colors.white
+                                                                                            : Colors.black87,
+                                                                                        borderRadius: BorderRadius.circular(
+                                                                                          8,
+                                                                                        ),
+                                                                                      ),
+                                                                                      textStyle: TextStyle(
+                                                                                        color: isDarkMode.value
+                                                                                            ? Colors.black
+                                                                                            : Colors.white,
+                                                                                        fontSize: 12,
+                                                                                        fontWeight: FontWeight.w500,
+                                                                                      ),
+                                                                                      child: GestureDetector(
+                                                                                        onTap: context.button.onPress,
+                                                                                        child: buttonContent,
+                                                                                      ),
+                                                                                    );
+                                                                                  },
+                                                                            ),
+                                                                          ),
+                                                                        ),
                                                                       ],
                                                                     ),
-                                                                  );
-                                                                },
+                                                                  ),
+                                                                ),
+                                                              ValueListenableBuilder<
+                                                                String
+                                                              >(
+                                                                valueListenable:
+                                                                    meetingProgressTime,
+                                                                builder:
+                                                                    (
+                                                                      context,
+                                                                      meetingProgressTime,
+                                                                      child,
+                                                                    ) {
+                                                                      final whiteboardToolbarOffset =
+                                                                          whiteboardStarted.value &&
+                                                                              !whiteboardEnded.value
+                                                                          ? 50.0
+                                                                          : 0.0;
+                                                                      return RepaintBoundary(
+                                                                        child: _meetingProgressTimerBuilder(
+                                                                          context,
+                                                                          MeetingProgressTimerOptions(
+                                                                            meetingProgressTime:
+                                                                                meetingProgressTime,
+                                                                            initialBackgroundColor:
+                                                                                recordState ==
+                                                                                    'green'
+                                                                                ? Colors.green
+                                                                                : recordState ==
+                                                                                      'yellow'
+                                                                                ? Colors.yellow
+                                                                                : Colors.red,
+                                                                            showTimer:
+                                                                                true,
+                                                                            position:
+                                                                                'topLeft',
+                                                                            positionOverride: MeetingProgressTimerPositionOverride(
+                                                                              top: whiteboardToolbarOffset,
+                                                                              left: 0.0,
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                      );
+                                                                    },
+                                                              ),
+                                                              // Participants counter badge
+                                                              ValueListenableBuilder<
+                                                                int
+                                                              >(
+                                                                valueListenable:
+                                                                    participantsCounter,
+                                                                builder:
+                                                                    (
+                                                                      context,
+                                                                      count,
+                                                                      child,
+                                                                    ) {
+                                                                      return ParticipantsCounterBadge(
+                                                                        options: ParticipantsCounterBadgeOptions(
+                                                                          participantsCount:
+                                                                              count,
+                                                                          position:
+                                                                              'bottomLeft',
+                                                                          positionOverride: const ParticipantsCounterBadgePositionOverride(
+                                                                            bottom:
+                                                                                12,
+                                                                            left:
+                                                                                12,
+                                                                          ),
+                                                                          showBadge:
+                                                                              true,
+                                                                        ),
+                                                                      );
+                                                                    },
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        );
+                                                      },
+                                                    );
+                                                  },
+                                                ),
+                                                ValueListenableBuilder<
+                                                  GridSizes
+                                                >(
+                                                  valueListenable: gridSizes,
+                                                  builder: (context, gridSizes, child) {
+                                                    return _otherGridBuilder(
+                                                      context,
+                                                      OtherGridComponentOptions(
+                                                        height: componentSizes
+                                                            .otherHeight,
+                                                        width: componentSizes
+                                                            .otherWidth,
+                                                        backgroundColor:
+                                                            MediasfuColors.themedSurface(
+                                                              darkMode:
+                                                                  isDarkModeVal,
+                                                            ),
+                                                        showAspect:
+                                                            mainHeightWidth ==
+                                                                100
+                                                            ? false
+                                                            : true,
+                                                        timeBackgroundColor:
+                                                            recordState ==
+                                                                'green'
+                                                            ? Colors.green
+                                                            : recordState ==
+                                                                  'yellow'
+                                                            ? Colors.yellow
+                                                            : Colors.red,
+                                                        showTimer: false,
+                                                        meetingProgressTime:
+                                                            meetingProgressTime
+                                                                .value,
+                                                        children: [
+                                                          // Translation Streams (Hidden/Audio Only)
+                                                          ValueListenableBuilder<
+                                                            List<Widget>
+                                                          >(
+                                                            valueListenable:
+                                                                translationStreams,
+                                                            builder: (context, streams, _) {
+                                                              return Column(
+                                                                children: streams
+                                                                    .map(
+                                                                      (
+                                                                        s,
+                                                                      ) => SizedBox(
+                                                                        width:
+                                                                            0,
+                                                                        height:
+                                                                            0,
+                                                                        child:
+                                                                            s,
+                                                                      ),
+                                                                    )
+                                                                    .toList(),
                                                               );
                                                             },
                                                           ),
+                                                          _audioGridBuilder(
+                                                            context,
+                                                            AudioGridOptions(
+                                                              componentsToRender:
+                                                                  audioOnlyStreams
+                                                                      .value,
+                                                            ),
+                                                          ),
+                                                          // Position the grid below pagination (for horizontal) or to the right (for vertical)
+                                                          Positioned(
+                                                            top:
+                                                                doPaginate
+                                                                        .value &&
+                                                                    paginationDirection
+                                                                            .value ==
+                                                                        'horizontal'
+                                                                ? paginationHeightWidth
+                                                                      .value
+                                                                      .toDouble()
+                                                                : 0,
+                                                            left:
+                                                                doPaginate
+                                                                        .value &&
+                                                                    paginationDirection
+                                                                            .value ==
+                                                                        'vertical'
+                                                                ? paginationHeightWidth
+                                                                      .value
+                                                                      .toDouble()
+                                                                : 0,
+                                                            right: 0,
+                                                            bottom: 0,
+                                                            child: _flexibleGridBuilder(
+                                                              context,
+                                                              FlexibleGridOptions(
+                                                                customWidth: gridSizes
+                                                                    .gridWidth
+                                                                    ?.toDouble(),
+                                                                customHeight: gridSizes
+                                                                    .gridHeight
+                                                                    ?.toDouble(),
+                                                                rows: gridRows
+                                                                    .value,
+                                                                columns:
+                                                                    gridCols
+                                                                        .value,
+                                                                componentsToRender:
+                                                                    otherGridStreams[0],
+                                                                backgroundColor:
+                                                                    MediasfuColors.themedSurface(
+                                                                      darkMode:
+                                                                          isDarkModeVal,
+                                                                    ),
+                                                                showAspect:
+                                                                    addGrid
+                                                                        .value &&
+                                                                    otherGridStreams[0]
+                                                                        .isNotEmpty,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          // Position the alt grid below the main grid
+                                                          Positioned(
+                                                            top:
+                                                                (gridSizes
+                                                                        .gridHeight
+                                                                        ?.toDouble() ??
+                                                                    0) +
+                                                                (doPaginate.value &&
+                                                                        paginationDirection.value ==
+                                                                            'horizontal'
+                                                                    ? paginationHeightWidth
+                                                                          .value
+                                                                          .toDouble()
+                                                                    : 0),
+                                                            left:
+                                                                doPaginate
+                                                                        .value &&
+                                                                    paginationDirection
+                                                                            .value ==
+                                                                        'vertical'
+                                                                ? paginationHeightWidth
+                                                                      .value
+                                                                      .toDouble()
+                                                                : 0,
+                                                            right: 0,
+                                                            bottom: 0,
+                                                            child: _flexibleGridAltBuilder(
+                                                              context,
+                                                              FlexibleGridOptions(
+                                                                customWidth:
+                                                                    gridSizes
+                                                                        .altGridWidth
+                                                                        ?.toDouble() ??
+                                                                    0,
+                                                                customHeight:
+                                                                    gridSizes
+                                                                        .altGridHeight
+                                                                        ?.toDouble() ??
+                                                                    0,
+                                                                rows:
+                                                                    altGridRows
+                                                                        .value,
+                                                                columns:
+                                                                    altGridCols
+                                                                        .value,
+                                                                componentsToRender:
+                                                                    otherGridStreams[1],
+                                                                backgroundColor:
+                                                                    MediasfuColors.themedSurface(
+                                                                      darkMode:
+                                                                          isDarkModeVal,
+                                                                    ),
+                                                                showAspect:
+                                                                    addAltGrid
+                                                                        .value &&
+                                                                    otherGridStreams[1]
+                                                                        .isNotEmpty,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          _controlButtonsTouchBuilder(
+                                                            context,
+                                                            ControlButtonsComponentTouchOptions(
+                                                              buttons:
+                                                                  controlChatButtons,
+                                                              position: "right",
+                                                              location:
+                                                                  "bottom",
+                                                              direction:
+                                                                  "vertical",
+                                                              showAspect:
+                                                                  eventType
+                                                                      .value ==
+                                                                  EventType
+                                                                      .chat,
+                                                            ),
+                                                          ),
                                                           ValueListenableBuilder<
-                                                                  GridSizes>(
-                                                              valueListenable:
-                                                                  gridSizes,
-                                                              builder: (context,
-                                                                  gridSizes,
-                                                                  child) {
-                                                                return _otherGridBuilder(
+                                                            String
+                                                          >(
+                                                            valueListenable:
+                                                                meetingProgressTime,
+                                                            builder:
+                                                                (
                                                                   context,
-                                                                  OtherGridComponentOptions(
-                                                                    height: componentSizes
-                                                                        .otherHeight,
-                                                                    width: componentSizes
-                                                                        .otherWidth,
-                                                                    backgroundColor:
-                                                                        MediasfuColors.themedSurface(
-                                                                            darkMode:
-                                                                                isDarkModeVal),
-                                                                    showAspect: mainHeightWidth ==
-                                                                            100
-                                                                        ? false
-                                                                        : true,
-                                                                    timeBackgroundColor: recordState ==
-                                                                            'green'
-                                                                        ? Colors
-                                                                            .green
-                                                                        : recordState ==
-                                                                                'yellow'
+                                                                  meetingProgressTime,
+                                                                  child,
+                                                                ) {
+                                                                  final timerTopOffset =
+                                                                      doPaginate
+                                                                              .value &&
+                                                                          paginationDirection.value ==
+                                                                              'horizontal'
+                                                                      ? paginationHeightWidth.value.toDouble() +
+                                                                            4
+                                                                      : 2.0;
+                                                                  final timerLeftOffset =
+                                                                      doPaginate
+                                                                              .value &&
+                                                                          paginationDirection.value ==
+                                                                              'vertical'
+                                                                      ? paginationHeightWidth.value.toDouble() +
+                                                                            4
+                                                                      : 2.0;
+                                                                  return RepaintBoundary(
+                                                                    child: _meetingProgressTimerBuilder(
+                                                                      context,
+                                                                      MeetingProgressTimerOptions(
+                                                                        meetingProgressTime:
+                                                                            meetingProgressTime,
+                                                                        initialBackgroundColor:
+                                                                            recordState ==
+                                                                                'green'
+                                                                            ? Colors.green
+                                                                            : recordState ==
+                                                                                  'yellow'
                                                                             ? Colors.yellow
                                                                             : Colors.red,
-                                                                    showTimer:
-                                                                        false,
-                                                                    meetingProgressTime:
-                                                                        meetingProgressTime
-                                                                            .value,
-                                                                    children: [
-                                                                      // Translation Streams (Hidden/Audio Only)
-                                                                      ValueListenableBuilder<
-                                                                          List<
-                                                                              Widget>>(
-                                                                        valueListenable:
-                                                                            translationStreams,
-                                                                        builder: (context,
-                                                                            streams,
-                                                                            _) {
-                                                                          return Column(
-                                                                            children:
-                                                                                streams.map((s) => SizedBox(width: 0, height: 0, child: s)).toList(),
-                                                                          );
-                                                                        },
-                                                                      ),
-                                                                      _audioGridBuilder(
-                                                                          context,
-                                                                          AudioGridOptions(
-                                                                            componentsToRender:
-                                                                                audioOnlyStreams.value,
-                                                                          )),
-                                                                      // Position the grid below pagination (for horizontal) or to the right (for vertical)
-                                                                      Positioned(
-                                                                        top: doPaginate.value &&
-                                                                                paginationDirection.value == 'horizontal'
-                                                                            ? paginationHeightWidth.value.toDouble()
-                                                                            : 0,
-                                                                        left: doPaginate.value &&
-                                                                                paginationDirection.value == 'vertical'
-                                                                            ? paginationHeightWidth.value.toDouble()
-                                                                            : 0,
-                                                                        right:
-                                                                            0,
-                                                                        bottom:
-                                                                            0,
-                                                                        child: _flexibleGridBuilder(
-                                                                            context,
-                                                                            FlexibleGridOptions(
-                                                                              customWidth: gridSizes.gridWidth?.toDouble(),
-                                                                              customHeight: gridSizes.gridHeight?.toDouble(),
-                                                                              rows: gridRows.value,
-                                                                              columns: gridCols.value,
-                                                                              componentsToRender: otherGridStreams[0],
-                                                                              backgroundColor: MediasfuColors.themedSurface(darkMode: isDarkModeVal),
-                                                                              showAspect: addGrid.value && otherGridStreams[0].isNotEmpty,
-                                                                            )),
-                                                                      ),
-                                                                      // Position the alt grid below the main grid
-                                                                      Positioned(
-                                                                        top: (gridSizes.gridHeight?.toDouble() ??
-                                                                                0) +
-                                                                            (doPaginate.value && paginationDirection.value == 'horizontal'
-                                                                                ? paginationHeightWidth.value.toDouble()
-                                                                                : 0),
-                                                                        left: doPaginate.value &&
-                                                                                paginationDirection.value == 'vertical'
-                                                                            ? paginationHeightWidth.value.toDouble()
-                                                                            : 0,
-                                                                        right:
-                                                                            0,
-                                                                        bottom:
-                                                                            0,
-                                                                        child: _flexibleGridAltBuilder(
-                                                                            context,
-                                                                            FlexibleGridOptions(
-                                                                              customWidth: gridSizes.altGridWidth?.toDouble() ?? 0,
-                                                                              customHeight: gridSizes.altGridHeight?.toDouble() ?? 0,
-                                                                              rows: altGridRows.value,
-                                                                              columns: altGridCols.value,
-                                                                              componentsToRender: otherGridStreams[1],
-                                                                              backgroundColor: MediasfuColors.themedSurface(darkMode: isDarkModeVal),
-                                                                              showAspect: addAltGrid.value && otherGridStreams[1].isNotEmpty,
-                                                                            )),
-                                                                      ),
-                                                                      _controlButtonsTouchBuilder(
-                                                                          context,
-                                                                          ControlButtonsComponentTouchOptions(
-                                                                              buttons: controlChatButtons,
-                                                                              position: "right",
-                                                                              location: "bottom",
-                                                                              direction: "vertical",
-                                                                              showAspect: eventType.value == EventType.chat)),
-                                                                      ValueListenableBuilder<
-                                                                              String>(
-                                                                          valueListenable:
-                                                                              meetingProgressTime,
-                                                                          builder: (context,
-                                                                              meetingProgressTime,
-                                                                              child) {
-                                                                            final timerTopOffset = doPaginate.value && paginationDirection.value == 'horizontal'
-                                                                                ? paginationHeightWidth.value.toDouble() + 4
-                                                                                : 2.0;
-                                                                            final timerLeftOffset = doPaginate.value && paginationDirection.value == 'vertical'
-                                                                                ? paginationHeightWidth.value.toDouble() + 4
-                                                                                : 2.0;
-                                                                            return RepaintBoundary(
-                                                                              child: _meetingProgressTimerBuilder(
-                                                                                  context,
-                                                                                  MeetingProgressTimerOptions(
-                                                                                    meetingProgressTime: meetingProgressTime,
-                                                                                    initialBackgroundColor: recordState == 'green'
-                                                                                        ? Colors.green
-                                                                                        : recordState == 'yellow'
-                                                                                            ? Colors.yellow
-                                                                                            : Colors.red,
-                                                                                    showTimer: mainHeightWidth == 0 ? true : false,
-                                                                                    position: 'topLeft',
-                                                                                    positionOverride: MeetingProgressTimerPositionOverride(
-                                                                                      top: timerTopOffset,
-                                                                                      left: timerLeftOffset,
-                                                                                    ),
-                                                                                  )),
-                                                                            );
-                                                                          }),
-                                                                      // Participants counter badge (other grid view)
-                                                                      ValueListenableBuilder<
-                                                                              int>(
-                                                                          valueListenable:
-                                                                              participantsCounter,
-                                                                          builder: (context,
-                                                                              count,
-                                                                              child) {
-                                                                            return ParticipantsCounterBadge(
-                                                                              options: ParticipantsCounterBadgeOptions(
-                                                                                participantsCount: count,
-                                                                                position: 'bottomLeft',
-                                                                                positionOverride: const ParticipantsCounterBadgePositionOverride(
-                                                                                  bottom: 12,
-                                                                                  left: 12,
-                                                                                ),
-                                                                                showBadge: mainHeightWidth == 0 ? true : false,
-                                                                              ),
-                                                                            );
-                                                                          }),
-                                                                      // Pagination positioned at top (horizontal) or left (vertical)
-                                                                      Positioned(
-                                                                        top: paginationDirection.value ==
-                                                                                'horizontal'
-                                                                            ? 0
-                                                                            : null,
-                                                                        left: paginationDirection.value ==
-                                                                                'vertical'
-                                                                            ? 0
-                                                                            : 0,
-                                                                        right: paginationDirection.value ==
-                                                                                'horizontal'
-                                                                            ? 0
-                                                                            : null,
-                                                                        bottom: paginationDirection.value ==
-                                                                                'vertical'
-                                                                            ? 0
-                                                                            : null,
-                                                                        child:
-                                                                            Visibility(
-                                                                          visible:
-                                                                              doPaginate.value,
-                                                                          child:
-                                                                              SizedBox(
-                                                                            width: paginationDirection.value == 'horizontal'
-                                                                                ? null
-                                                                                : paginationHeightWidth.value.toDouble(),
-                                                                            height: paginationDirection.value == 'horizontal'
-                                                                                ? paginationHeightWidth.value.toDouble()
-                                                                                : null,
-                                                                            child: _paginationBuilder(
-                                                                                context,
-                                                                                PaginationOptions(
-                                                                                  totalPages: numberPages.value,
-                                                                                  currentUserPage: currentUserPage.value,
-                                                                                  showAspect: doPaginate.value,
-                                                                                  paginationHeight: paginationHeightWidth.value.toDouble(),
-                                                                                  direction: paginationDirection.value,
-                                                                                  parameters: mediasfuParameters,
-                                                                                  isDarkMode: isDarkModeVal,
-                                                                                )),
-                                                                          ),
+                                                                        showTimer:
+                                                                            mainHeightWidth ==
+                                                                                0
+                                                                            ? true
+                                                                            : false,
+                                                                        position:
+                                                                            'topLeft',
+                                                                        positionOverride: MeetingProgressTimerPositionOverride(
+                                                                          top:
+                                                                              timerTopOffset,
+                                                                          left:
+                                                                              timerLeftOffset,
                                                                         ),
                                                                       ),
-                                                                    ],
+                                                                    ),
+                                                                  );
+                                                                },
+                                                          ),
+                                                          // Participants counter badge (other grid view)
+                                                          ValueListenableBuilder<
+                                                            int
+                                                          >(
+                                                            valueListenable:
+                                                                participantsCounter,
+                                                            builder: (context, count, child) {
+                                                              return ParticipantsCounterBadge(
+                                                                options: ParticipantsCounterBadgeOptions(
+                                                                  participantsCount:
+                                                                      count,
+                                                                  position:
+                                                                      'bottomLeft',
+                                                                  positionOverride:
+                                                                      const ParticipantsCounterBadgePositionOverride(
+                                                                        bottom:
+                                                                            12,
+                                                                        left:
+                                                                            12,
+                                                                      ),
+                                                                  showBadge:
+                                                                      mainHeightWidth ==
+                                                                          0
+                                                                      ? true
+                                                                      : false,
+                                                                ),
+                                                              );
+                                                            },
+                                                          ),
+                                                          // Pagination positioned at top (horizontal) or left (vertical)
+                                                          Positioned(
+                                                            top:
+                                                                paginationDirection
+                                                                        .value ==
+                                                                    'horizontal'
+                                                                ? 0
+                                                                : null,
+                                                            left:
+                                                                paginationDirection
+                                                                        .value ==
+                                                                    'vertical'
+                                                                ? 0
+                                                                : 0,
+                                                            right:
+                                                                paginationDirection
+                                                                        .value ==
+                                                                    'horizontal'
+                                                                ? 0
+                                                                : null,
+                                                            bottom:
+                                                                paginationDirection
+                                                                        .value ==
+                                                                    'vertical'
+                                                                ? 0
+                                                                : null,
+                                                            child: Visibility(
+                                                              visible:
+                                                                  doPaginate
+                                                                      .value,
+                                                              child: SizedBox(
+                                                                width:
+                                                                    paginationDirection
+                                                                            .value ==
+                                                                        'horizontal'
+                                                                    ? null
+                                                                    : paginationHeightWidth
+                                                                          .value
+                                                                          .toDouble(),
+                                                                height:
+                                                                    paginationDirection
+                                                                            .value ==
+                                                                        'horizontal'
+                                                                    ? paginationHeightWidth
+                                                                          .value
+                                                                          .toDouble()
+                                                                    : null,
+                                                                child: _paginationBuilder(
+                                                                  context,
+                                                                  PaginationOptions(
+                                                                    totalPages:
+                                                                        numberPages
+                                                                            .value,
+                                                                    currentUserPage:
+                                                                        currentUserPage
+                                                                            .value,
+                                                                    showAspect:
+                                                                        doPaginate
+                                                                            .value,
+                                                                    paginationHeight:
+                                                                        paginationHeightWidth
+                                                                            .value
+                                                                            .toDouble(),
+                                                                    direction:
+                                                                        paginationDirection
+                                                                            .value,
+                                                                    parameters:
+                                                                        mediasfuParameters,
+                                                                    isDarkMode:
+                                                                        isDarkModeVal,
                                                                   ),
-                                                                );
-                                                              }),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
                                                         ],
                                                       ),
                                                     );
-                                                  }),
-                                        ),
-                                        // Sidebar - always rendered but animates width from 0
-                                        // This ensures main grid shrinks BEFORE sidebar appears
-                                        AnimatedContainer(
-                                          duration:
-                                              const Duration(milliseconds: 300),
-                                          curve: Curves.easeInOut,
-                                          width: isSidebarVisible
-                                              ? sidebarWidth
-                                              : 0,
-                                          clipBehavior: Clip.antiAlias,
-                                          decoration: BoxDecoration(
-                                            color: isSidebarVisible
-                                                ? MediasfuColors.themedSurface(
-                                                    darkMode: isDarkModeVal,
-                                                    elevation: 1)
-                                                : Colors.transparent,
-                                            border: isSidebarVisible
-                                                ? Border(
-                                                    left: BorderSide(
-                                                      color: isDarkModeVal
-                                                          ? Colors.white12
-                                                          : Colors.black12,
-                                                      width: 1,
-                                                    ),
-                                                  )
-                                                : null,
-                                            boxShadow: isSidebarVisible
-                                                ? [
-                                                    BoxShadow(
-                                                      color: Colors.black
-                                                          .withOpacity(0.1),
-                                                      blurRadius: 8,
-                                                      offset:
-                                                          const Offset(-2, 0),
-                                                    ),
-                                                  ]
-                                                : null,
-                                          ),
-                                          // Use OverflowBox to allow child to maintain size during animation
-                                          // The clipBehavior on parent will clip the overflow
-                                          child: OverflowBox(
-                                            alignment: Alignment.centerLeft,
-                                            minWidth: sidebarWidth,
-                                            maxWidth: sidebarWidth,
-                                            child: isSidebarVisible
-                                                ? _buildSidebarContent(
-                                                    sidebarContent,
-                                                    isDarkModeVal)
-                                                : const SizedBox.shrink(),
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                          Visibility(
-                            visible: eventType.value == EventType.webinar ||
-                                eventType.value == EventType.conference,
-                            child: ValueListenableBuilder<double>(
-                              valueListenable: controlHeight,
-                              builder: (context, controlHeight, child) {
-                                return _subAspectBuilder(
-                                  context,
-                                  SubAspectComponentOptions(
-                                      backgroundColor:
-                                          MediasfuColors.themedSurface(
-                                              darkMode: isDarkModeVal),
-                                      showControls: eventType.value ==
-                                              EventType.webinar ||
-                                          eventType.value ==
-                                              EventType.conference,
-                                      defaultFractionSub: 40, //40 pixels
-                                      children: [
-                                        _controlButtonsBuilder(
-                                            context,
-                                            ControlButtonsComponentOptions(
-                                              buttons: controlButtons,
-                                              buttonBackgroundColor:
-                                                  Colors.transparent,
-                                              buttonColor: isDarkModeVal
-                                                  ? Colors.white
-                                                  : Colors.black87,
-                                              alignment: MainAxisAlignment
-                                                  .spaceBetween,
-                                              iconSize: 16,
-                                              textStyle: TextStyle(
-                                                fontSize: 10,
-                                                color: isDarkModeVal
-                                                    ? Colors.white
-                                                    : Colors.black87,
-                                              ),
-                                              buttonPadding:
-                                                  const EdgeInsets.all(4),
-                                              buttonMargin:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 2,
-                                                      vertical: 2),
-                                              vertical:
-                                                  false, // Set to true for vertical layout
-                                              buttonBuilder:
-                                                  (buttonContext, child) {
-                                                // Wrap each button with a tooltip
-                                                final tooltipText =
-                                                    buttonContext
-                                                        .button.semanticsLabel;
-                                                if (tooltipText != null &&
-                                                    tooltipText.isNotEmpty) {
-                                                  return Tooltip(
-                                                    message: tooltipText,
-                                                    preferBelow: false,
-                                                    child: child,
-                                                  );
-                                                }
-                                                return child;
-                                              },
-                                            )),
-                                      ]),
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    // Sidebar - always rendered but animates width from 0
+                                    // This ensures main grid shrinks BEFORE sidebar appears
+                                    AnimatedContainer(
+                                      duration: const Duration(
+                                        milliseconds: 300,
+                                      ),
+                                      curve: Curves.easeInOut,
+                                      width: isSidebarVisible
+                                          ? sidebarWidth
+                                          : 0,
+                                      clipBehavior: Clip.antiAlias,
+                                      decoration: BoxDecoration(
+                                        color: isSidebarVisible
+                                            ? MediasfuColors.themedSurface(
+                                                darkMode: isDarkModeVal,
+                                                elevation: 1,
+                                              )
+                                            : Colors.transparent,
+                                        border: isSidebarVisible
+                                            ? Border(
+                                                left: BorderSide(
+                                                  color: isDarkModeVal
+                                                      ? Colors.white12
+                                                      : Colors.black12,
+                                                  width: 1,
+                                                ),
+                                              )
+                                            : null,
+                                        boxShadow: isSidebarVisible
+                                            ? [
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withOpacity(0.1),
+                                                  blurRadius: 8,
+                                                  offset: const Offset(-2, 0),
+                                                ),
+                                              ]
+                                            : null,
+                                      ),
+                                      // Use OverflowBox to allow child to maintain size during animation
+                                      // The clipBehavior on parent will clip the overflow
+                                      child: OverflowBox(
+                                        alignment: Alignment.centerLeft,
+                                        minWidth: sidebarWidth,
+                                        maxWidth: sidebarWidth,
+                                        child: isSidebarVisible
+                                            ? _buildSidebarContent(
+                                                sidebarContent,
+                                                isDarkModeVal,
+                                              )
+                                            : const SizedBox.shrink(),
+                                      ),
+                                    ),
+                                  ],
                                 );
                               },
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    )
-                  : !validated
-                      ? (widget.options.credentials != null &&
-                              widget.options.credentials!.apiKey.isNotEmpty
-                          ? renderpreJoinPageWidget() ?? renderWelcomePage()
-                          : renderWelcomePage())
-                      : const SizedBox(),
+                      Visibility(
+                        visible:
+                            eventType.value == EventType.webinar ||
+                            eventType.value == EventType.conference,
+                        child: ValueListenableBuilder<double>(
+                          valueListenable: controlHeight,
+                          builder: (context, controlHeight, child) {
+                            return _subAspectBuilder(
+                              context,
+                              SubAspectComponentOptions(
+                                backgroundColor: MediasfuColors.themedSurface(
+                                  darkMode: isDarkModeVal,
+                                ),
+                                showControls:
+                                    eventType.value == EventType.webinar ||
+                                    eventType.value == EventType.conference,
+                                defaultFractionSub: 40, //40 pixels
+                                children: [
+                                  _controlButtonsBuilder(
+                                    context,
+                                    ControlButtonsComponentOptions(
+                                      buttons: controlButtons,
+                                      buttonBackgroundColor: Colors.transparent,
+                                      buttonColor: isDarkModeVal
+                                          ? Colors.white
+                                          : Colors.black87,
+                                      alignment: MainAxisAlignment.spaceBetween,
+                                      iconSize: 16,
+                                      textStyle: TextStyle(
+                                        fontSize: 10,
+                                        color: isDarkModeVal
+                                            ? Colors.white
+                                            : Colors.black87,
+                                      ),
+                                      buttonPadding: const EdgeInsets.all(4),
+                                      buttonMargin: const EdgeInsets.symmetric(
+                                        horizontal: 2,
+                                        vertical: 2,
+                                      ),
+                                      vertical:
+                                          false, // Set to true for vertical layout
+                                      buttonBuilder: (buttonContext, child) {
+                                        // Wrap each button with a tooltip
+                                        final tooltipText =
+                                            buttonContext.button.semanticsLabel;
+                                        if (tooltipText != null &&
+                                            tooltipText.isNotEmpty) {
+                                          return Tooltip(
+                                            message: tooltipText,
+                                            preferBelow: false,
+                                            child: child,
+                                          );
+                                        }
+                                        return child;
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : !validated
+              ? (widget.options.credentials != null &&
+                        widget.options.credentials!.apiKey.isNotEmpty
+                    ? renderpreJoinPageWidget() ?? renderWelcomePage()
+                    : renderWelcomePage())
+              : const SizedBox(),
         );
       },
     );
@@ -9998,7 +11449,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         ),
         localLink: widget.options.localLink,
         connectMediaSFU: widget.options.connectMediaSFU!,
-        credentials: widget.options.credentials ??
+        credentials:
+            widget.options.credentials ??
             Credentials(apiUserName: '', apiKey: ''),
         customBuilder: widget.options.preJoinPageWidget,
         returnUI: widget.options.returnUI,
@@ -10111,17 +11563,21 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                 child: InkWell(
                   onTap: sidebarNavigateBack,
                   borderRadius: BorderRadius.circular(0),
-                  splashColor: (isDarkModeVal
-                          ? MediasfuColors.primaryDark
-                          : MediasfuColors.primary)
-                      .withOpacity(0.15),
-                  highlightColor: (isDarkModeVal
-                          ? MediasfuColors.primaryDark
-                          : MediasfuColors.primary)
-                      .withOpacity(0.08),
+                  splashColor:
+                      (isDarkModeVal
+                              ? MediasfuColors.primaryDark
+                              : MediasfuColors.primary)
+                          .withOpacity(0.15),
+                  highlightColor:
+                      (isDarkModeVal
+                              ? MediasfuColors.primaryDark
+                              : MediasfuColors.primary)
+                          .withOpacity(0.08),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 14),
+                      horizontal: 14,
+                      vertical: 14,
+                    ),
                     decoration: BoxDecoration(
                       color: isDarkModeVal
                           ? MediasfuColors.primaryDark.withOpacity(0.12)
@@ -10187,11 +11643,11 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                   switchOutCurve: MediasfuAnimations.accelerate,
                   transitionBuilder:
                       (Widget child, Animation<double> animation) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: child,
-                    );
-                  },
+                        return FadeTransition(
+                          opacity: animation,
+                          child: child,
+                        );
+                      },
                   child: KeyedSubtree(
                     key: ValueKey<SidebarContent>(content),
                     child: _getSidebarWidget(content, isDarkModeVal),
@@ -10312,8 +11768,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                       ),
                       child: SafeArea(
                         left: false,
-                        child:
-                            _buildSidebarContent(sidebarContent, isDarkModeVal),
+                        child: _buildSidebarContent(
+                          sidebarContent,
+                          isDarkModeVal,
+                        ),
                       ),
                     ),
                   ),
@@ -10338,8 +11796,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             initializeCustomMenuButtons();
 
             final options = MenuModalOptions(
-              backgroundColor:
-                  MediasfuColors.themedSurface(darkMode: isDarkModeVal),
+              backgroundColor: MediasfuColors.themedSurface(
+                darkMode: isDarkModeVal,
+              ),
               isVisible: isMenuModalVisibleVal && !shouldUseSidebar,
               onClose: () => updateIsMenuModalVisible(false),
               customButtons: customMenuButtons,
@@ -10369,8 +11828,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               valueListenable: isDarkMode,
               builder: (context, isDarkModeVal, child) {
                 final options = RecordingModalOptions(
-                  backgroundColor:
-                      MediasfuColors.themedSurface(darkMode: isDarkModeVal),
+                  backgroundColor: MediasfuColors.themedSurface(
+                    darkMode: isDarkModeVal,
+                  ),
                   isRecordingModalVisible:
                       isRecordingModalVisible && !shouldUseSidebar,
                   onClose: () {
@@ -10402,8 +11862,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               valueListenable: isDarkMode,
               builder: (context, isDarkModeVal, child) {
                 final options = RequestsModalOptions(
-                  backgroundColor:
-                      MediasfuColors.themedSurface(darkMode: isDarkModeVal),
+                  backgroundColor: MediasfuColors.themedSurface(
+                    darkMode: isDarkModeVal,
+                  ),
                   isRequestsModalVisible:
                       isRequestsVisible && !shouldUseSidebar,
                   onRequestClose: () {
@@ -10439,8 +11900,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               valueListenable: isDarkMode,
               builder: (context, isDarkModeVal, child) {
                 final options = WaitingRoomModalOptions(
-                  backgroundColor:
-                      MediasfuColors.themedSurface(darkMode: isDarkModeVal),
+                  backgroundColor: MediasfuColors.themedSurface(
+                    darkMode: isDarkModeVal,
+                  ),
                   isWaitingModalVisible:
                       isWaitingModalVisible && !shouldUseSidebar,
                   onWaitingRoomClose: () {
@@ -10531,15 +11993,17 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                 updateMyDefaultOutputLanguage: updateMyDefaultOutputLanguage,
                 updateMyDefaultListenLanguage: (String? lang) {
                   final newPrefs = ListenerTranslationPreferences(
-                      perSpeaker: listenerTranslationPreferences.perSpeaker,
-                      globalLanguage: lang);
+                    perSpeaker: listenerTranslationPreferences.perSpeaker,
+                    globalLanguage: lang,
+                  );
                   updateListenerTranslationPreferences(newPrefs);
                 },
                 updateListenPreferences: (Map<String, String> prefs) {
                   final newPrefs = ListenerTranslationPreferences(
-                      perSpeaker: prefs,
-                      globalLanguage:
-                          listenerTranslationPreferences.globalLanguage);
+                    perSpeaker: prefs,
+                    globalLanguage:
+                        listenerTranslationPreferences.globalLanguage,
+                  );
                   updateListenerTranslationPreferences(newPrefs);
                 },
                 showSubtitlesOnCards: showSubtitlesOnCards.value,
@@ -10562,8 +12026,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           valueListenable: isDarkMode,
           builder: (context, isDarkModeVal, child) {
             final options = EventSettingsModalOptions(
-              backgroundColor:
-                  MediasfuColors.themedSurface(darkMode: isDarkModeVal),
+              backgroundColor: MediasfuColors.themedSurface(
+                darkMode: isDarkModeVal,
+              ),
               isVisible: isSettingsVisible && !shouldUseSidebar,
               updateIsSettingsModalVisible: updateIsSettingsModalVisible,
               onClose: () {
@@ -10625,8 +12090,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               valueListenable: isDarkMode,
               builder: (context, isDarkModeVal, child) {
                 final options = ParticipantsModalOptions(
-                  backgroundColor:
-                      MediasfuColors.themedSurface(darkMode: isDarkModeVal),
+                  backgroundColor: MediasfuColors.themedSurface(
+                    darkMode: isDarkModeVal,
+                  ),
                   isParticipantsModalVisible:
                       isParticipantsVisible && !shouldUseSidebar,
                   onParticipantsClose: () {
@@ -10657,8 +12123,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               valueListenable: isDarkMode,
               builder: (context, isDarkModeVal, child) {
                 final options = MessagesModalOptions(
-                  backgroundColor:
-                      MediasfuColors.themedSurface(darkMode: isDarkModeVal),
+                  backgroundColor: MediasfuColors.themedSurface(
+                    darkMode: isDarkModeVal,
+                  ),
                   isMessagesModalVisible:
                       isMessagesVisible && !shouldUseSidebar,
                   onMessagesClose: () {
@@ -10697,8 +12164,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           valueListenable: isDarkMode,
           builder: (context, isDarkModeVal, child) {
             final options = MediaSettingsModalOptions(
-              backgroundColor:
-                  MediasfuColors.themedSurface(darkMode: isDarkModeVal),
+              backgroundColor: MediasfuColors.themedSurface(
+                darkMode: isDarkModeVal,
+              ),
               isVisible: isMediaSettingsVisible && !shouldUseSidebar,
               onClose: () {
                 updateIsMediaSettingsModalVisible(false);
@@ -10722,8 +12190,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           valueListenable: isDarkMode,
           builder: (context, isDarkModeVal, child) {
             final options = ConfirmExitModalOptions(
-              backgroundColor:
-                  MediasfuColors.themedSurface(darkMode: isDarkModeVal),
+              backgroundColor: MediasfuColors.themedSurface(
+                darkMode: isDarkModeVal,
+              ),
               isVisible: isConfirmExitVisible,
               onClose: () {
                 updateIsConfirmExitModalVisible(false);
@@ -10748,8 +12217,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           valueListenable: isDarkMode,
           builder: (context, isDarkModeVal, child) {
             final options = ConfirmHereModalOptions(
-              backgroundColor:
-                  MediasfuColors.themedSurface(darkMode: isDarkModeVal),
+              backgroundColor: MediasfuColors.themedSurface(
+                darkMode: isDarkModeVal,
+              ),
               isConfirmHereModalVisible: isConfirmHereModalVisible,
               onConfirmHereClose: () {
                 updateIsConfirmHereModalVisible(false);
@@ -10791,42 +12261,43 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
 
   Widget _buildPollModal() {
     return ValueListenableBuilder<bool>(
-        valueListenable: isPollModalVisible,
-        builder: (context, isPollVisible, child) {
-          if (!isPollVisible) {
-            return const SizedBox.shrink();
-          }
-          return ValueListenableBuilder<List<Poll>>(
-            valueListenable: polls,
-            builder: (context, polls, child) {
-              return ValueListenableBuilder<bool>(
-                valueListenable: isDarkMode,
-                builder: (context, isDarkModeVal, child) {
-                  final options = PollModalOptions(
-                    isPollModalVisible: isPollVisible && !shouldUseSidebar,
-                    onClose: () {
-                      updateIsPollModalVisible(false);
-                    },
-                    member: member.value,
-                    islevel: islevel.value,
-                    polls: polls,
-                    poll: poll.value,
-                    socket: socket.value,
-                    roomName: roomName.value,
-                    showAlert: showAlert,
-                    updateIsPollModalVisible: updateIsPollModalVisible,
-                    handleCreatePoll: handleCreatePoll,
-                    handleEndPoll: handleEndPoll,
-                    handleVotePoll: handleVotePoll,
-                    isDarkMode: isDarkModeVal,
-                    enableGlassmorphism: true,
-                  );
-                  return _pollModalBuilder(context, options);
-                },
-              );
-            },
-          );
-        });
+      valueListenable: isPollModalVisible,
+      builder: (context, isPollVisible, child) {
+        if (!isPollVisible) {
+          return const SizedBox.shrink();
+        }
+        return ValueListenableBuilder<List<Poll>>(
+          valueListenable: polls,
+          builder: (context, polls, child) {
+            return ValueListenableBuilder<bool>(
+              valueListenable: isDarkMode,
+              builder: (context, isDarkModeVal, child) {
+                final options = PollModalOptions(
+                  isPollModalVisible: isPollVisible && !shouldUseSidebar,
+                  onClose: () {
+                    updateIsPollModalVisible(false);
+                  },
+                  member: member.value,
+                  islevel: islevel.value,
+                  polls: polls,
+                  poll: poll.value,
+                  socket: socket.value,
+                  roomName: roomName.value,
+                  showAlert: showAlert,
+                  updateIsPollModalVisible: updateIsPollModalVisible,
+                  handleCreatePoll: handleCreatePoll,
+                  handleEndPoll: handleEndPoll,
+                  handleVotePoll: handleVotePoll,
+                  isDarkMode: isDarkModeVal,
+                  enableGlassmorphism: true,
+                );
+                return _pollModalBuilder(context, options);
+              },
+            );
+          },
+        );
+      },
+    );
   }
 
   Widget _buildBreakoutRoomsModal() {
@@ -10834,8 +12305,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       valueListenable: isBreakoutRoomsModalVisible,
       builder: (context, isBreakoutRoomsVisible, child) {
         if (!isBreakoutRoomsVisible) {
-          return const SizedBox
-              .shrink(); // Return an empty widget if the modal is not visible
+          return const SizedBox.shrink(); // Return an empty widget if the modal is not visible
         }
         return ValueListenableBuilder<List<dynamic>>(
           valueListenable: breakoutRooms,
@@ -10847,8 +12317,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                   valueListenable: isDarkMode,
                   builder: (context, isDarkModeVal, child) {
                     final options = BreakoutRoomsModalOptions(
-                      backgroundColor:
-                          MediasfuColors.themedSurface(darkMode: isDarkModeVal),
+                      backgroundColor: MediasfuColors.themedSurface(
+                        darkMode: isDarkModeVal,
+                      ),
                       isVisible: isBreakoutRoomsVisible && !shouldUseSidebar,
                       onBreakoutRoomsClose: () {
                         updateIsBreakoutRoomsModalVisible(false);
@@ -10877,8 +12348,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           valueListenable: isDarkMode,
           builder: (context, isDarkModeVal, child) {
             final options = ConfigureWhiteboardModalOptions(
-              backgroundColor:
-                  MediasfuColors.themedSurface(darkMode: isDarkModeVal),
+              backgroundColor: MediasfuColors.themedSurface(
+                darkMode: isDarkModeVal,
+              ),
               isVisible: isVisible && !shouldUseSidebar,
               onClose: () {
                 updateIsConfigureWhiteboardModalVisible(false);
@@ -10932,8 +12404,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             updateIsBackgroundModalVisible(false);
           },
           parameters: mediasfuParameters as BackgroundModalParameters,
-          backgroundColor:
-              isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF5F5F5),
+          backgroundColor: isDark
+              ? const Color(0xFF1E1E1E)
+              : const Color(0xFFF5F5F5),
           isDarkMode: isDark,
         );
         return _backgroundModalBuilder(context, options);
@@ -11062,10 +12535,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           builder: (context, isDarkModeVal, child) {
             final options = LoadingModalOptions(
               isVisible: isLoadingModalVisible,
-              backgroundColor:
-                  MediasfuColors.themedSurface(darkMode: isDarkModeVal),
-              displayColor:
-                  MediasfuColors.controlTextColor(darkMode: isDarkModeVal),
+              backgroundColor: MediasfuColors.themedSurface(
+                darkMode: isDarkModeVal,
+              ),
+              displayColor: MediasfuColors.controlTextColor(
+                darkMode: isDarkModeVal,
+              ),
             );
             return _loadingModalBuilder(context, options);
           },
@@ -11383,8 +12858,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
 
   Widget _buildBackgroundSidebarContent(bool isDarkModeVal) {
     final options = BackgroundModalOptions(
-      backgroundColor:
-          isDarkModeVal ? const Color(0xFF1E1E1E) : Colors.transparent,
+      backgroundColor: isDarkModeVal
+          ? const Color(0xFF1E1E1E)
+          : Colors.transparent,
       isVisible: true,
       onClose: () => updateActiveSidebarContent(SidebarContent.none),
       parameters: mediasfuParameters,
@@ -11496,14 +12972,16 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         updateMyDefaultOutputLanguage: updateMyDefaultOutputLanguage,
         updateMyDefaultListenLanguage: (String? lang) {
           final newPrefs = ListenerTranslationPreferences(
-              perSpeaker: listenerTranslationPreferences.perSpeaker,
-              globalLanguage: lang);
+            perSpeaker: listenerTranslationPreferences.perSpeaker,
+            globalLanguage: lang,
+          );
           updateListenerTranslationPreferences(newPrefs);
         },
         updateListenPreferences: (Map<String, String> prefs) {
           final newPrefs = ListenerTranslationPreferences(
-              perSpeaker: prefs,
-              globalLanguage: listenerTranslationPreferences.globalLanguage);
+            perSpeaker: prefs,
+            globalLanguage: listenerTranslationPreferences.globalLanguage,
+          );
           updateListenerTranslationPreferences(newPrefs);
         },
         showSubtitlesOnCards: showSubtitlesOnCards.value,

@@ -178,21 +178,23 @@ class MainScreenComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-    final safeAreaInsets = mediaQuery.padding;
-
-    final parentWidth = mediaQuery.size.width * options.containerWidthFraction;
-
-    // Subtract only safe area padding (status bar, nav bar).
-    // systemGestureInsets is excluded — it affects touch, not layout.
-    // The outer SafeArea zeros out padding for sides it consumes.
-    final availableHeight =
-        mediaQuery.size.height - safeAreaInsets.top - safeAreaInsets.bottom;
-    final parentHeight = options.showControls
-        ? availableHeight *
-            options.containerHeightFraction *
-            options.defaultFraction
-        : availableHeight * options.containerHeightFraction;
+    return LayoutBuilder(builder: (context, constraints) {
+      final mediaQuery = MediaQuery.of(context);
+      final usesMeasuredHeight = constraints.hasBoundedHeight;
+      final boundaryWidth = constraints.hasBoundedWidth
+          ? constraints.maxWidth
+          : mediaQuery.size.width;
+      final boundaryHeight = usesMeasuredHeight
+          ? constraints.maxHeight
+          : mediaQuery.size.height -
+              mediaQuery.padding.top -
+              mediaQuery.padding.bottom;
+      final parentWidth = boundaryWidth * options.containerWidthFraction;
+      final parentHeight = options.showControls
+          ? boundaryHeight *
+              options.containerHeightFraction *
+              options.defaultFraction
+          : boundaryHeight * options.containerHeightFraction;
 
     bool isWideScreen = parentWidth > 768;
 
@@ -320,6 +322,7 @@ class MainScreenComponent extends StatelessWidget {
         ) ??
         defaultContainer;
 
-    return container;
+      return container;
+    });
   }
 }

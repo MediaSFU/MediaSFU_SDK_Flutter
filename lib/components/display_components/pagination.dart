@@ -100,6 +100,7 @@ abstract class PaginationParameters implements GeneratePageContentParameters {
 
   // mediasfu functions
   PaginationParameters Function() get getUpdatedAllParams;
+  dynamic Function() get getCurrentParams;
   // dynamic operator [](String key);
 }
 

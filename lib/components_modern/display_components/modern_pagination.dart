@@ -87,8 +87,10 @@ class _ModernPaginationState extends State<ModernPagination>
   void didUpdateWidget(ModernPagination oldWidget) {
     super.didUpdateWidget(oldWidget);
     // Only auto-adjust when breakout state changes (starts/ends)
-    final oldParams = oldWidget.options.parameters.getUpdatedAllParams();
-    final newParams = widget.options.parameters.getUpdatedAllParams();
+    final oldParams =
+        oldWidget.options.parameters.getCurrentParams() as PaginationParameters;
+    final newParams =
+        widget.options.parameters.getCurrentParams() as PaginationParameters;
 
     final wasBreakout =
         oldParams.breakOutRoomStarted && !oldParams.breakOutRoomEnded;
@@ -103,7 +105,8 @@ class _ModernPaginationState extends State<ModernPagination>
 
   void _adjustWindowForCurrentPage() {
     final totalPages = widget.options.totalPages;
-    final params = widget.options.parameters.getUpdatedAllParams();
+    final params =
+        widget.options.parameters.getCurrentParams() as PaginationParameters;
 
     if (totalPages <= _maxVisiblePages) {
       _windowStart = 1;
@@ -126,7 +129,8 @@ class _ModernPaginationState extends State<ModernPagination>
   }
 
   Future<void> _handlePageChange(int page) async {
-    final params = widget.options.parameters.getUpdatedAllParams();
+    final params =
+        widget.options.parameters.getCurrentParams() as PaginationParameters;
     await widget.options.handlePageChange(GeneratePageContentOptions(
       page: page,
       parameters: params,
@@ -186,7 +190,8 @@ class _ModernPaginationState extends State<ModernPagination>
 
     _adjustWindowForCurrentPage();
 
-    final params = widget.options.parameters.getUpdatedAllParams();
+    final params =
+        widget.options.parameters.getCurrentParams() as PaginationParameters;
     final visiblePages = _getVisiblePages();
     final isVertical = widget.options.direction == 'vertical';
 
@@ -481,9 +486,7 @@ class _ModernPaginationState extends State<ModernPagination>
         padding: const EdgeInsets.all(3),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: isActive
-              ? Colors.white.withOpacity(0.2)
-              : Colors.transparent,
+          color: isActive ? Colors.white.withOpacity(0.2) : Colors.transparent,
         ),
         child: Icon(
           Icons.home_rounded,

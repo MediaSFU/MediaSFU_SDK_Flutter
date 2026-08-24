@@ -7,6 +7,7 @@ class ConfirmExitOptions {
   final String member;
   final String roomName;
   final bool ban;
+  final bool endRoomOnHostExit;
 
   ConfirmExitOptions({
     this.socket,
@@ -14,6 +15,7 @@ class ConfirmExitOptions {
     required this.member,
     required this.roomName,
     this.ban = false,
+    this.endRoomOnHostExit = true,
   });
 }
 
@@ -44,6 +46,7 @@ Future<void> confirmExit(ConfirmExitOptions options) async {
     'member': options.member,
     'roomName': options.roomName,
     'ban': options.ban,
+    'endRoomOnHostExit': options.endRoomOnHostExit,
   });
 
   if (options.localSocket != null && options.localSocket!.id != null) {
@@ -51,6 +54,7 @@ Future<void> confirmExit(ConfirmExitOptions options) async {
       'member': options.member,
       'roomName': options.roomName,
       'ban': options.ban,
+      'endRoomOnHostExit': options.endRoomOnHostExit,
     });
   }
 }

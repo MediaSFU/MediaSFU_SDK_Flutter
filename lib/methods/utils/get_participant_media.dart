@@ -72,77 +72,54 @@ typedef GetParticipantMediaType = Future<MediaStream?> Function(
 Future<MediaStream?> getParticipantMedia(
     GetParticipantMediaOptions options) async {
   try {
-    MediaStream? stream;
-
-    // Get required parameters
     final allVideoStreams = options.parameters.allVideoStreams;
     final allAudioStreams = options.parameters.allAudioStreams;
     final participants = options.parameters.participants;
 
-    // Search by ID if provided
+    final kind = options.kind == 'audio' ? 'audio' : 'video';
+    final streams = kind == 'video' ? allVideoStreams : allAudioStreams;
+    if (streams.isEmpty) return null;
+
+    MediaStream? firstMatch(String producerId) {
+      if (producerId.isEmpty) return null;
+      for (final entry in streams) {
+        if (entry.producerId == producerId) return entry.stream;
+      }
+      return null;
+    }
+
+    // Resolve the participant by membership id first, then by name.
+    Participant? participant;
     if (options.id.isNotEmpty) {
-      if (options.kind == 'video') {
-        // Find video stream by producer ID
-        try {
-          final videoStreamObj = allVideoStreams.firstWhere(
-            (obj) => obj.producerId == options.id,
-          );
-          stream = videoStreamObj.stream;
-        } catch (e) {
-          // Not found
-          stream = null;
-        }
-      } else if (options.kind == 'audio') {
-        // Find audio stream by producer ID
-        try {
-          final audioStreamObj = allAudioStreams.firstWhere(
-            (obj) => obj.producerId == options.id,
-          );
-          stream = audioStreamObj.stream;
-        } catch (e) {
-          // Not found
-          stream = null;
+      for (final part in participants) {
+        if (part.id == options.id) {
+          participant = part;
+          break;
         }
       }
-    } else if (options.name.isNotEmpty) {
-      // Search by name if ID not provided
-      try {
-        final participant = participants.firstWhere(
-          (part) => part.name == options.name,
-        );
-
-        final participantId = participant.id ?? '';
-
-        if (options.kind == 'video') {
-          // Find video stream by participant ID
-          try {
-            final videoStreamObj = allVideoStreams.firstWhere(
-              (obj) => obj.producerId == participantId,
-            );
-            stream = videoStreamObj.stream;
-          } catch (e) {
-            // Not found
-            stream = null;
-          }
-        } else if (options.kind == 'audio') {
-          // Find audio stream by participant ID
-          try {
-            final audioStreamObj = allAudioStreams.firstWhere(
-              (obj) => obj.producerId == participantId,
-            );
-            stream = audioStreamObj.stream;
-          } catch (e) {
-            // Not found
-            stream = null;
-          }
+    }
+    if (participant == null && options.name.isNotEmpty) {
+      for (final part in participants) {
+        if (part.name == options.name) {
+          participant = part;
+          break;
         }
-      } catch (e) {
-        // Participant not found
-        stream = null;
       }
     }
 
-    return stream;
+    // allVideoStreams / allAudioStreams are keyed by producerId only. A
+    // participant's `id` is its membership id and never matches, so the
+    // producer reference has to come from videoID / audioID. Matching on `id`
+    // is why a lookup by name returned null for everyone.
+    if (participant != null) {
+      final producerId =
+          kind == 'video' ? participant.videoID : participant.audioID;
+      final match = firstMatch(producerId);
+      if (match != null) return match;
+    }
+
+    // A caller that already holds a producer id may pass it directly as `id`.
+    return firstMatch(options.id);
   } catch (e) {
     // Return null if an error occurs
     if (kDebugMode) {

@@ -28,6 +28,12 @@ import '../../components/background_components/virtual_background_types.dart'
     show VirtualBackground;
 import '../permissions_methods/update_permission_config.dart'
     show PermissionConfig;
+import 'headless/get_media_streams.dart' show MediaStreamsParameters;
+import 'headless/get_room_readiness.dart' show RoomReadinessParameters;
+import 'headless/participant_state.dart' show ParticipantStateParameters;
+import 'headless/media_permissions.dart' show MediaPermissionsParameters;
+import 'headless/room_actions.dart' show RoomActionsParameters;
+import 'headless/moderation.dart' show ModerationParameters;
 
 // Default no-op functions for optional panelist-related callbacks
 void _defaultUpdateBool(bool _) {}
@@ -71,7 +77,13 @@ class MediasfuParameters
         ScreenboardModalParameters,
         ScreenboardParameters,
         BackgroundModalParameters,
-        StartConsumingTranslationParameters {
+        StartConsumingTranslationParameters,
+        MediaStreamsParameters,
+        RoomReadinessParameters,
+        ParticipantStateParameters,
+        MediaPermissionsParameters,
+        RoomActionsParameters,
+        ModerationParameters {
   // ======== Parameters ========
 
   // ---------------------
@@ -1850,6 +1862,7 @@ class MediasfuParameters
     required this.updateMainScreenCanvas,
     required this.updateIsScreenboardModalVisible,
     required this.getUpdatedAllParams,
+    required this.getCurrentParams,
 
     // Translation
     this.listenerTranslationPreferences,
@@ -1866,6 +1879,14 @@ class MediasfuParameters
 
   @override
   MediasfuParameters Function() getUpdatedAllParams;
+
+  /// Pure snapshot read for render and polling code.
+  ///
+  /// Flutter's historical [getUpdatedAllParams] is already side-effect free,
+  /// unlike the React method with the same name. Keeping this separate API
+  /// makes read intent explicit and prevents a future implementation from
+  /// accidentally coupling render/poll paths to publication.
+  MediasfuParameters Function() getCurrentParams;
 
   //Convert update functions to map
 

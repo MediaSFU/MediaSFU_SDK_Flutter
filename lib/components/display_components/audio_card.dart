@@ -264,6 +264,7 @@ abstract class AudioCardParameters {
   EventType get eventType;
 
   AudioCardParameters Function() get getUpdatedAllParams;
+  dynamic Function() get getCurrentParams;
 
   // dynamic operator [](String key);
 }
@@ -691,17 +692,17 @@ class _AudioCardState extends State<AudioCard> with TickerProviderStateMixin {
 
   void animateWaveformChecker() {
     Timer.periodic(const Duration(seconds: 1), (timer) {
-      final audioDecibels =
-          widget.options.parameters.getUpdatedAllParams().audioDecibels;
-      final participants =
-          widget.options.parameters.getUpdatedAllParams().participants;
+      final currentParameters =
+          widget.options.parameters.getCurrentParams() as AudioCardParameters;
+      final audioDecibels = currentParameters.audioDecibels;
+      final participants = currentParameters.participants;
 
       // Find the existing audio entry and participant based on the name.
       final existingEntry = audioDecibels.firstWhere(
         (entry) => entry.name == widget.options.name,
         orElse: () => AudioDecibels(name: '', averageLoudness: 0),
       );
-      Participant? participant = participants.firstWhere(
+      final Participant participant = participants.firstWhere(
         (participant) => participant.name == widget.options.name,
         orElse: () => Participant(
           id: '',

@@ -73,7 +73,7 @@ class _ModernConfirmExitModalState extends State<ModernConfirmExitModal>
     super.dispose();
   }
 
-  Future<void> _handleExit() async {
+  Future<void> _handleExit({bool endRoomOnHostExit = true}) async {
     if (_isExiting) return;
     setState(() => _isExiting = true);
 
@@ -83,6 +83,7 @@ class _ModernConfirmExitModalState extends State<ModernConfirmExitModal>
         ban: widget.options.ban,
         socket: widget.options.socket,
         roomName: widget.options.roomName,
+        endRoomOnHostExit: endRoomOnHostExit,
       );
       await widget.options.exitEventOnConfirm(exitOptions);
       widget.options.onClose();
@@ -103,7 +104,7 @@ class _ModernConfirmExitModalState extends State<ModernConfirmExitModal>
 
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isHost = widget.options.islevel == '2';
+    final isHost = widget.options.islevel == '2' && !widget.options.ban;
 
     final screenWidth = MediaQuery.of(context).size.width;
     final isLandscape =
@@ -206,7 +207,7 @@ class _ModernConfirmExitModalState extends State<ModernConfirmExitModal>
                                   ),
                                   const SizedBox(height: MediasfuSpacing.md),
                                   Text(
-                                    isHost ? 'End Meeting' : 'Leave Meeting',
+                                    isHost ? 'Leave or end meeting' : 'Leave Meeting',
                                     style: TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold,
@@ -223,7 +224,7 @@ class _ModernConfirmExitModalState extends State<ModernConfirmExitModal>
                                 children: [
                                   Text(
                                     isHost
-                                        ? 'Are you sure you want to end this meeting? This will disconnect all participants.'
+                                        ? 'Leave room keeps the meeting active for everyone else and lets you rejoin. End for everyone closes it for all participants.'
                                         : 'Are you sure you want to leave this meeting?',
                                     style: TextStyle(
                                       fontSize: 15,
@@ -283,12 +284,28 @@ class _ModernConfirmExitModalState extends State<ModernConfirmExitModal>
                                         ),
                                       ),
                                       const SizedBox(width: MediasfuSpacing.md),
+                                      if (isHost) ...[
+                                        Expanded(
+                                          child: _buildButton(
+                                            onPressed: _isExiting
+                                                ? null
+                                                : () => _handleExit(endRoomOnHostExit: false),
+                                            label: 'Leave room',
+                                            backgroundColor: const Color(0xFF475569),
+                                            textColor: Colors.white,
+                                            isLoading: _isExiting,
+                                          ),
+                                        ),
+                                        const SizedBox(width: MediasfuSpacing.md),
+                                      ],
                                       Expanded(
                                         child: _buildButton(
                                           onPressed:
-                                              _isExiting ? null : _handleExit,
+                                              _isExiting
+                                                  ? null
+                                                  : () => _handleExit(endRoomOnHostExit: true),
                                           label:
-                                              isHost ? 'End Meeting' : 'Leave',
+                                              isHost ? 'End for everyone' : 'Leave',
                                           backgroundColor: dangerColor,
                                           textColor: Colors.white,
                                           isLoading: _isExiting,

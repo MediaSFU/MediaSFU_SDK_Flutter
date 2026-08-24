@@ -108,31 +108,37 @@ class MainContainerComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final double screenHeight = MediaQuery.of(context).size.height;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final mediaSize = MediaQuery.sizeOf(context);
+        final boundaryWidth = constraints.hasBoundedWidth
+            ? constraints.maxWidth
+            : mediaSize.width;
+        final boundaryHeight = constraints.hasBoundedHeight
+            ? constraints.maxHeight
+            : mediaSize.height;
+        final containerWidth = options.containerWidthFraction * boundaryWidth;
+        final containerHeight =
+            options.containerHeightFraction * boundaryHeight;
 
-    final double containerWidth = options.containerWidthFraction * screenWidth;
-    final double containerHeight =
-        options.containerHeightFraction * screenHeight;
-
-    return Container(
-      width: containerWidth,
-      height: containerHeight,
-      margin: options.margin ??
-          EdgeInsets.fromLTRB(
-            options.marginLeft,
-            options.marginTop,
-            options.marginRight,
-            options.marginBottom,
-          ),
-      padding: options.padding,
-      decoration: options.decoration,
-      color: options.decoration == null ? options.backgroundColor : null,
-      alignment: options.alignment,
-      clipBehavior: options.clipBehavior ?? Clip.none,
-      child: Stack(
-        children: options.children,
-      ),
+        return Container(
+          width: containerWidth,
+          height: containerHeight,
+          margin: options.margin ??
+              EdgeInsets.fromLTRB(
+                options.marginLeft,
+                options.marginTop,
+                options.marginRight,
+                options.marginBottom,
+              ),
+          padding: options.padding,
+          decoration: options.decoration,
+          color: options.decoration == null ? options.backgroundColor : null,
+          alignment: options.alignment,
+          clipBehavior: options.clipBehavior ?? Clip.none,
+          child: Stack(children: options.children),
+        );
+      },
     );
   }
 }

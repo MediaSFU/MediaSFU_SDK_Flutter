@@ -101,6 +101,7 @@ class ConfirmExitModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final islevel = options.islevel;
+    final isHostExit = islevel == '2' && !options.ban;
     final screenWidth = MediaQuery.of(context).size.width;
     final double modalWidth = screenWidth * 0.7 > 400 ? 400 : screenWidth * 0.7;
     final double modalHeight = MediaQuery.of(context).size.height * 0.5;
@@ -159,8 +160,8 @@ class ConfirmExitModal extends StatelessWidget {
                         height: 20,
                       ),
                       Text(
-                        islevel == '2'
-                            ? 'This will end the event for all. Confirm exit.'
+                        isHostExit
+                            ? 'Leave room keeps the event active for everyone else and lets you rejoin. End for everyone closes it for all participants.'
                             : 'Are you sure you want to exit?',
                         style: const TextStyle(
                           color: Colors.black,
@@ -169,8 +170,10 @@ class ConfirmExitModal extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      Wrap(
+                        alignment: WrapAlignment.end,
+                        spacing: 10,
+                        runSpacing: 10,
                         children: [
                           ElevatedButton(
                             onPressed: options.onClose,
@@ -190,11 +193,23 @@ class ConfirmExitModal extends StatelessWidget {
                               ),
                             ),
                           ),
-                          const VerticalDivider(
-                            color: Colors.black,
-                            thickness: 1,
-                            width: 10,
-                          ),
+                          if (isHostExit)
+                            ElevatedButton(
+                              onPressed: () async {
+                                await options.exitEventOnConfirm(ConfirmExitOptions(
+                                  member: options.member,
+                                  ban: options.ban,
+                                  socket: options.socket,
+                                  roomName: options.roomName,
+                                  endRoomOnHostExit: false,
+                                ));
+                                options.onClose();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF475569),
+                              ),
+                              child: const Text('Leave room', style: TextStyle(color: Colors.white)),
+                            ),
                           ElevatedButton(
                             onPressed: () async {
                               final optionsExit = ConfirmExitOptions(
@@ -202,6 +217,7 @@ class ConfirmExitModal extends StatelessWidget {
                                 ban: options.ban,
                                 socket: options.socket,
                                 roomName: options.roomName,
+                                endRoomOnHostExit: true,
                               );
                               await options.exitEventOnConfirm(
                                 optionsExit,
@@ -217,7 +233,7 @@ class ConfirmExitModal extends StatelessWidget {
                               ),
                             ),
                             child: Text(
-                              islevel == '2' ? 'End Event' : 'Exit',
+                              isHostExit ? 'End for everyone' : 'Exit',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 14,

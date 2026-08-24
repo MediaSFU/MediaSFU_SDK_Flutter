@@ -109,9 +109,8 @@ class _ModernAudioDecibelCheckState extends State<ModernAudioDecibelCheck> {
   }
 
   void _checkAudioDecibels() {
-    // Get the updated parameters
-    var parameters = widget.options.parameters;
-    final updatedParams = parameters.getUpdatedAllParams();
+    final updatedParams = widget.options.parameters.getCurrentParams()
+        as AudioDecibelCheckParameters;
 
     final audioDecibels = updatedParams.audioDecibels;
     final participants = updatedParams.participants;

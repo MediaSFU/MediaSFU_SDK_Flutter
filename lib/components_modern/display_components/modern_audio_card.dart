@@ -3,7 +3,7 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../components/display_components/audio_card.dart'
-    show AudioCardOptions;
+    show AudioCardOptions, AudioCardParameters;
 import '../../components/display_components/mini_card.dart'
     show MiniCardOptions;
 import 'modern_mini_card.dart' show ModernMiniCard;
@@ -77,17 +77,17 @@ class _ModernAudioCardState extends State<ModernAudioCard>
         return;
       }
 
-      final audioDecibels =
-          widget.options.parameters.getUpdatedAllParams().audioDecibels;
-      final participants =
-          widget.options.parameters.getUpdatedAllParams().participants;
+      final currentParameters =
+          widget.options.parameters.getCurrentParams() as AudioCardParameters;
+      final audioDecibels = currentParameters.audioDecibels;
+      final participants = currentParameters.participants;
 
       final existingEntry = audioDecibels.firstWhere(
         (entry) => entry.name == widget.options.name,
         orElse: () => AudioDecibels(name: '', averageLoudness: 0),
       );
 
-      Participant? participant = participants.firstWhere(
+      final Participant participant = participants.firstWhere(
         (participant) => participant.name == widget.options.name,
         orElse: () => Participant(
           id: '',

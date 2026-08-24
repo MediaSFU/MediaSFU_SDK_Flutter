@@ -6234,7 +6234,8 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
         updateCustomVideoCard: updateCustomVideoCard,
         updateCustomAudioCard: updateCustomAudioCard,
         updateCustomMiniCard: updateCustomMiniCard,
-        getUpdatedAllParams: () => mediasfuParameters);
+        getUpdatedAllParams: () => mediasfuParameters,
+        getCurrentParams: () => mediasfuParameters);
 
     if (widget.options.returnUI != null && widget.options.returnUI == false) {
       try {
@@ -6293,20 +6294,29 @@ class _MediasfuWebinarState extends State<MediasfuWebinar> {
     }
   }
 
+  bool _sourcePublishQueued = false;
+
   void updateSpecificState(
       MediasfuParameters? sourceParameters, String key, dynamic value) {
-    // providing a blanket update function for all states
-    // will modify later to provide specific update functions
-    try {
-      if (widget.options.updateSourceParameters != null) {
-        widget.options.sourceParameters = mediasfuParameters;
-        widget.options.updateSourceParameters!(mediasfuParameters);
+    if (widget.options.updateSourceParameters == null) return;
+
+    // Never notify a consumer synchronously from an updater. Some updaters are
+    // reached while Flutter is building layout; an immediate callback can make
+    // the parent call setState during that build. One zero-delay task both
+    // moves publication off the build stack and coalesces a burst of updates
+    // onto the latest mutable parameter snapshot.
+    widget.options.sourceParameters = mediasfuParameters;
+    if (_sourcePublishQueued) return;
+    _sourcePublishQueued = true;
+    Future<void>.delayed(Duration.zero, () {
+      _sourcePublishQueued = false;
+      if (!mounted) return;
+      try {
+        widget.options.updateSourceParameters?.call(mediasfuParameters);
+      } catch (_) {
+        // A consumer observer must never break the room state path.
       }
-    } catch (error) {
-      // if (kDebugMode) {
-      //   print('Error updating $key: $error');
-      // }
-    }
+    });
   }
 
   @override

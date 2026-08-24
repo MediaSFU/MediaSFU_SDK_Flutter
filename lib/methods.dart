@@ -103,3 +103,6 @@ export 'package:mediasfu_sdk/methods/utils/create_room_on_media_sfu.dart'
 // Platform feature support utility
 export 'package:mediasfu_sdk/methods/utils/platform_feature_support.dart'
     show PlatformFeatureSupport, MediasfuFeature;
+
+// Headless helpers for app-owned UIs. See HEADLESS_GUIDE.md.
+export 'package:mediasfu_sdk/methods/utils/headless/headless.dart';

@@ -15,6 +15,14 @@ Build video meetings, webinars, broadcasts, live streams, and collaborative room
 
 `mediasfu_sdk` is the official MediaSFU Flutter WebRTC SDK. It combines ready-made room UI with headless APIs for audio, video, chat, screen sharing, whiteboards, breakout rooms, recording, real-time translation, and AI-assisted meeting workflows across Android, iOS, web, macOS, Windows, and Linux.
 
+<p align="center">
+  <a href="https://mediasfu.com/storybook/?path=/story/mediasfu-components-modern-mediasfu-generic--default">
+    <img src="https://mediasfu.com/images/demos/showcase_all.webp" width="960" alt="MediaSFU product showcase: video calls, classrooms, broadcasts, live commerce, podcasts, and AI experiences" />
+  </a>
+</p>
+
+<p align="center"><a href="https://mediasfu.com/storybook/?path=/story/mediasfu-components-modern-mediasfu-generic--default">Open the live ModernMediasfuGeneric preview →</a></p>
+
 [Quick start](#quick-start-prebuilt-room) · [Try the sandbox](https://www.mediasfu.com/sandbox) · [Flutter guide](https://www.mediasfu.com/docs/sdks/flutter/) · [API reference](https://www.mediasfu.com/api/flutter/) · [Self-host with MediaSFU Open](https://github.com/MediaSFU/MediaSFUOpen)
 
 ## Why Product Teams Choose MediaSFU
@@ -29,7 +37,7 @@ Build video meetings, webinars, broadcasts, live streams, and collaborative room
 
 | Your goal | Start with | Why |
 | --- | --- | --- |
-| Add a working room to a Flutter app quickly | `MediasfuGeneric` or an event-specific widget | Prebuilt participant, media, chat, and collaboration UI |
+| Add a working room to a Flutter app quickly | `ModernMediasfuGeneric` | Current premium participant, media, chat, and collaboration UI |
 | Match an existing product design | SDK components and `MediasfuUICustomOverrides` | Replace selected surfaces while retaining the room runtime |
 | Own every pixel and interaction | Headless mode with `returnUI: false` | Receive `MediasfuParameters` state and helpers in your own widgets |
 | Run managed production infrastructure | [MediaSFU Cloud](https://www.mediasfu.com/documentation/) | Hosted room creation, signaling, media routing, and platform services |
@@ -112,7 +120,67 @@ The built-in helper endpoints are:
 | `createRoomOnMediaSFU` | `https://mediasfu.com/v1/rooms` | `${localLink}/createRoom` |
 | `joinRoomOnMediaSFU` | `https://mediasfu.com/v1/rooms/` | `${localLink}/joinRoom` |
 
-Security note: avoid embedding privileged production credentials in public clients unless that is an intentional part of your architecture. A backend proxy is usually safer for production mobile and web apps.
+For local-only development, a restricted and revocable MediaSFU API key is the fastest route. Before distributing an app, keep reusable credentials on an authenticated backend and inject **both** room callbacks. The client credentials below are syntactically valid placeholders only; the callbacks ignore them and send only the room payload.
+
+```dart
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:mediasfu_sdk/mediasfu_sdk.dart';
+
+const clientPlaceholders = Credentials(
+  apiUserName: 'client00',
+  apiKey: '0000000000000000000000000000000000000000000000000000000000000000',
+);
+
+Future<String> currentAppAccessToken() async {
+  // Return a short-lived token from your app's signed-in session.
+  throw UnimplementedError('Connect this to your application authentication.');
+}
+
+Future<CreateJoinRoomResult> _proxyRoom(
+  String operation,
+  Map<String, dynamic> payload,
+) async {
+  final response = await http.post(
+    Uri.parse('https://api.example.com/api/mediasfu/$operation'),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ${await currentAppAccessToken()}',
+    },
+    body: jsonEncode(payload),
+  );
+  final body = jsonDecode(response.body) as Map<String, dynamic>;
+  if (response.statusCode < 200 || response.statusCode >= 300 || body['success'] == false) {
+    return CreateJoinRoomResult(
+      success: false,
+      data: CreateJoinRoomError(
+        error: body['error']?.toString() ?? 'Room request failed (${response.statusCode}).',
+      ),
+    );
+  }
+  final data = (body['data'] ?? body) as Map<String, dynamic>;
+  return CreateJoinRoomResult(
+    success: true,
+    data: CreateJoinRoomResponse.fromJson(data),
+  );
+}
+
+Future<CreateJoinRoomResult> createViaBackend(CreateMediaSFUOptions options) =>
+    _proxyRoom('create-room', options.payload.toMap());
+
+Future<CreateJoinRoomResult> joinViaBackend(JoinMediaSFUOptions options) =>
+    _proxyRoom('join-room', options.payload.toMap());
+
+final room = ModernMediasfuGeneric(
+  options: ModernMediasfuGenericOptions(
+    credentials: clientPlaceholders,
+    createMediaSFURoom: createViaBackend,
+    joinMediaSFURoom: joinViaBackend,
+  ),
+);
+```
+
+Your backend must authenticate the app user, validate and allowlist the payload, enforce room/role/duration/capacity policy, rate-limit requests, replace the placeholders with server-only credentials, call MediaSFU, and return only the authorized room result. Never let either callback fall back to the default client credential path. Use the [REST API Sandbox](https://mediasfu.com/sandbox) for GET/POST experiments, create credentials at [API Keys](https://mediasfu.com/api-keys), and read the room API contract in the [Developer Console guide](https://mediasfu.com/documentation).
 
 ## Quick Start: Prebuilt Room
 
@@ -131,8 +199,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: MediasfuGeneric(
-        options: MediasfuGenericOptions(
+      home: ModernMediasfuGeneric(
+        options: ModernMediasfuGenericOptions(
           credentials: Credentials(
             apiUserName: 'your-api-username',
             apiKey: 'your-64-character-api-key',
@@ -150,7 +218,7 @@ Run it:
 flutter run
 ```
 
-The default `MediasfuGeneric` flow shows the pre-join page, lets the user create or join a room, then renders the meeting experience with media controls, chat, participants, recording controls, polls, whiteboard, and related modals.
+The default `ModernMediasfuGeneric` flow shows the pre-join page, lets the user create or join a room, then renders the meeting experience with media controls, chat, participants, recording controls, polls, whiteboard, and related modals.
 
 ## Try The UI Without A Live Room
 
@@ -173,7 +241,7 @@ This is useful for frontend work, visual QA, and rapid prototyping. It does not 
 
 ## Choose A Room Widget
 
-Start with `MediasfuGeneric` or `ModernMediasfuGeneric` when you are still shaping the product. Move to the event-specific widgets when the room type is fixed.
+Start with `ModernMediasfuGeneric` when you are still shaping the product. Use `MediasfuGeneric` for the classic shell, or move to an event-specific widget when the room type is fixed.
 
 | Widget | Use case |
 | --- | --- |
@@ -236,8 +304,8 @@ class _HeadlessMeetingState extends State<HeadlessMeeting> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        MediasfuGeneric(
-          options: MediasfuGenericOptions(
+        ModernMediasfuGeneric(
+          options: ModernMediasfuGenericOptions(
             credentials: Credentials(
               apiUserName: 'your-api-username',
               apiKey: 'your-64-character-api-key',
@@ -264,14 +332,48 @@ class MyMeetingSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final current = parameters.getCurrentParams();
+    final readiness = getRoomReadiness(current);
+    final screen = getScreenShareStream(current);
+    final remote = getRemoteVideoStreams(current);
+    final local = getLocalVideoStream(current);
+    final primary = screen.stream ?? (remote.isNotEmpty ? remote.first.stream : local);
+
     return Column(
       children: [
-        Text('Room: ${parameters.roomName}'),
-        Text('Participants: ${parameters.participants.length}'),
-        ElevatedButton(
-          onPressed: () => parameters.updateIsMessagesModalVisible(true),
-          child: const Text('Open chat'),
+        Text(readiness.ready ? 'Room ready' : readiness.reason),
+        Text('Participants: ${listParticipantMediaStates(current).length}'),
+        Expanded(
+          child: primary == null
+              ? const Center(child: Text('Waiting for media…'))
+              : CardVideoDisplay(
+                  options: CardVideoDisplayOptions(
+                    remoteProducerId: screen.active ? current.screenId : 'primary',
+                    eventType: current.eventType,
+                    videoStream: primary,
+                    forceFullDisplay: !screen.active,
+                    doMirror: !screen.active && remote.isEmpty,
+                  ),
+                ),
         ),
+        ElevatedButton(
+          onPressed: readiness.ready
+              ? () async {
+                  final result = await runMediaControl(
+                    current,
+                    () => clickAudio(ClickAudioOptions(parameters: current)),
+                  );
+                  if (!result.ok && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(result.error)),
+                    );
+                  }
+                }
+              : null,
+          child: Text(current.audioAlreadyOn ? 'Mute' : 'Unmute'),
+        ),
+        // Audio is independent from the visible video page. Mount every item.
+        ...getAudioGridComponents(current),
       ],
     );
   }
@@ -281,8 +383,8 @@ class MyMeetingSurface extends StatelessWidget {
 For headless mode you usually provide one of these pre-join payloads:
 
 ```dart
-MediasfuGeneric(
-  options: MediasfuGenericOptions(
+ModernMediasfuGeneric(
+  options: ModernMediasfuGenericOptions(
     returnUI: false,
     credentials: credentials,
     noUIPreJoinOptionsCreate: CreateMediaSFURoomOptions(
@@ -302,8 +404,8 @@ MediasfuGeneric(
 or:
 
 ```dart
-MediasfuGeneric(
-  options: MediasfuGenericOptions(
+ModernMediasfuGeneric(
+  options: ModernMediasfuGenericOptions(
     returnUI: false,
     credentials: credentials,
     noUIPreJoinOptionsJoin: JoinMediaSFURoomOptions(
@@ -317,6 +419,30 @@ MediasfuGeneric(
   ),
 )
 ```
+
+For larger app-owned surfaces, use `MediasfuHeadlessController` as the
+`updateSourceParameters` callback and rebuild with `AnimatedBuilder`. It accepts
+every publication and exposes `readiness`, `remoteVideos`, `remoteAudios`,
+`localVideo`, `localAudio`, `screenShare`, and participant state. The remaining
+headless helpers cover permissions, moderation, recording, polls, breakout
+rooms, whiteboards, session state, viewer sessions, safe media-production
+capabilities, chat, and leave/end actions.
+
+Headless rules that prevent the most common broken-call states:
+
+- keep the room component mounted for the complete call;
+- accept every parameter publication and call `getCurrentParams()` for pure
+  reads—do not retain an older bag or use `getUpdatedAllParams()` in a build,
+  timer, or listener;
+- select screen share first, then remote camera, then local camera; render
+  screens unmirrored with contain sizing;
+- mount every value returned by `getAudioGridComponents`, independent of the
+  visible video page;
+- wait for `getRoomReadiness(parameters).ready` before enabling controls;
+- display every `HeadlessActionResult.error`, gate host actions with the
+  permission helpers, await leave/end, and dispose app-created tracks.
+
+See [HEADLESS_GUIDE.md](./HEADLESS_GUIDE.md) and the [cross-SDK headless guide](https://mediasfu.com/docs/usage/headless/) for the complete state, action, moderation, session, and verification walkthrough.
 
 ## Create And Join Rooms Programmatically
 
@@ -370,7 +496,10 @@ if (joinResult.success) {
 
 ## Self-Hosted MediaSFU Open
 
-Use `localLink` for self-hosted or proxy-backed deployments.
+**MediaSFU Open is a media server that you deploy and operate yourself.** Start
+and verify that server first, then set `localLink` to its URL. The Flutter prop
+does not download or start MediaSFU Open; `localhost` reaches the device itself
+and only works when the app and server truly share that host.
 
 ```dart
 MediasfuGeneric(
@@ -442,9 +571,29 @@ These options appear across the prebuilt room widgets.
 | `customMiniCard` | `MiniCardType?` | Replace mini participant cards |
 | `customComponent` | `CustomComponentType?` | Replace the whole room workspace |
 | `containerStyle` | `ContainerStyleOptions?` | Style the room container |
+| `containerWidthFraction` / `containerHeightFraction` | `double` | Size `ModernMediasfuGeneric` relative to an embedded parent; each defaults to `1` |
 | `uiOverrides` | `MediasfuUICustomOverrides?` | Wrap or replace specific SDK widgets/functions |
 
 Modern-only extras include `useFixedLink`, `localAppKey`, `localApiUserName`, `localApiKey`, `localSubUserName`, `initialMeetingId`, `canUsePersonalTranslation`, `personalTranslationUsername`, `userVoiceClones`, `onBack`, and `optimizeVideoRecord`.
+
+Embed a room without letting it claim the complete viewport:
+
+```dart
+SizedBox(
+  width: 720,
+  height: 540,
+  child: ModernMediasfuGeneric(
+    options: ModernMediasfuGenericOptions(
+      credentials: credentials,
+      containerWidthFraction: 0.75,
+      containerHeightFraction: 0.75,
+    ),
+  ),
+)
+```
+
+When either fraction is below `1`, internal layout calculations use the
+embedded room dimensions instead of assuming a full-screen route.
 
 ## Customization
 
@@ -598,6 +747,7 @@ Use the shortest path for the question you have:
 | Exact classes and signatures | [Generated Flutter API reference](https://www.mediasfu.com/api/flutter/) |
 | Browse all developer material | [MediaSFU docs portal](https://www.mediasfu.com/docs/) |
 | Developer console and API configuration | [Developer console guide](https://www.mediasfu.com/documentation/) |
+| Create and manage MediaSFU API credentials | [MediaSFU API Keys](https://www.mediasfu.com/api-keys) |
 | Dashboard user guide | [mediasfu.com/user-guide](https://www.mediasfu.com/user-guide) |
 | Test before integrating | [MediaSFU sandbox](https://www.mediasfu.com/sandbox) |
 | Prototype embeddable experiences | [Widget Studio](https://www.mediasfu.com/widget-studio) |
@@ -609,6 +759,13 @@ Use the shortest path for the question you have:
 | Community support | [mediasfu.com/forums](https://www.mediasfu.com/forums) |
 | Contact | [mediasfu.com/contact](https://www.mediasfu.com/contact) |
 | GitHub organization | [github.com/MediaSFU](https://github.com/MediaSFU) |
+
+Complete products and staged examples:
+
+- [MediaSFU QuickStart Apps](https://github.com/MediaSFU/MediaSFU-QuickStart-Apps) — Cloud, MediaSFU Open, backend-proxy, custom-prejoin, and custom-UI starters.
+- [SpacesTek Initial](https://github.com/MediaSFU/SpacesTekInitial) → [Final](https://github.com/MediaSFU/SpacesTekFinal) → [Advanced](https://github.com/MediaSFU/SpacesTekAdvanced) — a progressive app-owned collaboration product.
+- [MediaSFU Agents](https://github.com/MediaSFU/Agents) — multimodal voice/vision agent clients.
+- [MediaSFU VOIP](https://github.com/MediaSFU/VOIP) — telephony, dialer, and human/agent handoff clients.
 
 For faster help, include the `mediasfu_sdk` version, Flutter target, chosen room widget, backend mode (MediaSFU Cloud or `localLink`), exact error text, and a minimal reproducible snippet. Those details also give coding assistants the context needed to suggest the correct MediaSFU APIs.
 
@@ -625,5 +782,9 @@ For faster help, include the `mediasfu_sdk` version, Flutter target, chosen room
 | JavaScript | [mediasfu.com/javascript](https://www.mediasfu.com/javascript) |
 
 ## License
+
+### Host leave and rejoin
+
+The host exit modal now offers **Leave room** and **End for everyone**. Programmatic callers can keep the room active with `ConfirmExitOptions(..., endRoomOnHostExit: false)` or `leaveRoom(parameters, endRoomOnHostExit: false)`. The default remains `true`.
 
 MIT. See [LICENSE](./LICENSE).

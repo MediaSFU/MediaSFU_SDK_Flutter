@@ -8,6 +8,7 @@ abstract class AudioDecibelCheckParameters {
   List<Participant> get participants;
 
   AudioDecibelCheckParameters Function() get getUpdatedAllParams;
+  dynamic Function() get getCurrentParams;
 
   // dynamic operator [](String key);
 }
@@ -76,7 +77,7 @@ class AudioDecibelCheck extends StatefulWidget {
 }
 
 class _AudioDecibelCheckState extends State<AudioDecibelCheck> {
-  late Timer _timer;
+  Timer? _timer;
 
   @override
   void initState() {
@@ -84,28 +85,16 @@ class _AudioDecibelCheckState extends State<AudioDecibelCheck> {
     _setupAudioDecibelCheck();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _setupAudioDecibelCheck();
-  }
-
   void _setupAudioDecibelCheck() {
+    _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       _checkAudioDecibels();
     });
   }
 
   void _checkAudioDecibels() {
-    // Get the updated parameters from the widget.
-    var parameters = widget.options.parameters;
-
-    parameters = parameters.getUpdatedAllParams();
-    // final Function animateWaveform = widget.animateWaveform;
-    // final Function resetWaveform = widget.resetWaveform;
-
-    // Get the updated parameters from the getUpdatedAllParams function.
-    final updatedParams = parameters.getUpdatedAllParams();
+    final updatedParams = widget.options.parameters.getCurrentParams()
+        as AudioDecibelCheckParameters;
 
     final audioDecibels = updatedParams.audioDecibels;
     final participants = updatedParams.participants;
@@ -134,7 +123,7 @@ class _AudioDecibelCheckState extends State<AudioDecibelCheck> {
 
   @override
   void dispose() {
-    _timer.cancel();
+    _timer?.cancel();
     super.dispose();
   }
 

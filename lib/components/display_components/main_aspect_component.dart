@@ -466,31 +466,41 @@ class _MainAspectComponentState extends State<MainAspectComponent>
 
   @override
   Widget build(BuildContext context) {
-    // Calculate dimensions based on current screen size and fractions
-    final Size size = MediaQuery.of(context).size;
-    final EdgeInsets safeAreaInsets = MediaQuery.of(context).padding;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final mediaQuery = MediaQuery.of(context);
+        final boundaryWidth = constraints.hasBoundedWidth
+            ? constraints.maxWidth
+            : mediaQuery.size.width;
+        final boundaryHeight = constraints.hasBoundedHeight
+            ? constraints.maxHeight
+            : mediaQuery.size.height -
+                mediaQuery.padding.top -
+                mediaQuery.padding.bottom;
+        final parentWidth =
+            boundaryWidth * widget.options.containerWidthFraction;
+        final parentHeight = widget.options.showControls
+            ? boundaryHeight *
+                widget.options.containerHeightFraction *
+                widget.options.defaultFraction
+            : boundaryHeight * widget.options.containerHeightFraction;
+        var isWide = parentWidth > 768 || parentWidth > 1.5 * parentHeight;
+        final isMedium = !isWide && parentWidth > 576;
+        final isSmall = !isWide && !isMedium;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          widget.options.updateIsWideScreen(isWide);
+          widget.options.updateIsMediumScreen(isMedium);
+          widget.options.updateIsSmallScreen(isSmall);
+        });
 
-    final double parentWidth =
-        size.width * widget.options.containerWidthFraction;
-
-    // Subtract only safe area padding (status bar, nav bar).
-    // systemGestureInsets is excluded — it affects touch, not layout.
-    // The outer SafeArea zeros out padding for sides it consumes.
-    final double availableHeight =
-        size.height - safeAreaInsets.top - safeAreaInsets.bottom;
-    final double parentHeight = widget.options.showControls
-        ? availableHeight *
-            widget.options.containerHeightFraction *
-            widget.options.defaultFraction
-        : availableHeight * widget.options.containerHeightFraction;
-
-    return Container(
-      color: widget.options.backgroundColor,
-      width: parentWidth,
-      height: parentHeight,
-      child: Stack(
-        children: widget.options.children,
-      ),
+        return Container(
+          color: widget.options.backgroundColor,
+          width: parentWidth,
+          height: parentHeight,
+          child: Stack(children: widget.options.children),
+        );
+      },
     );
   }
 }

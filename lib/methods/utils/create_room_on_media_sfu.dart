@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../types/types.dart' show CreateMediaSFURoomOptions;
 import 'create_join_room.dart';
+import 'media_sfu_http_response.dart';
 
 class CreateMediaSFUOptions {
   CreateMediaSFURoomOptions payload;
@@ -18,8 +19,8 @@ class CreateMediaSFUOptions {
   });
 }
 
-typedef CreateRoomOnMediaSFUType = Future<CreateJoinRoomResult> Function(
-    CreateMediaSFUOptions options);
+typedef CreateRoomOnMediaSFUType =
+    Future<CreateJoinRoomResult> Function(CreateMediaSFUOptions options);
 
 /// **createRoomOnMediaSFU**
 ///
@@ -89,13 +90,15 @@ Future<CreateJoinRoomResult> createRoomOnMediaSFU(
 
       if (pendingRequest != null) {
         final Map<String, dynamic> pendingData = jsonDecode(pendingRequest);
-        final int timeSincePending = DateTime.now().millisecondsSinceEpoch -
+        final int timeSincePending =
+            DateTime.now().millisecondsSinceEpoch -
             ((pendingData['timestamp'] as num?)?.toInt() ?? 0);
 
         if (timeSincePending < pendingTimeout) {
           return CreateJoinRoomResult(
-            data:
-                CreateJoinRoomError(error: 'Room creation already in progress'),
+            data: CreateJoinRoomError(
+              error: 'Room creation already in progress',
+            ),
             success: false,
           );
         } else {
@@ -172,7 +175,16 @@ Future<CreateJoinRoomResult> createRoomOnMediaSFU(
 
     // Handle response
     if (response.statusCode == 200 || response.statusCode == 201) {
-      final data = jsonDecode(response.body);
+      final data = decodeMediaSfuJsonObject(response.body);
+
+      if (data == null) {
+        return CreateJoinRoomResult(
+          data: CreateJoinRoomError(
+            error: mediaSfuResponseError(response, action: 'create the room'),
+          ),
+          success: false,
+        );
+      }
 
       // Clear pending status on success
       try {
@@ -187,7 +199,7 @@ Future<CreateJoinRoomResult> createRoomOnMediaSFU(
         success: true,
       );
     } else {
-      final errorData = jsonDecode(response.body);
+      final errorData = decodeMediaSfuJsonObject(response.body);
 
       // Clear pending status on error
       try {
@@ -198,7 +210,14 @@ Future<CreateJoinRoomResult> createRoomOnMediaSFU(
       }
 
       return CreateJoinRoomResult(
-        data: CreateJoinRoomError.fromJson(errorData),
+        data: errorData != null
+            ? CreateJoinRoomError.fromJson(errorData)
+            : CreateJoinRoomError(
+                error: mediaSfuResponseError(
+                  response,
+                  action: 'create the room',
+                ),
+              ),
         success: false,
       );
     }
@@ -216,7 +235,8 @@ Future<CreateJoinRoomResult> createRoomOnMediaSFU(
     // Handle unexpected errors
     return CreateJoinRoomResult(
       data: CreateJoinRoomError(
-          error: 'Unable to create room, ${error.toString()}'),
+        error: mediaSfuConnectionError(error, action: 'create the room'),
+      ),
       success: false,
     );
   }

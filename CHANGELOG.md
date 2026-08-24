@@ -1,3 +1,12 @@
+### 2.3.0
+* **Headless and embedded-room release**:
+  - Added public headless helpers for room readiness, participant/media state, production controls, playback, moderation, and session actions.
+  - Added pure current-parameter reads for render and polling paths, while retaining explicit parameter publication for state updates.
+  - Added embedded-container sizing across the main container, aspect, and screen boundaries without changing full-page defaults.
+  - Guarded late send-transport callbacks after teardown.
+  - Added the host option to leave without ending the room, while preserving end-on-exit as the default.
+  - Expanded public guidance for prebuilt UI, overrides, headless rendering, backend proxies, MediaSFU Cloud, and self-hosted MediaSFU Open.
+
 ### 2.2.9
 * **Compatibility and dependency updates**:
   - Fixed static analysis on Flutter 3.44+ after `CupertinoPageTransitionsBuilder` moved to the Cupertino library.

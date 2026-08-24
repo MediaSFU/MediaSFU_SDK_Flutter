@@ -125,9 +125,16 @@ Future<void> createLocalSendTransport(
                   : updateLocalVideoProducer!(producer);
         }
 
+        // The acknowledgement can arrive after room teardown. Re-read the
+        // live bag instead of using the device captured before the socket
+        // round trip; a cleared device means there is no room left to attach
+        // a transport to.
+        device = parameters.getCurrentParams().device;
+        if (device == null) return;
+
         try {
           // Create a WebRTC send transport for local transport
-          localProducerTransport = device?.createSendTransportFromMap(
+          localProducerTransport = device!.createSendTransportFromMap(
             webrtcTransportMap,
             producerCallback: producerCallbackFunction,
           );
@@ -333,9 +340,15 @@ Future<void> createSendTransport(
                   : updateVideoProducer(producer);
         }
 
+        // The room can be left while this acknowledgement is in flight.
+        // Teardown clears the current device, so stop before creating or
+        // publishing a transport from a stale callback.
+        device = parameters.getCurrentParams().device;
+        if (device == null) return;
+
         try {
           // Create a WebRTC send transport
-          producerTransport = device?.createSendTransportFromMap(
+          producerTransport = device!.createSendTransportFromMap(
             webrtcTransportMap,
             producerCallback: producerCallbackFunction,
           );

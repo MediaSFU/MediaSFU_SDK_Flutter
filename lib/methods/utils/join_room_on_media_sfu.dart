@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'create_join_room.dart';
+import 'media_sfu_http_response.dart';
 import '../../types/types.dart' show JoinMediaSFURoomOptions;
 
 class JoinMediaSFUOptions {
@@ -18,8 +19,8 @@ class JoinMediaSFUOptions {
   });
 }
 
-typedef JoinRoomOnMediaSFUType = Future<CreateJoinRoomResult> Function(
-    JoinMediaSFUOptions options);
+typedef JoinRoomOnMediaSFUType =
+    Future<CreateJoinRoomResult> Function(JoinMediaSFUOptions options);
 
 /// **joinRoomOnMediaSFU**
 ///
@@ -65,7 +66,8 @@ typedef JoinRoomOnMediaSFUType = Future<CreateJoinRoomResult> Function(
 /// ```
 
 Future<CreateJoinRoomResult> joinRoomOnMediaSFU(
-    JoinMediaSFUOptions options) async {
+  JoinMediaSFUOptions options,
+) async {
   try {
     // Extract options
     final payload = options.payload;
@@ -110,22 +112,38 @@ Future<CreateJoinRoomResult> joinRoomOnMediaSFU(
 
     // Handle response
     if (response.statusCode == 200 || response.statusCode == 201) {
-      final data = jsonDecode(response.body);
+      final data = decodeMediaSfuJsonObject(response.body);
+      if (data == null) {
+        return CreateJoinRoomResult(
+          data: CreateJoinRoomError(
+            error: mediaSfuResponseError(response, action: 'join the room'),
+          ),
+          success: false,
+        );
+      }
       return CreateJoinRoomResult(
         data: CreateJoinRoomResponse.fromJson(data),
         success: true,
       );
     } else {
-      final errorData = jsonDecode(response.body);
+      final errorData = decodeMediaSfuJsonObject(response.body);
       return CreateJoinRoomResult(
-        data: CreateJoinRoomError.fromJson(errorData),
+        data: errorData != null
+            ? CreateJoinRoomError.fromJson(errorData)
+            : CreateJoinRoomError(
+                error: mediaSfuResponseError(
+                  response,
+                  action: 'join the room',
+                ),
+              ),
         success: false,
       );
     }
   } catch (error) {
-    // Handle unexpected errors
     return CreateJoinRoomResult(
-      data: CreateJoinRoomError(error: 'Unknown error'),
+      data: CreateJoinRoomError(
+        error: mediaSfuConnectionError(error, action: 'join the room'),
+      ),
       success: false,
     );
   }
