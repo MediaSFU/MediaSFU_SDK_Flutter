@@ -11,6 +11,9 @@ import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
 import '../core/widgets/modal_header.dart';
 import '../core/widgets/section_card.dart';
+import '../core/widgets/modern_pressable.dart';
+import '../core/theme/mediasfu_typography.dart';
+import '../core/widgets/animation_widgets.dart';
 
 typedef ModernRequestsModalType = Widget Function(
     {required RequestsModalOptions options});
@@ -130,7 +133,7 @@ class _ModernRequestsModalState extends State<ModernRequestsModal>
           children: [
             // Backdrop
             Positioned.fill(
-              child: GestureDetector(
+              child: ModernPressable(
                 onTap: _handleClose,
                 child: FadeTransition(
                   opacity: _fadeAnimation,
@@ -257,7 +260,7 @@ class _ModernRequestsModalState extends State<ModernRequestsModal>
           style: TextStyle(
             color: MediasfuColors.warning,
             fontWeight: FontWeight.bold,
-            fontSize: 13,
+            fontSize: MediasfuTypography.sizeBodyCompact,
           ),
         ),
       ),
@@ -327,7 +330,7 @@ class _ModernRequestsModalState extends State<ModernRequestsModal>
             Text(
               'No pending requests',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: MediasfuTypography.sizeTitleSmall,
                 color:
                     widget.options.isDarkMode ? Colors.white54 : Colors.black45,
               ),
@@ -342,7 +345,15 @@ class _ModernRequestsModalState extends State<ModernRequestsModal>
       itemCount: widget.options.requestList.length,
       itemBuilder: (context, index) {
         final request = widget.options.requestList[index];
-        return _buildRequestItem(request);
+        return AnimatedEntry(
+          // Cascade only across the rows visible on open. Past that the delay
+          // is dropped, because a lazily built row that scrolls into view
+          // should appear at once, not wait its turn in a queue it never
+          // joined.
+          delay: Duration(milliseconds: index < 6 ? index * 45 : 0),
+          slideOffset: const Offset(0, 12),
+          child: _buildRequestItem(request),
+        );
       },
     );
   }
@@ -391,7 +402,7 @@ class _ModernRequestsModalState extends State<ModernRequestsModal>
                   Text(
                     'Requesting $type',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: MediasfuTypography.sizeBodySmall,
                       color: widget.options.isDarkMode
                           ? Colors.white54
                           : Colors.black45,
@@ -451,7 +462,7 @@ class _ModernRequestsModalState extends State<ModernRequestsModal>
     required Color color,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
+    return ModernPressable(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(MediasfuSpacing.sm),

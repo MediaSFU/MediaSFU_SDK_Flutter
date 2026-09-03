@@ -14,6 +14,9 @@ import '../../types/types.dart'
         RemoveParticipantsOptions;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
+import '../core/widgets/premium_widgets.dart';
+import '../core/theme/mediasfu_borders.dart';
+import '../core/theme/mediasfu_typography.dart';
 
 /// Configuration options for ModernParticipantList
 class ModernParticipantListOptions {
@@ -198,7 +201,7 @@ class _ModernParticipantListItemState extends State<_ModernParticipantListItem>
                       child: Text(
                         widget.participant.name,
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: MediasfuTypography.sizeTitleSmall,
                           fontWeight: FontWeight.w600,
                           color: isDark ? Colors.white : Colors.black87,
                         ),
@@ -265,7 +268,7 @@ class _ModernParticipantListItemState extends State<_ModernParticipantListItem>
             child: Text(
               initials,
               style: TextStyle(
-                fontSize: 18,
+                fontSize: MediasfuTypography.sizeTitleMedium,
                 fontWeight: FontWeight.w700,
                 color: isHost
                     ? Colors.white
@@ -315,7 +318,7 @@ class _ModernParticipantListItemState extends State<_ModernParticipantListItem>
       child: const Text(
         'HOST',
         style: TextStyle(
-          fontSize: 9,
+          fontSize: MediasfuTypography.sizeMicro,
           fontWeight: FontWeight.bold,
           color: Colors.white,
           letterSpacing: 0.8,
@@ -338,7 +341,7 @@ class _ModernParticipantListItemState extends State<_ModernParticipantListItem>
         Text(
           isMuted ? 'Muted' : 'Speaking',
           style: TextStyle(
-            fontSize: 12,
+            fontSize: MediasfuTypography.sizeBodySmall,
             color: (isDark ? Colors.white : Colors.black).withOpacity(0.5),
           ),
         ),
@@ -457,9 +460,9 @@ class _ModernParticipantListItemState extends State<_ModernParticipantListItem>
       decoration: MediasfuColors.tooltipDecoration(darkMode: isDark),
       textStyle: TextStyle(
         color: MediasfuColors.tooltipText(darkMode: isDark),
-        fontSize: 12,
+        fontSize: MediasfuTypography.sizeBodySmall,
       ),
-      child: GestureDetector(
+      child: ModernPressable(
         onTap: onPressed,
         child: Container(
           width: 38,
@@ -570,9 +573,7 @@ class _ModernParticipantListOthersItem extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: (isDark ? Colors.white : Colors.black).withOpacity(0.05),
-        border: Border.all(
-          color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
-        ),
+        border: MediasfuBorders.subtle(darkMode: isDark),
       ),
       child: Row(
         children: [
@@ -591,7 +592,7 @@ class _ModernParticipantListOthersItem extends StatelessWidget {
                       child: Text(
                         participant.name,
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: MediasfuTypography.sizeTitleSmall,
                           fontWeight: FontWeight.w600,
                           color: isDark ? Colors.white : Colors.black87,
                         ),
@@ -621,7 +622,7 @@ class _ModernParticipantListOthersItem extends StatelessWidget {
                     Text(
                       isMuted ? 'Muted' : 'Active',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: MediasfuTypography.sizeBodySmall,
                         color: (isDark ? Colors.white : Colors.black)
                             .withOpacity(0.5),
                       ),
@@ -661,7 +662,7 @@ class _ModernParticipantListOthersItem extends StatelessWidget {
             child: Text(
               initials,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: MediasfuTypography.sizeTitleSmall,
                 fontWeight: FontWeight.w600,
                 color: isSpecial
                     ? Colors.white
@@ -704,7 +705,7 @@ class _ModernParticipantListOthersItem extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 9,
+          fontSize: MediasfuTypography.sizeMicro,
           fontWeight: FontWeight.bold,
           color: color,
           letterSpacing: 0.5,

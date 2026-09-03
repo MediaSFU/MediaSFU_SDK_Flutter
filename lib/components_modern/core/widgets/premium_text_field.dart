@@ -471,7 +471,7 @@ class _PremiumTextFieldState extends State<PremiumTextField>
         inputFormatters: widget.inputFormatters,
         style: TextStyle(
           color: _textColor,
-          fontSize: 15,
+          fontSize: MediasfuTypography.sizeTitleSmall,
           fontWeight: FontWeight.w500,
         ),
         cursorColor: _hasError ? _errorColor : _primaryColor,
@@ -507,7 +507,7 @@ class _PremiumTextFieldState extends State<PremiumTextField>
             color: widget.isDarkMode
                 ? Colors.white.withOpacity(0.6)
                 : Colors.black.withOpacity(0.5),
-            fontSize: 12,
+            fontSize: MediasfuTypography.sizeBodySmall,
           ),
           counterText: '', // Hide default counter
         ),
@@ -543,7 +543,7 @@ class _PremiumTextFieldState extends State<PremiumTextField>
                   _effectiveError!,
                   style: TextStyle(
                     color: _errorColor,
-                    fontSize: 12,
+                    fontSize: MediasfuTypography.sizeBodySmall,
                     fontWeight: FontWeight.w500,
                   ),
                 )
@@ -554,7 +554,7 @@ class _PremiumTextFieldState extends State<PremiumTextField>
                     color: widget.isDarkMode
                         ? Colors.white.withOpacity(0.6)
                         : Colors.black.withOpacity(0.5),
-                    fontSize: 12,
+                    fontSize: MediasfuTypography.sizeBodySmall,
                   ),
                 )
               else
@@ -566,7 +566,7 @@ class _PremiumTextFieldState extends State<PremiumTextField>
                     color: widget.isDarkMode
                         ? Colors.white.withOpacity(0.5)
                         : Colors.black.withOpacity(0.4),
-                    fontSize: 12,
+                    fontSize: MediasfuTypography.sizeBodySmall,
                   ),
                 ),
             ],

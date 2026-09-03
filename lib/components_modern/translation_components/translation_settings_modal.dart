@@ -18,6 +18,8 @@ import '../../components_modern/core/theme/mediasfu_borders.dart';
 import '../../components_modern/core/widgets/glassmorphic_container.dart';
 import '../../components_modern/core/widgets/premium_button.dart';
 import '../../methods/utils/translation_languages.dart';
+import '../core/widgets/modern_pressable.dart';
+import '../core/theme/mediasfu_animations.dart';
 
 // ============================================================================
 // Types
@@ -313,7 +315,7 @@ class _LanguageDropdownState extends State<LanguageDropdown> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        GestureDetector(
+        ModernPressable(
           onTap: widget.disabled
               ? null
               : () {
@@ -1009,7 +1011,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
     return Stack(
       children: [
         // Backdrop
-        GestureDetector(
+        ModernPressable(
           onTap: widget.options.onClose,
           child: Container(
             color: MediasfuColors.alertBackdrop(darkMode: widget.isDarkMode),
@@ -1066,9 +1068,20 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.all(MediasfuSpacing.md),
-              child: _activeTab == 'speaking'
-                  ? _buildSpeakingTab()
-                  : _buildListeningTab(),
+              child: AnimatedSwitcher(
+                duration: MediasfuAnimations.fast,
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                // Keyed on the tab so the switcher sees a genuinely new child;
+                // without a key it treats the swap as an update and nothing
+                // fades.
+                child: KeyedSubtree(
+                  key: ValueKey<String>(_activeTab),
+                  child: _activeTab == 'speaking'
+                      ? _buildSpeakingTab()
+                      : _buildListeningTab(),
+                ),
+              ),
             ),
           ),
           _buildFooter(),
@@ -1326,7 +1339,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
                     child: Text(
                       'Translation is billed from your personal credits',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: MediasfuTypography.sizeBodySmall,
                         color: widget.isDarkMode
                             ? Colors.white.withOpacity(0.7)
                             : Colors.black.withOpacity(0.6),
@@ -1533,7 +1546,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
             children: [
               Text(
                 label.split(' ')[0],
-                style: const TextStyle(fontSize: 24),
+                style: const TextStyle(fontSize: MediasfuTypography.sizeTitleLarge),
               ),
               SizedBox(height: MediasfuSpacing.xs),
               Text(
@@ -1608,7 +1621,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
           Text(
             '👩 Female Voices',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: MediasfuTypography.sizeBodySmall,
               color: widget.isDarkMode
                   ? MediasfuColors.textMutedDark
                   : MediasfuColors.textMuted,
@@ -1629,7 +1642,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
           Text(
             '👨 Male Voices',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: MediasfuTypography.sizeBodySmall,
               color: widget.isDarkMode
                   ? MediasfuColors.textMutedDark
                   : MediasfuColors.textMuted,
@@ -1790,7 +1803,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
                     children: [
                       Text(
                         '🎤',
-                        style: const TextStyle(fontSize: 16),
+                        style: const TextStyle(fontSize: MediasfuTypography.sizeTitleSmall),
                       ),
                       SizedBox(width: MediasfuSpacing.xs),
                       Column(
@@ -1816,7 +1829,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
                                   : (widget.isDarkMode
                                       ? MediasfuColors.textMutedDark
                                       : MediasfuColors.textMuted),
-                              fontSize: 10,
+                              fontSize: MediasfuTypography.sizeMicro,
                             ),
                           ),
                         ],
@@ -1855,7 +1868,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
               children: [
                 Text(
                   '🎤',
-                  style: const TextStyle(fontSize: 32),
+                  style: const TextStyle(fontSize: MediasfuTypography.sizeDisplay),
                 ),
                 SizedBox(height: MediasfuSpacing.sm),
                 Text(
@@ -2101,7 +2114,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
                 color: widget.isDarkMode
                     ? Colors.white.withOpacity(0.5)
                     : Colors.black.withOpacity(0.5),
-                fontSize: 11,
+                fontSize: MediasfuTypography.sizeCaption,
               ),
             ),
             SizedBox(height: MediasfuSpacing.sm),
@@ -2144,7 +2157,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
                 color: widget.isDarkMode
                     ? Colors.white.withOpacity(0.5)
                     : Colors.black.withOpacity(0.5),
-                fontSize: 11,
+                fontSize: MediasfuTypography.sizeCaption,
               ),
             ),
             SizedBox(height: MediasfuSpacing.md),

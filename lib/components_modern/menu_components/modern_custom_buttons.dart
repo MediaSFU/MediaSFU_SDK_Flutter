@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
 import '../core/theme/mediasfu_animations.dart';
+import '../core/theme/mediasfu_typography.dart';
 
 /// `ModernCustomButton` - Defines options for each button within `ModernCustomButtons`.
 ///
@@ -256,7 +257,7 @@ class _ModernButtonItemState extends State<_ModernButtonItem>
       decoration: MediasfuColors.tooltipDecoration(darkMode: isDark),
       textStyle: TextStyle(
         color: MediasfuColors.tooltipText(darkMode: isDark),
-        fontSize: 12,
+        fontSize: MediasfuTypography.sizeBodySmall,
       ),
       child: MouseRegion(
         onEnter: (_) => setState(() => _isHovered = true),

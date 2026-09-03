@@ -7,6 +7,9 @@ import '../../types/types.dart'
     show CoHostResponsibility, EventType, Message, Participant, ShowAlert;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
+import '../core/widgets/premium_widgets.dart';
+import '../core/theme/mediasfu_borders.dart';
+import '../core/theme/mediasfu_typography.dart';
 
 /// Configuration options for the modern message panel.
 class ModernMessagePanelOptions {
@@ -330,7 +333,7 @@ class _ModernMessagePanelState extends State<ModernMessagePanel>
                             child: Text(
                               'Reply to existing DMs or start a new one from the Participants list.',
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: MediasfuTypography.sizeBodySmall,
                                 color: isDark
                                     ? Colors.white.withOpacity(0.7)
                                     : Colors.black.withOpacity(0.6),
@@ -339,7 +342,7 @@ class _ModernMessagePanelState extends State<ModernMessagePanel>
                             ),
                           ),
                           const SizedBox(width: MediasfuSpacing.xs),
-                          GestureDetector(
+                          ModernPressable(
                             onTap: () => _dmHintDismissed.value = true,
                             child: Icon(
                               Icons.close_rounded,
@@ -432,12 +435,12 @@ class _ModernMessagePanelState extends State<ModernMessagePanel>
               '${replyInfo['text']}${replyInfo['username']}',
               style: TextStyle(
                 color: isDark ? Colors.white : Colors.black87,
-                fontSize: 13,
+                fontSize: MediasfuTypography.sizeBodyCompact,
               ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          GestureDetector(
+          ModernPressable(
             onTap: _clearReplyInfoAndInput,
             child: Icon(
               Icons.close,
@@ -490,9 +493,7 @@ class _ModernMessagePanelState extends State<ModernMessagePanel>
       decoration: BoxDecoration(
         color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
-        ),
+        border: MediasfuBorders.subtle(darkMode: isDark),
       ),
       child: TextField(
         controller: _textController,
@@ -505,7 +506,7 @@ class _ModernMessagePanelState extends State<ModernMessagePanel>
         },
         style: TextStyle(
           color: isDark ? Colors.white : Colors.black87,
-          fontSize: 14,
+          fontSize: MediasfuTypography.sizeBodyMedium,
         ),
         maxLength: 350,
         maxLines: 3,
@@ -514,7 +515,7 @@ class _ModernMessagePanelState extends State<ModernMessagePanel>
           hintText: _getHintText(isDirectMessage),
           hintStyle: TextStyle(
             color: (isDark ? Colors.white : Colors.black).withOpacity(0.5),
-            fontSize: 14,
+            fontSize: MediasfuTypography.sizeBodyMedium,
           ),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
@@ -542,7 +543,7 @@ class _ModernMessagePanelState extends State<ModernMessagePanel>
   }
 
   Widget _buildSendButton() {
-    return GestureDetector(
+    return ModernPressable(
       onTap: _handleSendButton,
       child: Container(
         width: 52,
@@ -625,7 +626,7 @@ class _ModernMessageBubble extends StatelessWidget {
                 ? message.timestamp
                 : '${message.sender} • ${message.timestamp}',
             style: TextStyle(
-              fontSize: 11,
+              fontSize: MediasfuTypography.sizeCaption,
               color:
                   (isDarkMode ? Colors.white : Colors.black).withOpacity(0.5),
             ),
@@ -641,14 +642,14 @@ class _ModernMessageBubble extends StatelessWidget {
                         : message.timestamp
                     : '${message.sender} • ${message.timestamp}',
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: MediasfuTypography.sizeCaption,
                   color: (isDarkMode ? Colors.white : Colors.black)
                       .withOpacity(0.5),
                 ),
               ),
               if (showReplyButton) ...[
                 const SizedBox(width: MediasfuSpacing.xs),
-                GestureDetector(
+                ModernPressable(
                   onTap: onReply,
                   child: Container(
                     padding: const EdgeInsets.all(4),
@@ -713,10 +714,7 @@ class _ModernMessageBubble extends StatelessWidget {
         ),
         border: isSelfMessage
             ? null
-            : Border.all(
-                color:
-                    (isDarkMode ? Colors.white : Colors.black).withOpacity(0.1),
-              ),
+            : MediasfuBorders.subtle(darkMode: isDarkMode),
         boxShadow: isSelfMessage
             ? [
                 BoxShadow(
@@ -734,7 +732,7 @@ class _ModernMessageBubble extends StatelessWidget {
           color: isSelfMessage
               ? Colors.white
               : (isDarkMode ? Colors.white : Colors.black87),
-          fontSize: 14,
+          fontSize: MediasfuTypography.sizeBodyMedium,
           height: 1.4,
         ),
       ),

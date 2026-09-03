@@ -1163,7 +1163,7 @@ class _ModernDropdown extends StatelessWidget {
       decoration: MediasfuColors.tooltipDecoration(darkMode: isDark),
       textStyle: TextStyle(
         color: MediasfuColors.tooltipText(darkMode: isDark),
-        fontSize: 12,
+        fontSize: MediasfuTypography.sizeBodySmall,
       ),
       child: Container(
         decoration: MediasfuColors.dropdownDecoration(darkMode: isDark),

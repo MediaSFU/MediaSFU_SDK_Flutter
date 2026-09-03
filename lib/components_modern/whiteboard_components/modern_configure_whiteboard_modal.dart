@@ -10,6 +10,8 @@ import '../../components/whiteboard_components/configure_whiteboard_modal.dart'
     show ConfigureWhiteboardModalOptions, ConfigureWhiteboardModalParameters;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
+import '../core/widgets/premium_widgets.dart';
+import '../core/theme/mediasfu_typography.dart';
 
 /// Type definition for ModernConfigureWhiteboardModal widget builder.
 typedef ModernConfigureWhiteboardModalType = Widget Function(
@@ -369,7 +371,7 @@ class _ModernConfigureWhiteboardModalState
           children: [
             // Backdrop - semi-transparent to see content underneath
             Positioned.fill(
-              child: GestureDetector(
+              child: ModernPressable(
                 onTap: widget.options.onClose,
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
@@ -530,7 +532,7 @@ class _ModernConfigureWhiteboardModalState
                 Text(
                   'Configure Whiteboard',
                   style: TextStyle(
-                    fontSize: 17,
+                    fontSize: MediasfuTypography.sizeTitleMedium,
                     fontWeight: FontWeight.bold,
                     color: _isDark ? Colors.white : Colors.white,
                   ),
@@ -539,7 +541,7 @@ class _ModernConfigureWhiteboardModalState
                 Text(
                   isActive ? 'Session is live' : 'Manage drawing permissions',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: MediasfuTypography.sizeBodySmall,
                     color: _isDark
                         ? Colors.grey[400]
                         : Colors.white.withOpacity(0.8),
@@ -602,7 +604,7 @@ class _ModernConfigureWhiteboardModalState
           Text(
             'Whiteboard is active',
             style: TextStyle(
-              fontSize: 13,
+              fontSize: MediasfuTypography.sizeBodyCompact,
               fontWeight: FontWeight.w600,
               color: _isDark
                   ? MediasfuColors.successLight
@@ -619,7 +621,7 @@ class _ModernConfigureWhiteboardModalState
             child: Text(
               '${_assignedParticipants.length} drawing',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: MediasfuTypography.sizeBodySmall,
                 fontWeight: FontWeight.w500,
                 color: MediasfuColors.successDark,
               ),
@@ -710,7 +712,7 @@ class _ModernConfigureWhiteboardModalState
           child: Row(
             children: [
               Expanded(
-                child: GestureDetector(
+                child: ModernPressable(
                   onTap: () => setState(() => _selectedParticipantTab = 0),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
@@ -735,7 +737,7 @@ class _ModernConfigureWhiteboardModalState
                         Text(
                           'Can Draw (${_assignedParticipants.length})',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: MediasfuTypography.sizeBodyCompact,
                             fontWeight: FontWeight.w600,
                             color: _selectedParticipantTab == 0
                                 ? Colors.white
@@ -749,7 +751,7 @@ class _ModernConfigureWhiteboardModalState
               ),
               const SizedBox(width: 4),
               Expanded(
-                child: GestureDetector(
+                child: ModernPressable(
                   onTap: () => setState(() => _selectedParticipantTab = 1),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
@@ -774,7 +776,7 @@ class _ModernConfigureWhiteboardModalState
                         Text(
                           'View Only (${_pendingParticipants.length})',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: MediasfuTypography.sizeBodyCompact,
                             fontWeight: FontWeight.w600,
                             color: _selectedParticipantTab == 1
                                 ? Colors.white
@@ -865,7 +867,7 @@ class _ModernConfigureWhiteboardModalState
             child: Text(
               'Assign up to ${_params.itemPageLimit} participants to draw on the whiteboard.',
               style: TextStyle(
-                fontSize: 13,
+                fontSize: MediasfuTypography.sizeBodyCompact,
                 color: _isDark ? _textSecondary : MediasfuColors.infoDark,
               ),
             ),
@@ -931,14 +933,14 @@ class _ModernConfigureWhiteboardModalState
                         title,
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          fontSize: 14,
+                          fontSize: MediasfuTypography.sizeBodyMedium,
                           color: _textPrimary,
                         ),
                       ),
                       Text(
                         subtitle,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: MediasfuTypography.sizeCaption,
                           color: _textSecondary,
                         ),
                       ),
@@ -956,7 +958,7 @@ class _ModernConfigureWhiteboardModalState
                     '${participants.length}',
                     style: TextStyle(
                       color: accentColor,
-                      fontSize: 13,
+                      fontSize: MediasfuTypography.sizeBodyCompact,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -1017,7 +1019,7 @@ class _ModernConfigureWhiteboardModalState
           Text(
             subtitle,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: MediasfuTypography.sizeBodySmall,
               color: _textSecondary.withOpacity(0.7),
             ),
           ),
@@ -1072,7 +1074,7 @@ class _ModernConfigureWhiteboardModalState
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  fontSize: 14,
+                  fontSize: MediasfuTypography.sizeBodyMedium,
                 ),
               ),
             ),
@@ -1082,14 +1084,14 @@ class _ModernConfigureWhiteboardModalState
             child: Text(
               participant.name,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: MediasfuTypography.sizeBodyMedium,
                 fontWeight: FontWeight.w500,
                 color: _textPrimary,
               ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          GestureDetector(
+          ModernPressable(
             onTap: () => onAction(participant),
             child: Container(
               padding: const EdgeInsets.all(8),
@@ -1151,7 +1153,7 @@ class _ModernConfigureWhiteboardModalState
                     child: Text(
                       'Limit exceeded (max ${_params.itemPageLimit})',
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: MediasfuTypography.sizeBodyCompact,
                         color: MediasfuColors.danger,
                         fontWeight: FontWeight.w500,
                       ),
@@ -1222,7 +1224,7 @@ class _ModernConfigureWhiteboardModalState
   }) {
     final isDisabled = onPressed == null || isLoading;
 
-    return GestureDetector(
+    return ModernPressable(
       onTap: isLoading ? null : onPressed,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -1277,7 +1279,7 @@ class _ModernConfigureWhiteboardModalState
                     ? (_isDark ? Colors.grey[600] : Colors.grey[500])
                     : Colors.white,
                 fontWeight: FontWeight.w600,
-                fontSize: 14,
+                fontSize: MediasfuTypography.sizeBodyMedium,
               ),
             ),
           ],

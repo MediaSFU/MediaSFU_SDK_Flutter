@@ -19,6 +19,8 @@ import '../core/theme/mediasfu_spacing.dart';
 import '../core/theme/mediasfu_typography.dart';
 import '../core/theme/mediasfu_animations.dart';
 import '../core/widgets/modern_switch.dart';
+import '../core/widgets/modern_pressable.dart';
+import '../core/theme/mediasfu_borders.dart';
 
 /// Modern redesigned MenuModal with glassmorphic styling, premium animations,
 /// theme selector, and enhanced visual effects.
@@ -107,12 +109,14 @@ class _ModernMenuModalState extends State<ModernMenuModal>
         : MediaQuery.of(context).size.width * 0.85;
     final double modalHeight = MediaQuery.of(context).size.height * 0.75;
 
-    final position = getModalPosition(GetModalPositionOptions(
-      position: widget.options.position,
-      modalWidth: modalWidth,
-      modalHeight: modalHeight,
-      context: context,
-    ));
+    final position = getModalPosition(
+      GetModalPositionOptions(
+        position: widget.options.position,
+        modalWidth: modalWidth,
+        modalHeight: modalHeight,
+        context: context,
+      ),
+    );
 
     return Visibility(
       visible: widget.options.isVisible,
@@ -120,15 +124,16 @@ class _ModernMenuModalState extends State<ModernMenuModal>
         children: [
           // Semi-transparent backdrop - minimal to see content underneath
           Positioned.fill(
-            child: GestureDetector(
+            child: ModernPressable(
               onTap: widget.options.onClose,
               child: AnimatedBuilder(
                 animation: _backdropAnim,
                 builder: (context, child) {
                   return Container(
                     decoration: BoxDecoration(
-                      color:
-                          Colors.black.withOpacity(0.05 * _backdropAnim.value),
+                      color: Colors.black.withOpacity(
+                        0.05 * _backdropAnim.value,
+                      ),
                     ),
                   );
                 },
@@ -215,9 +220,14 @@ class _ModernMenuModalState extends State<ModernMenuModal>
 
                                 // Custom buttons section
                                 if (widget
-                                    .options.customButtons.isNotEmpty) ...[
+                                    .options
+                                    .customButtons
+                                    .isNotEmpty) ...[
                                   _buildSectionTitle(
-                                      'Quick Actions', textTheme, isDark),
+                                    'Quick Actions',
+                                    textTheme,
+                                    isDark,
+                                  ),
                                   const SizedBox(height: MediasfuSpacing.sm),
                                   ModernCustomButtons(
                                     options: ModernCustomButtonsOptions(
@@ -245,7 +255,10 @@ class _ModernMenuModalState extends State<ModernMenuModal>
 
                                 // Meeting info section
                                 _buildSectionTitle(
-                                    'Meeting Info', textTheme, isDark),
+                                  'Meeting Info',
+                                  textTheme,
+                                  isDark,
+                                ),
                                 const SizedBox(height: MediasfuSpacing.sm),
 
                                 // Admin passcode
@@ -253,10 +266,10 @@ class _ModernMenuModalState extends State<ModernMenuModal>
                                   ModernMeetingPasscodeComponent(
                                     options:
                                         ModernMeetingPasscodeComponentOptions(
-                                      meetingPasscode:
-                                          widget.options.adminPasscode,
-                                      isDarkMode: isDark,
-                                    ),
+                                          meetingPasscode:
+                                              widget.options.adminPasscode,
+                                          isDarkMode: isDark,
+                                        ),
                                   ),
                                   const SizedBox(height: MediasfuSpacing.md),
                                 ],
@@ -273,7 +286,10 @@ class _ModernMenuModalState extends State<ModernMenuModal>
                                 if (widget.options.shareButtons) ...[
                                   const SizedBox(height: MediasfuSpacing.lg),
                                   _buildSectionTitle(
-                                      'Share Meeting', textTheme, isDark),
+                                    'Share Meeting',
+                                    textTheme,
+                                    isDark,
+                                  ),
                                   const SizedBox(height: MediasfuSpacing.sm),
                                   ModernShareButtonsComponent(
                                     options: ModernShareButtonsComponentOptions(
@@ -302,7 +318,10 @@ class _ModernMenuModalState extends State<ModernMenuModal>
 
   /// Builds sidebar-optimized content for embedding in sidebar panel.
   Widget _buildSidebarContent(
-      BuildContext context, bool isDark, TextTheme textTheme) {
+    BuildContext context,
+    bool isDark,
+    TextTheme textTheme,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -396,52 +415,60 @@ class _ModernMenuModalState extends State<ModernMenuModal>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              // Animated menu icon with gradient
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  gradient: MediasfuColors.brandGradient(darkMode: isDark),
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.dashboard_rounded,
-                  color: Colors.white,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: MediasfuSpacing.md),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Control Center',
-                    style: textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : Colors.black87,
-                      letterSpacing: -0.5,
-                    ),
+          Expanded(
+            child: Row(
+              children: [
+                // Animated menu icon with gradient
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    gradient: MediasfuColors.brandGradient(darkMode: isDark),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Manage your meeting',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: isDark
-                          ? Colors.white.withOpacity(0.6)
-                          : Colors.black.withOpacity(0.5),
-                    ),
+                  child: const Icon(
+                    Icons.dashboard_rounded,
+                    color: Colors.white,
+                    size: 22,
                   ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(width: MediasfuSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Control Center',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black87,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Manage your meeting',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.bodySmall?.copyWith(
+                          color: isDark
+                              ? Colors.white.withOpacity(0.6)
+                              : Colors.black.withOpacity(0.5),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
           _buildCloseButton(isDark),
         ],
@@ -543,7 +570,7 @@ class _ModernMenuModalState extends State<ModernMenuModal>
                           color: isDark
                               ? Colors.white.withOpacity(0.5)
                               : Colors.black.withOpacity(0.4),
-                          fontSize: 11,
+                          fontSize: MediasfuTypography.sizeCaption,
                         ),
                       ),
                     ],
@@ -572,7 +599,7 @@ class _ModernMenuModalState extends State<ModernMenuModal>
       decoration: MediasfuColors.tooltipDecoration(darkMode: isDark),
       textStyle: TextStyle(
         color: MediasfuColors.tooltipText(darkMode: isDark),
-        fontSize: 12,
+        fontSize: MediasfuTypography.sizeBodySmall,
       ),
       child: Material(
         color: Colors.transparent,
@@ -584,9 +611,7 @@ class _ModernMenuModalState extends State<ModernMenuModal>
             decoration: BoxDecoration(
               color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
-              ),
+              border: MediasfuBorders.subtle(darkMode: isDark),
             ),
             child: Icon(
               Icons.close_rounded,

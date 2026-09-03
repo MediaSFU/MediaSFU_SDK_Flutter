@@ -12,6 +12,8 @@ import '../core/theme/mediasfu_spacing.dart';
 import '../core/theme/mediasfu_typography.dart';
 import '../core/widgets/glassmorphic_container.dart';
 import '../core/widgets/premium_button.dart';
+import '../core/widgets/modern_pressable.dart';
+import '../core/theme/mediasfu_animations.dart';
 
 // ============================================================================
 // OPTIONS CLASS
@@ -443,7 +445,7 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
         children: [
           // Backdrop
           Positioned.fill(
-            child: GestureDetector(
+            child: ModernPressable(
               onTap: _handleClose,
               child: FadeTransition(
                 opacity: _fadeAnimation,
@@ -481,7 +483,17 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
         _buildHeader(),
         _buildTabs(),
         Expanded(
-          child: _activeTab == 0 ? _buildUsersTab() : _buildConfigTab(),
+          child: AnimatedSwitcher(
+            duration: MediasfuAnimations.fast,
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
+            // Keyed on the tab so the switcher sees a genuinely new child;
+            // without a key it treats the swap as an update and nothing fades.
+            child: KeyedSubtree(
+              key: ValueKey<int>(_activeTab),
+              child: _activeTab == 0 ? _buildUsersTab() : _buildConfigTab(),
+            ),
+          ),
         ),
       ],
     );
@@ -537,7 +549,7 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
               ),
             ),
           ),
-          GestureDetector(
+          ModernPressable(
             onTap: _handleClose,
             child: Container(
               padding: EdgeInsets.all(MediasfuSpacing.xs),
@@ -573,7 +585,7 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
 
   Widget _buildTab(int index, IconData icon, String label) {
     final isActive = _activeTab == index;
-    return GestureDetector(
+    return ModernPressable(
       onTap: () => setState(() => _activeTab = index),
       child: Container(
         padding: EdgeInsets.symmetric(
@@ -609,7 +621,7 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
             Text(
               label,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: MediasfuTypography.sizeBodyCompact,
                 fontWeight: FontWeight.w600,
                 color: isActive
                     ? MediasfuColors.primary
@@ -660,7 +672,7 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
               color: isDarkMode
                   ? MediasfuColors.textPrimaryDark
                   : MediasfuColors.textPrimary,
-              fontSize: 14,
+              fontSize: MediasfuTypography.sizeBodyMedium,
             ),
             decoration: InputDecoration(
               hintText: 'Search participants...',
@@ -706,7 +718,7 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
                     color: isDarkMode
                         ? MediasfuColors.textMutedDark
                         : MediasfuColors.textMuted,
-                    fontSize: 12,
+                    fontSize: MediasfuTypography.sizeBodySmall,
                   ),
                 ),
                 _buildActionChip(
@@ -741,7 +753,7 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
     bool isLoading = false,
   }) {
     final isDisabled = onTap == null;
-    return GestureDetector(
+    return ModernPressable(
       onTap: isDisabled ? null : onTap,
       child: Opacity(
         opacity: isDisabled ? 0.6 : 1.0,
@@ -791,7 +803,7 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
                           ? MediasfuColors.textPrimaryDark
                           : MediasfuColors.textPrimary)
                       : Colors.white,
-                  fontSize: 12,
+                  fontSize: MediasfuTypography.sizeBodySmall,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -867,7 +879,7 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
                     child: Text(
                       '${participants.length}',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: MediasfuTypography.sizeCaption,
                         fontWeight: FontWeight.w600,
                         color: isDarkMode
                             ? MediasfuColors.textPrimaryDark
@@ -890,7 +902,7 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
                       color: isDarkMode
                           ? MediasfuColors.textMutedDark
                           : MediasfuColors.textMuted,
-                      fontSize: 13,
+                      fontSize: MediasfuTypography.sizeBodyCompact,
                     ),
                   ),
                 ),
@@ -991,7 +1003,7 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
                           color: isDarkMode
                               ? MediasfuColors.textPrimaryDark
                               : MediasfuColors.textPrimary,
-                          fontSize: 12,
+                          fontSize: MediasfuTypography.sizeBodySmall,
                         ),
                         icon: Icon(
                           Icons.arrow_drop_down,
@@ -1029,7 +1041,7 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
               color: isDarkMode
                   ? MediasfuColors.textSecondaryDark
                   : MediasfuColors.textSecondary,
-              fontSize: 13,
+              fontSize: MediasfuTypography.sizeBodyCompact,
             ),
           ),
           SizedBox(height: MediasfuSpacing.md),
@@ -1080,7 +1092,7 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
       ),
       child: Column(
         children: [
-          GestureDetector(
+          ModernPressable(
             onTap: () {
               setState(() {
                 _expandedLevel = isExpanded ? null : levelKey;
@@ -1230,7 +1242,7 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
                     color: isDarkMode
                         ? MediasfuColors.textPrimaryDark
                         : MediasfuColors.textPrimary,
-                    fontSize: 12,
+                    fontSize: MediasfuTypography.sizeBodySmall,
                   ),
                   icon: Icon(
                     Icons.arrow_drop_down,
@@ -1268,7 +1280,7 @@ class _ModernPermissionsModalState extends State<ModernPermissionsModal>
                     color: isDarkMode
                         ? MediasfuColors.textSecondaryDark
                         : MediasfuColors.textSecondary,
-                    fontSize: 12,
+                    fontSize: MediasfuTypography.sizeBodySmall,
                   ),
                 ),
               ],

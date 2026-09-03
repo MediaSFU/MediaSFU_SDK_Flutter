@@ -457,12 +457,19 @@ Future<List<Widget>?> prepopulateUserMedia(
         // Video is off
         if (islevel == '2' && videoAlreadyOn) {
           // Admin's video is on
+          // Keep the self-view in lockstep with the published track.  The
+          // processed virtual stream is authoritative while a background is
+          // active; falling back to the raw camera preserves normal behavior.
+          final effectiveLocalVideo =
+              keepBackground && virtualStream != null
+                  ? virtualStream
+                  : localStreamVideo;
           newComponent.add(
             parameters.customVideoCard != null
                 ? parameters.customVideoCard!(
                     participant: host,
                     stream: Stream(
-                        stream: localStreamVideo, producerId: host.videoID),
+                        stream: effectiveLocalVideo, producerId: host.videoID),
                     width: double.infinity,
                     height: double.infinity,
                     showControls: false,
@@ -476,7 +483,7 @@ Future<List<Widget>?> prepopulateUserMedia(
                   )
                 : ModernVideoCard(
                     options: VideoCardOptions(
-                    videoStream: localStreamVideo,
+                    videoStream: effectiveLocalVideo,
                     remoteProducerId: host.videoID,
                     eventType: eventType,
                     forceFullDisplay: forceFullDisplay,

@@ -428,6 +428,14 @@ headless helpers cover permissions, moderation, recording, polls, breakout
 rooms, whiteboards, session state, viewer sessions, safe media-production
 capabilities, chat, and leave/end actions.
 
+Need the complete standard modern interface after mounting the engine
+headlessly? Render `ModernMediasfuGenericHead` with the latest published
+parameters. It delegates to that same engine's widget tree, so it preserves the
+normal controls, sidebars, modal visibility, and media lifecycle without a
+second connection or a second copy of room state. See the
+[Flutter headless guide](./HEADLESS_GUIDE.md#restore-the-complete-modern-ui-from-a-headless-engine)
+for the complete pattern.
+
 Headless rules that prevent the most common broken-call states:
 
 - keep the room component mounted for the complete call;
@@ -596,6 +604,10 @@ When either fraction is below `1`, internal layout calculations use the
 embedded room dimensions instead of assuming a full-screen route.
 
 ## Customization
+
+You can host SDK dialogs inside a custom headless layout while the room owns
+their visibility and lifecycle. See [reusing SDK dialogs](HEADLESS_GUIDE.md#reuse-sdk-dialogs-in-your-own-layout)
+for current-parameter handling, recording callbacks, and background lifecycle.
 
 ### Replace common media cards
 

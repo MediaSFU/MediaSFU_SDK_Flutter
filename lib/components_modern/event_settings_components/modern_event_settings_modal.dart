@@ -12,6 +12,8 @@ import '../core/theme/mediasfu_spacing.dart';
 import '../core/widgets/modal_header.dart';
 import '../core/widgets/modal_footer_button.dart';
 import '../core/widgets/section_card.dart';
+import '../core/widgets/modern_pressable.dart';
+import '../core/theme/mediasfu_typography.dart';
 import '../core/widgets/animation_widgets.dart' show StaggeredAnimationList;
 
 typedef ModernEventSettingsModalType = Widget Function(
@@ -147,7 +149,7 @@ class _ModernEventSettingsModalState extends State<ModernEventSettingsModal>
           children: [
             // Backdrop
             Positioned.fill(
-              child: GestureDetector(
+              child: ModernPressable(
                 onTap: _handleClose,
                 child: FadeTransition(
                   opacity: _fadeAnimation,
@@ -335,7 +337,7 @@ class _ModernEventSettingsModalState extends State<ModernEventSettingsModal>
                     Text(
                       description,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: MediasfuTypography.sizeCaption,
                         color: widget.options.isDarkMode
                             ? Colors.white54
                             : Colors.black45,
@@ -383,7 +385,7 @@ class _ModernEventSettingsModalState extends State<ModernEventSettingsModal>
     required VoidCallback onTap,
   }) {
     return Expanded(
-      child: GestureDetector(
+      child: ModernPressable(
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
@@ -416,7 +418,7 @@ class _ModernEventSettingsModalState extends State<ModernEventSettingsModal>
                         ? Colors.white70
                         : Colors.black54),
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                fontSize: 12,
+                fontSize: MediasfuTypography.sizeBodySmall,
               ),
             ),
           ),

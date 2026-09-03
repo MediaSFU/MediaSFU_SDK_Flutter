@@ -403,11 +403,44 @@ class MediasfuTheme {
 
       // Tooltip theme
       tooltipTheme: TooltipThemeData(
+        // A tap opens the tooltip on touch, and it takes itself back down
+        // after three seconds. Without showDuration a tooltip opened by touch
+        // had nothing to dismiss it — there is no pointer-exit on a
+        // touchscreen — so it stayed up indefinitely.
+        triggerMode: TooltipTriggerMode.tap,
+        waitDuration: const Duration(milliseconds: 500),
+        showDuration: const Duration(seconds: 3),
+        // A flat fill reads as a system tooltip; the gradient, hairline and
+        // lifted shadow are what make it look like part of this UI. No blur
+        // here on purpose — a tooltip can sit over live video, and a backdrop
+        // filter there costs a full readback every frame it is visible.
         decoration: BoxDecoration(
-          color: darkMode
-              ? MediasfuColors.surfaceElevatedDark
-              : MediasfuColors.textPrimary,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: darkMode
+                ? <Color>[
+                    MediasfuColors.surfaceElevatedDark,
+                    Color.lerp(MediasfuColors.surfaceElevatedDark,
+                        Colors.black, 0.28)!,
+                  ]
+                : <Color>[
+                    Color.lerp(MediasfuColors.textPrimary, Colors.white, 0.08)!,
+                    MediasfuColors.textPrimary,
+                  ],
+          ),
           borderRadius: BorderRadius.circular(MediasfuBorders.sm),
+          border: Border.all(
+            color: MediasfuColors.glassBorder(darkMode: darkMode),
+            width: 1,
+          ),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: Colors.black.withOpacity(darkMode ? 0.45 : 0.20),
+              blurRadius: 14,
+              offset: const Offset(0, 5),
+            ),
+          ],
         ),
         textStyle: textTheme.bodySmall?.copyWith(
           color: darkMode ? MediasfuColors.textPrimaryDark : Colors.white,

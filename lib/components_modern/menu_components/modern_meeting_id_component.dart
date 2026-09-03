@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
+import '../core/widgets/premium_widgets.dart';
+import '../core/theme/mediasfu_typography.dart';
 
 /// Configuration options for the `ModernMeetingIdComponent` widget.
 ///
@@ -134,7 +136,7 @@ class _ModernMeetingIdComponentState extends State<ModernMeetingIdComponent>
             child: Text(
               label,
               style: const TextStyle(
-                fontSize: 13,
+                fontSize: MediasfuTypography.sizeBodyCompact,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
                 letterSpacing: 0.5,
@@ -193,7 +195,7 @@ class _ModernMeetingIdComponentState extends State<ModernMeetingIdComponent>
                         widget.options.meetingID,
                         style: TextStyle(
                           color: textColor,
-                          fontSize: 15,
+                          fontSize: MediasfuTypography.sizeTitleSmall,
                           fontWeight: FontWeight.w500,
                           letterSpacing: 0.8,
                         ),
@@ -206,7 +208,7 @@ class _ModernMeetingIdComponentState extends State<ModernMeetingIdComponent>
                       const SizedBox(width: MediasfuSpacing.sm),
                       ScaleTransition(
                         scale: _scaleAnimation,
-                        child: GestureDetector(
+                        child: ModernPressable(
                           onTap: _copyToClipboard,
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),

@@ -1,6 +1,10 @@
 // lib/components.dart
 library;
 
+// Modern UI, including ModernMediasfuGeneric and
+// ModernMediasfuGenericHead, is part of the public package surface.
+export 'components_modern/components_modern.dart';
+
 export 'package:mediasfu_sdk/components/display_components/loading_modal.dart'
     show LoadingModal;
 export 'package:mediasfu_sdk/components/display_components/main_aspect_component.dart'

@@ -6,6 +6,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../types/types.dart' show EventType;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
+import '../core/theme/mediasfu_typography.dart';
 
 /// Configuration options for a single share button in `ModernShareButtonsComponent`.
 ///
@@ -372,7 +373,7 @@ class _ModernShareButtonState extends State<_ModernShareButton>
               Text(
                 data.label,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: MediasfuTypography.sizeCaption,
                   color: Colors.white70,
                   fontWeight: FontWeight.w500,
                 ),

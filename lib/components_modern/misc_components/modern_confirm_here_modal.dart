@@ -19,6 +19,7 @@ import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
 import '../core/theme/mediasfu_typography.dart';
 import '../core/widgets/glassmorphic_container.dart';
+import '../core/widgets/modern_pressable.dart';
 
 /// Modern redesigned ConfirmHereModal with glassmorphic styling and circular countdown.
 /// Retains all business logic from the original component.
@@ -329,7 +330,7 @@ class _ModernConfirmHereModalState extends State<ModernConfirmHereModal>
 
     // "Don't show again" checkbox
     final Widget suppressCheckbox = widget.options.onSuppressConfirmHere != null
-        ? GestureDetector(
+        ? ModernPressable(
             onTap: () => setState(() {
               _doNotShowAgain = !_doNotShowAgain;
             }),

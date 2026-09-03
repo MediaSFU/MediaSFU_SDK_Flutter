@@ -4,6 +4,8 @@ export 'core/theme/mediasfu_colors.dart';
 export 'core/theme/mediasfu_spacing.dart';
 export 'core/theme/mediasfu_theme.dart';
 export 'core/theme/mediasfu_typography.dart';
+export 'core/theme/mediasfu_borders.dart';
+export 'core/widgets/premium_widgets.dart';
 
 /// Core widget primitives
 export 'core/widgets/animated_icon_button.dart';

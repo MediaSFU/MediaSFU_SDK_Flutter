@@ -9,6 +9,7 @@ import '../../components/display_components/meeting_progress_timer.dart'
         MeetingProgressTimerContainerContext,
         MeetingProgressTimerPositionContext;
 import '../core/theme/mediasfu_spacing.dart';
+import '../core/theme/mediasfu_typography.dart';
 
 typedef ModernMeetingProgressTimerType = Widget Function({
   required MeetingProgressTimerOptions options,
@@ -215,7 +216,7 @@ class _ModernMeetingProgressTimerState extends State<ModernMeetingProgressTimer>
     final textStyle = widget.options.textStyle ??
         TextStyle(
           color: Colors.white,
-          fontSize: 14,
+          fontSize: MediasfuTypography.sizeBodyMedium,
           fontWeight: FontWeight.w600,
           decoration: TextDecoration.none,
           shadows: [

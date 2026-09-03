@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'dart:async';
 import '../../types/types.dart' show MeetingRoomParams, RecordingParams;
@@ -158,36 +157,52 @@ Future<io.Socket> connectSocket(ConnectSocketOptions options) async {
   final socket = io.io('${options.link}/media', {
     'transports': ['websocket'],
     'query': query,
+    'autoConnect': false,
   });
 
-  // Determine the socket connection path
-  String conn = 'media';
-  try {
-    if (options.link.contains('mediasfu.com') &&
-        (RegExp('c').allMatches(options.link).length > 1)) {
-      conn = 'consume';
-    }
-  } catch (e) {
-    // Do nothing
+  final completer = Completer<io.Socket>();
+  Timer? admissionTimer;
+
+  void finishWithError(String stage) {
+    if (completer.isCompleted) return;
+    admissionTimer?.cancel();
+    socket.disconnect();
+    completer.completeError(
+      Exception('Media socket admission failed at $stage.'),
+    );
   }
 
-  final completer = Completer<io.Socket>();
-
-  // Handle connection success
+  // A raw Socket.IO connection is only transport establishment. The media
+  // server emits connection-success after its credential admission finishes;
+  // do not expose the socket to callers before that application-level proof.
   socket.onConnect((_) {
-    if (kDebugMode) print('Connected to $conn socket with ID: ${socket.id}');
+  });
+
+  socket.on('connection-success', (_) {
     if (!completer.isCompleted) {
+      admissionTimer?.cancel();
       completer.complete(socket);
     }
   });
 
   // Handle connection error
-  socket.onConnectError((error) {
-    if (!completer.isCompleted) {
-      completer
-          .completeError(Exception('Error connecting to media socket: $error'));
-    }
+  socket.onConnectError((_) {
+    finishWithError('transport_connect_error');
   });
+
+  socket.onError((_) {
+    finishWithError('socket_error_before_authorization');
+  });
+
+  socket.onDisconnect((_) {
+    finishWithError('disconnected_before_authorization');
+  });
+
+  admissionTimer = Timer(
+    const Duration(seconds: 12),
+    () => finishWithError('application_authorization_timeout'),
+  );
+  socket.connect();
 
   return completer.future;
 }

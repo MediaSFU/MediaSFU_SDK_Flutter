@@ -11,6 +11,8 @@ import '../../methods/utils/get_modal_position.dart'
 import '../../types/modal_style_options.dart' show ModalRenderMode;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
+import '../core/widgets/premium_widgets.dart';
+import '../core/theme/mediasfu_typography.dart';
 import '../../components/menu_components/meeting_id_component.dart'
     show MeetingIdComponent, MeetingIdComponentOptions;
 import '../../components/menu_components/meeting_passcode_component.dart'
@@ -63,7 +65,7 @@ class _ModernShareEventModalState extends State<ModernShareEventModal>
       child: Text(
         text,
         style: TextStyle(
-          fontSize: 13,
+          fontSize: MediasfuTypography.sizeBodyCompact,
           fontWeight: FontWeight.w600,
           color: isDarkMode
               ? Colors.white.withOpacity(0.75)
@@ -120,7 +122,7 @@ class _ModernShareEventModalState extends State<ModernShareEventModal>
           children: [
             // Backdrop
             Positioned.fill(
-              child: GestureDetector(
+              child: ModernPressable(
                 onTap: _handleClose,
                 child: FadeTransition(
                   opacity: _fadeAnimation,
@@ -263,7 +265,7 @@ class _ModernShareEventModalState extends State<ModernShareEventModal>
             child: Text(
               'Share Event',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: MediasfuTypography.sizeTitleMedium,
                 fontWeight: FontWeight.bold,
                 color: isDarkMode ? Colors.white : Colors.black87,
               ),
@@ -527,7 +529,7 @@ class _ModernShareEventModalState extends State<ModernShareEventModal>
                     Text(
                       'Share Event',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: MediasfuTypography.sizeTitleMedium,
                         fontWeight: FontWeight.bold,
                         color: isDarkMode ? Colors.white : Colors.black87,
                       ),

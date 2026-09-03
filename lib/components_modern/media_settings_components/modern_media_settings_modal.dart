@@ -16,6 +16,8 @@ import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
 import '../core/widgets/modal_header.dart';
 import '../core/widgets/section_card.dart';
+import '../core/widgets/modern_pressable.dart';
+import '../core/theme/mediasfu_typography.dart';
 import '../core/widgets/animation_widgets.dart' show StaggeredAnimationList;
 
 typedef ModernMediaSettingsModalType = Widget Function({
@@ -112,7 +114,7 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
       child: Stack(
         children: [
           Positioned.fill(
-            child: GestureDetector(
+            child: ModernPressable(
               onTap: _handleClose,
               child: FadeTransition(
                 opacity: _fadeAnimation,
@@ -346,7 +348,7 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
                   child: Text(
                     '${devices.length} devices',
                     style: TextStyle(
-                        fontSize: 11,
+                        fontSize: MediasfuTypography.sizeCaption,
                         color: MediasfuColors.success,
                         fontWeight: FontWeight.w500),
                   ),
@@ -370,7 +372,7 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
               textStyle: TextStyle(
                 color: MediasfuColors.tooltipText(
                     darkMode: widget.options.isDarkMode),
-                fontSize: 12,
+                fontSize: MediasfuTypography.sizeBodySmall,
               ),
               child: Container(
                 padding:
@@ -400,7 +402,7 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
                             color: widget.options.isDarkMode
                                 ? Colors.white
                                 : Colors.black87,
-                            fontSize: 14,
+                            fontSize: MediasfuTypography.sizeBodyMedium,
                             fontWeight: FontWeight.w500,
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -426,9 +428,9 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
           MediasfuColors.tooltipDecoration(darkMode: widget.options.isDarkMode),
       textStyle: TextStyle(
         color: MediasfuColors.tooltipText(darkMode: widget.options.isDarkMode),
-        fontSize: 12,
+        fontSize: MediasfuTypography.sizeBodySmall,
       ),
-      child: GestureDetector(
+      child: ModernPressable(
         onTap: () async {
           final updatedParams = params.getUpdatedAllParams();
           await widget.options.switchCameraOnPress(
@@ -478,7 +480,7 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
                     Text(
                       'Toggle front/back camera',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: MediasfuTypography.sizeBodySmall,
                         color: widget.options.isDarkMode
                             ? Colors.white54
                             : Colors.black45,
@@ -514,7 +516,7 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
   Widget _buildVirtualBackgroundButton(dynamic params) {
     final isSupported = _isVirtualBackgroundSupported;
 
-    return GestureDetector(
+    return ModernPressable(
       onTap: () {
         if (isSupported) {
           widget.options.onClose();
@@ -580,7 +582,7 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
                           ? 'Change or blur your background'
                           : 'Not supported on this platform',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: MediasfuTypography.sizeBodySmall,
                         color: widget.options.isDarkMode
                             ? Colors.white54
                             : Colors.black45,
@@ -607,7 +609,7 @@ class _ModernMediaSettingsModalState extends State<ModernMediaSettingsModal>
                   isSupported ? 'NEW' : 'N/A',
                   style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 10,
+                      fontSize: MediasfuTypography.sizeMicro,
                       fontWeight: FontWeight.bold),
                 ),
               ),

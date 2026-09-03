@@ -22,12 +22,22 @@ class ModernFlexibleGrid extends StatelessWidget {
   final bool enableGlassmorphism;
   final BorderRadius? cellBorderRadius;
 
+  /// Glide tiles to their new size and position when the grid re-lays out,
+  /// instead of snapping.
+  ///
+  /// Only the cell constraints are animated; Flutter's own layout carries the
+  /// neighbours along, so a participant joining or leaving reads as movement
+  /// rather than a jump. Honours the platform "reduce motion" setting
+  /// regardless of this flag.
+  final bool animateLayout;
+
   const ModernFlexibleGrid({
     super.key,
     required this.options,
     this.isDarkMode = true,
     this.enableGlassmorphism = true,
     this.cellBorderRadius,
+    this.animateLayout = true,
   });
 
   double? _positiveDimension(double? value) {
@@ -163,11 +173,14 @@ class ModernFlexibleGrid extends StatelessWidget {
                       ? BoxDecoration(color: options.backgroundColor)
                       : modernDecoration),
               clipBehavior: options.cellClipBehavior,
-              child: ConstrainedBox(
-                constraints: BoxConstraints.tightFor(
-                  width: cellWidth,
-                  height: cellHeight,
-                ),
+              child: _ReflowBox(
+                width: cellWidth,
+                height: cellHeight,
+                animate: animateLayout,
+                // Keyed by position so a cell keeps its animation state across
+                // a re-layout and tweens from its old size rather than
+                // restarting.
+                key: ValueKey<String>('cell-$rowIndex-$columnIndex'),
                 child: hasComponent
                     ? ClipRRect(
                         borderRadius:
@@ -305,6 +318,59 @@ class ModernFlexibleGrid extends StatelessWidget {
               : Colors.black.withOpacity(0.15),
         ),
       ),
+    );
+  }
+}
+
+
+/// Tweens a grid cell between sizes so a re-layout reads as movement.
+///
+/// The child is handed to [TweenAnimationBuilder] by reference, so the video
+/// card inside never rebuilds while the box is animating — only the constraints
+/// around it change. Rebuilding a live video tile sixty times a second for the
+/// sake of a transition would cost far more than the transition is worth.
+class _ReflowBox extends StatelessWidget {
+  const _ReflowBox({
+    super.key,
+    required this.width,
+    required this.height,
+    required this.animate,
+    required this.child,
+  });
+
+  final double width;
+  final double height;
+  final bool animate;
+  final Widget child;
+
+  static const Duration _duration = Duration(milliseconds: 300);
+  static const Curve _curve = Cubic(0.16, 1.0, 0.3, 1.0);
+
+  @override
+  Widget build(BuildContext context) {
+    final bool reduced = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+
+    if (!animate || reduced) {
+      return ConstrainedBox(
+        constraints: BoxConstraints.tightFor(width: width, height: height),
+        child: child,
+      );
+    }
+
+    return TweenAnimationBuilder<Size>(
+      tween: Tween<Size>(end: Size(width, height)),
+      duration: _duration,
+      curve: _curve,
+      child: child,
+      builder: (BuildContext context, Size size, Widget? child) {
+        return ConstrainedBox(
+          constraints: BoxConstraints.tightFor(
+            width: size.width,
+            height: size.height,
+          ),
+          child: child,
+        );
+      },
     );
   }
 }

@@ -14,7 +14,10 @@ import '../../types/types.dart'
         HandleVotePollOptions,
         Poll;
 import '../core/theme/mediasfu_colors.dart';
+import '../core/widgets/premium_widgets.dart';
 import '../core/theme/mediasfu_spacing.dart';
+import '../core/theme/mediasfu_animations.dart';
+import '../core/theme/mediasfu_typography.dart';
 
 typedef ModernPollModalType = ModernPollModal Function(
     {required PollModalOptions options});
@@ -158,7 +161,7 @@ class _ModernPollModalState extends State<ModernPollModal>
           children: [
             // Backdrop
             Positioned.fill(
-              child: GestureDetector(
+              child: ModernPressable(
                 onTap: _handleClose,
                 child: FadeTransition(
                   opacity: _fadeAnimation,
@@ -264,7 +267,7 @@ class _ModernPollModalState extends State<ModernPollModal>
             'Polls',
             style: titleStyle ??
                 TextStyle(
-                  fontSize: 18,
+                  fontSize: MediasfuTypography.sizeTitleMedium,
                   fontWeight: FontWeight.bold,
                   color:
                       widget.options.isDarkMode ? Colors.white : Colors.black87,
@@ -280,7 +283,7 @@ class _ModernPollModalState extends State<ModernPollModal>
           else
             Tooltip(
               message: 'Close polls',
-              child: GestureDetector(
+              child: ModernPressable(
                 onTap: _handleClose,
                 child: Container(
                   padding: const EdgeInsets.all(MediasfuSpacing.sm),
@@ -311,13 +314,15 @@ class _ModernPollModalState extends State<ModernPollModal>
         horizontal: MediasfuSpacing.md,
         vertical: MediasfuSpacing.sm,
       ),
+      // Three fixed-width tabs overflowed a narrow sidebar by 22px, clipping
+      // "Current". Sharing the row lets them shrink to whatever is available.
       child: Row(
         children: [
-          _buildTab('Previous', 0),
+          Expanded(child: _buildTab('Previous', 0)),
           const SizedBox(width: MediasfuSpacing.sm),
-          _buildTab('New Poll', 1),
+          Expanded(child: _buildTab('New Poll', 1)),
           const SizedBox(width: MediasfuSpacing.sm),
-          _buildTab('Current', 2),
+          Expanded(child: _buildTab('Current', 2)),
         ],
       ),
     );
@@ -325,12 +330,14 @@ class _ModernPollModalState extends State<ModernPollModal>
 
   Widget _buildTab(String title, int index) {
     final isSelected = _selectedTabIndex == index;
-    return GestureDetector(
+    return ModernPressable(
       onTap: () => setState(() => _selectedTabIndex = index),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
+        // Tight horizontally: the tabs share a narrow sidebar, and generous
+        // side padding was eating the room the labels needed.
         padding: const EdgeInsets.symmetric(
-          horizontal: MediasfuSpacing.md,
+          horizontal: MediasfuSpacing.xs,
           vertical: MediasfuSpacing.sm,
         ),
         decoration: BoxDecoration(
@@ -349,11 +356,15 @@ class _ModernPollModalState extends State<ModernPollModal>
                   : Colors.black.withOpacity(0.05)),
           borderRadius: BorderRadius.circular(10),
         ),
+        alignment: Alignment.center,
         child: Text(
           title,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontWeight: FontWeight.w600,
-            fontSize: 13,
+            fontSize: MediasfuTypography.sizeBodyCompact,
             color: isSelected
                 ? Colors.white
                 : (widget.options.isDarkMode ? Colors.white70 : Colors.black54),
@@ -364,20 +375,37 @@ class _ModernPollModalState extends State<ModernPollModal>
   }
 
   Widget _buildContent() {
+    final Widget body;
     if (!_isHost) {
-      return _buildCurrentPollContent();
+      body = _buildCurrentPollContent();
+    } else {
+      switch (_selectedTabIndex) {
+        case 0:
+          body = _buildPreviousPollsContent();
+          break;
+        case 1:
+          body = _buildNewPollContent();
+          break;
+        case 2:
+          body = _buildCurrentPollContent();
+          break;
+        default:
+          body = const SizedBox();
+      }
     }
 
-    switch (_selectedTabIndex) {
-      case 0:
-        return _buildPreviousPollsContent();
-      case 1:
-        return _buildNewPollContent();
-      case 2:
-        return _buildCurrentPollContent();
-      default:
-        return const SizedBox();
-    }
+    // Cross-fade between tabs. Keyed on the tab so the switcher sees a
+    // genuinely new child; without a key it treats the swap as an update and
+    // nothing fades.
+    return AnimatedSwitcher(
+      duration: MediasfuAnimations.fast,
+      switchInCurve: Curves.easeOut,
+      switchOutCurve: Curves.easeIn,
+      child: KeyedSubtree(
+        key: ValueKey<int>(_isHost ? _selectedTabIndex : -1),
+        child: body,
+      ),
+    );
   }
 
   Widget _buildPreviousPollsContent() {
@@ -502,7 +530,7 @@ class _ModernPollModalState extends State<ModernPollModal>
             message,
             style: emptyStyle ??
                 TextStyle(
-                  fontSize: 16,
+                  fontSize: MediasfuTypography.sizeTitleSmall,
                   color: widget.options.isDarkMode
                       ? Colors.white54
                       : Colors.black45,
@@ -520,7 +548,7 @@ class _ModernPollModalState extends State<ModernPollModal>
         title,
         style: _styles.sectionTitleTextStyle ??
             TextStyle(
-              fontSize: 14,
+              fontSize: MediasfuTypography.sizeBodyMedium,
               fontWeight: FontWeight.w600,
               color:
                   widget.options.isDarkMode ? Colors.white70 : Colors.black54,
@@ -543,7 +571,7 @@ class _ModernPollModalState extends State<ModernPollModal>
           MediasfuColors.tooltipDecoration(darkMode: widget.options.isDarkMode),
       textStyle: TextStyle(
         color: MediasfuColors.tooltipText(darkMode: widget.options.isDarkMode),
-        fontSize: 12,
+        fontSize: MediasfuTypography.sizeBodySmall,
       ),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: MediasfuSpacing.md),
@@ -644,7 +672,7 @@ class _ModernPollModalState extends State<ModernPollModal>
   }
 
   Widget _buildAddOptionButton() {
-    return GestureDetector(
+    return ModernPressable(
       onTap: () {
         setState(() {
           _customOptions.add('');
@@ -744,7 +772,7 @@ class _ModernPollModalState extends State<ModernPollModal>
       );
     }
 
-    return GestureDetector(
+    return ModernPressable(
       onTap: launch,
       child: Container(
         width: double.infinity,
@@ -768,7 +796,7 @@ class _ModernPollModalState extends State<ModernPollModal>
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
-                fontSize: 16,
+                fontSize: MediasfuTypography.sizeTitleSmall,
               ),
             ),
           ],
@@ -811,7 +839,7 @@ class _ModernPollModalState extends State<ModernPollModal>
                 child: Text(
                   isCompleted ? 'Completed' : 'Active',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: MediasfuTypography.sizeBodySmall,
                     fontWeight: FontWeight.w600,
                     color: isCompleted ? Colors.grey : MediasfuColors.success,
                   ),
@@ -824,7 +852,7 @@ class _ModernPollModalState extends State<ModernPollModal>
             poll.question,
             style: _styles.pollItemQuestionTextStyle ??
                 TextStyle(
-                  fontSize: 16,
+                  fontSize: MediasfuTypography.sizeTitleSmall,
                   fontWeight: FontWeight.w600,
                   color:
                       widget.options.isDarkMode ? Colors.white : Colors.black87,
@@ -869,7 +897,7 @@ class _ModernPollModalState extends State<ModernPollModal>
                             color: widget.options.isDarkMode
                                 ? Colors.white54
                                 : Colors.black54,
-                            fontSize: 12,
+                            fontSize: MediasfuTypography.sizeBodySmall,
                           ),
                     ),
                   ],
@@ -890,7 +918,7 @@ class _ModernPollModalState extends State<ModernPollModal>
     required bool isSelected,
     required bool hasVoted,
   }) {
-    return GestureDetector(
+    return ModernPressable(
       onTap: hasVoted ? null : () => setState(() => _selectedOption = index),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -953,7 +981,7 @@ class _ModernPollModalState extends State<ModernPollModal>
                       color: widget.options.isDarkMode
                           ? Colors.white54
                           : Colors.black45,
-                      fontSize: 12,
+                      fontSize: MediasfuTypography.sizeBodySmall,
                     ),
               ),
             ],
@@ -992,7 +1020,7 @@ class _ModernPollModalState extends State<ModernPollModal>
       );
     }
 
-    return GestureDetector(
+    return ModernPressable(
       onTap: _selectedOption != null
           ? () {
               widget.options.handleVotePoll(
@@ -1030,7 +1058,7 @@ class _ModernPollModalState extends State<ModernPollModal>
           style: TextStyle(
             color: _selectedOption != null ? Colors.white : Colors.grey,
             fontWeight: FontWeight.bold,
-            fontSize: 16,
+            fontSize: MediasfuTypography.sizeTitleSmall,
           ),
         ),
       ),
@@ -1062,7 +1090,7 @@ class _ModernPollModalState extends State<ModernPollModal>
       );
     }
 
-    return GestureDetector(
+    return ModernPressable(
       onTap: () {
         widget.options.handleEndPoll(
           HandleEndPollOptions(
@@ -1094,7 +1122,7 @@ class _ModernPollModalState extends State<ModernPollModal>
               style: TextStyle(
                 color: MediasfuColors.danger,
                 fontWeight: FontWeight.bold,
-                fontSize: 16,
+                fontSize: MediasfuTypography.sizeTitleSmall,
               ),
             ),
           ],

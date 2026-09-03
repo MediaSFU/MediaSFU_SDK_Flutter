@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +11,8 @@ import '../../consumers/control_media.dart' show ControlMediaOptions;
 import '../../types/types.dart' show LiveSubtitle;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
+import '../core/widgets/premium_widgets.dart';
+import '../core/theme/mediasfu_typography.dart';
 
 typedef ModernVideoCardType = Widget Function(
     {required VideoCardOptions options});
@@ -299,7 +300,7 @@ class _ModernVideoCardState extends State<ModernVideoCard>
           widget.options.participant.name,
           style: TextStyle(
             color: Colors.white,
-            fontSize: 12.5,
+            fontSize: MediasfuTypography.sizeBodySmall,
             fontWeight: FontWeight.w600,
             shadows: [
               Shadow(
@@ -322,23 +323,33 @@ class _ModernVideoCardState extends State<ModernVideoCard>
       builder: (context, isVisible, child) {
         if (!isVisible) return const SizedBox(width: 0);
 
+        // Each bar scales from its own repeating controller. The previous
+        // version rebuilt an AnimatedContainer with a fresh `Random()` height
+        // on every frame, which restarted a 100ms implicit animation sixty
+        // times a second and animated `height` — forcing a relayout of the row
+        // each frame, per bar, per speaking tile. Scaling is a repaint only,
+        // and the bar itself is passed by reference so it never rebuilds.
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: List.generate(5, (index) {
             return AnimatedBuilder(
               animation: waveformAnimations[index],
+              child: Container(
+                height: 14,
+                width: 3,
+                margin: const EdgeInsets.symmetric(horizontal: 1),
+                decoration: BoxDecoration(
+                  color: widget.options.barColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
               builder: (context, child) {
-                final double height =
-                    isVisible ? 4 + Random().nextDouble() * 10 : 2;
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 100),
-                  height: height,
-                  width: 3,
-                  margin: const EdgeInsets.symmetric(horizontal: 1),
-                  decoration: BoxDecoration(
-                    color: widget.options.barColor,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+                final double t = Curves.easeInOut
+                    .transform(waveformAnimations[index].value);
+                return Transform(
+                  alignment: Alignment.center,
+                  transform: Matrix4.diagonal3Values(1, 0.28 + 0.72 * t, 1),
+                  child: child,
                 );
               },
             );
@@ -426,9 +437,9 @@ class _ModernVideoCardState extends State<ModernVideoCard>
       decoration: MediasfuColors.tooltipDecoration(darkMode: true),
       textStyle: TextStyle(
         color: MediasfuColors.tooltipText(darkMode: true),
-        fontSize: 12,
+        fontSize: MediasfuTypography.sizeBodySmall,
       ),
-      child: GestureDetector(
+      child: ModernPressable(
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
@@ -493,7 +504,7 @@ class _ModernVideoCardState extends State<ModernVideoCard>
                       subtitle.text,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 13,
+                        fontSize: MediasfuTypography.sizeBodyCompact,
                         fontWeight: FontWeight.w500,
                         height: 1.3,
                         shadows: [
@@ -594,7 +605,7 @@ class _ModernVideoCardState extends State<ModernVideoCard>
                                     : 'Cropped view - others see more of your video.',
                                 style: TextStyle(
                                   color: Colors.white.withOpacity(0.9),
-                                  fontSize: 11,
+                                  fontSize: MediasfuTypography.sizeCaption,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -602,7 +613,7 @@ class _ModernVideoCardState extends State<ModernVideoCard>
                             // Action button (if callback provided)
                             if (hasToggleAction) ...[
                               const SizedBox(width: 8),
-                              GestureDetector(
+                              ModernPressable(
                                 onTap: () {
                                   widget.options.onToggleSelfViewFit?.call();
                                   _showCropIndicator.value = false;
@@ -620,7 +631,7 @@ class _ModernVideoCardState extends State<ModernVideoCard>
                                     'Full View',
                                     style: TextStyle(
                                       color: Colors.white,
-                                      fontSize: 10,
+                                      fontSize: MediasfuTypography.sizeMicro,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -629,7 +640,7 @@ class _ModernVideoCardState extends State<ModernVideoCard>
                             ],
                             const SizedBox(width: 6),
                             // Dismiss button
-                            GestureDetector(
+                            ModernPressable(
                               onTap: () => _showCropIndicator.value = false,
                               child: Icon(
                                 Icons.close,
@@ -705,7 +716,7 @@ class _ModernVideoCardState extends State<ModernVideoCard>
                         'Full capture area - this is exactly what others see',
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.9),
-                          fontSize: 11,
+                          fontSize: MediasfuTypography.sizeCaption,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),

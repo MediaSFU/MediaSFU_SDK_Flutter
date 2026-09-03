@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/mediasfu_colors.dart';
 import '../theme/mediasfu_spacing.dart';
+import '../../core/theme/mediasfu_typography.dart';
 
 /// A section title with a small gradient accent bar on the left.
 ///
@@ -37,7 +38,7 @@ class SectionTitle extends StatelessWidget {
             color:
                 isDarkMode ? MediasfuColors.primaryDark : MediasfuColors.primary,
             fontWeight: FontWeight.w600,
-            fontSize: 14,
+            fontSize: MediasfuTypography.sizeBodyMedium,
             letterSpacing: 0.5,
           ),
         ),

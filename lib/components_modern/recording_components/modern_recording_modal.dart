@@ -17,6 +17,9 @@ import '../../methods/recording_methods/start_recording.dart'
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
 import '../core/widgets/modal_header.dart';
+import '../core/widgets/modern_pressable.dart';
+import '../core/theme/mediasfu_animations.dart';
+import '../core/theme/mediasfu_typography.dart';
 
 typedef ModernRecordingModalType = Widget Function(
     {required RecordingModalOptions options});
@@ -108,7 +111,7 @@ class _ModernRecordingModalState extends State<ModernRecordingModal>
           children: [
             // Backdrop
             Positioned.fill(
-              child: GestureDetector(
+              child: ModernPressable(
                 onTap: _handleClose,
                 child: FadeTransition(
                   opacity: _fadeAnimation,
@@ -226,7 +229,7 @@ class _ModernRecordingModalState extends State<ModernRecordingModal>
 
   Widget _buildTab(String title, int index) {
     final isSelected = _selectedTabIndex == index;
-    return GestureDetector(
+    return ModernPressable(
       onTap: () => setState(() => _selectedTabIndex = index),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -267,21 +270,31 @@ class _ModernRecordingModalState extends State<ModernRecordingModal>
     return Padding(
       padding: const EdgeInsets.all(MediasfuSpacing.md),
       child: SingleChildScrollView(
-        child: _selectedTabIndex == 0
-            ? ModernStandardPanelComponent(
-                options: ModernStandardPanelComponentOptions(
-                  parameters: widget.options.parameters,
-                  enableGlassmorphism: widget.options.enableGlassmorphism,
-                  isDarkMode: widget.options.isDarkMode,
-                ),
-              )
-            : ModernAdvancedPanelComponent(
-                options: ModernAdvancedPanelComponentOptions(
-                  parameters: widget.options.parameters,
-                  enableGlassmorphism: widget.options.enableGlassmorphism,
-                  isDarkMode: widget.options.isDarkMode,
-                ),
-              ),
+        child: AnimatedSwitcher(
+          duration: MediasfuAnimations.fast,
+          switchInCurve: Curves.easeOut,
+          switchOutCurve: Curves.easeIn,
+          // Keyed on the tab so the switcher sees a genuinely new child;
+          // without a key it treats the swap as an update and nothing fades.
+          child: KeyedSubtree(
+            key: ValueKey<int>(_selectedTabIndex),
+            child: _selectedTabIndex == 0
+                ? ModernStandardPanelComponent(
+                    options: ModernStandardPanelComponentOptions(
+                      parameters: widget.options.parameters,
+                      enableGlassmorphism: widget.options.enableGlassmorphism,
+                      isDarkMode: widget.options.isDarkMode,
+                    ),
+                  )
+                : ModernAdvancedPanelComponent(
+                    options: ModernAdvancedPanelComponentOptions(
+                      parameters: widget.options.parameters,
+                      enableGlassmorphism: widget.options.enableGlassmorphism,
+                      isDarkMode: widget.options.isDarkMode,
+                    ),
+                  ),
+          ),
+        ),
       ),
     );
   }
@@ -322,7 +335,7 @@ class _ModernRecordingModalState extends State<ModernRecordingModal>
                   Text(
                     'Fix before confirming',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: MediasfuTypography.sizeCaption,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 0.8,
                       color: widget.options.isDarkMode
@@ -334,7 +347,7 @@ class _ModernRecordingModalState extends State<ModernRecordingModal>
                   Text(
                     recordingDisplayAdvice,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: MediasfuTypography.sizeBodyCompact,
                       fontWeight: FontWeight.w600,
                       height: 1.4,
                       color: widget.options.isDarkMode
@@ -397,7 +410,7 @@ class _ModernRecordingModalState extends State<ModernRecordingModal>
     bool isSuccess = false,
     VoidCallback? onTap,
   }) {
-    return GestureDetector(
+    return ModernPressable(
       onTap: isEnabled ? onTap : null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),

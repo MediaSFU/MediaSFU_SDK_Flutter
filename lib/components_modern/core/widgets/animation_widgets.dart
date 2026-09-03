@@ -111,13 +111,41 @@ class _StaggeredAnimationListState extends State<StaggeredAnimationList>
     }).toList();
   }
 
-  Future<void> _playAnimations() async {
-    for (int i = 0; i < _controllers.length; i++) {
+  Future<void> _playAnimations() => _playAnimationsFrom(0);
+
+  Future<void> _playAnimationsFrom(int start) async {
+    for (int i = start; i < _controllers.length; i++) {
       await Future.delayed(widget.staggerDelay);
-      if (mounted) {
-        _controllers[i].forward();
+      // The list can shrink while the stagger is still walking it.
+      if (!mounted || i >= _controllers.length) return;
+      _controllers[i].forward();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant StaggeredAnimationList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Controllers are created once per child in initState. Without this, a
+    // list that grows would index past the end of `_controllers` and throw,
+    // which is why this was only ever safe on fixed-length content. Rebuild
+    // the set when the count changes, and animate in just the new tail so
+    // existing rows do not flash back in.
+    if (widget.children.length == oldWidget.children.length) return;
+
+    final int previous = _controllers.length;
+    for (final AnimationController controller in _controllers) {
+      controller.dispose();
+    }
+    _initializeAnimations();
+
+    if (!widget.enabled) return;
+    for (int i = 0; i < _controllers.length; i++) {
+      if (i < previous) {
+        // Already on screen — show it immediately rather than replaying.
+        _controllers[i].value = 1.0;
       }
     }
+    _playAnimationsFrom(previous);
   }
 
   /// Trigger animations programmatically.

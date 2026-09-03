@@ -8,6 +8,7 @@ import '../core/theme/mediasfu_spacing.dart';
 import '../core/theme/mediasfu_animations.dart';
 import '../core/widgets/animated_icon_button.dart';
 import '../core/widgets/glassmorphic_container.dart';
+import '../core/theme/mediasfu_typography.dart';
 
 /// Modern replacement for ControlButtonsComponent.
 ///
@@ -231,7 +232,7 @@ class _PremiumControlButtonState extends State<_PremiumControlButton>
       final labelStyle = button.textStyle ??
           widget.options.textStyle ??
           TextStyle(
-            fontSize: 10,
+            fontSize: MediasfuTypography.sizeMicro,
             fontWeight: FontWeight.w500,
             color: isDark ? Colors.white70 : Colors.black87,
           );

@@ -8,6 +8,8 @@ import '../../consumers/generate_page_content.dart'
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
 import '../core/theme/mediasfu_animations.dart';
+import '../core/widgets/premium_widgets.dart';
+import '../core/theme/mediasfu_typography.dart';
 
 typedef ModernPaginationType = Widget Function(
     {required PaginationOptions options});
@@ -318,7 +320,7 @@ class _ModernPaginationState extends State<ModernPagination>
       child: MouseRegion(
         onEnter: (_) => setState(() => _hoverIndex = isBack ? -2 : -3),
         onExit: (_) => setState(() => _hoverIndex = -1),
-        child: GestureDetector(
+        child: ModernPressable(
           onTap: isBack ? _shiftWindowBack : _shiftWindowForward,
           child: AnimatedContainer(
             duration: MediasfuAnimations.fast,
@@ -401,7 +403,7 @@ class _ModernPaginationState extends State<ModernPagination>
       child: MouseRegion(
         onEnter: (_) => setState(() => _hoverIndex = page),
         onExit: (_) => setState(() => _hoverIndex = -1),
-        child: GestureDetector(
+        child: ModernPressable(
           onTap: isLocked ? null : () => _handlePageChange(page),
           child: AnimatedContainer(
             duration: MediasfuAnimations.fast,
@@ -513,7 +515,7 @@ class _ModernPaginationState extends State<ModernPagination>
           Text(
             label,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: MediasfuTypography.sizeCaption,
               fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
               letterSpacing: 0.2,
               color: isLocked
@@ -529,7 +531,7 @@ class _ModernPaginationState extends State<ModernPagination>
     return Text(
       label,
       style: TextStyle(
-        fontSize: 13,
+        fontSize: MediasfuTypography.sizeBodyCompact,
         fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
         letterSpacing: 0.3,
         color: isActive ? activeColor : inactiveColor,

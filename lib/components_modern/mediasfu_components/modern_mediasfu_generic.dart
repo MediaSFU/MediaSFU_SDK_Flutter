@@ -12,6 +12,8 @@ import '../translation_components/translation_settings_modal.dart'
 // import 'package:permission_handler/permission_handler.dart'; // handle permissions manually
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'dart:async';
+import '../core/widgets/premium_widgets.dart';
+import '../core/theme/mediasfu_typography.dart';
 import 'package:flutter/services.dart'; // Import Services for platform-specific services
 import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform, kDebugMode, kIsWeb;
@@ -535,6 +537,8 @@ import '../../types/ui_overrides.dart'
         withFunctionOverride,
         withOverride;
 
+part 'modern_mediasfu_generic_head.dart';
+
 /// Enum to track which content is displayed in the desktop sidebar
 enum SidebarContent {
   none,
@@ -731,6 +735,8 @@ class ModernMediasfuGeneric extends StatefulWidget {
 
 class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   bool validated = false;
+  late final _ModernMediasfuGenericHeadBinding _headBinding;
+  int _attachedHeadRenderers = 0;
 
   Map<String, dynamic> initialValues = initialValuesState;
   late MediasfuUICustomOverrides _uiOverrides;
@@ -1260,7 +1266,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     final mediaQuery = MediaQuery.of(context);
     final isLandscape = mediaQuery.orientation == Orientation.landscape;
     final isWide = mediaQuery.size.width >= 1200;
-    return isLandscape && isWide;
+    return (widget.options.returnUI != false || _attachedHeadRenderers > 0) &&
+        isLandscape &&
+        isWide;
   }
 
   /// Check if button labels should be shown (screens >= 576px width)
@@ -4311,7 +4319,28 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     });
   }
 
+  /// In headless mode the caller owns the surface. Keep visibility in the
+  /// parameter bag instead of opening a sidebar that is not rendered.
+  bool _handleHeadlessModalVisibility(
+    String key,
+    ValueNotifier<bool> target,
+    bool value,
+  ) {
+    if (widget.options.returnUI != false || _attachedHeadRenderers > 0) {
+      return false;
+    }
+    target.value = value;
+    updateSpecificState(widget.options.sourceParameters, key, value);
+    return true;
+  }
+
   void updateIsMenuModalVisible(bool value) {
+    if (_handleHeadlessModalVisibility(
+      'isMenuModalVisible',
+      isMenuModalVisible,
+      value,
+    ))
+      return;
     // Route to sidebar on desktop, or sidebar modal on mobile
     if (value) {
       updateActiveSidebarContent(SidebarContent.menu);
@@ -4333,6 +4362,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   }
 
   void updateIsRecordingModalVisible(bool value) {
+    if (_handleHeadlessModalVisibility(
+      'isRecordingModalVisible',
+      isRecordingModalVisible,
+      value,
+    ))
+      return;
     // Route to sidebar (desktop embedded or mobile modal)
     if (value) {
       final pushToStack = activeSidebarContent.value == SidebarContent.menu;
@@ -4364,6 +4399,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   }
 
   void updateIsSettingsModalVisible(bool value) {
+    if (_handleHeadlessModalVisibility(
+      'isSettingsModalVisible',
+      isSettingsModalVisible,
+      value,
+    ))
+      return;
     // Route to sidebar (desktop embedded or mobile modal)
     if (value) {
       final pushToStack = activeSidebarContent.value == SidebarContent.menu;
@@ -4387,6 +4428,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   }
 
   void updateIsRequestsModalVisible(bool value) {
+    if (_handleHeadlessModalVisibility(
+      'isRequestsModalVisible',
+      isRequestsModalVisible,
+      value,
+    ))
+      return;
     // Route to sidebar (desktop embedded or mobile modal)
     if (value) {
       final pushToStack = activeSidebarContent.value == SidebarContent.menu;
@@ -4410,6 +4457,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   }
 
   void updateIsWaitingModalVisible(bool value) {
+    if (_handleHeadlessModalVisibility(
+      'isWaitingModalVisible',
+      isWaitingModalVisible,
+      value,
+    ))
+      return;
     // Route to sidebar (desktop embedded or mobile modal)
     if (value) {
       final pushToStack = activeSidebarContent.value == SidebarContent.menu;
@@ -4433,6 +4486,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   }
 
   void updateIsCoHostModalVisible(bool value) {
+    if (_handleHeadlessModalVisibility(
+      'isCoHostModalVisible',
+      isCoHostModalVisible,
+      value,
+    ))
+      return;
     // Route to sidebar (desktop embedded or mobile modal)
     if (value) {
       final pushToStack = activeSidebarContent.value == SidebarContent.menu;
@@ -4456,6 +4515,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   }
 
   void updateIsMediaSettingsModalVisible(bool value) {
+    if (_handleHeadlessModalVisibility(
+      'isMediaSettingsModalVisible',
+      isMediaSettingsModalVisible,
+      value,
+    ))
+      return;
     // Route to sidebar (desktop embedded or mobile modal)
     if (value) {
       final pushToStack = activeSidebarContent.value == SidebarContent.menu;
@@ -4479,6 +4544,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   }
 
   void updateIsDisplaySettingsModalVisible(bool value) {
+    if (_handleHeadlessModalVisibility(
+      'isDisplaySettingsModalVisible',
+      isDisplaySettingsModalVisible,
+      value,
+    ))
+      return;
     // Route to sidebar (desktop embedded or mobile modal)
     if (value) {
       final pushToStack = activeSidebarContent.value == SidebarContent.menu;
@@ -4514,6 +4585,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   }
 
   void updateIsParticipantsModalVisible(bool value) {
+    if (_handleHeadlessModalVisibility(
+      'isParticipantsModalVisible',
+      isParticipantsModalVisible,
+      value,
+    ))
+      return;
     // Route to sidebar (desktop embedded or mobile modal)
     if (value) {
       updateActiveSidebarContent(SidebarContent.participants);
@@ -4533,6 +4610,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   }
 
   void updateIsMessagesModalVisible(bool value) {
+    if (_handleHeadlessModalVisibility(
+      'isMessagesModalVisible',
+      isMessagesModalVisible,
+      value,
+    ))
+      return;
     // Route to sidebar (desktop embedded or mobile modal)
     if (value) {
       updateActiveSidebarContent(SidebarContent.messages);
@@ -4572,6 +4655,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   }
 
   void updateIsShareEventModalVisible(bool value) {
+    if (_handleHeadlessModalVisibility(
+      'isShareEventModalVisible',
+      isShareEventModalVisible,
+      value,
+    ))
+      return;
     // Route to sidebar (desktop embedded or mobile modal)
     if (value) {
       updateActiveSidebarContent(SidebarContent.shareEvent);
@@ -5245,6 +5334,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   }
 
   void updateIsPollModalVisible(bool value) {
+    if (_handleHeadlessModalVisibility(
+      'isPollModalVisible',
+      isPollModalVisible,
+      value,
+    ))
+      return;
     // Route to sidebar (desktop embedded or mobile modal)
     if (value) {
       final pushToStack = activeSidebarContent.value == SidebarContent.menu;
@@ -5350,6 +5445,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   }
 
   void updateIsBreakoutRoomsModalVisible(bool value) {
+    if (_handleHeadlessModalVisibility(
+      'isBreakoutRoomsModalVisible',
+      isBreakoutRoomsModalVisible,
+      value,
+    ))
+      return;
     // Route to sidebar (desktop embedded or mobile modal)
     if (value) {
       final pushToStack = activeSidebarContent.value == SidebarContent.menu;
@@ -5509,6 +5610,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   }
 
   void updateIsBackgroundModalVisible(bool value) {
+    if (_handleHeadlessModalVisibility(
+      'isBackgroundModalVisible',
+      isBackgroundModalVisible,
+      value,
+    ))
+      return;
     // Route to sidebar (desktop embedded or mobile modal)
     if (value) {
       updateActiveSidebarContent(SidebarContent.background);
@@ -5840,6 +5947,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   }
 
   void updateIsWhiteboardModalVisible(bool value) {
+    if (_handleHeadlessModalVisibility(
+      'isWhiteboardModalVisible',
+      isWhiteboardModalVisible,
+      value,
+    ))
+      return;
     isWhiteboardModalVisible.value = value;
     mediasfuParameters.isWhiteboardModalVisible = value;
     updateSpecificState(
@@ -5850,6 +5963,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   }
 
   void updateIsConfigureWhiteboardModalVisible(bool value) {
+    if (_handleHeadlessModalVisibility(
+      'isConfigureWhiteboardModalVisible',
+      isConfigureWhiteboardModalVisible,
+      value,
+    ))
+      return;
     // Route to sidebar (desktop embedded or mobile modal)
     if (value) {
       final pushToStack = activeSidebarContent.value == SidebarContent.menu;
@@ -5957,6 +6076,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   }
 
   void updateIsScreenboardModalVisible(bool value) {
+    if (_handleHeadlessModalVisibility(
+      'isScreenboardModalVisible',
+      isScreenboardModalVisible,
+      value,
+    ))
+      return;
     isScreenboardModalVisible.value = value;
     mediasfuParameters.isScreenboardModalVisible = value;
     updateSpecificState(
@@ -5968,6 +6093,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
 
   // Permissions update methods
   void updateIsPermissionsModalVisible(bool value) {
+    if (_handleHeadlessModalVisibility(
+      'isPermissionsModalVisible',
+      isPermissionsModalVisible,
+      value,
+    ))
+      return;
     isPermissionsModalVisible.value = value;
   }
 
@@ -5983,6 +6114,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
 
   // Panelists update methods
   void updateIsPanelistsModalVisible(bool value) {
+    if (_handleHeadlessModalVisibility(
+      'isPanelistsModalVisible',
+      isPanelistsModalVisible,
+      value,
+    ))
+      return;
     isPanelistsModalVisible.value = value;
   }
 
@@ -6118,7 +6255,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           ),
           textStyle: TextStyle(
             color: isDarkModeVal ? Colors.black : Colors.white,
-            fontSize: 12,
+            fontSize: MediasfuTypography.sizeBodySmall,
             fontWeight: FontWeight.w600,
           ),
           child: Container(
@@ -6136,7 +6273,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                     ),
                     backgroundColor: Colors.transparent,
                     fontWeight: FontWeight.w600,
-                    fontSize: 14,
+                    fontSize: MediasfuTypography.sizeBodyMedium,
                   ),
                 );
               },
@@ -6261,7 +6398,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                   ),
                   backgroundColor: Colors.transparent,
                   fontWeight: FontWeight.w600,
-                  fontSize: 14,
+                  fontSize: MediasfuTypography.sizeBodyMedium,
                 ),
               );
             },
@@ -6382,7 +6519,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                 child: Text(
                   'Recording Controls',
                   style: TextStyle(
-                    fontSize: 9,
+                    fontSize: MediasfuTypography.sizeMicro,
                     fontWeight: FontWeight.w500,
                     color: isDarkMode.value
                         ? Colors.white.withOpacity(0.6)
@@ -6451,10 +6588,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                         ),
                         textStyle: TextStyle(
                           color: isDarkMode.value ? Colors.black : Colors.white,
-                          fontSize: 12,
+                          fontSize: MediasfuTypography.sizeBodySmall,
                           fontWeight: FontWeight.w500,
                         ),
-                        child: GestureDetector(
+                        child: ModernPressable(
                           onTap: context.button.onPress,
                           child: buttonContent,
                         ),
@@ -6778,7 +6915,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                     '',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 12,
+                      fontSize: MediasfuTypography.sizeBodySmall,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -6912,7 +7049,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                     '',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 12,
+                      fontSize: MediasfuTypography.sizeBodySmall,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -7112,7 +7249,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                         totalReqWait.value.toString(),
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 10,
+                          fontSize: MediasfuTypography.sizeMicro,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -7126,7 +7263,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                 'Menu',
                 style: TextStyle(
                   color: MediasfuColors.themedText(darkMode: isDarkModeVal),
-                  fontSize: 12,
+                  fontSize: MediasfuTypography.sizeBodySmall,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -7170,7 +7307,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                         '*',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 10,
+                          fontSize: MediasfuTypography.sizeMicro,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -7184,7 +7321,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                 'Chat',
                 style: TextStyle(
                   color: MediasfuColors.themedText(darkMode: isDarkModeVal),
-                  fontSize: 12,
+                  fontSize: MediasfuTypography.sizeBodySmall,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -7229,12 +7366,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                             color: recordPaused.value
                                 ? Colors.yellow
                                 : Colors.red,
-                            fontSize: 14,
+                            fontSize: MediasfuTypography.sizeBodyMedium,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(width: 8),
-                        GestureDetector(
+                        ModernPressable(
                           onTap: () {
                             updateRecording(
                               UpdateRecordingOptions(
@@ -7249,7 +7386,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        GestureDetector(
+                        ModernPressable(
                           onTap: () {
                             stopRecording(
                               StopRecordingOptions(
@@ -7270,7 +7407,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                         'Recording',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 8,
+                          fontSize: MediasfuTypography.sizeMicro,
                         ),
                       ),
                   ],
@@ -7386,7 +7523,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                             requestCounter.value.toString(),
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 9,
+                              fontSize: MediasfuTypography.sizeMicro,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -7399,7 +7536,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                   'Requests',
                   style: TextStyle(
                     color: MediasfuColors.themedText(darkMode: isDarkModeVal),
-                    fontSize: 10,
+                    fontSize: MediasfuTypography.sizeMicro,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -7464,6 +7601,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
 
   @override
   void dispose() {
+    if (identical(
+      _modernMediasfuGenericHeadBindings[mediasfuParameters],
+      _headBinding,
+    )) {
+      _modernMediasfuGenericHeadBindings[mediasfuParameters] = null;
+    }
     isPortrait.removeListener(_handleOrientationChange);
     activeSidebarContent.removeListener(_handleSidebarVisibilityChange);
 
@@ -10212,6 +10355,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       getCurrentParams: () => mediasfuParameters,
     );
 
+    _headBinding = _ModernMediasfuGenericHeadBinding(this);
+    _modernMediasfuGenericHeadBindings[mediasfuParameters] = _headBinding;
+
     if (widget.options.returnUI != null && widget.options.returnUI == false) {
       try {
         widget.options.sourceParameters = mediasfuParameters;
@@ -10226,6 +10372,16 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     if (widget.options.useSeed == true && widget.options.seedData != null) {
       try {
         updateMember(widget.options.seedData!.member!);
+        // Seeded host detection, matching the React generic: when the seeded
+        // member is the host, run at host level so host-only surfaces —
+        // Requests, Waiting, co-host, the multi-tab Poll — are reachable. The
+        // seed path previously left islevel at its "0" default, so those
+        // surfaces could never be opened no matter what was seeded.
+        updateIslevel(
+          widget.options.seedData!.member == widget.options.seedData!.host
+              ? '2'
+              : '1',
+        );
         updateParticipants(widget.options.seedData!.participants!);
         updateParticipantsCounter(
           widget.options.seedData!.participants!.length,
@@ -10348,7 +10504,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     );
   }
 
-  Widget buildEventRoom(BuildContext context) {
+  Widget buildEventRoom(
+    BuildContext context, {
+    bool forceStandardUi = false,
+  }) {
     return ValueListenableBuilder<bool>(
       valueListenable: isDarkMode,
       builder: (context, isDarkModeVal, _) {
@@ -10362,9 +10521,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
         return Theme(
           data: isDarkModeVal ? MediasfuTheme.dark() : MediasfuTheme.light(),
           child:
-              validated &&
-                  widget.options.returnUI != null &&
-                  widget.options.returnUI == true
+              validated && (forceStandardUi || widget.options.returnUI == true)
               ? _mainContainerBuilder(
                   context,
                   MainContainerComponentOptions(
@@ -10694,7 +10851,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                                                                           child: Text(
                                                                             'Recording Controls',
                                                                             style: TextStyle(
-                                                                              fontSize: 9,
+                                                                              fontSize: MediasfuTypography.sizeMicro,
                                                                               fontWeight: FontWeight.w500,
                                                                               color: isDarkMode.value
                                                                                   ? Colors.white.withOpacity(
@@ -10793,10 +10950,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                                                                                         color: isDarkMode.value
                                                                                             ? Colors.black
                                                                                             : Colors.white,
-                                                                                        fontSize: 12,
+                                                                                        fontSize: MediasfuTypography.sizeBodySmall,
                                                                                         fontWeight: FontWeight.w500,
                                                                                       ),
-                                                                                      child: GestureDetector(
+                                                                                      child: ModernPressable(
                                                                                         onTap: context.button.onPress,
                                                                                         child: buttonContent,
                                                                                       ),
@@ -11350,7 +11507,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                                       alignment: MainAxisAlignment.spaceBetween,
                                       iconSize: 16,
                                       textStyle: TextStyle(
-                                        fontSize: 10,
+                                        fontSize: MediasfuTypography.sizeMicro,
                                         color: isDarkModeVal
                                             ? Colors.white
                                             : Colors.black87,
@@ -11390,7 +11547,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               : !validated
               ? (widget.options.credentials != null &&
                         widget.options.credentials!.apiKey.isNotEmpty
-                    ? renderpreJoinPageWidget() ?? renderWelcomePage()
+                    ? renderpreJoinPageWidget(
+                            forceStandardUi: forceStandardUi,
+                          ) ??
+                          renderWelcomePage()
                     : renderWelcomePage())
               : const SizedBox(),
         );
@@ -11417,7 +11577,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     );
   }
 
-  Widget? renderpreJoinPageWidget() {
+  Widget? renderpreJoinPageWidget({bool forceStandardUi = false}) {
     return _preJoinPageBuilder(
       context,
       PreJoinPageOptions(
@@ -11453,7 +11613,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             widget.options.credentials ??
             Credentials(apiUserName: '', apiKey: ''),
         customBuilder: widget.options.preJoinPageWidget,
-        returnUI: widget.options.returnUI,
+        returnUI: forceStandardUi ? true : widget.options.returnUI,
         noUIPreJoinOptionsCreate: widget.options.noUIPreJoinOptionsCreate,
         noUIPreJoinOptionsJoin: widget.options.noUIPreJoinOptionsJoin,
         joinMediaSFURoom: widget.options.joinMediaSFURoom,
@@ -11469,13 +11629,13 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     );
   }
 
-  Widget _buildRoomInterface() {
+  Widget _buildRoomInterface({bool forceStandardUi = false}) {
     // If a custom component is provided, use it instead of the default interface
-    if (widget.options.customComponent != null) {
+    if (!forceStandardUi && widget.options.customComponent != null) {
       return widget.options.customComponent!(parameters: mediasfuParameters);
     }
 
-    if (widget.options.returnUI != null && widget.options.returnUI == false) {
+    if (!forceStandardUi && widget.options.returnUI == false) {
       return Stack(
         children: [
           buildEventRoom(context),
@@ -11495,7 +11655,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           // Desktop layout with persistent sidebar (sidebar is rendered inside MainAspect)
           return Stack(
             children: [
-              buildEventRoom(context),
+              buildEventRoom(context, forceStandardUi: forceStandardUi),
               // System modals that always overlay (confirm exit, alerts, loading)
               _buildConfirmExitModal(),
               _buildAlertModal(),
@@ -11508,7 +11668,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           // Mobile/tablet layout with overlay modals
           return Stack(
             children: [
-              buildEventRoom(context),
+              buildEventRoom(context, forceStandardUi: forceStandardUi),
 
               // Sidebar as modal for small screens (unified modal container)
               _buildSidebarModal(),
@@ -11616,7 +11776,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                             color: isDarkModeVal
                                 ? MediasfuColors.primaryLightDark
                                 : MediasfuColors.primary,
-                            fontSize: 15,
+                            fontSize: MediasfuTypography.sizeTitleSmall,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.2,
                           ),
@@ -11727,7 +11887,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               children: [
                 // Backdrop - tap to close
                 Positioned.fill(
-                  child: GestureDetector(
+                  child: ModernPressable(
                     onTap: closeSidebar,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),

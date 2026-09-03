@@ -11,6 +11,8 @@ import 'modern_message_panel.dart'
 import '../../types/types.dart' show EventType, Message;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
+import '../core/widgets/premium_widgets.dart';
+import '../core/theme/mediasfu_typography.dart';
 
 typedef ModernMessagesModalType = ModernMessagesModal Function({
   required MessagesModalOptions options,
@@ -127,7 +129,7 @@ class _ModernMessagesModalState extends State<ModernMessagesModal>
           children: [
             // Backdrop
             Positioned.fill(
-              child: GestureDetector(
+              child: ModernPressable(
                 onTap: widget.options.onMessagesClose,
                 child: FadeTransition(
                   opacity: _fadeAnimation,
@@ -276,7 +278,7 @@ class _ModernMessagesModalState extends State<ModernMessagesModal>
             child: Text(
               'Messages',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: MediasfuTypography.sizeBodyMedium,
                 fontWeight: FontWeight.bold,
                 color:
                     widget.options.isDarkMode ? Colors.white : Colors.black87,
@@ -316,9 +318,9 @@ class _ModernMessagesModalState extends State<ModernMessagesModal>
           textStyle: TextStyle(
             color:
                 MediasfuColors.tooltipText(darkMode: widget.options.isDarkMode),
-            fontSize: 12,
+            fontSize: MediasfuTypography.sizeBodySmall,
           ),
-          child: GestureDetector(
+          child: ModernPressable(
             onTap: () => activeTab.value = tab,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
@@ -346,7 +348,7 @@ class _ModernMessagesModalState extends State<ModernMessagesModal>
                 text,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  fontSize: 11,
+                  fontSize: MediasfuTypography.sizeCaption,
                   color: isActive
                       ? Colors.white
                       : (widget.options.isDarkMode
@@ -368,9 +370,9 @@ class _ModernMessagesModalState extends State<ModernMessagesModal>
           MediasfuColors.tooltipDecoration(darkMode: widget.options.isDarkMode),
       textStyle: TextStyle(
         color: MediasfuColors.tooltipText(darkMode: widget.options.isDarkMode),
-        fontSize: 12,
+        fontSize: MediasfuTypography.sizeBodySmall,
       ),
-      child: GestureDetector(
+      child: ModernPressable(
         onTap: () {
           _animationController.reverse().then((_) {
             widget.options.onMessagesClose();

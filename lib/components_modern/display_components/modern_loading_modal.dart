@@ -14,6 +14,7 @@ import '../core/theme/mediasfu_spacing.dart';
 import '../core/theme/mediasfu_typography.dart';
 import '../core/theme/mediasfu_animations.dart';
 import '../core/widgets/glassmorphic_container.dart';
+import '../core/widgets/modern_pressable.dart';
 
 /// Modern redesigned LoadingModal with glassmorphic styling, gradient spinner,
 /// and premium animations.
@@ -223,7 +224,7 @@ class _ModernLoadingModalState extends State<ModernLoadingModal>
       child: Stack(
         children: [
           Positioned.fill(
-            child: GestureDetector(
+            child: ModernPressable(
               onTap: () {}, // block taps
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),

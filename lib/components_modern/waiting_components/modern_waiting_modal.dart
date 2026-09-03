@@ -12,6 +12,9 @@ import '../../types/types.dart' show WaitingRoomParticipant;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
 import '../core/widgets/modal_header.dart';
+import '../core/widgets/modern_pressable.dart';
+import '../core/theme/mediasfu_typography.dart';
+import '../core/widgets/animation_widgets.dart';
 
 typedef ModernWaitingRoomModalType = Widget Function(
     {required WaitingRoomModalOptions options});
@@ -133,7 +136,7 @@ class _ModernWaitingRoomModalState extends State<ModernWaitingRoomModal>
           children: [
             // Backdrop
             Positioned.fill(
-              child: GestureDetector(
+              child: ModernPressable(
                 onTap: _handleClose,
                 child: FadeTransition(
                   opacity: _fadeAnimation,
@@ -250,7 +253,7 @@ class _ModernWaitingRoomModalState extends State<ModernWaitingRoomModal>
           style: TextStyle(
             color: MediasfuColors.info,
             fontWeight: FontWeight.bold,
-            fontSize: 13,
+            fontSize: MediasfuTypography.sizeBodyCompact,
           ),
         ),
       ),
@@ -320,7 +323,7 @@ class _ModernWaitingRoomModalState extends State<ModernWaitingRoomModal>
             Text(
               'No one in waiting room',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: MediasfuTypography.sizeTitleSmall,
                 color:
                     widget.options.isDarkMode ? Colors.white54 : Colors.black45,
               ),
@@ -335,7 +338,13 @@ class _ModernWaitingRoomModalState extends State<ModernWaitingRoomModal>
       itemCount: waitingList.length,
       itemBuilder: (context, index) {
         final participant = waitingList[index];
-        return _buildParticipantItem(participant);
+        return AnimatedEntry(
+          // Cascade only across the rows visible on open; a row that scrolls
+          // in later should appear at once rather than wait its turn.
+          delay: Duration(milliseconds: index < 6 ? index * 45 : 0),
+          slideOffset: const Offset(0, 12),
+          child: _buildParticipantItem(participant),
+        );
       },
     );
   }
@@ -378,7 +387,7 @@ class _ModernWaitingRoomModalState extends State<ModernWaitingRoomModal>
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  fontSize: MediasfuTypography.sizeTitleSmall,
                 ),
               ),
             ),
@@ -403,7 +412,7 @@ class _ModernWaitingRoomModalState extends State<ModernWaitingRoomModal>
                 Text(
                   'Waiting to join',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: MediasfuTypography.sizeBodySmall,
                     color: widget.options.isDarkMode
                         ? Colors.white54
                         : Colors.black45,
@@ -443,7 +452,7 @@ class _ModernWaitingRoomModalState extends State<ModernWaitingRoomModal>
     required Color color,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
+    return ModernPressable(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(
@@ -467,7 +476,7 @@ class _ModernWaitingRoomModalState extends State<ModernWaitingRoomModal>
               style: TextStyle(
                 color: color,
                 fontWeight: FontWeight.w600,
-                fontSize: 12,
+                fontSize: MediasfuTypography.sizeBodySmall,
               ),
             ),
           ],

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
+import '../core/widgets/premium_widgets.dart';
+import '../core/theme/mediasfu_typography.dart';
 
 /// Configuration options for the `ModernMeetingPasscodeComponent` widget.
 ///
@@ -155,7 +157,7 @@ class _ModernMeetingPasscodeComponentState
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: MediasfuTypography.sizeBodyCompact,
                   fontWeight: FontWeight.w600,
                   color: isDarkMode ? Colors.white : Colors.black87,
                   letterSpacing: 0.5,
@@ -180,7 +182,7 @@ class _ModernMeetingPasscodeComponentState
                     Text(
                       'Private',
                       style: TextStyle(
-                        fontSize: 9,
+                        fontSize: MediasfuTypography.sizeMicro,
                         fontWeight: FontWeight.bold,
                         color: MediasfuColors.danger,
                         letterSpacing: 0.8,
@@ -257,7 +259,7 @@ class _ModernMeetingPasscodeComponentState
 
                     // Visibility toggle
                     if (widget.options.showVisibilityToggle) ...[
-                      GestureDetector(
+                      ModernPressable(
                         onTap: _toggleVisibility,
                         child: Container(
                           padding: const EdgeInsets.all(8),
@@ -286,7 +288,7 @@ class _ModernMeetingPasscodeComponentState
                     if (widget.options.showCopyButton) ...[
                       ScaleTransition(
                         scale: _scaleAnimation,
-                        child: GestureDetector(
+                        child: ModernPressable(
                           onTap: _copyToClipboard,
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
@@ -352,7 +354,7 @@ class _ModernMeetingPasscodeComponentState
             child: Text(
               'Others with this passcode can join as host with full privileges.',
               style: TextStyle(
-                fontSize: 11,
+                fontSize: MediasfuTypography.sizeCaption,
                 color: subtleTextColor,
                 fontStyle: FontStyle.italic,
               ),

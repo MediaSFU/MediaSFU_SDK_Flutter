@@ -5,6 +5,7 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 import '../../types/types.dart' show EventType;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
+import '../core/theme/mediasfu_typography.dart';
 
 /// Provides context data when building a custom container for [ModernCardVideoDisplay].
 class ModernCardVideoDisplayContainerContext {
@@ -337,7 +338,7 @@ class _ModernCardVideoDisplayState extends State<ModernCardVideoDisplay>
                     style: TextStyle(
                       color: (options.isDarkMode ? Colors.white : Colors.black)
                           .withOpacity(0.7),
-                      fontSize: 14,
+                      fontSize: MediasfuTypography.sizeBodyMedium,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

@@ -13,6 +13,7 @@ import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
 import '../core/theme/mediasfu_typography.dart';
 import '../core/widgets/glassmorphic_container.dart';
+import '../core/widgets/modern_pressable.dart';
 
 /// Modern redesigned AlertComponent with glassmorphic styling, premium animations,
 /// and glow effects for success/error states.
@@ -328,7 +329,7 @@ class _ModernAlertComponentState extends State<ModernAlertComponent>
     final bool enableContentTap =
         options.contentDismissible || options.onContentTap != null;
     if (enableContentTap) {
-      contentNode = GestureDetector(
+      contentNode = ModernPressable(
         behavior: HitTestBehavior.opaque,
         onTap: _handleContentTap,
         child: contentNode,
@@ -373,7 +374,7 @@ class _ModernAlertComponentState extends State<ModernAlertComponent>
       children: [
         // Subtle translucent backdrop for better contrast separation
         Positioned.fill(
-          child: GestureDetector(
+          child: ModernPressable(
             behavior: HitTestBehavior.translucent,
             onTap: _handleOverlayTap,
             child: AnimatedBuilder(

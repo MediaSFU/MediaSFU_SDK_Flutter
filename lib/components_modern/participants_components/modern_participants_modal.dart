@@ -15,6 +15,8 @@ import 'modern_participant_list.dart'
 import '../../types/types.dart' show Participant, EventType;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
+import '../core/widgets/premium_widgets.dart';
+import '../core/theme/mediasfu_typography.dart';
 
 typedef ModernParticipantsModalType = Widget Function(
     {required ParticipantsModalOptions options});
@@ -44,6 +46,10 @@ class _ModernParticipantsModalState extends State<ModernParticipantsModal>
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.9, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack),
     );
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -126,7 +132,7 @@ class _ModernParticipantsModalState extends State<ModernParticipantsModal>
           children: [
             // Backdrop
             Positioned.fill(
-              child: GestureDetector(
+              child: ModernPressable(
                 onTap: _handleClose,
                 child: FadeTransition(
                   opacity: _fadeAnimation,
@@ -287,7 +293,7 @@ class _ModernParticipantsModalState extends State<ModernParticipantsModal>
           Text(
             'Participants',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: MediasfuTypography.sizeTitleMedium,
               fontWeight: FontWeight.bold,
               color: widget.options.isDarkMode ? Colors.white : Colors.black87,
             ),
@@ -325,7 +331,7 @@ class _ModernParticipantsModalState extends State<ModernParticipantsModal>
                         ? Colors.white70
                         : Colors.black54,
                     fontWeight: FontWeight.w600,
-                    fontSize: 13,
+                    fontSize: MediasfuTypography.sizeBodyCompact,
                   ),
                 ),
               ],
@@ -342,9 +348,9 @@ class _ModernParticipantsModalState extends State<ModernParticipantsModal>
             textStyle: TextStyle(
               color: MediasfuColors.tooltipText(
                   darkMode: widget.options.isDarkMode),
-              fontSize: 12,
+              fontSize: MediasfuTypography.sizeBodySmall,
             ),
-            child: GestureDetector(
+            child: ModernPressable(
               onTap: _handleClose,
               child: Container(
                 padding: const EdgeInsets.all(MediasfuSpacing.sm),
@@ -438,7 +444,7 @@ class _ModernParticipantsModalState extends State<ModernParticipantsModal>
             Text(
               'No participants',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: MediasfuTypography.sizeTitleSmall,
                 color:
                     widget.options.isDarkMode ? Colors.white54 : Colors.black45,
               ),

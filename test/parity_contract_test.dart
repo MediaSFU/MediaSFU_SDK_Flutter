@@ -92,4 +92,24 @@ void main() {
     );
     expect(source, contains('whiteboardToolbarOffset'));
   });
+
+  test('host self-view prefers the active virtual background stream', () {
+    final source = _source('lib/consumers/prepopulate_user_media.dart');
+    // The admin/video-on branch used to bind the card directly to
+    // localStreamVideo, which made the local tile disagree with the track
+    // published to peers after a background was applied.
+    expect(source, contains('final effectiveLocalVideo ='));
+    expect(
+      source,
+      contains(
+        "keepBackground && virtualStream != null\n                  ? virtualStream\n                  : localStreamVideo",
+      ),
+    );
+    expect(
+      RegExp(
+        r"Admin's video is on[\s\S]*?videoStream: effectiveLocalVideo",
+      ).hasMatch(source),
+      isTrue,
+    );
+  });
 }

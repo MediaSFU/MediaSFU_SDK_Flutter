@@ -15,6 +15,9 @@ import '../../types/modal_style_options.dart' show ModalRenderMode;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
 import '../core/widgets/modal_header.dart';
+import '../core/widgets/modern_pressable.dart';
+import '../core/theme/mediasfu_animations.dart';
+import '../core/theme/mediasfu_typography.dart';
 
 // Platform check helper that works on all platforms including web
 bool _isMobilePlatform() {
@@ -354,7 +357,7 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
       child: Stack(
         children: [
           Positioned.fill(
-            child: GestureDetector(
+            child: ModernPressable(
               onTap: _handleClose,
               child: FadeTransition(
                 opacity: _fadeAnimation,
@@ -490,7 +493,7 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
                 color: widget.options.isDarkMode
                     ? Colors.orange[200]
                     : Colors.orange[800],
-                fontSize: 13,
+                fontSize: MediasfuTypography.sizeBodyCompact,
               ),
             ),
           ),
@@ -537,7 +540,7 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
                   color: widget.options.isDarkMode
                       ? Colors.white70
                       : Colors.black54,
-                  fontSize: 13,
+                  fontSize: MediasfuTypography.sizeBodyCompact,
                 ),
               ),
             ],
@@ -576,7 +579,7 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
                   color: widget.options.isDarkMode
                       ? Colors.white54
                       : Colors.black45,
-                  fontSize: 12,
+                  fontSize: MediasfuTypography.sizeBodySmall,
                 ),
               ),
               const SizedBox(height: MediasfuSpacing.md),
@@ -627,7 +630,7 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
                 style: TextStyle(
                   color:
                       widget.options.isDarkMode ? Colors.white : Colors.black87,
-                  fontSize: 14,
+                  fontSize: MediasfuTypography.sizeBodyMedium,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -638,7 +641,7 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
                   color: widget.options.isDarkMode
                       ? Colors.white54
                       : Colors.black45,
-                  fontSize: 12,
+                  fontSize: MediasfuTypography.sizeBodySmall,
                 ),
               ),
               const SizedBox(height: MediasfuSpacing.sm),
@@ -729,7 +732,7 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
                         'Preview',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 10,
+                          fontSize: MediasfuTypography.sizeMicro,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -766,7 +769,7 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
             style: TextStyle(
               color:
                   widget.options.isDarkMode ? Colors.white54 : Colors.black45,
-              fontSize: 12,
+              fontSize: MediasfuTypography.sizeBodySmall,
             ),
           ),
         ],
@@ -804,7 +807,7 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
     required VoidCallback onPressed,
     bool small = false,
   }) {
-    return GestureDetector(
+    return ModernPressable(
       onTap: onPressed,
       child: Container(
         padding: EdgeInsets.symmetric(
@@ -860,7 +863,7 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
           final isSelected = _selectedTabIndex == index;
 
           return Expanded(
-            child: GestureDetector(
+            child: ModernPressable(
               onTap: () => setState(() => _selectedTabIndex = index),
               child: Container(
                 padding: const EdgeInsets.symmetric(
@@ -886,7 +889,7 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
                             ? Colors.white54
                             : Colors.black45),
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    fontSize: 13,
+                    fontSize: MediasfuTypography.sizeBodyCompact,
                   ),
                 ),
               ),
@@ -898,18 +901,31 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
   }
 
   Widget _buildTabContent() {
-    final tabIndex = _selectedTabIndex;
-    final hasColors = widget.options.showColorPicker;
+    // Cross-fade between tabs. Keyed on the tab so the switcher sees a
+    // genuinely new child; without a key it treats the swap as an update
+    // and nothing fades.
+    return AnimatedSwitcher(
+      duration: MediasfuAnimations.fast,
+      switchInCurve: Curves.easeOut,
+      switchOutCurve: Curves.easeIn,
+      child: KeyedSubtree(
+        key: ValueKey<int>(_selectedTabIndex),
+        child: Builder(builder: (BuildContext context) {
+      final tabIndex = _selectedTabIndex;
+      final hasColors = widget.options.showColorPicker;
 
-    if (tabIndex == 0) {
-      return _buildPresetsTab();
-    } else if (tabIndex == 1) {
-      return _buildBlurTab();
-    } else if (hasColors && tabIndex == 2) {
-      return _buildColorsTab();
-    } else {
-      return _buildCustomTab();
-    }
+      if (tabIndex == 0) {
+        return _buildPresetsTab();
+      } else if (tabIndex == 1) {
+        return _buildBlurTab();
+      } else if (hasColors && tabIndex == 2) {
+        return _buildColorsTab();
+      } else {
+        return _buildCustomTab();
+      }
+        }),
+      ),
+    );
   }
 
   Widget _buildPresetsTab() {
@@ -1093,7 +1109,7 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
                           color: widget.options.isDarkMode
                               ? Colors.white38
                               : Colors.black38,
-                          fontSize: 12,
+                          fontSize: MediasfuTypography.sizeBodySmall,
                         ),
                       ),
                     ],
@@ -1125,7 +1141,7 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
         if (widget.options.allowCustomUpload)
           Padding(
             padding: const EdgeInsets.all(MediasfuSpacing.md),
-            child: GestureDetector(
+            child: ModernPressable(
               onTap: _isPlatformSupported ? _pickImage : null,
               child: Container(
                 width: double.infinity,
@@ -1178,7 +1194,7 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
     required bool isSelected,
     required Widget child,
   }) {
-    return GestureDetector(
+    return ModernPressable(
       onTap: () => _selectBackground(background),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -1262,7 +1278,7 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
                   background.name,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 10,
+                    fontSize: MediasfuTypography.sizeMicro,
                     fontWeight: FontWeight.w500,
                   ),
                   textAlign: TextAlign.center,
@@ -1294,7 +1310,7 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           // Cancel button
-          GestureDetector(
+          ModernPressable(
             onTap: _handleClose,
             child: Container(
               padding: const EdgeInsets.symmetric(
@@ -1320,7 +1336,7 @@ class _ModernBackgroundModalState extends State<ModernBackgroundModal>
           ),
           const SizedBox(width: MediasfuSpacing.sm),
           // Apply button
-          GestureDetector(
+          ModernPressable(
             onTap: _isPlatformSupported && !_isProcessing
                 ? (videoAlreadyOn ? _applyBackground : _saveBackgroundForLater)
                 : null,

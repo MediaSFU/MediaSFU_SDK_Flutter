@@ -70,7 +70,7 @@ abstract class ChangeVidsParameters implements DispStreamsParameters {
   void Function(bool sortAudioLoudness) get updateSortAudioLoudness;
   void Function(List<Stream> mixedAlVideoStreams) get updateMixedAlVideoStreams;
   void Function(List<Stream> nonAlVideoStreamsMuted)
-      get updateNonAlVideoStreamsMuted;
+  get updateNonAlVideoStreamsMuted;
   void Function(List<List<Stream>> paginatedStreams) get updatePaginatedStreams;
   void Function(bool doPaginate) get updateDoPaginate;
   void Function(bool prevDoPaginate) get updatePrevDoPaginate;
@@ -310,15 +310,19 @@ Future<void> changeVids(ChangeVidsOptions options) async {
     List<Participant> refParticipants = List.from(parameters.refParticipants);
     List<Participant> participants = List.from(parameters.participants);
     List<AudioDecibels> audioDecibels = List.from(parameters.audioDecibels);
-    List<Stream> mixedAlVideoStreams =
-        List.from(parameters.mixedAlVideoStreams);
-    List<Stream> nonAlVideoStreamsMuted =
-        List.from(parameters.nonAlVideoStreamsMuted);
+    List<Stream> mixedAlVideoStreams = List.from(
+      parameters.mixedAlVideoStreams,
+    );
+    List<Stream> nonAlVideoStreamsMuted = List.from(
+      parameters.nonAlVideoStreamsMuted,
+    );
     List<Stream> oldAllStreams = List.from(parameters.oldAllStreams);
-    List<List<BreakoutParticipant>> breakoutRooms =
-        List.from(parameters.breakoutRooms);
-    List<List<Stream>> paginatedStreams =
-        List.from(parameters.paginatedStreams);
+    List<List<BreakoutParticipant>> breakoutRooms = List.from(
+      parameters.breakoutRooms,
+    );
+    List<List<Stream>> paginatedStreams = List.from(
+      parameters.paginatedStreams,
+    );
 
     bool shareScreenStarted = parameters.shareScreenStarted;
     bool shared = parameters.shared;
@@ -369,8 +373,9 @@ Future<void> changeVids(ChangeVidsOptions options) async {
 
     for (var stream in tempStreams) {
       try {
-        Participant? participant = refParticipants
-            .firstWhereOrNull((obj) => obj.videoID == stream.producerId);
+        Participant? participant = refParticipants.firstWhereOrNull(
+          (obj) => obj.videoID == stream.producerId,
+        );
 
         if (participant == null &&
             stream.producerId != 'youyou' &&
@@ -383,8 +388,9 @@ Future<void> changeVids(ChangeVidsOptions options) async {
     }
 
     // Remove identified streams
-    alVideoStreams
-        .removeWhere((obj) => elementsToRemove.contains(obj.producerId));
+    alVideoStreams.removeWhere(
+      (obj) => elementsToRemove.contains(obj.producerId),
+    );
 
     // Adjust audio loudness sorting based on event type
     if (eventType == 'broadcast' || eventType == 'chat') {
@@ -421,8 +427,9 @@ Future<void> changeVids(ChangeVidsOptions options) async {
         alVideoStreams = temp;
 
         // Prioritize 'youyou' and 'youyouyou' streams
-        var youyou = allVideoStreams
-            .firstWhereOrNull((obj) => obj.producerId == 'youyou');
+        var youyou = allVideoStreams.firstWhereOrNull(
+          (obj) => obj.producerId == 'youyou',
+        );
 
         if (youyou == null) {
           var youyouyou = allVideoStreams.firstWhereOrNull(
@@ -496,8 +503,9 @@ Future<void> changeVids(ChangeVidsOptions options) async {
             nonAlVideoStreams: nonAlVideoStreams,
             refParticipants: refParticipants,
           );
-          mixedAlVideoStreams =
-              await parameters.mixStreams(options: optionsMix);
+          mixedAlVideoStreams = await parameters.mixStreams(
+            options: optionsMix,
+          );
         }
       }
 
@@ -549,16 +557,19 @@ Future<void> changeVids(ChangeVidsOptions options) async {
 
             if (streame != null) {
               // Remove host's old streams
-              alVideoStreams
-                  .removeWhere((obj) => obj.producerId == host.videoID);
+              alVideoStreams.removeWhere(
+                (obj) => obj.producerId == host.videoID,
+              );
               nonAlVideoStreams.removeWhere((obj) => obj.name == host.name);
-              nonAlVideoStreamsMuted
-                  .removeWhere((obj) => obj.name == host.name);
+              nonAlVideoStreamsMuted.removeWhere(
+                (obj) => obj.name == host.name,
+              );
 
               if (sortAudioLoudness) {
                 mixedAlVideoStreams.removeWhere((obj) => obj.name == host.name);
-                nonAlVideoStreamsMuted
-                    .removeWhere((obj) => obj.name == host.name);
+                nonAlVideoStreamsMuted.removeWhere(
+                  (obj) => obj.name == host.name,
+                );
 
                 if (meetingDisplayType == "video" && meetingVideoOptimized) {
                   alVideoStreams.insert(0, streame);
@@ -578,14 +589,17 @@ Future<void> changeVids(ChangeVidsOptions options) async {
                 );
                 if (stream != null) {
                   if (sortAudioLoudness) {
-                    mixedAlVideoStreams
-                        .removeWhere((obj) => obj.name == host.name);
-                    nonAlVideoStreamsMuted
-                        .removeWhere((obj) => obj.name == host.name);
+                    mixedAlVideoStreams.removeWhere(
+                      (obj) => obj.name == host.name,
+                    );
+                    nonAlVideoStreamsMuted.removeWhere(
+                      (obj) => obj.name == host.name,
+                    );
                     mixedAlVideoStreams.insert(0, stream);
                   } else {
-                    nonAlVideoStreams
-                        .removeWhere((obj) => obj.name == host.name);
+                    nonAlVideoStreams.removeWhere(
+                      (obj) => obj.name == host.name,
+                    );
                     nonAlVideoStreams.insert(0, stream);
                     break;
                   }
@@ -728,8 +742,9 @@ Future<void> changeVids(ChangeVidsOptions options) async {
     bool filterHost = false;
 
     if (breakOutRoomStarted && !breakOutRoomEnded) {
-      List<List<BreakoutParticipant>> tempBreakoutRooms =
-          List.from(breakoutRooms);
+      List<List<BreakoutParticipant>> tempBreakoutRooms = List.from(
+        breakoutRooms,
+      );
       var host = participants.firstWhereOrNull((obj) => obj.islevel == '2');
 
       for (var room in tempBreakoutRooms) {
@@ -741,8 +756,9 @@ Future<void> changeVids(ChangeVidsOptions options) async {
             if (host != null) {
               if (!room.any((obj) => obj.name == host.name)) {
                 room = List.from(room)
-                  ..add(BreakoutParticipant(
-                      name: host.name, breakRoom: roomIndex));
+                  ..add(
+                    BreakoutParticipant(name: host.name, breakRoom: roomIndex),
+                  );
                 filterHost = true;
               }
             }
@@ -756,9 +772,11 @@ Future<void> changeVids(ChangeVidsOptions options) async {
             }
 
             List<Stream> streams = allStreamsPaged.where((stream) {
-              bool hasProducerId = stream.containsKey('producerId') &&
+              bool hasProducerId =
+                  stream.containsKey('producerId') &&
                   stream.producerId.isNotEmpty;
-              bool hasAudioId = stream.containsKey('audioID') &&
+              bool hasAudioId =
+                  stream.containsKey('audioID') &&
                   stream.audioID != null &&
                   stream.audioID!.isNotEmpty;
 
@@ -800,7 +818,8 @@ Future<void> changeVids(ChangeVidsOptions options) async {
       List<Stream> remainingStreams = allStreamsPaged.where((stream) {
         bool hasProducerId =
             stream.containsKey('producerId') && stream.producerId.isNotEmpty;
-        bool hasAudioId = stream.containsKey('audioID') &&
+        bool hasAudioId =
+            stream.containsKey('audioID') &&
             stream.audioID != null &&
             stream.audioID!.isNotEmpty;
 

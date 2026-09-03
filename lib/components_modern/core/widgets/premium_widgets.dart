@@ -7,6 +7,7 @@
 /// - [PulseBorderContainer] - Pulsing animated borders
 /// - [SkeletonLoader] - Shimmer loading placeholders
 /// - [StyledContainer] - Unified container with all effects
+/// - [ModernPressable] - Press-scale / hover-lift interaction primitive
 /// - [PremiumButton] - Premium buttons with multiple variants
 /// - [PremiumIconButton] - Circular icon buttons
 /// - [PremiumTextField] - Premium text inputs
@@ -21,6 +22,7 @@ export 'glow_container.dart';
 export 'modal_footer_button.dart';
 export 'modal_gradient_divider.dart';
 export 'modal_header.dart';
+export 'modern_pressable.dart';
 export 'modern_switch.dart';
 export 'neumorphic_container.dart';
 export 'premium_button.dart';

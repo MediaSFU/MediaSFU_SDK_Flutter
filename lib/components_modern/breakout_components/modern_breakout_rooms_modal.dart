@@ -7,6 +7,9 @@ import '../../types/modal_style_options.dart' show ModalRenderMode;
 import '../../types/types.dart' show BreakoutParticipant, Participant;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
+import '../core/widgets/premium_widgets.dart';
+import '../core/theme/mediasfu_borders.dart';
+import '../core/theme/mediasfu_typography.dart';
 
 /// Modern glassmorphic breakout rooms management modal.
 ///
@@ -346,7 +349,7 @@ class _ModernBreakoutRoomsModalState extends State<ModernBreakoutRoomsModal>
 
     return FadeTransition(
       opacity: _fadeAnimation,
-      child: GestureDetector(
+      child: ModernPressable(
         onTap: _handleClose,
         child: Container(
           color: Colors.black.withOpacity(0.1),
@@ -357,7 +360,7 @@ class _ModernBreakoutRoomsModalState extends State<ModernBreakoutRoomsModal>
               child: child,
             ),
             child: Center(
-              child: GestureDetector(
+              child: ModernPressable(
                 onTap: () {},
                 child: Container(
                   width: modalWidth,
@@ -481,7 +484,7 @@ class _ModernBreakoutRoomsModalState extends State<ModernBreakoutRoomsModal>
                       ? 'Edit Room ${_currentRoomIndex + 1}'
                       : 'Breakout Rooms',
                   style: TextStyle(
-                      fontSize: 18,
+                      fontSize: MediasfuTypography.sizeTitleMedium,
                       fontWeight: FontWeight.bold,
                       color: textColor),
                 ),
@@ -499,7 +502,7 @@ class _ModernBreakoutRoomsModalState extends State<ModernBreakoutRoomsModal>
                       const SizedBox(width: 4),
                       Text('Active',
                           style: TextStyle(
-                              fontSize: 12, color: MediasfuColors.successDark)),
+                              fontSize: MediasfuTypography.sizeBodySmall, color: MediasfuColors.successDark)),
                     ],
                   ),
               ],
@@ -572,7 +575,7 @@ class _ModernBreakoutRoomsModalState extends State<ModernBreakoutRoomsModal>
             decoration: MediasfuColors.tooltipDecoration(darkMode: isDark),
             textStyle: TextStyle(
               color: MediasfuColors.tooltipText(darkMode: isDark),
-              fontSize: 12,
+              fontSize: MediasfuTypography.sizeBodySmall,
             ),
             child: Container(
               padding:
@@ -707,7 +710,7 @@ class _ModernBreakoutRoomsModalState extends State<ModernBreakoutRoomsModal>
   Widget _buildSectionLabel(String text, Color color) {
     return Text(text,
         style:
-            TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: color));
+            TextStyle(fontSize: MediasfuTypography.sizeBodyCompact, fontWeight: FontWeight.w600, color: color));
   }
 
   Widget _buildActionChip(
@@ -729,7 +732,7 @@ class _ModernBreakoutRoomsModalState extends State<ModernBreakoutRoomsModal>
             const SizedBox(width: 4),
             Text(label,
                 style: TextStyle(
-                    fontSize: 13,
+                    fontSize: MediasfuTypography.sizeBodyCompact,
                     color: primaryColor,
                     fontWeight: FontWeight.w500)),
           ],
@@ -751,7 +754,7 @@ class _ModernBreakoutRoomsModalState extends State<ModernBreakoutRoomsModal>
             const SizedBox(height: MediasfuSpacing.xs),
             Text('Enter a number and tap Random or Manual',
                 style: TextStyle(
-                    fontSize: 12, color: subtitleColor.withOpacity(0.7))),
+                    fontSize: MediasfuTypography.sizeBodySmall, color: subtitleColor.withOpacity(0.7))),
           ],
         ),
       ),
@@ -781,7 +784,7 @@ class _ModernBreakoutRoomsModalState extends State<ModernBreakoutRoomsModal>
                   backgroundColor: primaryColor.withOpacity(0.15),
                   child: Text('${index + 1}',
                       style: TextStyle(
-                          fontSize: 12,
+                          fontSize: MediasfuTypography.sizeBodySmall,
                           color: primaryColor,
                           fontWeight: FontWeight.bold)),
                 ),
@@ -792,7 +795,7 @@ class _ModernBreakoutRoomsModalState extends State<ModernBreakoutRoomsModal>
                           fontWeight: FontWeight.w600, color: textColor)),
                 ),
                 Text('${room.length} participant${room.length != 1 ? 's' : ''}',
-                    style: TextStyle(fontSize: 12, color: subtitleColor)),
+                    style: TextStyle(fontSize: MediasfuTypography.sizeBodySmall, color: subtitleColor)),
                 const SizedBox(width: MediasfuSpacing.sm),
                 IconButton(
                   onPressed: () => _handleEditRoom(index),
@@ -821,7 +824,7 @@ class _ModernBreakoutRoomsModalState extends State<ModernBreakoutRoomsModal>
                 children: room
                     .map((p) => Chip(
                           label: Text(p.name,
-                              style: TextStyle(fontSize: 12, color: textColor)),
+                              style: TextStyle(fontSize: MediasfuTypography.sizeBodySmall, color: textColor)),
                           backgroundColor:
                               (isDark ? Colors.white : Colors.black)
                                   .withOpacity(0.05),
@@ -841,7 +844,7 @@ class _ModernBreakoutRoomsModalState extends State<ModernBreakoutRoomsModal>
                   MediasfuSpacing.md, MediasfuSpacing.sm),
               child: Text('Tap edit to assign participants',
                   style: TextStyle(
-                      fontSize: 12,
+                      fontSize: MediasfuTypography.sizeBodySmall,
                       color: subtitleColor,
                       fontStyle: FontStyle.italic)),
             ),
@@ -862,8 +865,7 @@ class _ModernBreakoutRoomsModalState extends State<ModernBreakoutRoomsModal>
       decoration: BoxDecoration(
         color: (isDark ? Colors.white : Colors.black).withOpacity(0.05),
         borderRadius: BorderRadius.circular(8.0),
-        border: Border.all(
-            color: (isDark ? Colors.white : Colors.black).withOpacity(0.1)),
+        border: MediasfuBorders.subtle(darkMode: isDark),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -873,12 +875,12 @@ class _ModernBreakoutRoomsModalState extends State<ModernBreakoutRoomsModal>
             backgroundColor: primaryColor.withOpacity(0.2),
             child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?',
                 style: TextStyle(
-                    fontSize: 10,
+                    fontSize: MediasfuTypography.sizeMicro,
                     color: primaryColor,
                     fontWeight: FontWeight.bold)),
           ),
           const SizedBox(width: MediasfuSpacing.xs),
-          Text(name, style: TextStyle(fontSize: 13, color: textColor)),
+          Text(name, style: TextStyle(fontSize: MediasfuTypography.sizeBodyCompact, color: textColor)),
           const SizedBox(width: MediasfuSpacing.xs),
           if (onAdd != null)
             InkWell(

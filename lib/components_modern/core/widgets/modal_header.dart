@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/mediasfu_colors.dart';
 import '../theme/mediasfu_spacing.dart';
+import '../../core/theme/mediasfu_typography.dart';
 
 /// Reusable modal header with gradient icon, title, and close button.
 ///
@@ -89,7 +90,7 @@ class ModalHeader extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: MediasfuTypography.sizeTitleMedium,
                     fontWeight: FontWeight.bold,
                     letterSpacing: -0.3,
                     color: isDarkMode ? Colors.white : Colors.black87,
@@ -100,7 +101,7 @@ class ModalHeader extends StatelessWidget {
                   Text(
                     subtitle!,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: MediasfuTypography.sizeBodySmall,
                       color: isDarkMode ? Colors.white54 : Colors.black45,
                     ),
                   ),
@@ -121,7 +122,7 @@ class ModalHeader extends StatelessWidget {
             decoration: MediasfuColors.tooltipDecoration(darkMode: isDarkMode),
             textStyle: TextStyle(
               color: MediasfuColors.tooltipText(darkMode: isDarkMode),
-              fontSize: 12,
+              fontSize: MediasfuTypography.sizeBodySmall,
             ),
             child: Material(
               color: Colors.transparent,

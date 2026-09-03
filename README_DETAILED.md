@@ -262,6 +262,17 @@ Use this when:
 - you want MediaSFU transports and state, but not the stock UI
 - you are progressively migrating from stock MediaSFU UI to a custom interface
 
+#### Restore the exact modern room interface
+
+If the engine must remain headless but another part of your widget tree should
+show the complete standard modern interface, pair a headless
+`ModernMediasfuGeneric` with `ModernMediasfuGenericHead`. Pass the latest
+published `MediasfuParameters` to the head. It delegates to the mounted engine's
+own widget builders, so it does not create another room connection or duplicate
+modal and media state. See
+[HEADLESS_GUIDE.md](./HEADLESS_GUIDE.md#restore-the-complete-modern-ui-from-a-headless-engine)
+for the full pattern.
+
 ### 3. Custom UI on top of the MediaSFU runtime
 
 If you still want MediaSFU to render most of the room but need to swap specific surfaces, use:
@@ -628,7 +639,10 @@ Use `useLocalUIMode: true` with optional `useSeed: true`.
 
 ### Headless mode renders nothing
 
-That is expected when `returnUI: false`. Provide your own widgets and capture `MediasfuParameters` through `updateSourceParameters`.
+That is expected when `returnUI: false`. Provide your own widgets and capture
+`MediasfuParameters` through `updateSourceParameters`, or render
+`ModernMediasfuGenericHead` with the latest parameters to restore the exact
+standard modern interface from the same engine.
 
 ### Web media does not behave correctly in local testing
 

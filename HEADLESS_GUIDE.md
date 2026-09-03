@@ -89,6 +89,9 @@ Stated plainly so nothing is assumed.
 
 - `MediasfuHeadlessController` accepts every parameter publication and exposes
   readiness, local/remote audio and video, screen share, and participant state.
+- `ModernMediasfuGenericHead` restores the complete standard modern interface
+  from that same mounted room engine. It does not open a second socket or keep
+  a second copy of room, media, sidebar, or modal state.
 - Media resolution: `getRemoteVideoStreams`, `getRemoteAudioStreams`,
   `getLocalVideoStream`, `getLocalAudioStream`, `getScreenShareStream`, and
   `getAudioGridComponents`.
@@ -121,6 +124,77 @@ These are absent by necessity, not oversight:
 | `produceCanvas`, `produceElement` | DOM-only by definition. |
 | `attachPlayback` (HLS) | needs a Flutter player (`video_player`), not `hls.js`. The *contract* ports; the implementation does not. |
 | `publishWhip` / WHEP playback | **portable** — `flutter_webrtc` has `RTCPeerConnection` and HTTP. Not yet written; no blocker. |
+
+## Reuse SDK dialogs in your own layout
+
+Keep `ModernMediasfuGeneric` mounted with `returnUI: false` and accept its
+parameter publications. Your widgets can host SDK dialogs without rendering
+the entire built-in room interface.
+
+Use the room's visibility value and matching updater instead of a second
+local Boolean. For recording, bind `isRecordingModalVisible` in the dialog
+options and route `onClose` to `updateIsRecordingModalVisible(false)`; opening
+uses the same updater with `true`. Pass the current typed room parameters
+and required confirmation/start callbacks.
+
+Retain the background widget's lifecycle while the room is mounted. Apply
+supported style and layout options without replacing its processing or room
+callbacks. Use Flutter's component options; React DOM props and canvas
+helpers do not apply to native Flutter.
+
+Headless mode does not display the built-in sidebar. Supply your own visible
+panel or dialog host, while allowing the room to control permissions, state
+changes, and teardown. A settings dialog being visible does not prove that a
+background has been published or that recording has started.
+
+For self-view, render the controller's resolved local-video value rather than a
+raw camera track. The resolver follows Flutter's native virtual-background
+state, so the preview and the published stream do not disagree.
+
+For breakout rooms, reuse `ModernBreakoutRoomsModal` with the latest typed room
+parameters when you want the built-in planner. Save assignments before Start
+and render validation feedback in your own surface. A breakout transition is a
+room-membership operation; filtering participant widgets alone cannot pause and
+resume the correct consumers.
+
+### Restore the complete modern UI from a headless engine
+
+Use `ModernMediasfuGenericHead` when you want the standard modern room tree but
+need the engine and visible surface to remain separately placeable in your
+Flutter layout. Keep one `ModernMediasfuGeneric` mounted with `returnUI: false`,
+accept every publication, and pass the latest bag to the head:
+
+```dart
+final room = MediasfuHeadlessController();
+
+Stack(
+  children: [
+    ModernMediasfuGeneric(
+      options: ModernMediasfuGenericOptions(
+        returnUI: false,
+        noUIPreJoinOptionsJoin: joinOptions,
+        updateSourceParameters: room.updateSourceParameters,
+      ),
+    ),
+    AnimatedBuilder(
+      animation: room,
+      builder: (context, _) {
+        final parameters = room.parameters;
+        if (parameters == null) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return ModernMediasfuGenericHead(parameters: parameters);
+      },
+    ),
+  ],
+)
+```
+
+The head delegates rendering back to the engine that published `parameters`.
+That is why it can use the exact standard tree instead of approximating it, and
+why an application-created or stale parameter bag is intentionally rejected.
+Dispose the controller with the surrounding screen and let the generic engine
+own room teardown as usual.
 
 ## 5. Verification
 

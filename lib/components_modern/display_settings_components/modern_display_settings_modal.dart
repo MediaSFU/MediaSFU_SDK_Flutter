@@ -12,6 +12,8 @@ import '../core/widgets/modal_header.dart';
 import '../core/widgets/modal_footer_button.dart';
 import '../core/widgets/modern_switch.dart';
 import '../core/widgets/section_card.dart';
+import '../core/widgets/modern_pressable.dart';
+import '../core/theme/mediasfu_typography.dart';
 import '../core/widgets/animation_widgets.dart' show StaggeredAnimationList;
 
 typedef ModernDisplaySettingsModalType = Widget Function(
@@ -128,7 +130,7 @@ class _ModernDisplaySettingsModalState extends State<ModernDisplaySettingsModal>
           children: [
             // Backdrop
             Positioned.fill(
-              child: GestureDetector(
+              child: ModernPressable(
                 onTap: _handleClose,
                 child: FadeTransition(
                   opacity: _fadeAnimation,
@@ -348,7 +350,7 @@ class _ModernDisplaySettingsModalState extends State<ModernDisplaySettingsModal>
             textStyle: TextStyle(
               color: MediasfuColors.tooltipText(
                   darkMode: widget.options.isDarkMode),
-              fontSize: 12,
+              fontSize: MediasfuTypography.sizeBodySmall,
             ),
             child: Container(
               padding:
@@ -429,7 +431,7 @@ class _ModernDisplaySettingsModalState extends State<ModernDisplaySettingsModal>
                 Text(
                   description,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: MediasfuTypography.sizeBodySmall,
                     color: widget.options.isDarkMode
                         ? Colors.white54
                         : Colors.black45,

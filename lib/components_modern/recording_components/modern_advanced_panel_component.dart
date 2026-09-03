@@ -7,6 +7,9 @@ import '../../types/types.dart' show EventType;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
 import '../core/widgets/modern_switch.dart';
+import '../core/widgets/modern_pressable.dart';
+import '../core/theme/mediasfu_borders.dart';
+import '../core/theme/mediasfu_typography.dart';
 
 /// Configuration options for ModernAdvancedPanelComponent.
 /// Uses the same [AdvancedPanelComponentParameters] as the original component.
@@ -401,9 +404,7 @@ class _ModernAdvancedPanelComponentState
       decoration: BoxDecoration(
         color: (isDark ? Colors.white : Colors.black).withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
-        ),
+        border: MediasfuBorders.subtle(darkMode: isDark),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -438,7 +439,7 @@ class _ModernAdvancedPanelComponentState
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: MediasfuTypography.sizeBodyMedium,
                   fontWeight: FontWeight.w600,
                   color: isDark ? Colors.white : Colors.black87,
                 ),
@@ -499,7 +500,7 @@ class _ModernAdvancedPanelComponentState
                     child: Text(
                       item['label'],
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: MediasfuTypography.sizeBodyMedium,
                         fontWeight:
                             isSelected ? FontWeight.w600 : FontWeight.normal,
                         color: isSelected
@@ -529,7 +530,7 @@ class _ModernAdvancedPanelComponentState
         color.value.toRadixString(16).padLeft(8, '0').substring(2);
     String colorString = '#$colorHex';
 
-    return GestureDetector(
+    return ModernPressable(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(
@@ -539,9 +540,7 @@ class _ModernAdvancedPanelComponentState
         decoration: BoxDecoration(
           color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
-          ),
+          border: MediasfuBorders.subtle(darkMode: isDark),
         ),
         child: Row(
           children: [
@@ -573,7 +572,7 @@ class _ModernAdvancedPanelComponentState
                     Text(
                       label,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: MediasfuTypography.sizeBodySmall,
                         color: (isDark ? Colors.white : Colors.black)
                             .withOpacity(0.6),
                       ),
@@ -581,7 +580,7 @@ class _ModernAdvancedPanelComponentState
                   Text(
                     colorString.toUpperCase(),
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: MediasfuTypography.sizeBodyMedium,
                       fontWeight: FontWeight.w600,
                       color: isDark ? Colors.white : Colors.black87,
                       fontFamily: 'monospace',
@@ -617,7 +616,7 @@ class _ModernAdvancedPanelComponentState
         children: List.generate(options.length, (index) {
           final isSelected = options[index] == value;
           return Expanded(
-            child: GestureDetector(
+            child: ModernPressable(
               onTap: () => onChanged(options[index]),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
@@ -638,7 +637,7 @@ class _ModernAdvancedPanelComponentState
                   labels[index],
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: MediasfuTypography.sizeBodyCompact,
                     fontWeight:
                         isSelected ? FontWeight.w600 : FontWeight.normal,
                     color: isSelected
@@ -666,7 +665,7 @@ class _ModernAdvancedPanelComponentState
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: MediasfuTypography.sizeBodyCompact,
               color: (isDark ? Colors.white : Colors.black).withOpacity(0.7),
             ),
           ),
@@ -686,23 +685,21 @@ class _ModernAdvancedPanelComponentState
       decoration: BoxDecoration(
         color: (isDark ? Colors.white : Colors.black).withOpacity(0.08),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
-        ),
+        border: MediasfuBorders.subtle(darkMode: isDark),
       ),
       child: TextField(
         controller: customTextController,
         onChanged: onChangeTextHandler,
         style: TextStyle(
           color: isDark ? Colors.white : Colors.black87,
-          fontSize: 14,
+          fontSize: MediasfuTypography.sizeBodyMedium,
         ),
         maxLength: 40,
         decoration: InputDecoration(
           hintText: 'Enter custom text (max 40 chars)',
           hintStyle: TextStyle(
             color: (isDark ? Colors.white : Colors.black).withOpacity(0.5),
-            fontSize: 14,
+            fontSize: MediasfuTypography.sizeBodyMedium,
           ),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.all(MediasfuSpacing.md),

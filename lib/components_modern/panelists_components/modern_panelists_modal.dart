@@ -12,6 +12,7 @@ import '../core/theme/mediasfu_spacing.dart';
 import '../core/theme/mediasfu_typography.dart';
 import '../core/widgets/glassmorphic_container.dart';
 import '../core/widgets/premium_button.dart';
+import '../core/widgets/modern_pressable.dart';
 
 // ============================================================================
 // OPTIONS CLASS
@@ -346,7 +347,7 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
         children: [
           // Backdrop
           Positioned.fill(
-            child: GestureDetector(
+            child: ModernPressable(
               onTap: _handleClose,
               child: FadeTransition(
                 opacity: _fadeAnimation,
@@ -469,7 +470,7 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
                   child: Text(
                     '${panelists.length}/$limit',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: MediasfuTypography.sizeBodySmall,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
                     ),
@@ -478,7 +479,7 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
               ],
             ),
           ),
-          GestureDetector(
+          ModernPressable(
             onTap: _handleClose,
             child: Container(
               padding: EdgeInsets.all(MediasfuSpacing.xs),
@@ -524,7 +525,7 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
                 ],
               ),
               if (_isHost && panelists.isNotEmpty)
-                GestureDetector(
+                ModernPressable(
                   onTap: _handleClearAll,
                   child: Row(
                     children: [
@@ -535,7 +536,7 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
                         'Clear All',
                         style: TextStyle(
                           color: MediasfuColors.danger,
-                          fontSize: 12,
+                          fontSize: MediasfuTypography.sizeBodySmall,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -555,7 +556,7 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
                     color: isDarkMode
                         ? MediasfuColors.textMutedDark
                         : MediasfuColors.textMuted,
-                    fontSize: 13,
+                    fontSize: MediasfuTypography.sizeBodyCompact,
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -593,7 +594,7 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
             child: Text(
               panelist.name.isNotEmpty ? panelist.name[0].toUpperCase() : '?',
               style: TextStyle(
-                fontSize: 10,
+                fontSize: MediasfuTypography.sizeMicro,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
@@ -604,13 +605,13 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
             panelist.name,
             style: TextStyle(
               color: Colors.white,
-              fontSize: 13,
+              fontSize: MediasfuTypography.sizeBodyCompact,
               fontWeight: FontWeight.w500,
             ),
           ),
           if (_isHost) ...[
             SizedBox(width: MediasfuSpacing.xs),
-            GestureDetector(
+            ModernPressable(
               onTap: () => _handleRemovePanelist(panelist),
               child: Icon(
                 Icons.close,
@@ -667,7 +668,7 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
                 'Add panelists to enable focus mode',
                 style: TextStyle(
                   color: MediasfuColors.warning,
-                  fontSize: 12,
+                  fontSize: MediasfuTypography.sizeBodySmall,
                 ),
               ),
             ),
@@ -717,7 +718,7 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
                       'Focus mode active - Only panelists visible',
                       style: TextStyle(
                         color: MediasfuColors.success,
-                        fontSize: 12,
+                        fontSize: MediasfuTypography.sizeBodySmall,
                       ),
                     ),
                   ),
@@ -799,7 +800,7 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
                 color: isDarkMode
                     ? MediasfuColors.textPrimaryDark
                     : MediasfuColors.textPrimary,
-                fontSize: 14,
+                fontSize: MediasfuTypography.sizeBodyMedium,
               ),
               decoration: InputDecoration(
                 hintText: 'Search participants...',
@@ -845,7 +846,7 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
                     'Maximum panelists reached',
                     style: TextStyle(
                       color: MediasfuColors.warningDark,
-                      fontSize: 12,
+                      fontSize: MediasfuTypography.sizeBodySmall,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -868,7 +869,7 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
                           color: isDarkMode
                               ? MediasfuColors.textMutedDark
                               : MediasfuColors.textMuted,
-                          fontSize: 13,
+                          fontSize: MediasfuTypography.sizeBodyCompact,
                           fontStyle: FontStyle.italic,
                         ),
                       ),
@@ -915,7 +916,7 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
                   ? participant.name[0].toUpperCase()
                   : '?',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: MediasfuTypography.sizeBodySmall,
                 fontWeight: FontWeight.w600,
                 color: isDarkMode
                     ? MediasfuColors.textPrimaryDark
@@ -935,7 +936,7 @@ class _ModernPanelistsModalState extends State<ModernPanelistsModal>
                 Text(
                   _getLevelLabel(participant.islevel ?? "0"),
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: MediasfuTypography.sizeCaption,
                     color: isDarkMode
                         ? MediasfuColors.textMutedDark
                         : MediasfuColors.textMuted,

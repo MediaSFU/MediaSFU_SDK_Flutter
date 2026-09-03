@@ -1,3 +1,10 @@
+### 2.3.1
+* **Headless rendering and release refinements**:
+  - Refined embedded/headless room sizing and media-rendering contracts for custom UIs.
+  - Improved virtual-background and local-media selection guidance for camera-on and camera-off flows.
+  - Hardened room/session teardown and late callback handling after leave or reconnect.
+  - Clarified custom-component, backend-proxy, and platform setup documentation for production apps.
+
 ### 2.3.0
 * **Headless and embedded-room release**:
   - Added public headless helpers for room readiness, participant/media state, production controls, playback, moderation, and session actions.

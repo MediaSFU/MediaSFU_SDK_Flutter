@@ -9,6 +9,8 @@ import '../../types/types.dart' show CoHostResponsibility;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
 import '../core/widgets/modern_switch.dart';
+import '../core/widgets/modern_pressable.dart';
+import '../core/theme/mediasfu_typography.dart';
 
 /// Modern glassmorphic co-host management modal.
 ///
@@ -231,7 +233,7 @@ class _ModernCoHostModalState extends State<ModernCoHostModal>
 
     return FadeTransition(
       opacity: _fadeAnimation,
-      child: GestureDetector(
+      child: ModernPressable(
         onTap: _handleClose,
         child: Container(
           color: Colors.black.withOpacity(0.1),
@@ -244,7 +246,7 @@ class _ModernCoHostModalState extends State<ModernCoHostModal>
               );
             },
             child: Center(
-              child: GestureDetector(
+              child: ModernPressable(
                 onTap: () {},
                 child: Container(
                   width: modalWidth,
@@ -402,7 +404,7 @@ class _ModernCoHostModalState extends State<ModernCoHostModal>
             child: Text(
               'Manage Co-Host',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: MediasfuTypography.sizeTitleMedium,
                 fontWeight: FontWeight.bold,
                 color: textColor,
               ),
@@ -436,7 +438,7 @@ class _ModernCoHostModalState extends State<ModernCoHostModal>
           Text(
             'Select Co-Host',
             style: TextStyle(
-              fontSize: 13,
+              fontSize: MediasfuTypography.sizeBodyCompact,
               fontWeight: FontWeight.w600,
               color: subtitleColor,
             ),
@@ -447,7 +449,7 @@ class _ModernCoHostModalState extends State<ModernCoHostModal>
             decoration: MediasfuColors.tooltipDecoration(darkMode: isDark),
             textStyle: TextStyle(
               color: MediasfuColors.tooltipText(darkMode: isDark),
-              fontSize: 12,
+              fontSize: MediasfuTypography.sizeBodySmall,
             ),
             child: Container(
               padding:
@@ -497,7 +499,7 @@ class _ModernCoHostModalState extends State<ModernCoHostModal>
                                     ? p.name[0].toUpperCase()
                                     : '?',
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: MediasfuTypography.sizeBodySmall,
                                   color: primaryColor,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -537,7 +539,7 @@ class _ModernCoHostModalState extends State<ModernCoHostModal>
                 child: Text(
                   'Responsibility',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: MediasfuTypography.sizeBodySmall,
                     fontWeight: FontWeight.w600,
                     color: subtitleColor,
                   ),
@@ -549,7 +551,7 @@ class _ModernCoHostModalState extends State<ModernCoHostModal>
                   child: Text(
                     'Allow',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: MediasfuTypography.sizeBodySmall,
                       fontWeight: FontWeight.w600,
                       color: subtitleColor,
                     ),
@@ -562,7 +564,7 @@ class _ModernCoHostModalState extends State<ModernCoHostModal>
                   child: Text(
                     'Dedicated',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: MediasfuTypography.sizeBodySmall,
                       fontWeight: FontWeight.w600,
                       color: subtitleColor,
                     ),
@@ -640,7 +642,7 @@ class _ModernCoHostModalState extends State<ModernCoHostModal>
                   child: Text(
                     _formatResponsibilityLabel(responsibility.name),
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: MediasfuTypography.sizeBodyMedium,
                       color: textColor,
                       fontWeight:
                           isManageEnabled ? FontWeight.w500 : FontWeight.normal,

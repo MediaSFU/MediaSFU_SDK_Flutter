@@ -6,6 +6,8 @@ import '../../types/types.dart' show EventType;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
 import '../core/widgets/modern_switch.dart';
+import '../core/theme/mediasfu_borders.dart';
+import '../core/theme/mediasfu_typography.dart';
 
 /// Configuration options for ModernStandardPanelComponent.
 /// Uses the same [StandardPanelComponentParameters] as the original component.
@@ -171,9 +173,7 @@ class ModernStandardPanelComponent extends StatelessWidget {
       decoration: BoxDecoration(
         color: (isDark ? Colors.white : Colors.black).withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: (isDark ? Colors.white : Colors.black).withOpacity(0.1),
-        ),
+        border: MediasfuBorders.subtle(darkMode: isDark),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,7 +208,7 @@ class ModernStandardPanelComponent extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: MediasfuTypography.sizeBodyMedium,
                   fontWeight: FontWeight.w600,
                   color: isDark ? Colors.white : Colors.black87,
                 ),
@@ -268,7 +268,7 @@ class ModernStandardPanelComponent extends StatelessWidget {
                   Text(
                     item['label'],
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: MediasfuTypography.sizeBodyMedium,
                       fontWeight:
                           isSelected ? FontWeight.w600 : FontWeight.normal,
                       color: isSelected
@@ -297,7 +297,7 @@ class ModernStandardPanelComponent extends StatelessWidget {
           child: Text(
             enableLabel,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: MediasfuTypography.sizeBodyCompact,
               color: (isDark ? Colors.white : Colors.black).withOpacity(0.7),
             ),
           ),

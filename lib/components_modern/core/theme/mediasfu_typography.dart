@@ -83,6 +83,44 @@ class MediasfuTypography {
     );
   }
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // TYPE RAMP
+  // ═══════════════════════════════════════════════════════════════════════
+  //
+  // Derived from what the modern components actually used, which was twelve
+  // distinct sizes with no scale behind them — 12 appeared 77 times, 13 thirty
+  // five times, 11 seventeen, 10 thirteen, 9 six, 15 seven. Consolidating to
+  // eight steps moves only 9 -> 10, 12.5 -> 12 and 15 -> 16, so nothing shifts
+  // by more than a pixel, but sizing becomes a decision rather than an
+  // accident. A value that is not on this ramp should now look wrong.
+
+  /// Badges, counters, timestamps. 10
+  static const double sizeMicro = 10;
+
+  /// Captions and helper text under a control. 11
+  static const double sizeCaption = 11;
+
+  /// The workhorse body size. 12
+  static const double sizeBodySmall = 12;
+
+  /// Body text that needs a little more presence. 13
+  static const double sizeBodyCompact = 13;
+
+  /// Default body and list rows. 14
+  static const double sizeBodyMedium = 14;
+
+  /// Section headings inside a panel. 16
+  static const double sizeTitleSmall = 16;
+
+  /// Modal titles. 18
+  static const double sizeTitleMedium = 18;
+
+  /// Screen and sheet titles. 22
+  static const double sizeTitleLarge = 22;
+
+  /// Countdowns and single big numbers. 32
+  static const double sizeDisplay = 32;
+
   // Convenience helpers for legacy call-sites while we migrate sizing.
   static TextStyle getTitleLarge(bool darkMode) =>
       textTheme(darkMode: darkMode).titleLarge ?? titleLarge;

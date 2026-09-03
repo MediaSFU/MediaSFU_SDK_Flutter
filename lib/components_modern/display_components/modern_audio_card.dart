@@ -11,6 +11,8 @@ import '../../consumers/control_media.dart' show ControlMediaOptions;
 import '../../types/types.dart' show Participant, AudioDecibels, LiveSubtitle;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
+import '../core/widgets/premium_widgets.dart';
+import '../core/theme/mediasfu_typography.dart';
 
 typedef ModernAudioCardType = Widget Function(
     {required AudioCardOptions options});
@@ -335,7 +337,7 @@ class _ModernAudioCardState extends State<ModernAudioCard>
                       initials: widget.options.name.isNotEmpty
                           ? widget.options.name
                           : '?',
-                      fontSize: 22,
+                      fontSize: MediasfuTypography.sizeTitleLarge,
                       imageSource: widget.options.imageSource,
                       roundedImage: true,
                       imageStyle: widget.options.imageStyle,
@@ -364,32 +366,43 @@ class _ModernAudioCardState extends State<ModernAudioCard>
             alignment: Alignment.center,
             children: List.generate(9, (index) {
               final angle = (index * 40) * (pi / 180);
-              return AnimatedBuilder(
-                animation: waveformAnimations[index],
-                builder: (context, child) {
-                  final height = 8 + Random().nextDouble() * 20;
-                  return Transform.rotate(
-                    angle: angle,
-                    child: Transform.translate(
-                      offset: const Offset(0, -55),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 100),
-                        width: 4,
-                        height: height,
-                        decoration: BoxDecoration(
-                          color: widget.options.barColor,
-                          borderRadius: BorderRadius.circular(2),
-                          boxShadow: [
-                            BoxShadow(
-                              color: widget.options.barColor.withOpacity(0.5),
-                              blurRadius: 4,
-                            ),
-                          ],
-                        ),
+              // Placement is static, so the rotate and translate sit outside
+              // the animation and only the bar's vertical scale is driven per
+              // frame. Previously the whole chain rebuilt at 60fps with a
+              // fresh `Random()` height and a restarted AnimatedContainer,
+              // re-creating nine blurred shadows every frame.
+              return Transform.rotate(
+                angle: angle,
+                child: Transform.translate(
+                  offset: const Offset(0, -55),
+                  child: AnimatedBuilder(
+                    animation: waveformAnimations[index],
+                    child: Container(
+                      width: 4,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: widget.options.barColor,
+                        borderRadius: BorderRadius.circular(2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: widget.options.barColor.withOpacity(0.5),
+                            blurRadius: 4,
+                          ),
+                        ],
                       ),
                     ),
-                  );
-                },
+                    builder: (context, child) {
+                      final double t = Curves.easeInOut
+                          .transform(waveformAnimations[index].value);
+                      return Transform(
+                        alignment: Alignment.center,
+                        transform:
+                            Matrix4.diagonal3Values(1, 0.3 + 0.7 * t, 1),
+                        child: child,
+                      );
+                    },
+                  ),
+                ),
               );
             }),
           ),
@@ -452,7 +465,7 @@ class _ModernAudioCardState extends State<ModernAudioCard>
               style: TextStyle(
                 color:
                     isDark ? widget.options.textColor : const Color(0xFF1F2937),
-                fontSize: 12.5,
+                fontSize: MediasfuTypography.sizeBodySmall,
                 fontWeight: FontWeight.w600,
                 shadows: isDark
                     ? [
@@ -545,9 +558,9 @@ class _ModernAudioCardState extends State<ModernAudioCard>
       decoration: MediasfuColors.tooltipDecoration(darkMode: isDark),
       textStyle: TextStyle(
         color: MediasfuColors.tooltipText(darkMode: isDark),
-        fontSize: 12,
+        fontSize: MediasfuTypography.sizeBodySmall,
       ),
-      child: GestureDetector(
+      child: ModernPressable(
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
@@ -613,7 +626,7 @@ class _ModernAudioCardState extends State<ModernAudioCard>
                     color: isDark
                         ? Colors.white.withOpacity(0.6)
                         : Colors.black.withOpacity(0.55),
-                    fontSize: 10,
+                    fontSize: MediasfuTypography.sizeMicro,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -661,7 +674,7 @@ class _ModernAudioCardState extends State<ModernAudioCard>
                     subtitle.text,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 13,
+                      fontSize: MediasfuTypography.sizeBodyCompact,
                       fontWeight: FontWeight.w500,
                       shadows: [
                         Shadow(

@@ -5,6 +5,8 @@ import '../../components/exit_components/confirm_exit_modal.dart'
 import '../../methods/exit_methods/confirm_exit.dart' show ConfirmExitOptions;
 import '../core/theme/mediasfu_colors.dart';
 import '../core/theme/mediasfu_spacing.dart';
+import '../core/widgets/premium_widgets.dart';
+import '../core/theme/mediasfu_typography.dart';
 
 /// Modern glassmorphic confirm exit modal with smooth animations.
 ///
@@ -128,12 +130,12 @@ class _ModernConfirmExitModalState extends State<ModernConfirmExitModal>
 
     return FadeTransition(
       opacity: _fadeAnimation,
-      child: GestureDetector(
+      child: ModernPressable(
         onTap: _handleCancel,
         child: Container(
           color: Colors.black.withOpacity(0.15),
           child: Center(
-            child: GestureDetector(
+            child: ModernPressable(
               onTap: () {}, // Prevent dismissal when tapping modal
               child: ScaleTransition(
                 scale: _scaleAnimation,
@@ -209,7 +211,7 @@ class _ModernConfirmExitModalState extends State<ModernConfirmExitModal>
                                   Text(
                                     isHost ? 'Leave or end meeting' : 'Leave Meeting',
                                     style: TextStyle(
-                                      fontSize: 20,
+                                      fontSize: MediasfuTypography.sizeTitleMedium,
                                       fontWeight: FontWeight.bold,
                                       color: textColor,
                                     ),
@@ -227,7 +229,7 @@ class _ModernConfirmExitModalState extends State<ModernConfirmExitModal>
                                         ? 'Leave room keeps the meeting active for everyone else and lets you rejoin. End for everyone closes it for all participants.'
                                         : 'Are you sure you want to leave this meeting?',
                                     style: TextStyle(
-                                      fontSize: 15,
+                                      fontSize: MediasfuTypography.sizeTitleSmall,
                                       color: subtitleColor,
                                       height: 1.5,
                                     ),
@@ -259,7 +261,7 @@ class _ModernConfirmExitModalState extends State<ModernConfirmExitModal>
                                             child: Text(
                                               'This action cannot be undone',
                                               style: TextStyle(
-                                                fontSize: 13,
+                                                fontSize: MediasfuTypography.sizeBodyCompact,
                                                 color: dangerColor,
                                                 fontWeight: FontWeight.w500,
                                               ),
@@ -270,47 +272,65 @@ class _ModernConfirmExitModalState extends State<ModernConfirmExitModal>
                                     ),
                                   ],
                                   const SizedBox(height: MediasfuSpacing.lg),
-                                  // Action buttons
-                                  Row(
+                                  // Keep the reversible host actions together;
+                                  // the destructive action gets its own row.
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
                                     children: [
-                                      Expanded(
-                                        child: _buildButton(
-                                          onPressed: _handleCancel,
-                                          label: 'Cancel',
-                                          backgroundColor: isDark
-                                              ? Colors.white.withOpacity(0.1)
-                                              : Colors.black.withOpacity(0.05),
-                                          textColor: textColor,
-                                        ),
-                                      ),
-                                      const SizedBox(width: MediasfuSpacing.md),
-                                      if (isHost) ...[
-                                        Expanded(
-                                          child: _buildButton(
-                                            onPressed: _isExiting
-                                                ? null
-                                                : () => _handleExit(endRoomOnHostExit: false),
-                                            label: 'Leave room',
-                                            backgroundColor: const Color(0xFF475569),
-                                            textColor: Colors.white,
-                                            isLoading: _isExiting,
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: _buildButton(
+                                              onPressed: _handleCancel,
+                                              label: 'Cancel',
+                                              backgroundColor: isDark
+                                                  ? Colors.white
+                                                      .withOpacity(0.1)
+                                                  : Colors.black
+                                                      .withOpacity(0.05),
+                                              textColor: textColor,
+                                            ),
                                           ),
-                                        ),
-                                        const SizedBox(width: MediasfuSpacing.md),
-                                      ],
-                                      Expanded(
-                                        child: _buildButton(
-                                          onPressed:
-                                              _isExiting
+                                          const SizedBox(
+                                            width: MediasfuSpacing.md,
+                                          ),
+                                          Expanded(
+                                            child: _buildButton(
+                                              onPressed: _isExiting
                                                   ? null
-                                                  : () => _handleExit(endRoomOnHostExit: true),
-                                          label:
-                                              isHost ? 'End for everyone' : 'Leave',
+                                                  : () => _handleExit(
+                                                        endRoomOnHostExit:
+                                                            !isHost,
+                                                      ),
+                                              label: isHost
+                                                  ? 'Leave room'
+                                                  : 'Leave',
+                                              backgroundColor: isHost
+                                                  ? const Color(0xFF475569)
+                                                  : dangerColor,
+                                              textColor: Colors.white,
+                                              isLoading: _isExiting,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      if (isHost) ...[
+                                        const SizedBox(
+                                          height: MediasfuSpacing.md,
+                                        ),
+                                        _buildButton(
+                                          onPressed: _isExiting
+                                              ? null
+                                              : () => _handleExit(
+                                                    endRoomOnHostExit: true,
+                                                  ),
+                                          label: 'End for everyone',
                                           backgroundColor: dangerColor,
                                           textColor: Colors.white,
                                           isLoading: _isExiting,
                                         ),
-                                      ),
+                                      ],
                                     ],
                                   ),
                                 ],
@@ -368,7 +388,7 @@ class _ModernConfirmExitModalState extends State<ModernConfirmExitModal>
                     label,
                     style: TextStyle(
                       color: textColor,
-                      fontSize: 15,
+                      fontSize: MediasfuTypography.sizeTitleSmall,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

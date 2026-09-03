@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../components/display_components/control_buttons_component_touch.dart';
+import '../core/widgets/premium_widgets.dart';
+import '../core/theme/mediasfu_typography.dart';
 
 /// Modern version of ControlButtonsComponentTouch with improved alignment and styling.
 class ModernControlButtonsComponentTouch extends StatelessWidget {
@@ -446,7 +448,7 @@ class ModernControlButtonsComponentTouch extends StatelessWidget {
       label: tooltipMessage,
       button: true,
       enabled: !button.disabled,
-      child: GestureDetector(
+      child: ModernPressable(
         onTap: button.disabled ? null : button.onPress,
         child: buttonContainer,
       ),
@@ -462,7 +464,7 @@ class ModernControlButtonsComponentTouch extends StatelessWidget {
         ),
         textStyle: TextStyle(
           color: isDarkMode ? Colors.black : Colors.white,
-          fontSize: 12,
+          fontSize: MediasfuTypography.sizeBodySmall,
           fontWeight: FontWeight.w600,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

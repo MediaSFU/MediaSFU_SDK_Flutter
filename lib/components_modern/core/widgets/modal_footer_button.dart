@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/mediasfu_colors.dart';
 import '../theme/mediasfu_spacing.dart';
+import '../../core/theme/mediasfu_typography.dart';
 
 /// A full-width gradient action button for modern modal footers.
 ///
@@ -101,7 +102,7 @@ class ModalFooterButton extends StatelessWidget {
                     style: TextStyle(
                       color: Colors.white.withOpacity(isEnabled ? 1.0 : 0.6),
                       fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                      fontSize: MediasfuTypography.sizeTitleSmall,
                     ),
                   ),
                 ),

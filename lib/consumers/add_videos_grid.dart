@@ -702,19 +702,30 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
         if (i == options.altGridStreams.length - 1) {
           otherGridStreams[1] = List<Widget>.from(newComponents[1]);
 
-          final optionsUpdate = UpdateMiniCardsGridOptions(
-              rows: options.numRows,
-              cols: options.numCols,
-              defal: false,
-              actualRows: options.actualRows,
-              parameters: parameters);
-
+          // The alt grid holds the remainder of the last row, so it is one row
+          // of `lastRowCols` cells — not numRows x numCols. Sizing it with the
+          // main grid's dimensions gave it far more cells than it has
+          // components, which is what painted the empty placeholders.
+          // `options.lastRowCols` was already being passed in and ignored.
           await updateMiniCardsGrid(
-            optionsUpdate,
+            UpdateMiniCardsGridOptions(
+                rows: 1,
+                cols: options.lastRowCols,
+                defal: false,
+                actualRows: options.actualRows,
+                parameters: parameters),
           );
           updateOtherGridStreams(otherGridStreams);
+          // Restore the main grid's own sizing; the call above wrote the alt
+          // grid's, and without this the main grid keeps whatever the alt pass
+          // left behind.
           await updateMiniCardsGrid(
-            optionsUpdate,
+            UpdateMiniCardsGridOptions(
+                rows: options.numRows,
+                cols: options.numCols,
+                defal: true,
+                actualRows: options.actualRows,
+                parameters: parameters),
           );
         }
       }
