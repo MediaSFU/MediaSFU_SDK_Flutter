@@ -70,6 +70,55 @@ class ConnectIpsOptions {
 typedef ConnectIpsType = Future<List<dynamic>> Function(
     ConnectIpsOptions options);
 
+// Keep concurrent consume setup serialized per room socket collection. The
+// reservation is released after every attempt so failed connections remain
+// retryable without allowing a second socket to race the first one.
+final Expando<Map<String, Future<bool>>> _pendingConsumeConnections =
+    Expando<Map<String, Future<bool>>>('pendingConsumeConnections');
+
+String _normalizeConsumeEndpoint(String ip) =>
+    ip.trim().toLowerCase().replaceFirst(RegExp(r'\.$'), '');
+
+bool _hasConsumeEndpoint(
+    List<Map<String, io.Socket>> consumeSockets, String endpoint) {
+  return consumeSockets.any((socketMap) {
+    if (socketMap.isEmpty) return false;
+    return _normalizeConsumeEndpoint(socketMap.keys.first) == endpoint;
+  });
+}
+
+Future<void Function(bool)?> _reserveConsumeEndpoint(
+    List<Map<String, io.Socket>> consumeSockets, String ip) async {
+  final endpoint = _normalizeConsumeEndpoint(ip);
+  if (endpoint.isEmpty || endpoint == 'none') return null;
+
+  var pendingForSockets = _pendingConsumeConnections[consumeSockets];
+  if (pendingForSockets == null) {
+    pendingForSockets = <String, Future<bool>>{};
+    _pendingConsumeConnections[consumeSockets] = pendingForSockets;
+  }
+
+  while (true) {
+    if (_hasConsumeEndpoint(consumeSockets, endpoint)) return null;
+
+    final pending = pendingForSockets[endpoint];
+    if (pending != null) {
+      if (await pending) return null;
+      continue;
+    }
+
+    final completer = Completer<bool>();
+    final reservation = completer.future;
+    pendingForSockets[endpoint] = reservation;
+    return (bool connected) {
+      if (identical(pendingForSockets![endpoint], reservation)) {
+        pendingForSockets.remove(endpoint);
+      }
+      if (!completer.isCompleted) completer.complete(connected);
+    };
+  }
+}
+
 /// Connects to multiple remote IPs to manage socket connections for media consumption.
 ///
 /// This function iterates over a list of remote IPs, attempting to establish socket connections
@@ -136,6 +185,11 @@ Future<List<dynamic>> connectIps(ConnectIpsOptions options) async {
     }
 
     for (final ip in options.remIP) {
+      final releaseReservation =
+          await _reserveConsumeEndpoint(consumeSockets, ip);
+      if (releaseReservation == null) continue;
+
+      var connected = false;
       try {
         // Check if the IP is already connected
         final existingSocket = consumeSockets.firstWhere(
@@ -219,12 +273,15 @@ Future<List<dynamic>> connectIps(ConnectIpsOptions options) async {
             // Add the remote socket to the consumeSockets array
             consumeSockets.add({ip: remoteSock});
             updateConsumeSockets(consumeSockets);
+            connected = true;
           }
         }
       } catch (error) {
         if (kDebugMode) {
           debugPrint('connectIps error with IP $ip: $error');
         }
+      } finally {
+        releaseReservation(connected);
       }
     }
 

@@ -1,3 +1,8 @@
+### 2.3.2
+* **Consume socket de-duplication**:
+  - Serialize concurrent consume-endpoint setup so overlapping room updates cannot create duplicate sockets.
+  - Keep failed connection attempts retryable without reintroducing the race.
+
 ### 2.3.1
 * **Headless rendering and release refinements**:
   - Refined embedded/headless room sizing and media-rendering contracts for custom UIs.
