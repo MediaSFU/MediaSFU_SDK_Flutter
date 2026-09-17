@@ -757,6 +757,7 @@ Use the shortest path for the question you have:
 | Copy-and-run first integration | [Quick start guide](https://www.mediasfu.com/docs/usage/quickstart/) |
 | Fully custom Flutter UI | [Headless guide](https://www.mediasfu.com/docs/usage/headless/) |
 | Exact classes and signatures | [Generated Flutter API reference](https://www.mediasfu.com/api/flutter/) |
+| What changed in each release | [Changelog](CHANGELOG.md) |
 | Browse all developer material | [MediaSFU docs portal](https://www.mediasfu.com/docs/) |
 | Developer console and API configuration | [Developer console guide](https://www.mediasfu.com/documentation/) |
 | Create and manage MediaSFU API credentials | [MediaSFU API Keys](https://www.mediasfu.com/api-keys) |
@@ -774,6 +775,9 @@ Use the shortest path for the question you have:
 
 Complete products and staged examples:
 
+- [Familiar Calls](https://github.com/MediaSFU/mediasfu-familiar-calls) — chat-style audio and video calling with incoming-call accept/decline; includes a Flutter app and one shared backend.
+- [Live Auction](https://github.com/MediaSFU/mediasfu-live-auction) — host and bidder views, timed lots, and live media; includes a Flutter app.
+- [Watch Together](https://github.com/MediaSFU/mediasfu-watch-together) — a watch party with a realtime conversation floor and HLS audience; includes a Flutter app.
 - [MediaSFU QuickStart Apps](https://github.com/MediaSFU/MediaSFU-QuickStart-Apps) — Cloud, MediaSFU Open, backend-proxy, custom-prejoin, and custom-UI starters.
 - [SpacesTek Initial](https://github.com/MediaSFU/SpacesTekInitial) → [Final](https://github.com/MediaSFU/SpacesTekFinal) → [Advanced](https://github.com/MediaSFU/SpacesTekAdvanced) — a progressive app-owned collaboration product.
 - [MediaSFU Agents](https://github.com/MediaSFU/Agents) — multimodal voice/vision agent clients.

@@ -7370,8 +7370,13 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 4),
+                        // 28px targets around 16px glyphs, so a near-miss
+                        // still lands on the control rather than dead space.
                         ModernPressable(
+                          semanticLabel: recordPaused.value
+                              ? 'Resume recording'
+                              : 'Pause recording',
                           onTap: () {
                             updateRecording(
                               UpdateRecordingOptions(
@@ -7379,14 +7384,22 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                               ),
                             );
                           },
-                          child: Icon(
-                            recordPaused.value ? Icons.play_arrow : Icons.pause,
-                            color: Colors.white,
-                            size: 16,
+                          child: SizedBox(
+                            width: 28,
+                            height: 28,
+                            child: Center(
+                              child: Icon(
+                                recordPaused.value
+                                    ? Icons.play_arrow
+                                    : Icons.pause,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 8),
                         ModernPressable(
+                          semanticLabel: 'Stop recording',
                           onTap: () {
                             stopRecording(
                               StopRecordingOptions(
@@ -7394,10 +7407,16 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                               ),
                             );
                           },
-                          child: const Icon(
-                            Icons.stop,
-                            color: Colors.red,
-                            size: 16,
+                          child: const SizedBox(
+                            width: 28,
+                            height: 28,
+                            child: Center(
+                              child: Icon(
+                                Icons.stop,
+                                color: Colors.red,
+                                size: 16,
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -7414,12 +7433,14 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                 ),
               ),
               name: null,
-              semanticsLabel: recordPaused.value
-                  ? 'Resume recording'
-                  : 'Pause/stop recording',
-              onPress: () {
-                updateActiveSidebarContent(SidebarContent.recording);
-              },
+              semanticsLabel:
+                  recordPaused.value ? 'Recording paused' : 'Recording in progress',
+              // Deliberately no onPress: only Pause and Stop respond. A tap
+              // anywhere else on the pill used to open the Recording sidebar,
+              // which during a live recording only raised "You can only
+              // re-configure recording after pausing it". With onPress null the
+              // wrapping GestureDetector stops claiming taps, and the tooltip
+              // is skipped for passive items in buttonBuilder below.
               activeColor: MediasfuColors.danger,
               inActiveColor: MediasfuColors.controlButtonInactive(
                 darkMode: isDarkModeVal,
@@ -11520,6 +11541,17 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                                       vertical:
                                           false, // Set to true for vertical layout
                                       buttonBuilder: (buttonContext, child) {
+                                        // Passive items (the live recording
+                                        // pill) carry their own controls. With
+                                        // tooltips on tap, wrapping them would
+                                        // still react to taps on dead space.
+                                        if (buttonContext.button.onPress ==
+                                                null &&
+                                            buttonContext
+                                                    .button.customComponent !=
+                                                null) {
+                                          return child;
+                                        }
                                         // Wrap each button with a tooltip
                                         final tooltipText =
                                             buttonContext.button.semanticsLabel;

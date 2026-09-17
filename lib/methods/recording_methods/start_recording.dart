@@ -207,7 +207,14 @@ Future<bool?> startRecording(StartRecordingOptions options) async {
         parameters.updateRecordPaused(recordPaused);
 
         if (action == 'startRecord') {
-          final optionsReport = RePortOptions(parameters: updatedParams);
+          // restart: force an immediate updateScreenClient. Without it, rePort
+          // only emits when activeNames or screenStates differ from their
+          // previous values — and nothing has changed at the moment a
+          // recording starts, so the recorder got no layout until something
+          // later did (a speaker change, a join, a share). Resume already
+          // forced it; start now matches.
+          final optionsReport =
+              RePortOptions(parameters: updatedParams, restart: true);
           await parameters.rePort(optionsReport);
           final recordOptions =
               RecordStartTimerOptions(parameters: updatedParams);

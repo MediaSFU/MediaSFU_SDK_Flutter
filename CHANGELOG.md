@@ -1,3 +1,9 @@
+### 2.3.3
+* **Recording controls and layout reporting**:
+  - Report the room layout to the recorder as soon as a recording starts, rather than waiting for the next participant or screen change.
+  - The live recording indicator in the control bar now responds only to its Pause/Resume and Stop controls. Taps elsewhere on the indicator no longer open recording settings during a recording.
+  - Enlarged the Pause/Resume and Stop touch targets and added accessible labels to both.
+
 ### 2.3.2
 * **Consume socket de-duplication**:
   - Serialize concurrent consume-endpoint setup so overlapping room updates cannot create duplicate sockets.
