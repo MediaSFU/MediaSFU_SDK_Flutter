@@ -12,7 +12,6 @@ import '../../types/types.dart'
         StopShareScreenParameters,
         DisconnectSendTransportVideoParameters,
         DisconnectSendTransportAudioParameters,
-        DisconnectSendTransportScreenParameters,
         DisconnectSendTransportVideoOptions,
         DisconnectSendTransportAudioOptions,
         DisconnectSendTransportScreenOptions,
@@ -25,8 +24,7 @@ abstract class ControlMediaHostParameters
         OnScreenChangesParameters,
         StopShareScreenParameters,
         DisconnectSendTransportVideoParameters,
-        DisconnectSendTransportAudioParameters,
-        DisconnectSendTransportScreenParameters {
+        DisconnectSendTransportAudioParameters {
   // Core properties as abstract getters
   ValueChanged<bool> get updateAdminRestrictSetting;
   MediaStream? get localStream;
@@ -65,8 +63,8 @@ class ControlMediaHostOptions {
   });
 }
 
-typedef ControlMediaHostType = Future<void> Function(
-    ControlMediaHostOptions options);
+typedef ControlMediaHostType =
+    Future<void> Function(ControlMediaHostOptions options);
 
 /// Controls media actions based on the specified [ControlMediaHostOptions].
 ///

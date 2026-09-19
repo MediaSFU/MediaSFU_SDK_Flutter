@@ -8,15 +8,13 @@ import '../types/types.dart'
         RequestPermissionCameraType,
         StreamSuccessVideoType,
         SleepType,
-        StreamSuccessVideoParameters,
         SleepOptions,
         StreamSuccessVideoOptions,
         ClickVideoOptions,
         ClickVideoParameters;
 
 // Abstract class for parameters
-abstract class SwitchUserVideoParameters
-    implements StreamSuccessVideoParameters, ClickVideoParameters {
+abstract class SwitchUserVideoParameters implements ClickVideoParameters {
   bool get audioOnlyRoom;
   int get frameRate;
   VidCons get vidCons;
@@ -49,8 +47,8 @@ class SwitchUserVideoOptions {
   });
 }
 
-typedef SwitchUserVideoType = Future<void> Function(
-    SwitchUserVideoOptions options);
+typedef SwitchUserVideoType =
+    Future<void> Function(SwitchUserVideoOptions options);
 
 /// Toggles or switches the video stream based on user preferences and permission checks.
 ///

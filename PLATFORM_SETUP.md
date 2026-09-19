@@ -27,17 +27,17 @@ Open `android/app/build.gradle` and configure the SDK versions:
 
 ```gradle
 android {
-    compileSdkVersion 34
+    compileSdkVersion flutter.compileSdkVersion
 
     defaultConfig {
-        minSdkVersion 23
-        targetSdkVersion 34
+        minSdkVersion flutter.minSdkVersion
+        targetSdkVersion flutter.targetSdkVersion
         // ... other configurations
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 }
 ```
@@ -57,6 +57,7 @@ Open `android/app/src/main/AndroidManifest.xml` and add the required permissions
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     
     <!-- Optional: For audio recording features -->
@@ -81,6 +82,28 @@ Open `android/app/src/main/AndroidManifest.xml` and add the required permissions
 ```
 
 ### 3. ProGuard Rules (Optional)
+
+These manifest permissions are required in debug as well as release builds.
+Camera and microphone additionally require runtime consent; the WebRTC capture
+flow requests it when the user enables media. `ACCESS_NETWORK_STATE` is a
+normal manifest permission, not a runtime prompt. Omitting it can abort the
+native WebRTC network-monitor thread when media starts, even after camera
+permission was granted. Rebuild and reinstall after manifest changes; hot
+reload cannot apply native permissions.
+
+Keep your Flutter-generated Gradle/SDK configuration aligned with the installed
+Flutter release and your dependencies' minimum requirements. The Android example
+is the maintained reference for this SDK release.
+
+Bluetooth routing on Android 12+ requires runtime `BLUETOOTH_CONNECT` consent
+in addition to its manifest entry. Screen sharing is a separate integration:
+the host must implement `com.mediasfu/screen_capture`, obtain Android's screen
+capture consent, and manage a `mediaProjection` foreground service. Declaring
+permissions alone does not install that service. The SDK fails safely when the
+host integration is absent instead of proceeding into native screen capture.
+The basic example demonstrates camera/microphone calls; a complete Android
+screen-sharing service is not included. The example's `MainActivity` implements
+the optional screen-wake-lock channel for keeping an active meeting visible.
 
 If you're using ProGuard/R8 for release builds, add to `android/app/proguard-rules.pro`:
 

@@ -798,7 +798,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   late DefaultComponentBuilder<PreJoinPageOptions> _preJoinPageBuilder;
   late DefaultComponentBuilder<WelcomePageOptions> _welcomePageBuilder;
 
-  void _hydrateUiOverrides() {
+  bool _uiBuildersHydrated = false;
+
+  void _hydrateCoreOverrides() {
     _uiOverrides =
         widget.options.uiOverrides ?? const MediasfuUICustomOverrides.empty();
     _containerStyle =
@@ -823,6 +825,11 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     _miniAudioPlayerHandler = (options) => Builder(
       builder: (context) => miniAudioPlayerBuilder(context, options),
     );
+  }
+
+  void _hydrateUiBuilders() {
+    if (_uiBuildersHydrated) return;
+    _uiBuildersHydrated = true;
     _mainContainerBuilder = withOverride<MainContainerComponentOptions>(
       override: _uiOverrides.mainContainer,
       baseBuilder: (context, options) =>
@@ -7433,8 +7440,9 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                 ),
               ),
               name: null,
-              semanticsLabel:
-                  recordPaused.value ? 'Recording paused' : 'Recording in progress',
+              semanticsLabel: recordPaused.value
+                  ? 'Recording paused'
+                  : 'Recording in progress',
               // Deliberately no onPress: only Pause and Stop respond. A tap
               // anywhere else on the pill used to open the Recording sidebar,
               // which during a live recording only raised "You can only
@@ -9509,6 +9517,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
           updateIsLoadingModalVisible(false);
           io.Socket? socket_ = io.io("https://example.com", <String, dynamic>{
             'transports': ['websocket'],
+            'autoConnect': false,
           });
           updateSocket(socket_);
         }
@@ -9526,7 +9535,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
   @override
   void initState() {
     super.initState();
-    _hydrateUiOverrides();
+    _hydrateCoreOverrides();
     mediasfuParameters = MediasfuParameters(
       updateMiniCardsGrid: updateMiniCardsGrid,
       mixStreams: mixStreams,
@@ -10529,6 +10538,7 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     BuildContext context, {
     bool forceStandardUi = false,
   }) {
+    _hydrateUiBuilders();
     return ValueListenableBuilder<bool>(
       valueListenable: isDarkMode,
       builder: (context, isDarkModeVal, _) {
@@ -11548,7 +11558,8 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                                         if (buttonContext.button.onPress ==
                                                 null &&
                                             buttonContext
-                                                    .button.customComponent !=
+                                                    .button
+                                                    .customComponent !=
                                                 null) {
                                           return child;
                                         }
@@ -11668,11 +11679,11 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     }
 
     if (!forceStandardUi && widget.options.returnUI == false) {
-      return Stack(
-        children: [
-          buildEventRoom(context),
-        ],
-      );
+      // Do not enter buildEventRoom for an engine-only mount. That method owns
+      // the complete modern room tree and is intentionally large; compiling it
+      // in Android debug/JIT mode was pure overhead for headless consumers and
+      // could push memory-constrained debug sessions into a Dart VM OOM.
+      return const SizedBox.shrink();
     }
 
     // Check if we should use desktop sidebar layout

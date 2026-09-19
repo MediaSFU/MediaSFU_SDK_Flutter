@@ -8,7 +8,6 @@ import '../types/types.dart'
         Stream,
         Participant,
         TransportType,
-        PrepopulateUserMediaParameters,
         PrepopulateUserMediaType,
         RePortParameters,
         RePortType,
@@ -41,7 +40,6 @@ import '../types/types.dart'
 /// Extends multiple parameter interfaces from your TypeScript definitions.
 abstract class DispStreamsParameters
     implements
-        PrepopulateUserMediaParameters,
         RePortParameters,
         ProcessConsumerTransportsParameters,
         ResumePauseStreamsParameters,
@@ -581,7 +579,8 @@ Future<void> dispStreams(DispStreamsOptions options) async {
 
         if (islevel != '2') {
           Participant? host =
-              participants.firstWhereOrNull((obj) => obj.islevel == '2');
+              participants.firstWhereOrNull((obj) => obj.islevel == '2',
+          );
 
           if (host != null) {
             Stream? streame;
@@ -606,12 +605,14 @@ Future<void> dispStreams(DispStreamsOptions options) async {
         }
 
         Stream? youyou = lStreams.firstWhereOrNull((obj) =>
-            obj.producerId == 'youyou' || obj.producerId == 'youyouyou');
+            obj.producerId == 'youyou' || obj.producerId == 'youyouyou',
+        );
 
         lStreams = lStreams
             .where((stream) =>
                 stream.producerId != 'youyou' &&
-                stream.producerId != 'youyouyou')
+                stream.producerId != 'youyouyou',
+            )
             .toList();
 
         if (youyou != null) {
@@ -628,9 +629,12 @@ Future<void> dispStreams(DispStreamsOptions options) async {
     int refLength = lStreams.length;
 
     List<int> estimate =
-        getEstimate(GetEstimateOptions(n: refLength, parameters: parameters));
+        getEstimate(GetEstimateOptions(n: refLength, parameters: parameters),
+    );
     List<dynamic> gridCheckResult = await checkGrid(CheckGridOptions(
-        rows: estimate[1], cols: estimate[2], actives: refLength));
+        rows: estimate[1], cols: estimate[2], actives: refLength,
+      ),
+    );
     bool removeAltGrid = gridCheckResult[0];
     int numtoaddd = gridCheckResult[1];
     int numRows = gridCheckResult[2];
@@ -691,7 +695,8 @@ Future<void> dispStreams(DispStreamsOptions options) async {
         if (!breakOutRoomStarted ||
             (breakOutRoomStarted && breakOutRoomEnded)) {
           final optionsResumePause =
-              ResumePauseStreamsOptions(parameters: parameters);
+              ResumePauseStreamsOptions(parameters: parameters,
+          );
           await resumePauseStreams(options: optionsResumePause);
         }
       } catch (error) {

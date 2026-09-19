@@ -110,7 +110,8 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   // Provides access to the source parameters if not using the default UI (returnUI = false in options)
   final ValueNotifier<MediasfuParameters?> sourceParameters =
-      ValueNotifier(null);
+      ValueNotifier(null,
+  );
 
   // Update function to update source parameters if not using the default UI (returnUI = false in options)
   void updateSourceParameters(MediasfuParameters? parameters) {
@@ -122,22 +123,20 @@ class _MyAppState extends State<MyApp> {
     super.initState();
 
     // Attach the listener
-    sourceParameters.addListener(() {
-      _onSourceParametersChanged(sourceParameters.value);
-    });
-  }
-
-  @override
+    sourceParameters.addListener(_handleSourceParametersChanged) ;
+    }@override
   void dispose() {
     // Detach the listener
-    sourceParameters.removeListener(() {
-      _onSourceParametersChanged(sourceParameters.value);
-    });
+    sourceParameters.removeListener(_handleSourceParametersChanged) ;
     sourceParameters.dispose();
     super.dispose();
   }
 
   /// Listener for changes in sourceParameters.
+  void _handleSourceParametersChanged() {
+    _onSourceParametersChanged(sourceParameters.value);
+  }
+
   void _onSourceParametersChanged(MediasfuParameters? parameters) {
     if (parameters != null) {
       // Add custom logic here if needed
@@ -475,8 +474,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       title: 'MediaSFU Custom Builders Demo',
       theme: ThemeData(
-        primarySwatch: Colors.purple,
-      ),
+        primarySwatch: Colors.purple),
       home: MediasfuGeneric(options: options),
     );
   }
@@ -508,8 +506,7 @@ class _MyAppState extends State<MyApp> {
 /// Custom MediaSFU Component that completely replaces the default interface
 /// This demonstrates how to build your own MediaSFU interface using the parameters
 Widget myCustomMediaSFUComponent({
-  required MediasfuParameters parameters,
-}) {
+  required MediasfuParameters parameters}) {
   return Scaffold(
     backgroundColor: Colors.grey.shade900,
     appBar: AppBar(
@@ -546,8 +543,7 @@ Widget myCustomMediaSFUComponent({
                 'Participants: ${parameters.participants.length}',
                 style: const TextStyle(
                   color: Colors.white70,
-                  fontSize: 16,
-                ),
+                  fontSize: 16),
               ),
             ],
           ),
@@ -573,7 +569,8 @@ Widget myCustomMediaSFUComponent({
               ElevatedButton.icon(
                 onPressed: () {
                   parameters
-                      .clickVideo(ClickVideoOptions(parameters: parameters));
+                      .clickVideo(ClickVideoOptions(parameters: parameters),
+                  );
                 },
                 icon: Icon(
                   parameters.videoAction ? Icons.videocam : Icons.videocam_off,
@@ -593,7 +590,8 @@ Widget myCustomMediaSFUComponent({
               ElevatedButton.icon(
                 onPressed: () {
                   parameters
-                      .clickAudio(ClickAudioOptions(parameters: parameters));
+                      .clickAudio(ClickAudioOptions(parameters: parameters),
+                  );
                 },
                 icon: Icon(
                   parameters.micAction ? Icons.mic : Icons.mic_off,
@@ -613,7 +611,8 @@ Widget myCustomMediaSFUComponent({
               ElevatedButton.icon(
                 onPressed: () {
                   parameters.clickScreenShare(
-                      ClickScreenShareOptions(parameters: parameters));
+                      ClickScreenShareOptions(parameters: parameters),
+                  );
                 },
                 icon: Icon(
                   parameters.screenAction
@@ -789,7 +788,8 @@ Widget myCustomMediaSFUComponent({
                   backgroundColor: Colors.blue.shade600,
                 ),
                 child: const Text('Messages',
-                    style: TextStyle(color: Colors.white)),
+                    style: TextStyle(color: Colors.white),
+                ),
               ),
               ElevatedButton(
                 onPressed: () {
@@ -799,7 +799,8 @@ Widget myCustomMediaSFUComponent({
                   backgroundColor: Colors.green.shade600,
                 ),
                 child: const Text('Settings',
-                    style: TextStyle(color: Colors.white)),
+                    style: TextStyle(color: Colors.white),
+                ),
               ),
               ElevatedButton(
                 onPressed: () {
@@ -809,7 +810,8 @@ Widget myCustomMediaSFUComponent({
                   backgroundColor: Colors.red.shade600,
                 ),
                 child:
-                    const Text('Leave', style: TextStyle(color: Colors.white)),
+                    const Text('Leave', style: TextStyle(color: Colors.white),
+                ),
               ),
             ],
           ),

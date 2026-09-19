@@ -298,28 +298,44 @@ class HeadlessMeeting extends StatefulWidget {
 }
 
 class _HeadlessMeetingState extends State<HeadlessMeeting> {
-  MediasfuParameters? parameters;
+  final room = MediasfuHeadlessController();
+  late final Widget engine;
+
+  @override
+  void initState() {
+    super.initState();
+    engine = ModernMediasfuGeneric(
+      options: ModernMediasfuGenericOptions(
+        credentials: Credentials(
+          apiUserName: 'your-api-username',
+          apiKey: 'your-64-character-api-key',
+        ),
+        returnUI: false,
+        updateSourceParameters: room.updateSourceParameters,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    room.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        ModernMediasfuGeneric(
-          options: ModernMediasfuGenericOptions(
-            credentials: Credentials(
-              apiUserName: 'your-api-username',
-              apiKey: 'your-64-character-api-key',
-            ),
-            returnUI: false,
-            updateSourceParameters: (nextParameters) {
-              setState(() => parameters = nextParameters);
-            },
-          ),
+        engine,
+        AnimatedBuilder(
+          animation: room,
+          builder: (context, _) {
+            final parameters = room.parameters;
+            return parameters == null
+                ? const Center(child: CircularProgressIndicator())
+                : MyMeetingSurface(parameters: parameters);
+          },
         ),
-        if (parameters == null)
-          const Center(child: CircularProgressIndicator())
-        else
-          MyMeetingSurface(parameters: parameters!),
       ],
     );
   }
@@ -379,6 +395,10 @@ class MyMeetingSurface extends StatelessWidget {
   }
 }
 ```
+
+Create the room engine and controller once, keep the engine mounted for the
+call, and rebuild only the app-owned surface. Do not call `setState` around a
+new `ModernMediasfuGeneric` for every parameter publication.
 
 For headless mode you usually provide one of these pre-join payloads:
 
@@ -743,6 +763,7 @@ ShareButtonOptions(
 | Web works locally but not in production | HTTPS, browser permission prompts, CORS for self-hosted APIs, and TURN/STUN reachability |
 | Self-hosted create/join fails | Verify `localLink`, `/createRoom`, `/joinRoom`, TLS, CORS, and backend auth headers |
 | Headless mode renders no UI | This is expected with `returnUI: false`; render your own widgets from `MediasfuParameters` |
+| Excessive memory use or an Android debug crash | Keep one engine mounted per call, use compatible dependencies, and verify native permissions. Compare with profile mode as a diagnostic, not proof of the cause. See [headless debugging guidance](./HEADLESS_GUIDE.md#5-efficient-lifecycle-and-debugging); redact private data before sharing logs. |
 | Demo mode connects unexpectedly | Use `useLocalUIMode: true` with seed data and avoid live credentials for visual-only demos |
 | Font Awesome compile error with `Icon(FontAwesomeIcons.xmark)` | Use `FaIcon(FontAwesomeIcons.xmark)` with `font_awesome_flutter` v11 |
 | Analyzer reports only info-level lints | The package may still build; clean those lints separately if your CI treats infos as fatal |

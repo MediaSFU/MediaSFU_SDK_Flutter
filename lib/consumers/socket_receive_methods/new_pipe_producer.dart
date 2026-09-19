@@ -12,9 +12,6 @@ import '../../types/types.dart'
     show
         ShowAlert,
         SignalNewConsumerTransportOptions,
-        ReorderStreamsParameters,
-        SignalNewConsumerTransportParameters,
-        ConnectRecvTransportParameters,
         ConnectRecvTransportType,
         ReorderStreamsType,
         TranslationMeta,
@@ -23,9 +20,6 @@ import '../../types/types.dart'
 /// Interface for [NewPipeProducerParameters], extending other parameters.
 abstract class NewPipeProducerParameters
     implements
-        ReorderStreamsParameters,
-        SignalNewConsumerTransportParameters,
-        ConnectRecvTransportParameters,
         StartConsumingTranslationParameters {
   bool get firstRound;
   bool get shareScreenStarted;
@@ -276,7 +270,8 @@ Future<void> newPipeProducer(NewPipeProducerOptions options) async {
         islevel: islevel,
         parameters: parameters,
         translationMeta: translationMeta,
-      ));
+      ),
+      );
     }
     return;
   }

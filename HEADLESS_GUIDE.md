@@ -10,16 +10,16 @@ browser-only capabilities are reported explicitly in Section 4.
 
 ---
 
-## 1. The one rule to internalise
+## 1. Keep parameter snapshots current
 
 **The parameter bag is a snapshot of values the SDK reassigns.** Every field you
 read — `allVideoStreams`, `participants`, `consumerTransports` — is captured at
 publication time, and the SDK replaces its internals as producers come and go.
 
-Two consequences, and nearly every "my video is black" report breaks one of them:
+Follow these two guidelines to keep your interface in sync:
 
-1. **Take every publication.** De-duplicating or deep-comparing them freezes your
-   UI on whatever it rendered first. It looks like an optimisation; it is a freeze.
+1. **Accept every publication.** Filtering updates by object identity or deep
+   equality can miss changes and leave your UI displaying stale state.
 2. **Read at use time, not at build time.** A bag captured in a widget's fields
    goes stale; read it inside `build` or from the callback that delivered it.
 
@@ -33,7 +33,7 @@ final local  = getLocalVideoStream(parameters);     // MediaStream?
 final screen = getScreenShareStream(parameters);    // ScreenShareState
 ```
 
-Each exists because the obvious hand-rolled version gets something wrong:
+These helpers handle common media-selection cases:
 
 | Trap | What you see |
 | --- | --- |
@@ -196,20 +196,54 @@ why an application-created or stale parameter bag is intentionally rejected.
 Dispose the controller with the surrounding screen and let the generic engine
 own room teardown as usual.
 
-## 5. Verification
+## 5. Efficient lifecycle and debugging
+
+Create `MediasfuHeadlessController`, `ModernMediasfuGenericOptions`, and the
+headless room widget once in `initState` (or as stable state fields). Keep that
+engine mounted for the entire call and use `AnimatedBuilder` to rebuild only
+your app-owned surface. Avoid replacing the engine or changing its key on every
+parameter update. Normal Flutter widget rebuilds do not, by themselves, recreate
+an existing engine's state.
+
+Version `2.3.4` reduces unnecessary startup work in both headless and standard
+UI sessions. With `returnUI: false`, the engine skips the standard room UI and
+initializes UI builders only if a custom surface or `ModernMediasfuGenericHead`
+requests them. Room signaling and media ownership follow the same lifecycle.
+
+If you encounter excessive memory use or an out-of-memory error during development:
+
+1. check that the engine and app-owned controllers are disposed when the call ends;
+2. use compatible SDK and WebRTC versions and complete the native setup in
+   [PLATFORM_SETUP.md](./PLATFORM_SETUP.md);
+3. compare with `flutter run --profile` to help identify debug/JIT overhead;
+   profile succeeding is useful evidence, but does not by itself rule out a
+   lifecycle issue;
+4. report a minimal reproduction, Flutter and dependency versions, device details,
+   and whether the issue occurs before joining, when enabling media, or over time.
+   Include relevant diagnostic logs only after removing credentials, room tokens,
+   participant information, and other private data.
+
+Increasing emulator RAM can confirm memory pressure, but should not be the
+first or only fix. A steadily growing profile/release process indicates a
+possible lifecycle issue and should be investigated separately.
+
+## 6. Verification
 
 ```bash
 flutter test test/headless
+flutter test test/parameter_hierarchy_test.dart
 ```
 
 The Dart tests pin producer-id matching, `'none'` handling, host/self
 identification, roster ordering, permissions, viewer sessions, getter purity,
 deferred publication, teardown guards, and embedded geometry.
 
-**Verification status:** These headless APIs are integrated in the Familiar Calls
-Flutter application and are covered by static analysis, automated Dart tests,
-and Android build, install, and launch checks. A live two-participant Flutter
-media session is not yet part of the published acceptance evidence. Before a
-production rollout, validate create and join flows, local and remote media, call
-controls, leave and end behavior, and teardown on every target platform you
-support.
+For a credential-free physical-device startup and repeated-mount check, run
+`flutter run --debug -t lib/device_memory_smoke.dart` from `example/`. It cycles
+through classic and modern headless and local-room UI modes. Local UI mode does
+not establish a real meeting or validate media delivery.
+
+Before releasing your application, test create and join flows, local and remote
+media with at least two participants, call controls, reconnects, leave/end behavior,
+and teardown on each supported platform. Automated tests and local UI checks
+complement, but do not replace, live media testing on your target devices.

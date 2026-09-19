@@ -4,13 +4,12 @@ import '../../types/types.dart'
         Participant,
         PrepopulateUserMediaType,
         ReorderStreamsType,
-        PrepopulateUserMediaParameters,
         ReorderStreamsParameters,
         PrepopulateUserMediaOptions,
         ReorderStreamsOptions;
 
 abstract class ProducerMediaResumedParameters
-    implements PrepopulateUserMediaParameters, ReorderStreamsParameters {
+    implements ReorderStreamsParameters {
   String get meetingDisplayType;
   List<Participant> get participants;
   bool get shared;
@@ -44,8 +43,8 @@ class ProducerMediaResumedOptions {
   });
 }
 
-typedef ProducerMediaResumedType = Future<void> Function(
-    ProducerMediaResumedOptions options);
+typedef ProducerMediaResumedType =
+    Future<void> Function(ProducerMediaResumedOptions options);
 
 /// Resumes media for a specified participant in a meeting.
 ///

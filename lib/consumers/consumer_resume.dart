@@ -34,8 +34,6 @@ import '../types/types.dart'
 /// and state management.
 abstract class ConsumerResumeParameters
     implements
-        ReorderStreamsParameters,
-        PrepopulateUserMediaParameters,
         MiniAudioPlayerParameters {
   MediaStream? get nStream;
   List<Stream> get allAudioStreams; // Use List<Stream> or List<Participant>
@@ -265,7 +263,8 @@ Future<void> consumerResume(ConsumerResumeOptions options) async {
               final speakerId = (meta as dynamic).speakerId as String?;
               if (speakerId != null) {
                 participant = participants.firstWhere(
-                    (p) => p.id == speakerId || p.audioID == speakerId);
+                    (p) => p.id == speakerId || p.audioID == speakerId,
+                );
               }
             } catch (e) {
               participant = null;
@@ -294,7 +293,8 @@ Future<void> consumerResume(ConsumerResumeOptions options) async {
           producerId: remoteProducerId,
           name: name,
           stream: stream,
-        ));
+        ),
+        );
         updateAllAudioStreams(allAudioStreams);
 
         // Add to audStreamNames
@@ -302,7 +302,8 @@ Future<void> consumerResume(ConsumerResumeOptions options) async {
           producerId: remoteProducerId,
           name: name,
           stream: stream,
-        ));
+        ),
+        );
         updateAudStreamNames(audStreamNames);
         return;
       }
@@ -320,7 +321,8 @@ Future<void> consumerResume(ConsumerResumeOptions options) async {
               final speakerId = (meta as dynamic).speakerId as String?;
               if (speakerId != null) {
                 participant = participants.firstWhere(
-                    (p) => p.id == speakerId || p.audioID == speakerId);
+                    (p) => p.id == speakerId || p.audioID == speakerId,
+                );
               }
             } catch (e) {
               participant = null;
@@ -348,7 +350,8 @@ Future<void> consumerResume(ConsumerResumeOptions options) async {
               producerId: remoteProducerId,
               name: name,
               stream: stream,
-            ));
+            ),
+            );
             updateAllAudioStreams(allAudioStreams);
 
             // Add to audStreamNames
@@ -356,7 +359,8 @@ Future<void> consumerResume(ConsumerResumeOptions options) async {
               producerId: remoteProducerId,
               name: name,
               stream: stream,
-            ));
+            ),
+            );
             updateAudStreamNames(audStreamNames);
             return;
           }
@@ -369,7 +373,8 @@ Future<void> consumerResume(ConsumerResumeOptions options) async {
       Participant? participant;
       try {
         participant =
-            participants.firstWhere((p) => p.audioID == remoteProducerId);
+            participants.firstWhere((p) => p.audioID == remoteProducerId,
+        );
       } catch (e) {
         participant = null;
       }
@@ -428,7 +433,8 @@ Future<void> consumerResume(ConsumerResumeOptions options) async {
           textColor: Colors.white,
           imageSource: kDefaultMediaSFULogo,
           roundedImage: true,
-        )),
+        ),
+        ),
         miniAudioProps: {
           'customStyle': const {
             'backgroundColor': Color.fromARGB(255, 23, 23, 23),
@@ -453,7 +459,8 @@ Future<void> consumerResume(ConsumerResumeOptions options) async {
 
       // Add the new audio stream to allAudioStreams
       allAudioStreams
-          .add(Stream(producerId: remoteProducerId, stream: nStream));
+          .add(Stream(producerId: remoteProducerId, stream: nStream),
+      );
       updateAllAudioStreams(allAudioStreams);
 
       if (name.isNotEmpty) {
@@ -576,7 +583,8 @@ Future<void> consumerResume(ConsumerResumeOptions options) async {
         // Manage screen sharing on the main screen
         updateUpdateMainWindow(true);
         final newRemoteScreen = Stream(
-            producerId: remoteProducerId, stream: nStream, socket_: nsock);
+            producerId: remoteProducerId, stream: nStream, socket_: nsock,
+        );
 
         remoteScreenStream = [
           newRemoteScreen,
@@ -670,7 +678,8 @@ Future<void> consumerResume(ConsumerResumeOptions options) async {
         Participant? participant;
         try {
           participant =
-              participants.firstWhere((p) => p.videoID == remoteProducerId);
+              participants.firstWhere((p) => p.videoID == remoteProducerId,
+          );
         } catch (e) {
           participant = null;
         }
@@ -681,7 +690,8 @@ Future<void> consumerResume(ConsumerResumeOptions options) async {
           // Add the new video stream to allVideoStreams
           allVideoStreams.add(
             Stream(
-                producerId: remoteProducerId, stream: nStream, socket_: nsock),
+                producerId: remoteProducerId, stream: nStream, socket_: nsock,
+            ),
           );
           updateAllVideoStreams(allVideoStreams);
         }

@@ -8,8 +8,6 @@ import '../types/types.dart'
         ReorderStreamsType,
         ChangeVidsType,
         OnScreenChangesParameters,
-        ReorderStreamsParameters,
-        ChangeVidsParameters,
         EventType,
         ReorderStreamsOptions,
         ChangeVidsOptions,
@@ -17,9 +15,7 @@ import '../types/types.dart'
 
 abstract class ReUpdateInterParameters
     implements
-        OnScreenChangesParameters,
-        ReorderStreamsParameters,
-        ChangeVidsParameters {
+        OnScreenChangesParameters{
   // Basic properties as abstract getters
   int get screenPageLimit;
   int get itemPageLimit;
@@ -226,7 +222,8 @@ Future<void> reUpdateInter(ReUpdateInterOptions options) async {
       if (add) {
         Participant? participant = participants.firstWhere(
             (p) => p.name == name,
-            orElse: () => Participant(name: "", videoID: "", audioID: ""));
+            orElse: () => Participant(name: "", videoID: "", audioID: ""),
+        );
 
         videoID = participant.videoID;
         if (videoID.isEmpty || videoID == "") {
@@ -244,7 +241,8 @@ Future<void> reUpdateInter(ReUpdateInterOptions options) async {
                 if (oldSoundId != screenShareNameStream &&
                     oldSoundId != adminNameStream) {
                   newLimitedStreams
-                      .removeWhere((stream) => stream.producerId == oldSoundId);
+                      .removeWhere((stream) => stream.producerId == oldSoundId,
+                  );
                   newLimitedStreamsIDs.removeWhere((id) => id == oldSoundId);
                   oldSoundsCopy.removeWhere((id) => id == oldSoundId);
                 }
@@ -255,7 +253,8 @@ Future<void> reUpdateInter(ReUpdateInterOptions options) async {
 
           var stream = allVideoStreams.firstWhere(
               (stream) => stream.producerId == videoID,
-              orElse: () => Stream(producerId: "", name: "none"));
+              orElse: () => Stream(producerId: "", name: "none"),
+          );
           if (stream.name != 'none' &&
               newLimitedStreams.length < screenPageLimit) {
             newLimitedStreams.add(stream);
@@ -272,7 +271,8 @@ Future<void> reUpdateInter(ReUpdateInterOptions options) async {
       } else {
         Participant? participant = participants.firstWhere(
             (p) => p.name == name,
-            orElse: () => Participant(name: "", videoID: "", audioID: ""));
+            orElse: () => Participant(name: "", videoID: "", audioID: ""),
+        );
 
         videoID = participant.videoID;
         if (videoID == "" || videoID.isEmpty) {
@@ -282,7 +282,8 @@ Future<void> reUpdateInter(ReUpdateInterOptions options) async {
         if (!force) {
           try {
             newLimitedStreams
-                .removeWhere((stream) => stream.producerId == videoID);
+                .removeWhere((stream) => stream.producerId == videoID,
+            );
             newLimitedStreamsIDs.removeWhere((id) => id == videoID);
             oldSoundIds.removeWhere((id) => id == name);
             final optionsChangeVids = ChangeVidsOptions(
@@ -295,7 +296,8 @@ Future<void> reUpdateInter(ReUpdateInterOptions options) async {
           if (mic != null && mic) {
             try {
               newLimitedStreams
-                  .removeWhere((stream) => stream.producerId == videoID);
+                  .removeWhere((stream) => stream.producerId == videoID,
+              );
               newLimitedStreamsIDs.removeWhere((id) => id == videoID);
               oldSoundIds.removeWhere((id) => id == name);
               final optionsChangeVids = ChangeVidsOptions(

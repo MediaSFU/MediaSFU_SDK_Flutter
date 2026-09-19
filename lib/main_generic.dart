@@ -98,8 +98,9 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   // Provides access to the source parameters if not using the default UI (returnUI = false in options). See more in the guide.
-  final ValueNotifier<MediasfuParameters?> sourceParameters =
-      ValueNotifier(null);
+  final ValueNotifier<MediasfuParameters?> sourceParameters = ValueNotifier(
+    null,
+  );
 
   // Update function to update source parameters if not using the default UI (returnUI = false in options). See more in the guide.
   void updateSourceParameters(MediasfuParameters? parameters) {
@@ -116,8 +117,9 @@ class _MyAppState extends State<MyApp> {
   //
   void triggerClickVideo() {
     Future.delayed(const Duration(seconds: 5), () {
-      sourceParameters.value
-          ?.clickVideo(ClickVideoOptions(parameters: sourceParameters.value!));
+      sourceParameters.value?.clickVideo(
+        ClickVideoOptions(parameters: sourceParameters.value!),
+      );
     });
   }
 
@@ -126,9 +128,7 @@ class _MyAppState extends State<MyApp> {
     super.initState();
 
     // Attach the listener
-    sourceParameters.addListener(() {
-      _onSourceParametersChanged(sourceParameters.value);
-    });
+    sourceParameters.addListener(_handleSourceParametersChanged);
 
     // trigger click video after 5 seconds, uncomment to trigger
     // triggerClickVideo();
@@ -138,9 +138,7 @@ class _MyAppState extends State<MyApp> {
   void dispose() {
     // Detach the listener; irrelevant if not 'returnUI = false'
     // Comment out if not using sourceParameters
-    sourceParameters.removeListener(() {
-      _onSourceParametersChanged(sourceParameters.value);
-    });
+    sourceParameters.removeListener(_handleSourceParametersChanged);
     sourceParameters.dispose();
     super.dispose();
   }
@@ -151,6 +149,10 @@ class _MyAppState extends State<MyApp> {
 
   /// Listener for changes in sourceParameters.
   /// Prints the updated parameters to the console whenever they change.
+  void _handleSourceParametersChanged() {
+    _onSourceParametersChanged(sourceParameters.value);
+  }
+
   void _onSourceParametersChanged(MediasfuParameters? parameters) {
     if (parameters != null) {
       // if (kDebugMode) {
@@ -223,12 +225,12 @@ class _MyAppState extends State<MyApp> {
     // Example noUIPreJoinOptions for creating a room
     final CreateMediaSFURoomOptions noUIPreJoinOptionsCreate =
         CreateMediaSFURoomOptions(
-      action: 'create',
-      capacity: 10,
-      duration: 15,
-      eventType: EventType.broadcast,
-      userName: 'Prince',
-    );
+          action: 'create',
+          capacity: 10,
+          duration: 15,
+          eventType: EventType.broadcast,
+          userName: 'Prince',
+        );
 
     // Example noUIPreJoinOptions for joining a room
     /*
@@ -241,14 +243,6 @@ class _MyAppState extends State<MyApp> {
 
     const bool returnUI =
         true; // Set to false for custom UI, true for default MediaSFU UI
-
-    // State management using ValueNotifier (can be replaced with other state management solutions)
-    final ValueNotifier<MediasfuParameters?> sourceParameters =
-        ValueNotifier(null);
-
-    // void updateSourceParameters(MediasfuParameters? data) {
-    //   sourceParameters.value = data;
-    // }
 
     // =========================================================
     //                CUSTOM ROOM FUNCTIONS (OPTIONAL)
@@ -398,14 +392,13 @@ class _MyAppState extends State<MyApp> {
 
       // Uncomment the following line to specify your own MediaSFU Community Edition server
       localLink: localLink, // e.g., 'http://localhost:3000'
-
       // Set to false to use a custom UI, true to use the default MediaSFU UI
       returnUI: returnUI,
 
       // Provide pre-join options if not using the default UI (if creating a room)
-      noUIPreJoinOptionsCreate:
-          !returnUI ? noUIPreJoinOptionsCreate : null, // if creating a room
-
+      noUIPreJoinOptionsCreate: !returnUI
+          ? noUIPreJoinOptionsCreate
+          : null, // if creating a room
       // Provide pre-join options if not using the default UI (if joining a room)
       // noUIPreJoinOptionsJoin: !returnUI ? noUIPreJoinOptionsJoin : null, // if joining a room
 

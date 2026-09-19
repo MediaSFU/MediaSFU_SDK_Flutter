@@ -3,7 +3,6 @@ import '../../types/types.dart'
     show
         ConnectIpsType,
         GetDomainsType,
-        ConnectIpsParameters,
         GetDomainsParameters,
         AltDomains,
         Participant,
@@ -13,7 +12,7 @@ import '../../types/types.dart'
 
 /// Represents the parameters required for updating consuming domains.
 abstract class UpdateConsumingDomainsParameters
-    implements ConnectIpsParameters, GetDomainsParameters {
+    implements GetDomainsParameters {
   List<Participant> get participants;
   List<ConsumeSocket> get consumeSockets;
 
@@ -45,8 +44,8 @@ class UpdateConsumingDomainsOptions {
   });
 }
 
-typedef UpdateConsumingDomainsType = Future<void> Function(
-    UpdateConsumingDomainsOptions options);
+typedef UpdateConsumingDomainsType =
+    Future<void> Function(UpdateConsumingDomainsOptions options);
 
 /// Updates consuming domains based on the provided options.
 ///

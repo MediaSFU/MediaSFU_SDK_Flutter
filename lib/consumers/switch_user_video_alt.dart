@@ -8,15 +8,13 @@ import '../types/types.dart'
         StreamSuccessVideoType,
         SleepType,
         SleepOptions,
-        StreamSuccessVideoOptions,
-        StreamSuccessVideoParameters;
+        StreamSuccessVideoOptions;
 
 import '../methods/stream_methods/click_video.dart'
     show clickVideo, ClickVideoOptions, ClickVideoParameters;
 
 // Abstract class for SwitchUserVideoAltParameters
-abstract class SwitchUserVideoAltParameters
-    implements StreamSuccessVideoParameters, ClickVideoParameters {
+abstract class SwitchUserVideoAltParameters implements ClickVideoParameters {
   bool get audioOnlyRoom;
   int get frameRate;
   VidCons get vidCons;
@@ -51,8 +49,8 @@ class SwitchUserVideoAltOptions {
   });
 }
 
-typedef SwitchUserVideoAltType = Future<void> Function(
-    SwitchUserVideoAltOptions options);
+typedef SwitchUserVideoAltType =
+    Future<void> Function(SwitchUserVideoAltOptions options);
 
 /// Switches video input devices, handling permission checks, device switching, and error handling.
 ///
@@ -170,8 +168,8 @@ Future<void> switchUserVideoAlt(SwitchUserVideoAltOptions options) async {
       }
     }
 
-    List<MediaDeviceInfo> videoDevices =
-        await navigator.mediaDevices.enumerateDevices();
+    List<MediaDeviceInfo> videoDevices = await navigator.mediaDevices
+        .enumerateDevices();
 
     Map<String, dynamic> mediaConstraints = _buildMediaConstraints(
       vidCons: vidCons,
@@ -180,14 +178,15 @@ Future<void> switchUserVideoAlt(SwitchUserVideoAltOptions options) async {
     );
 
     await _attemptStream(
-        mediaConstraints,
-        streamSuccessVideo,
-        params,
-        showAlert,
-        videoDevices,
-        currentFacingMode,
-        prevFacingMode,
-        updateCurrentFacingMode);
+      mediaConstraints,
+      streamSuccessVideo,
+      params,
+      showAlert,
+      videoDevices,
+      currentFacingMode,
+      prevFacingMode,
+      updateCurrentFacingMode,
+    );
   } catch (error) {
     await _handleStreamError(
       videoDevices: await navigator.mediaDevices.enumerateDevices(),
@@ -236,37 +235,39 @@ Map<String, dynamic> _buildMediaConstraints({
 }
 
 Future<void> _attemptStream(
-    Map<String, dynamic> mediaConstraints,
-    StreamSuccessVideoType streamSuccessVideo,
-    SwitchUserVideoAltParameters params,
-    ShowAlert? showAlert,
-    List<MediaDeviceInfo> videoDevices,
-    String currentFacingMode,
-    String prevFacingMode,
-    void Function(String) updateCurrentFacingMode) async {
+  Map<String, dynamic> mediaConstraints,
+  StreamSuccessVideoType streamSuccessVideo,
+  SwitchUserVideoAltParameters params,
+  ShowAlert? showAlert,
+  List<MediaDeviceInfo> videoDevices,
+  String currentFacingMode,
+  String prevFacingMode,
+  void Function(String) updateCurrentFacingMode,
+) async {
   await navigator.mediaDevices
       .getUserMedia(mediaConstraints)
       .then((stream) async {
-    final optionsStream = StreamSuccessVideoOptions(
-      stream: stream,
-      videoConstraints: mediaConstraints,
-      parameters: params,
-    );
-    await streamSuccessVideo(optionsStream);
-  }).catchError((error) async {
-    await _handleStreamError(
-      videoDevices: videoDevices,
-      vidCons: params.vidCons,
-      frameRate: params.frameRate,
-      videoPreference: currentFacingMode,
-      streamSuccessVideo: streamSuccessVideo,
-      currentFacingMode: currentFacingMode,
-      prevFacingMode: prevFacingMode,
-      updateCurrentFacingMode: updateCurrentFacingMode,
-      showAlert: showAlert,
-      parameters: params,
-    );
-  });
+        final optionsStream = StreamSuccessVideoOptions(
+          stream: stream,
+          videoConstraints: mediaConstraints,
+          parameters: params,
+        );
+        await streamSuccessVideo(optionsStream);
+      })
+      .catchError((error) async {
+        await _handleStreamError(
+          videoDevices: videoDevices,
+          vidCons: params.vidCons,
+          frameRate: params.frameRate,
+          videoPreference: currentFacingMode,
+          streamSuccessVideo: streamSuccessVideo,
+          currentFacingMode: currentFacingMode,
+          prevFacingMode: prevFacingMode,
+          updateCurrentFacingMode: updateCurrentFacingMode,
+          showAlert: showAlert,
+          parameters: params,
+        );
+      });
 }
 
 Future<void> _handleStreamError({
@@ -300,8 +301,9 @@ Future<void> _handleStreamError({
       );
 
       try {
-        final stream =
-            await navigator.mediaDevices.getUserMedia(mediaConstraints);
+        final stream = await navigator.mediaDevices.getUserMedia(
+          mediaConstraints,
+        );
         final optionsStream = StreamSuccessVideoOptions(
           stream: stream,
           videoConstraints: mediaConstraints,

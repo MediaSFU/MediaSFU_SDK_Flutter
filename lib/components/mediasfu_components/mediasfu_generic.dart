@@ -561,7 +561,9 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
   late DefaultComponentBuilder<PreJoinPageOptions> _preJoinPageBuilder;
   late DefaultComponentBuilder<WelcomePageOptions> _welcomePageBuilder;
 
-  void _hydrateUiOverrides() {
+  bool _uiBuildersHydrated = false;
+
+  void _hydrateCoreOverrides() {
     _uiOverrides =
         widget.options.uiOverrides ?? const MediasfuUICustomOverrides.empty();
     _containerStyle =
@@ -586,6 +588,11 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
     _miniAudioPlayerHandler = (options) => Builder(
           builder: (context) => miniAudioPlayerBuilder(context, options),
         );
+  }
+
+  void _hydrateUiBuilders() {
+    if (_uiBuildersHydrated) return;
+    _uiBuildersHydrated = true;
     _mainContainerBuilder = withOverride<MainContainerComponentOptions>(
       override: _uiOverrides.mainContainer,
       baseBuilder: (context, options) =>
@@ -6018,6 +6025,7 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
           updateIsLoadingModalVisible(false);
           io.Socket? socket_ = io.io("https://example.com", <String, dynamic>{
             'transports': ['websocket'],
+            'autoConnect': false,
           });
           updateSocket(socket_);
         }
@@ -6035,7 +6043,7 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
   @override
   void initState() {
     super.initState();
-    _hydrateUiOverrides();
+    _hydrateCoreOverrides();
     mediasfuParameters = MediasfuParameters(
         updateMiniCardsGrid: updateMiniCardsGrid,
         mixStreams: mixStreams,
@@ -6967,6 +6975,7 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
   }
 
   Widget buildEventRoom(BuildContext context) {
+    _hydrateUiBuilders();
     initializeRecordButton();
     initializeControlButtons();
     initializeControlChatButtons();
@@ -7541,41 +7550,39 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
       return widget.options.customComponent!(parameters: mediasfuParameters);
     }
 
-    return widget.options.returnUI != null && widget.options.returnUI == false
-        ? Stack(
-            children: [
-              buildEventRoom(context),
-            ],
-          )
-        : Stack(
-            children: [
-              buildEventRoom(context),
+    // Engine-only mounts do not build the SDK room UI.
+    if (widget.options.returnUI == false) {
+      return const SizedBox.shrink();
+    }
 
-              _buildMenuModal(), // Add Menu Modal
-              _buildDisplaySettingsModal(), // Add Display Settings Modal
-              _buildDisplaySettingsModal(), // Add Display Settings Modal
-              _buildMediaSettingsModal(), // Add Media Settings Modal
-              _buildEventSettingsModal(), // Add Event Settings Modal
-              _buildRequestsModal(), // Add Requests Modal
-              _buildWaitingModal(), // Add Waiting Room Modal
-              _buildShareEventModal(), // Add Share Event Modal
-              _buildRecordingModal(), // Add Recording Modal
-              _buildCoHostModal(), // Add Co-Host Modal
-              _buildParticipantsModal(), // Add Participants Modal
-              _buildMessagesModal(), // Add Messages Modal
-              _buildPollModal(), // Add Polls Modal
-              _buildBreakoutRoomsModal(), // Add Breakout Rooms Modal
-              _buildConfigureWhiteboardModal(), // Add Configure Whiteboard Modal
-              _buildScreenboardModal(), // Add Screenboard Modal
-              _buildBackgroundModal(), // Add Background Modal
+    return Stack(
+      children: [
+        buildEventRoom(context),
 
-              _buildConfirmExitModal(), // Add Confirm Exit Modal
+        _buildMenuModal(), // Add Menu Modal
+        _buildDisplaySettingsModal(), // Add Display Settings Modal
+        _buildMediaSettingsModal(), // Add Media Settings Modal
+        _buildEventSettingsModal(), // Add Event Settings Modal
+        _buildRequestsModal(), // Add Requests Modal
+        _buildWaitingModal(), // Add Waiting Room Modal
+        _buildShareEventModal(), // Add Share Event Modal
+        _buildRecordingModal(), // Add Recording Modal
+        _buildCoHostModal(), // Add Co-Host Modal
+        _buildParticipantsModal(), // Add Participants Modal
+        _buildMessagesModal(), // Add Messages Modal
+        _buildPollModal(), // Add Polls Modal
+        _buildBreakoutRoomsModal(), // Add Breakout Rooms Modal
+        _buildConfigureWhiteboardModal(), // Add Configure Whiteboard Modal
+        _buildScreenboardModal(), // Add Screenboard Modal
+        _buildBackgroundModal(), // Add Background Modal
 
-              _buildAlertModal(), // Add Alert Modal
-              _buildConfirmHereModal(), // Add Confirm Here Modal
-              _buildLoadingModal(), // Add Loading Modal
-            ],
-          );
+        _buildConfirmExitModal(), // Add Confirm Exit Modal
+
+        _buildAlertModal(), // Add Alert Modal
+        _buildConfirmHereModal(), // Add Confirm Here Modal
+        _buildLoadingModal(), // Add Loading Modal
+      ],
+    );
   }
 
   Widget _buildMenuModal() {

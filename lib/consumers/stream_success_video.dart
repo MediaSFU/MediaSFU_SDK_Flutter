@@ -6,7 +6,6 @@ import '../components/background_components/virtual_background_types.dart'
     show VirtualBackground, BackgroundType;
 import '../types/types.dart'
     show
-        ConnectSendTransportVideoParameters,
         Participant,
         ShowAlert,
         CreateSendTransportParameters,
@@ -22,10 +21,7 @@ import '../types/types.dart'
         SleepOptions;
 
 abstract class StreamSuccessVideoParameters
-    implements
-        CreateSendTransportParameters,
-        ConnectSendTransportVideoParameters,
-        ReorderStreamsParameters {
+    implements CreateSendTransportParameters, ReorderStreamsParameters {
   // Core properties as abstract getters
   io.Socket? get socket;
   List<Participant> get participants;
@@ -100,8 +96,8 @@ class StreamSuccessVideoOptions {
   });
 }
 
-typedef StreamSuccessVideoType = Future<void> Function(
-    StreamSuccessVideoOptions options);
+typedef StreamSuccessVideoType =
+    Future<void> Function(StreamSuccessVideoOptions options);
 
 /// Handles successful video streaming setup by initializing video transports, managing UI states, and updating
 /// participant information to reflect the video status.
@@ -244,8 +240,9 @@ Future<void> streamSuccessVideo(
       updateLocalStream(localStream);
     } else {
       // Remove existing video tracks from localStream
-      for (MediaStreamTrack track
-          in List<MediaStreamTrack>.from(localStream.getVideoTracks())) {
+      for (MediaStreamTrack track in List<MediaStreamTrack>.from(
+        localStream.getVideoTracks(),
+      )) {
         try {
           await localStream.removeTrack(track);
         } catch (_) {}
@@ -315,7 +312,8 @@ Future<void> streamSuccessVideo(
       final appliedBackground = parameters.appliedBackground;
       final selectedBackground = parameters.selectedBackground;
       final onBackgroundApply = parameters.onBackgroundApply;
-      final shouldAutoApplyBackground = keepBackground &&
+      final shouldAutoApplyBackground =
+          keepBackground &&
           appliedBackground &&
           selectedBackground != null &&
           selectedBackground.type != BackgroundType.none;
@@ -335,9 +333,11 @@ Future<void> streamSuccessVideo(
         // Close existing producer if any
         if (parameters.videoProducer != null) {
           parameters.videoProducer!.close();
-          await sleep(SleepOptions(
-            ms: 1000,
-          ));
+          await sleep(
+            SleepOptions(
+              ms: 1000,
+            ),
+          );
         }
         parameters.updateVideoParams(videoParams);
         final optionsConnect = ConnectSendTransportVideoOptions(

@@ -483,7 +483,9 @@ Widget myCustomChatInterface({required MediasfuParameters parameters}) {
                           itemBuilder: (context, index) {
                             final participant = parameters.participants[index];
                             return _buildChatParticipantCard(
-                                participant, Colors.green.shade600);
+                              participant,
+                              Colors.green.shade600,
+                            );
                           },
                         ),
                 ),
@@ -666,8 +668,9 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   // Provides access to the source parameters if not using the default UI (returnUI = false in options). See more in the guide.
-  final ValueNotifier<MediasfuParameters?> sourceParameters =
-      ValueNotifier(null);
+  final ValueNotifier<MediasfuParameters?> sourceParameters = ValueNotifier(
+    null,
+  );
 
   // Update function to update source parameters if not using the default UI (returnUI = false in options). See more in the guide.
   void updateSourceParameters(MediasfuParameters? parameters) {
@@ -684,8 +687,9 @@ class _MyAppState extends State<MyApp> {
   //
   void triggerClickVideo() {
     Future.delayed(const Duration(seconds: 5), () {
-      sourceParameters.value
-          ?.clickVideo(ClickVideoOptions(parameters: sourceParameters.value!));
+      sourceParameters.value?.clickVideo(
+        ClickVideoOptions(parameters: sourceParameters.value!),
+      );
     });
   }
 
@@ -694,9 +698,7 @@ class _MyAppState extends State<MyApp> {
     super.initState();
 
     // Attach the listener
-    sourceParameters.addListener(() {
-      _onSourceParametersChanged(sourceParameters.value);
-    });
+    sourceParameters.addListener(_handleSourceParametersChanged);
 
     // trigger click video after 5 seconds, uncomment to trigger
     // triggerClickVideo();
@@ -706,9 +708,7 @@ class _MyAppState extends State<MyApp> {
   void dispose() {
     // Detach the listener; irrelevant if not 'returnUI = false'
     // Comment out if not using sourceParameters
-    sourceParameters.removeListener(() {
-      _onSourceParametersChanged(sourceParameters.value);
-    });
+    sourceParameters.removeListener(_handleSourceParametersChanged);
     sourceParameters.dispose();
     super.dispose();
   }
@@ -719,6 +719,10 @@ class _MyAppState extends State<MyApp> {
 
   /// Listener for changes in sourceParameters.
   /// Prints the updated parameters to the console whenever they change.
+  void _handleSourceParametersChanged() {
+    _onSourceParametersChanged(sourceParameters.value);
+  }
+
   void _onSourceParametersChanged(MediasfuParameters? parameters) {
     if (parameters != null) {
       // if (kDebugMode) {
@@ -807,12 +811,12 @@ class _MyAppState extends State<MyApp> {
     // Example noUIPreJoinOptions for creating a room
     final CreateMediaSFURoomOptions noUIPreJoinOptionsCreate =
         CreateMediaSFURoomOptions(
-      action: 'create',
-      capacity: 10,
-      duration: 15,
-      eventType: EventType.chat,
-      userName: 'Prince',
-    );
+          action: 'create',
+          capacity: 10,
+          duration: 15,
+          eventType: EventType.chat,
+          userName: 'Prince',
+        );
 
     // Example noUIPreJoinOptions for joining a room
     /*
@@ -842,7 +846,6 @@ class _MyAppState extends State<MyApp> {
 
       // Specify your own MediaSFU Community Edition server if applicable
       localLink: localLink, // e.g., 'http://localhost:3000'
-
       // Set to false to use a custom UI, true to use the default MediaSFU UI
       returnUI: returnUI,
 

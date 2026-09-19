@@ -6,14 +6,13 @@ import '../../types/types.dart'
         OnScreenChangesParameters,
         OnScreenChangesType,
         Participant,
-        RePortParameters,
         RePortType,
         OnScreenChangesOptions,
         RePortOptions;
 
 // Type definitions
-typedef UpdateBreakoutRooms = void Function(
-    List<List<BreakoutParticipant>> rooms);
+typedef UpdateBreakoutRooms =
+    void Function(List<List<BreakoutParticipant>> rooms);
 typedef UpdateBreakOutRoomStarted = void Function(bool started);
 typedef UpdateBreakOutRoomEnded = void Function(bool ended);
 typedef UpdateHostNewRoom = void Function(int room);
@@ -23,7 +22,7 @@ typedef UpdateParticipants = void Function(List<Participant> participants);
 
 // Abstract class for parameters
 abstract class BreakoutRoomUpdatedParameters
-    implements OnScreenChangesParameters, RePortParameters {
+    implements OnScreenChangesParameters {
   bool get breakOutRoomStarted;
   bool get breakOutRoomEnded;
   List<List<BreakoutParticipant>> get breakoutRooms;
@@ -58,8 +57,8 @@ class BreakoutRoomUpdatedOptions {
   });
 }
 
-typedef BreakoutRoomUpdatedType = Future<void> Function(
-    BreakoutRoomUpdatedOptions options);
+typedef BreakoutRoomUpdatedType =
+    Future<void> Function(BreakoutRoomUpdatedOptions options);
 
 /// Handles breakout room updates based on the received data and parameters.
 ///
@@ -142,26 +141,31 @@ Future<void> breakoutRoomUpdated(BreakoutRoomUpdatedOptions options) async {
       if (data.newRoom != null) {
         updateHostNewRoom(data.newRoom ?? -1);
       }
-      await onScreenChanges(OnScreenChangesOptions(
-        changed: true,
-        parameters: parameters,
-      ));
+      await onScreenChanges(
+        OnScreenChangesOptions(
+          changed: true,
+          parameters: parameters,
+        ),
+      );
       return;
     }
 
     if (islevel == '2' && data.members != null) {
       participantsAll = data.members!
-          .map((participant) => Participant(
-                isBanned: participant.isBanned,
-                name: participant.name,
-                audioID: participant.audioID,
-                videoID: participant.videoID,
-              ))
+          .map(
+            (participant) => Participant(
+              isBanned: participant.isBanned,
+              name: participant.name,
+              audioID: participant.audioID,
+              videoID: participant.videoID,
+            ),
+          )
           .toList();
       updateParticipantsAll(participantsAll);
 
-      participants =
-          data.members!.where((participant) => !participant.isBanned!).toList();
+      participants = data.members!
+          .where((participant) => !participant.isBanned!)
+          .toList();
       updateParticipants(participants);
     }
 
@@ -179,10 +183,12 @@ Future<void> breakoutRoomUpdated(BreakoutRoomUpdatedOptions options) async {
         meetingDisplayType = 'all';
         updateMeetingDisplayType('all');
       }
-      await onScreenChanges(OnScreenChangesOptions(
-        changed: true,
-        parameters: parameters,
-      ));
+      await onScreenChanges(
+        OnScreenChangesOptions(
+          changed: true,
+          parameters: parameters,
+        ),
+      );
       if (islevel == '2') {
         await rePort(RePortOptions(restart: true, parameters: parameters));
       }
@@ -193,10 +199,12 @@ Future<void> breakoutRoomUpdated(BreakoutRoomUpdatedOptions options) async {
       if (meetingDisplayType != prevMeetingDisplayType) {
         updateMeetingDisplayType(prevMeetingDisplayType);
       }
-      await onScreenChanges(OnScreenChangesOptions(
-        changed: true,
-        parameters: parameters,
-      ));
+      await onScreenChanges(
+        OnScreenChangesOptions(
+          changed: true,
+          parameters: parameters,
+        ),
+      );
       if (islevel == '2') {
         await rePort(RePortOptions(restart: true, parameters: parameters));
       }
@@ -205,10 +213,12 @@ Future<void> breakoutRoomUpdated(BreakoutRoomUpdatedOptions options) async {
       breakOutRoomEnded = false;
       updateBreakOutRoomStarted(true);
       updateBreakOutRoomEnded(false);
-      await onScreenChanges(OnScreenChangesOptions(
-        changed: true,
-        parameters: parameters,
-      ));
+      await onScreenChanges(
+        OnScreenChangesOptions(
+          changed: true,
+          parameters: parameters,
+        ),
+      );
       if (islevel == '2') {
         await rePort(RePortOptions(restart: true, parameters: parameters));
       }

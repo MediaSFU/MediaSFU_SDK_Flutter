@@ -6,9 +6,7 @@ import '../../types/types.dart'
     show
         CloseAndResizeParameters,
         CloseAndResizeType,
-        PrepopulateUserMediaParameters,
         PrepopulateUserMediaType,
-        ReorderStreamsParameters,
         ReorderStreamsType,
         TransportType,
         CloseAndResizeOptions,
@@ -17,10 +15,7 @@ import '../../types/types.dart'
 
 /// Abstract class defining the parameters required for closing media of a producer.
 abstract class ProducerMediaClosedParameters
-    implements
-        CloseAndResizeParameters,
-        PrepopulateUserMediaParameters,
-        ReorderStreamsParameters {
+    implements CloseAndResizeParameters {
   // Core properties as abstract getters
   List<TransportType> get consumerTransports;
   String get hostLabel;
@@ -59,8 +54,8 @@ class ProducerMediaClosedOptions {
 }
 
 // Typedef for the closure function signature
-typedef ProducerMediaClosedType = Future<void> Function(
-    ProducerMediaClosedOptions options);
+typedef ProducerMediaClosedType =
+    Future<void> Function(ProducerMediaClosedOptions options);
 
 /// Handles the closure of a media producer's stream or screenshare.
 ///
@@ -116,7 +111,8 @@ Future<void> producerMediaClosed(
 
   // Find the transport for the producer to close
   TransportType? producerToClose = consumerTransports.firstWhereOrNull(
-      (transportData) => transportData.producerId == producerId);
+    (transportData) => transportData.producerId == producerId,
+  );
 
   if (producerToClose == null) {
     return;

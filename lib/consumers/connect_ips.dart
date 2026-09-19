@@ -18,7 +18,6 @@ import '../types/types.dart'
         ProducerClosedOptions,
         ProducerClosedParameters,
         ProducerClosedType,
-        ReorderStreamsParameters,
         ReorderStreamsType,
         ResponseJoinRoom,
         TranslationMeta;
@@ -26,7 +25,6 @@ import '../types/types.dart'
 /// Parameters interface for connecting IPs and managing socket connections.
 abstract class ConnectIpsParameters
     implements
-        ReorderStreamsParameters,
         JoinConsumeRoomParameters,
         ProducerClosedParameters,
         NewPipeProducerParameters {
@@ -80,7 +78,8 @@ String _normalizeConsumeEndpoint(String ip) =>
     ip.trim().toLowerCase().replaceFirst(RegExp(r'\.$'), '');
 
 bool _hasConsumeEndpoint(
-    List<Map<String, io.Socket>> consumeSockets, String endpoint) {
+    List<Map<String, io.Socket>> consumeSockets, String endpoint,
+) {
   return consumeSockets.any((socketMap) {
     if (socketMap.isEmpty) return false;
     return _normalizeConsumeEndpoint(socketMap.keys.first) == endpoint;
@@ -88,7 +87,8 @@ bool _hasConsumeEndpoint(
 }
 
 Future<void Function(bool)?> _reserveConsumeEndpoint(
-    List<Map<String, io.Socket>> consumeSockets, String ip) async {
+    List<Map<String, io.Socket>> consumeSockets, String ip,
+) async {
   final endpoint = _normalizeConsumeEndpoint(ip);
   if (endpoint.isEmpty || endpoint == 'none') return null;
 
@@ -186,7 +186,8 @@ Future<List<dynamic>> connectIps(ConnectIpsOptions options) async {
 
     for (final ip in options.remIP) {
       final releaseReservation =
-          await _reserveConsumeEndpoint(consumeSockets, ip);
+          await _reserveConsumeEndpoint(consumeSockets, ip,
+      );
       if (releaseReservation == null) continue;
 
       var connected = false;
@@ -226,7 +227,8 @@ Future<List<dynamic>> connectIps(ConnectIpsOptions options) async {
             TranslationMeta? translationMeta;
             if (data['translationMeta'] != null) {
               translationMeta =
-                  TranslationMeta.fromMap(data['translationMeta']);
+                  TranslationMeta.fromMap(data['translationMeta'],
+              );
             }
             final optionsNewPipeProducer = NewPipeProducerOptions(
               producerId: data['producerId'],

@@ -14,14 +14,12 @@ import '../types/types.dart'
         ReceiveAllPipedTransportsOptions,
         ReceiveAllPipedTransportsParameters,
         ReceiveAllPipedTransportsType,
-        ReorderStreamsParameters,
         ReorderStreamsType,
         TranslationMeta;
 
 /// Parameters interface for connecting local IPs and managing socket connections.
 abstract class ConnectLocalIpsParameters
     implements
-        ReorderStreamsParameters,
         ProducerClosedParameters,
         NewPipeProducerParameters,
         ReceiveAllPipedTransportsParameters {
@@ -145,7 +143,8 @@ Future<void> connectLocalIps(ConnectLocalIpsOptions options) async {
     await receiveAllPipedTransports(optionsReceive);
 
     if (kDebugMode) {
-      debugPrint('Successfully connected local IPs and set up event listeners.');
+      debugPrint('Successfully connected local IPs and set up event listeners.',
+      );
     }
   } catch (error) {
     if (kDebugMode) {

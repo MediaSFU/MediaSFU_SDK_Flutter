@@ -18,7 +18,7 @@ import '../types/types.dart'
 /// Parameters required for signaling a new consumer transport.
 /// Extends [ReorderStreamsParameters] and [ConnectRecvTransportParameters].
 abstract class SignalNewConsumerTransportParameters
-    implements ReorderStreamsParameters, ConnectRecvTransportParameters {
+    implements ConnectRecvTransportParameters {
   // Additional properties as abstract getters
   List<String> get consumingTransports;
   bool get lockScreen;
@@ -87,12 +87,14 @@ typedef SignalNewConsumerTransportType = Future<void> Function(
 /// ```
 ///
 Future<void> signalNewConsumerTransport(
-    SignalNewConsumerTransportOptions options) async {
+    SignalNewConsumerTransportOptions options,
+) async {
   var parameters = options.parameters;
   final updatedParameters = options.parameters.getUpdatedAllParams();
   Device? device = updatedParameters.device;
   List<String> consumingTransports =
-      List<String>.from(updatedParameters.consumingTransports);
+      List<String>.from(updatedParameters.consumingTransports,
+  );
   bool lockScreen = parameters.lockScreen;
 
   // Update functions
@@ -121,11 +123,13 @@ Future<void> signalNewConsumerTransport(
         "createWebRtcTransport", {"consumer": true, "islevel": options.islevel},
         ack: (response) {
       if (response['params'] == null || response['params']['error'] != null) {
-        completer.completeError(response['params']['error'] ?? 'Unknown error');
+        completer.completeError(response['params']['error'] ?? 'Unknown error',
+          );
       } else {
         completer.complete(response['params']);
       }
-    });
+    },
+    );
 
     Map<String, dynamic> webrtcTransportMap = await completer.future;
 
@@ -151,7 +155,8 @@ Future<void> signalNewConsumerTransport(
     }
 
     consumerTransport = device!.createRecvTransportFromMap(webrtcTransportMap,
-        consumerCallback: consumerCallbackFunction);
+        consumerCallback: consumerCallbackFunction,
+    );
     // Handle 'connect' event for the consumer transport
     // Note consumer id changes from serverConsumerTransportId to consumer.id -- very important
     consumerTransport.on('connect', (data) async {
@@ -225,9 +230,11 @@ Future<void> signalNewConsumerTransport(
           return;
         } else {
           consumeCompleter
-              .complete(ConsumeResponse.fromMap(response['params']));
+              .complete(ConsumeResponse.fromMap(response['params']),
+            );
         }
-      });
+      },
+      );
     } catch (error) {
       if (kDebugMode) {
         debugPrint('MediaSFU - consume error: $error');
@@ -246,7 +253,8 @@ Future<void> signalNewConsumerTransport(
         peerId: consumeParams.producerId,
         kind: RTCRtpMediaTypeExtension.fromString(consumeParams.kind),
         rtpParameters: consumeParams.rtpParameters,
-        accept: (param) {});
+        accept: (param) {},
+    );
   } catch (error) {
     if (kDebugMode) {
       debugPrint('signalNewConsumerTransport error: $error');

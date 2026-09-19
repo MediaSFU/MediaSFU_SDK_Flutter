@@ -12,7 +12,6 @@ import '../../types/types.dart'
         DisconnectSendTransportAudioType,
         Participant,
         RequestPermissionAudioType,
-        ResumeSendTransportAudioParameters,
         ResumeSendTransportAudioType,
         ShowAlert,
         StreamSuccessAudioParameters,
@@ -26,7 +25,6 @@ import '../../types/types.dart'
 abstract class ClickAudioParameters
     implements
         DisconnectSendTransportAudioParameters,
-        ResumeSendTransportAudioParameters,
         StreamSuccessAudioParameters {
   // Core properties as abstract getters
   bool get checkMediaPermission;
@@ -195,9 +193,10 @@ Future<void> clickAudio(ClickAudioOptions options) async {
 
     if (audioOnlyRoom) {
       showAlert?.call(
-          message: "You cannot turn on your camera in an audio-only event.",
-          type: "danger",
-          duration: 3000);
+        message: "You cannot turn on your camera in an audio-only event.",
+        type: "danger",
+        duration: 3000,
+      );
       return;
     }
 
@@ -208,10 +207,11 @@ Future<void> clickAudio(ClickAudioOptions options) async {
           !(recordPaused || recordStopped) &&
           recordingMediaOptions == 'audio') {
         showAlert?.call(
-            message:
-                "You cannot turn off your audio while recording, please pause or stop recording first.",
-            type: "danger",
-            duration: 3000);
+          message:
+              "You cannot turn off your audio while recording, please pause or stop recording first.",
+          type: "danger",
+          duration: 3000,
+        );
         return;
       }
 
@@ -229,10 +229,10 @@ Future<void> clickAudio(ClickAudioOptions options) async {
     } else {
       if (adminRestrictSetting) {
         showAlert?.call(
-            message:
-                "You cannot turn on your microphone. Access denied by host.",
-            type: "danger",
-            duration: 3000);
+          message: "You cannot turn on your microphone. Access denied by host.",
+          type: "danger",
+          duration: 3000,
+        );
         return;
       }
 
@@ -246,10 +246,11 @@ Future<void> clickAudio(ClickAudioOptions options) async {
         final isPanelist = panelists_.any((p) => p.name == member);
         if (!isPanelist) {
           showAlert?.call(
-              message:
-                  "You cannot turn on your microphone. Only panelists can unmute while focus mode is active.",
-              type: "danger",
-              duration: 3000);
+            message:
+                "You cannot turn on your microphone. Only panelists can unmute while focus mode is active.",
+            type: "danger",
+            duration: 3000,
+          );
           return;
         }
       }
@@ -275,10 +276,11 @@ Future<void> clickAudio(ClickAudioOptions options) async {
         case 1:
           if (audioRequestState == 'pending') {
             showAlert?.call(
-                message:
-                    "A request is pending. Please wait for the host to respond.",
-                type: "danger",
-                duration: 3000);
+              message:
+                  "A request is pending. Please wait for the host to respond.",
+              type: "danger",
+              duration: 3000,
+            );
             return;
           }
 
@@ -286,27 +288,31 @@ Future<void> clickAudio(ClickAudioOptions options) async {
               DateTime.now().millisecondsSinceEpoch - audioRequestTime! <
                   updateRequestIntervalSeconds * 1000) {
             showAlert?.call(
-                message:
-                    "A request was rejected. Please wait for $updateRequestIntervalSeconds seconds before sending another request.",
-                type: "danger",
-                duration: 3000);
+              message:
+                  "A request was rejected. Please wait for $updateRequestIntervalSeconds seconds before sending another request.",
+              type: "danger",
+              duration: 3000,
+            );
             return;
           }
 
           showAlert?.call(
-              message: "Request sent to host.",
-              type: "success",
-              duration: 3000);
+            message: "Request sent to host.",
+            type: "success",
+            duration: 3000,
+          );
           audioRequestState = 'pending';
           updateAudioRequestState(audioRequestState);
 
           final userRequest = {
             'id': socket!.id,
             'name': member,
-            'icon': 'fa-microphone'
+            'icon': 'fa-microphone',
           };
-          socket.emit('participantRequest',
-              {'userRequest': userRequest, 'roomName': roomName});
+          socket.emit('participantRequest', {
+            'userRequest': userRequest,
+            'roomName': roomName,
+          });
           break;
 
         case 2:
@@ -327,13 +333,17 @@ Future<void> clickAudio(ClickAudioOptions options) async {
               parameters: parameters,
             );
             await resumeSendTransportAudio(options: optionsResume);
-            socket!.emit("resumeProducerAudio",
-                {"mediaTag": "audio", "roomName": roomName});
+            socket!.emit("resumeProducerAudio", {
+              "mediaTag": "audio",
+              "roomName": roomName,
+            });
 
             try {
               if (localSocket != null && localSocket.id != null) {
-                localSocket.emit("resumeProducerAudio",
-                    {"mediaTag": "audio", "roomName": roomName});
+                localSocket.emit("resumeProducerAudio", {
+                  "mediaTag": "audio",
+                  "roomName": roomName,
+                });
               }
             } catch (e) {
               if (kDebugMode) {
@@ -366,10 +376,11 @@ Future<void> clickAudio(ClickAudioOptions options) async {
                 bool statusMic = await requestPermissionAudio();
                 if (statusMic != true) {
                   showAlert?.call(
-                      message:
-                          "Allow access to your microphone or check if your microphone is not being used by another application.",
-                      type: "danger",
-                      duration: 3000);
+                    message:
+                        "Allow access to your microphone or check if your microphone is not being used by another application.",
+                    type: "danger",
+                    duration: 3000,
+                  );
                   return;
                 }
               }
@@ -378,13 +389,14 @@ Future<void> clickAudio(ClickAudioOptions options) async {
             final mediaConstraints = userDefaultAudioInputDevice.isNotEmpty
                 ? {
                     'audio': {'deviceId': userDefaultAudioInputDevice},
-                    'video': false
+                    'video': false,
                   }
                 : {'audio': true, 'video': false};
 
             try {
-              final stream =
-                  await navigator.mediaDevices.getUserMedia(mediaConstraints);
+              final stream = await navigator.mediaDevices.getUserMedia(
+                mediaConstraints,
+              );
               final optionsStream = StreamSuccessAudioOptions(
                 parameters: parameters,
                 stream: stream,
@@ -393,10 +405,11 @@ Future<void> clickAudio(ClickAudioOptions options) async {
               await streamSuccessAudio(optionsStream);
             } catch (error) {
               showAlert?.call(
-                  message:
-                      "Allow access to your microphone or check if your microphone is not being used by another application.",
-                  type: "danger",
-                  duration: 3000);
+                message:
+                    "Allow access to your microphone or check if your microphone is not being used by another application.",
+                type: "danger",
+                duration: 3000,
+              );
             }
           }
           break;

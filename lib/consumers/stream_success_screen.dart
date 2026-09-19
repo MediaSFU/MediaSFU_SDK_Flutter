@@ -16,11 +16,7 @@ import '../types/types.dart'
         PrepopulateUserMediaType,
         RePortType,
         CreateSendTransportParameters,
-        ConnectSendTransportScreenParameters,
-        DisconnectSendTransportScreenParameters,
         StopShareScreenParameters,
-        ReorderStreamsParameters,
-        PrepopulateUserMediaParameters,
         CreateSendTransportOptions,
         ConnectSendTransportScreenOptions,
         DisconnectSendTransportScreenOptions,
@@ -31,13 +27,7 @@ import '../types/types.dart'
         SleepOptions;
 
 abstract class StreamSuccessScreenParameters
-    implements
-        CreateSendTransportParameters,
-        ConnectSendTransportScreenParameters,
-        DisconnectSendTransportScreenParameters,
-        StopShareScreenParameters,
-        ReorderStreamsParameters,
-        PrepopulateUserMediaParameters {
+    implements CreateSendTransportParameters, StopShareScreenParameters {
   // Core properties as abstract getters
   io.Socket? get socket;
   bool get transportCreated;
@@ -59,7 +49,7 @@ abstract class StreamSuccessScreenParameters
   void Function(MediaStream? localStreamScreen) get updateLocalStreamScreen;
   void Function(bool shared) get updateShared;
   void Function(bool isScreenboardModalVisible)
-      get updateIsScreenboardModalVisible;
+  get updateIsScreenboardModalVisible;
 
   // Mediasfu functions as abstract getters
   SleepType get sleep;
@@ -89,8 +79,8 @@ class StreamSuccessScreenOptions {
   });
 }
 
-typedef StreamSuccessScreenType = Future<void> Function(
-    StreamSuccessScreenOptions options);
+typedef StreamSuccessScreenType =
+    Future<void> Function(StreamSuccessScreenOptions options);
 
 /// Handles the successful initiation and management of screen sharing, including setting up necessary transports,
 /// managing screen states, and updating the user interface accordingly.
@@ -170,8 +160,8 @@ Future<void> streamSuccessScreen(
 
   try {
     // Retrieve updated parameters
-    StreamSuccessScreenParameters updatedParameters =
-        parameters.getUpdatedAllParams();
+    StreamSuccessScreenParameters updatedParameters = parameters
+        .getUpdatedAllParams();
 
     // Destructure parameters
     io.Socket? socket = updatedParameters.socket;
@@ -199,7 +189,7 @@ Future<void> streamSuccessScreen(
         updatedParameters.updateLocalStreamScreen;
     void Function(bool shared) updateShared = updatedParameters.updateShared;
     void Function(bool isScreenboardModalVisible)
-        updateIsScreenboardModalVisible =
+    updateIsScreenboardModalVisible =
         updatedParameters.updateIsScreenboardModalVisible;
 
     // Mediasfu functions
@@ -340,7 +330,8 @@ Future<void> streamSuccessScreen(
     transportCreatedScreen = true;
     updateTransportCreatedScreen(transportCreatedScreen);
     updateTransportCreated(
-        transportCreatedScreen); // Assuming transportCreated corresponds to transportCreatedScreen
+      transportCreatedScreen,
+    ); // Assuming transportCreated corresponds to transportCreatedScreen
 
     // Handle screen annotation modal
     try {

@@ -11,8 +11,6 @@ import '../types/types.dart'
         GetVideosType,
         RePortType,
         ReorderStreamsParameters,
-        PrepopulateUserMediaParameters,
-        RePortParameters,
         ReorderStreamsOptions,
         RePortOptions,
         PrepopulateUserMediaOptions,
@@ -21,9 +19,7 @@ import '../types/types.dart'
 // Parameters Interface
 abstract class CloseAndResizeParameters
     implements
-        ReorderStreamsParameters,
-        PrepopulateUserMediaParameters,
-        RePortParameters {
+        ReorderStreamsParameters{
   List<Stream> get allAudioStreams;
   List<Stream> get allVideoStreams;
   List<String> get activeNames;
@@ -269,7 +265,8 @@ Future<void> closeAndResize(CloseAndResizeOptions options) async {
       activeNames.removeWhere((name) {
         var participant = streamNames.firstWhere(
             (obj) => obj.producerId == options.producerId,
-            orElse: () => Stream(producerId: '', name: ''));
+            orElse: () => Stream(producerId: '', name: ''),
+        );
         return name == participant.name;
       });
       updateActiveNames(activeNames);

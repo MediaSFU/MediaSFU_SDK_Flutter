@@ -6,7 +6,6 @@ import '../types/types.dart'
         Participant,
         ShowAlert,
         CreateSendTransportParameters,
-        ConnectSendTransportAudioParameters,
         PrepopulateUserMediaType,
         CreateSendTransportType,
         ConnectSendTransportAudioType,
@@ -19,9 +18,7 @@ import '../types/types.dart'
 
 /// StreamSuccessAudioParameters class equivalent to your TypeScript interface
 abstract class StreamSuccessAudioParameters
-    implements
-        ConnectSendTransportAudioParameters,
-        CreateSendTransportParameters {
+    implements CreateSendTransportParameters {
   // Core properties as abstract getters
   io.Socket? get socket;
   List<Participant> get participants;
@@ -56,7 +53,7 @@ abstract class StreamSuccessAudioParameters
   void Function(MediaStream? localStreamAudio) get updateLocalStreamAudio;
   void Function(String defAudioID) get updateDefAudioID;
   void Function(String userDefaultAudioInputDevice)
-      get updateUserDefaultAudioInputDevice;
+  get updateUserDefaultAudioInputDevice;
   void Function(bool updateMainWindow) get updateUpdateMainWindow;
 
   // Mediasfu functions as abstract getters
@@ -86,8 +83,8 @@ class StreamSuccessAudioOptions {
   });
 }
 
-typedef StreamSuccessAudioType = Future<void> Function(
-    StreamSuccessAudioOptions options);
+typedef StreamSuccessAudioType =
+    Future<void> Function(StreamSuccessAudioOptions options);
 
 /// Manages the setup and successful transition of audio streaming by configuring necessary transports,
 /// updating audio settings, and updating UI state as required.
@@ -210,7 +207,7 @@ Future<void> streamSuccessAudio(
     void Function(String defAudioID) updateDefAudioID =
         parameters.updateDefAudioID;
     void Function(String userDefaultAudioInputDevice)
-        updateUserDefaultAudioInputDevice =
+    updateUserDefaultAudioInputDevice =
         parameters.updateUserDefaultAudioInputDevice;
     void Function(bool updateMainWindow) updateUpdateMainWindow =
         parameters.updateUpdateMainWindow;
@@ -233,8 +230,9 @@ Future<void> streamSuccessAudio(
       localStream = localStreamAudio;
     } else {
       // Remove existing audio tracks from localStream
-      for (MediaStreamTrack track
-          in List<MediaStreamTrack>.from(localStream.getAudioTracks())) {
+      for (MediaStreamTrack track in List<MediaStreamTrack>.from(
+        localStream.getAudioTracks(),
+      )) {
         await localStream.removeTrack(track);
       }
 

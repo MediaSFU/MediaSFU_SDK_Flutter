@@ -22,12 +22,10 @@ const _screenCaptureChannel = MethodChannel('com.mediasfu/screen_capture');
 /// On Android 14+ (API 34), failing to start this service will crash the app.
 Future<void> _startAndroidForegroundService() async {
   if (kIsWeb) return;
-  try {
-    if (Platform.isAndroid) {
-      await _screenCaptureChannel.invokeMethod('startForegroundService');
-    }
-  } catch (e) {
-    // Silently handle error
+  if (Platform.isAndroid) {
+    // Do not continue into native MediaProjection without the host service.
+    // Missing host integration must be a recoverable Dart error, not a crash.
+    await _screenCaptureChannel.invokeMethod('startForegroundService');
   }
 }
 
@@ -576,7 +574,17 @@ Future<void> startShareScreen(StartShareScreenOptions options) async {
       // Android requires a foreground service to be running during screen capture.
       // This is REQUIRED on Android 10+ (API 29) and MANDATORY on Android 14+ (API 34)
       // Without this, the app will crash when trying to start MediaProjection
-      await _startAndroidForegroundService();
+      try {
+        await _startAndroidForegroundService();
+      } catch (_) {
+        updateShared(false);
+        showAlert?.call(
+          message: 'Screen sharing requires the Android host screen-capture service. Check the platform setup guide.',
+          type: 'danger',
+          duration: 5000,
+        );
+        return;
+      }
     }
     // iOS: flutter_webrtc handles ReplayKit via getDisplayMedia when
     // RTCAppGroupIdentifier + RTCScreenSharingExtension are set in Info.plist.

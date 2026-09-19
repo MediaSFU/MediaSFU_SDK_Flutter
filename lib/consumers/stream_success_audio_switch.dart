@@ -5,13 +5,11 @@ import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
 import '../types/types.dart'
     show
         ConnectSendTransportAudioOptions,
-        ConnectSendTransportAudioParameters,
         ConnectSendTransportAudioType,
         CreateSendTransportOptions,
         CreateSendTransportParameters,
         CreateSendTransportType,
         PrepopulateUserMediaOptions,
-        PrepopulateUserMediaParameters,
         PrepopulateUserMediaType,
         ProducerOptionsType,
         SleepOptions,
@@ -19,10 +17,7 @@ import '../types/types.dart'
 
 /// Represents the parameters required for StreamSuccessAudioSwitch.
 abstract class StreamSuccessAudioSwitchParameters
-    implements
-        PrepopulateUserMediaParameters,
-        CreateSendTransportParameters,
-        ConnectSendTransportAudioParameters {
+    implements CreateSendTransportParameters {
   Producer? get audioProducer;
   io.Socket? get socket;
   // Local Audio Transport and Producer
@@ -51,7 +46,7 @@ abstract class StreamSuccessAudioSwitchParameters
   void Function(ProducerOptionsType audioParams) get updateAudioParams;
   void Function(String defAudioID) get updateDefAudioID;
   void Function(String userDefaultAudioInputDevice)
-      get updateUserDefaultAudioInputDevice;
+  get updateUserDefaultAudioInputDevice;
   void Function(bool updateMainWindow) get updateUpdateMainWindow;
 
   SleepType get sleep;
@@ -83,8 +78,8 @@ class StreamSuccessAudioSwitchOptions {
 }
 
 /// Type definition for the StreamSuccessAudioSwitch function.
-typedef StreamSuccessAudioSwitchType = Future<void> Function(
-    StreamSuccessAudioSwitchOptions options);
+typedef StreamSuccessAudioSwitchType =
+    Future<void> Function(StreamSuccessAudioSwitchOptions options);
 
 /// Manages switching to a new audio stream, updating the audio producer, local streams, and UI state as necessary.
 ///
@@ -171,7 +166,8 @@ typedef StreamSuccessAudioSwitchType = Future<void> Function(
 /// - All exceptions are logged for debugging purposes.
 
 Future<void> streamSuccessAudioSwitch(
-    StreamSuccessAudioSwitchOptions options) async {
+  StreamSuccessAudioSwitchOptions options,
+) async {
   try {
     // Retrieve updated parameters
     final parameters = options.parameters.getUpdatedAllParams();
@@ -210,7 +206,7 @@ Future<void> streamSuccessAudioSwitch(
     final Function(String defAudioID) updateDefAudioID =
         parameters.updateDefAudioID;
     final Function(String userDefaultAudioInputDevice)
-        updateUserDefaultAudioInputDevice =
+    updateUserDefaultAudioInputDevice =
         parameters.updateUserDefaultAudioInputDevice;
     final Function(bool updateMainWindow) updateUpdateMainWindow =
         parameters.updateUpdateMainWindow;
@@ -261,7 +257,8 @@ Future<void> streamSuccessAudioSwitch(
       } catch (error) {
         if (kDebugMode) {
           debugPrint(
-              'Error in streamSuccessAudioSwitch localSocket pauseProducerMedia:');
+            'Error in streamSuccessAudioSwitch localSocket pauseProducerMedia:',
+          );
         }
       }
 
@@ -287,8 +284,8 @@ Future<void> streamSuccessAudioSwitch(
       // Get the new default audio device ID from the new audio track
       final MediaStreamTrack? audioTracked =
           localStream.getAudioTracks().isNotEmpty
-              ? localStream.getAudioTracks().first
-              : null;
+          ? localStream.getAudioTracks().first
+          : null;
       defAudioID = audioTracked?.getSettings()['deviceId'] ?? '';
       updateDefAudioID(defAudioID);
 
@@ -318,7 +315,8 @@ Future<void> streamSuccessAudioSwitch(
         } catch (error) {
           if (kDebugMode) {
             debugPrint(
-                'Error in streamSuccessAudioSwitch createSendTransport: $error');
+              'Error in streamSuccessAudioSwitch createSendTransport: $error',
+            );
           }
         }
       } else {
@@ -334,7 +332,8 @@ Future<void> streamSuccessAudioSwitch(
         } catch (error) {
           if (kDebugMode) {
             debugPrint(
-                'Error in streamSuccessAudioSwitch connectSendTransportAudio: $error');
+              'Error in streamSuccessAudioSwitch connectSendTransportAudio: $error',
+            );
           }
         }
       }
@@ -366,7 +365,8 @@ Future<void> streamSuccessAudioSwitch(
         } catch (error) {
           if (kDebugMode) {
             debugPrint(
-                'Error in streamSuccessAudioSwitch localSocket pauseProducerMedia:');
+              'Error in streamSuccessAudioSwitch localSocket pauseProducerMedia:',
+            );
           }
         }
       }

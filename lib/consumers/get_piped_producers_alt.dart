@@ -7,7 +7,6 @@ import 'start_consuming_translation.dart'
         StartConsumingTranslationParameters;
 import '../types/types.dart'
     show
-        SignalNewConsumerTransportParameters,
         SignalNewConsumerTransportType,
         SignalNewConsumerTransportOptions,
         TranslationMeta,
@@ -16,7 +15,6 @@ import '../types/types.dart'
 /// Parameters for signaling new consumer transport.
 abstract class GetPipedProducersAltParameters
     implements
-        SignalNewConsumerTransportParameters,
         StartConsumingTranslationParameters {
   // Properties as abstract getters
   String get member;
@@ -115,7 +113,8 @@ Future<void> getPipedProducersAlt(
               remoteProducerId = id['id'];
               if (id['translationMeta'] != null) {
                 translationMeta =
-                    TranslationMeta.fromMap(id['translationMeta']);
+                    TranslationMeta.fromMap(id['translationMeta'],
+                );
               }
             } else {
               continue;
@@ -260,7 +259,8 @@ Future<void> getPipedProducersAlt(
                 islevel: islevel,
                 parameters: parameters,
                 translationMeta: translationMeta,
-              ));
+              ),
+              );
               continue;
             }
 

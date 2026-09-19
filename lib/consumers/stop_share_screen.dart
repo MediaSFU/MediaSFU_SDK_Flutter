@@ -7,7 +7,6 @@ import '../types/types.dart'
     show
         EventType,
         DisconnectSendTransportScreenParameters,
-        PrepopulateUserMediaParameters,
         ReorderStreamsParameters,
         DisconnectSendTransportScreenType,
         PrepopulateUserMediaType,
@@ -62,7 +61,6 @@ Future<void> _stopiOSBroadcast() async {
 abstract class StopShareScreenParameters
     implements
         DisconnectSendTransportScreenParameters,
-        PrepopulateUserMediaParameters,
         ReorderStreamsParameters {
   // Inherited properties from the interfaces will be defined by the implementing class
 
@@ -120,8 +118,8 @@ class StopShareScreenOptions {
 }
 
 /// Function type definition for stopping screen sharing.
-typedef StopShareScreenType = Future<void> Function(
-    StopShareScreenOptions options);
+typedef StopShareScreenType =
+    Future<void> Function(StopShareScreenOptions options);
 
 /// Stops the screen sharing process and updates various states and UI elements accordingly.
 ///
@@ -192,8 +190,8 @@ typedef StopShareScreenType = Future<void> Function(
 
 Future<void> stopShareScreen(StopShareScreenOptions options) async {
   // Retrieve updated parameters
-  StopShareScreenParameters parameters =
-      options.parameters.getUpdatedAllParams();
+  StopShareScreenParameters parameters = options.parameters
+      .getUpdatedAllParams();
 
   // Destructure necessary properties
   bool shared = parameters.shared;
@@ -256,12 +254,13 @@ Future<void> stopShareScreen(StopShareScreenOptions options) async {
     deferReceive = false;
     updateDeferReceive(deferReceive);
     final optionsGet = GetVideosOptions(
-        participants: parameters.participants,
-        allVideoStreams: parameters.allVideoStreams,
-        oldAllStreams: parameters.oldAllStreams,
-        adminVidID: parameters.adminVidID,
-        updateAllVideoStreams: parameters.updateAllVideoStreams,
-        updateOldAllStreams: parameters.updateOldAllStreams);
+      participants: parameters.participants,
+      allVideoStreams: parameters.allVideoStreams,
+      oldAllStreams: parameters.oldAllStreams,
+      adminVidID: parameters.adminVidID,
+      updateAllVideoStreams: parameters.updateAllVideoStreams,
+      updateOldAllStreams: parameters.updateOldAllStreams,
+    );
 
     await getVideos(options: optionsGet);
   }
@@ -269,9 +268,11 @@ Future<void> stopShareScreen(StopShareScreenOptions options) async {
   // Stop all tracks in the local screen stream
   if (localStreamScreen != null) {
     try {
-      await Future.wait(localStreamScreen.getTracks().map((track) async {
-        await track.stop();
-      }));
+      await Future.wait(
+        localStreamScreen.getTracks().map((track) async {
+          await track.stop();
+        }),
+      );
       updateLocalStreamScreen(null);
     } catch (error) {
       if (kDebugMode) {
@@ -282,8 +283,9 @@ Future<void> stopShareScreen(StopShareScreenOptions options) async {
 
   // Disconnect send transport screen
   try {
-    final optionsDisconnect =
-        DisconnectSendTransportScreenOptions(parameters: parameters);
+    final optionsDisconnect = DisconnectSendTransportScreenOptions(
+      parameters: parameters,
+    );
     await disconnectSendTransportScreen(optionsDisconnect);
   } catch (error) {
     if (kDebugMode) {
@@ -308,8 +310,10 @@ Future<void> stopShareScreen(StopShareScreenOptions options) async {
 
   // Prepopulate user media
   try {
-    final optionsPrepopulate =
-        PrepopulateUserMediaOptions(name: hostLabel, parameters: parameters);
+    final optionsPrepopulate = PrepopulateUserMediaOptions(
+      name: hostLabel,
+      parameters: parameters,
+    );
     prepopulateUserMedia(optionsPrepopulate);
   } catch (error) {
     if (kDebugMode) {
@@ -319,8 +323,10 @@ Future<void> stopShareScreen(StopShareScreenOptions options) async {
 
   // Reorder streams
   try {
-    final optionsReorder =
-        ReorderStreamsOptions(screenChanged: true, parameters: parameters);
+    final optionsReorder = ReorderStreamsOptions(
+      screenChanged: true,
+      parameters: parameters,
+    );
     await reorderStreams(
       optionsReorder,
     );

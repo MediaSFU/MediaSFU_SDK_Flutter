@@ -1,3 +1,13 @@
+### 2.3.4
+
+* Reduce unnecessary startup work for headless and standard room interfaces while preserving existing parameter interfaces.
+* Initialize prebuilt UI builders only when needed. Engine-only sessions using `returnUI: false` skip the standard room UI; custom interfaces and `ModernMediasfuGenericHead` remain supported.
+* Update `flutter_webrtc` to `^1.6.2+hotfix.3`.
+* Improve example listener cleanup and remove a duplicate classic display-settings modal.
+* Complete the Android example's media permission declarations and screen-wake-lock integration. See `PLATFORM_SETUP.md` for host-app requirements.
+* Report unavailable Android screen-sharing integration without proceeding into native capture.
+* Expand lifecycle, Android configuration, and startup regression coverage.
+
 ### 2.3.3
 * **Recording controls and layout reporting**:
   - Report the room layout to the recorder as soon as a recording starts, rather than waiting for the next participant or screen change.

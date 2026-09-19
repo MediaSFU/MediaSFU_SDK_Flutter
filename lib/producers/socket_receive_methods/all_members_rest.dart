@@ -15,10 +15,8 @@ import '../../types/types.dart'
         ConsumeSocket,
         ReorderStreamsOptions,
         SleepType,
-        OnScreenChangesParameters,
         ConnectIpsParameters,
         ConnectLocalIpsParameters,
-        ReorderStreamsParameters,
         OnScreenChangesOptions,
         SleepOptions,
         ConnectIpsOptions,
@@ -37,11 +35,7 @@ typedef UpdateIPs = void Function(List<String>);
 
 /// Contains all parameters required for handling member updates and configurations in the room.
 abstract class AllMembersRestParameters
-    implements
-        OnScreenChangesParameters,
-        ConnectIpsParameters,
-        ReorderStreamsParameters,
-        ConnectLocalIpsParameters {
+    implements ConnectIpsParameters, ConnectLocalIpsParameters {
   // Core properties as abstract getters
   List<Participant> get participantsAll;
   List<Participant> get participants;
@@ -121,8 +115,8 @@ class AllMembersRestOptions {
   });
 }
 
-typedef AllMembersRestType = Future<void> Function(
-    AllMembersRestOptions options);
+typedef AllMembersRestType =
+    Future<void> Function(AllMembersRestOptions options);
 
 /// Main function to handle participant updates, settings, and server connections in the room.
 ///
@@ -246,12 +240,14 @@ Future<void> allMembersRest(
     }
 
     // Processing participants
-    participantsAll =
-        members.where((m) => !m.isBanned! && !m.isSuspended!).toList();
+    participantsAll = members
+        .where((m) => !m.isBanned! && !m.isSuspended!)
+        .toList();
     parameters.updateParticipantsAll(participantsAll);
 
-    participants =
-        members.where((m) => !m.isBanned! && !m.isSuspended!).toList();
+    participants = members
+        .where((m) => !m.isBanned! && !m.isSuspended!)
+        .toList();
     parameters.updateParticipants(participants);
 
     // Handle dispActiveNames if not empty

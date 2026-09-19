@@ -17,8 +17,7 @@ Widget myCustomPreJoinPage({
 }) {
   return Scaffold(
     appBar: AppBar(
-      title: const Text('Welcome to MediaSFU'),
-    ),
+      title: const Text('Welcome to MediaSFU')),
     body: Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -66,7 +65,8 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   // Provides access to the source parameters if not using the default UI (returnUI = false in options). See more in the guide.
   final ValueNotifier<MediasfuParameters?> sourceParameters =
-      ValueNotifier(null);
+      ValueNotifier(null,
+  );
 
   // Update function to update source parameters if not using the default UI (returnUI = false in options). See more in the guide.
   void updateSourceParameters(MediasfuParameters? parameters) {
@@ -84,7 +84,8 @@ class _MyAppState extends State<MyApp> {
   void triggerClickVideo() {
     Future.delayed(const Duration(seconds: 5), () {
       sourceParameters.value
-          ?.clickVideo(ClickVideoOptions(parameters: sourceParameters.value!));
+          ?.clickVideo(ClickVideoOptions(parameters: sourceParameters.value!),
+      );
     });
   }
 
@@ -93,10 +94,7 @@ class _MyAppState extends State<MyApp> {
     super.initState();
 
     // Attach the listener
-    sourceParameters.addListener(() {
-      _onSourceParametersChanged(sourceParameters.value);
-    });
-
+    sourceParameters.addListener(_handleSourceParametersChanged) ;
     // trigger click video after 5 seconds, uncomment to trigger
     // triggerClickVideo();
   }
@@ -105,9 +103,7 @@ class _MyAppState extends State<MyApp> {
   void dispose() {
     // Detach the listener; irrelevant if not 'returnUI = false'
     // Comment out if not using sourceParameters
-    sourceParameters.removeListener(() {
-      _onSourceParametersChanged(sourceParameters.value);
-    });
+    sourceParameters.removeListener(_handleSourceParametersChanged) ;
     sourceParameters.dispose();
     super.dispose();
   }
@@ -118,6 +114,10 @@ class _MyAppState extends State<MyApp> {
 
   /// Listener for changes in sourceParameters.
   /// Prints the updated parameters to the console whenever they change.
+  void _handleSourceParametersChanged() {
+    _onSourceParametersChanged(sourceParameters.value);
+  }
+
   void _onSourceParametersChanged(MediasfuParameters? parameters) {
     if (parameters != null) {
       // if (kDebugMode) {
@@ -208,14 +208,6 @@ class _MyAppState extends State<MyApp> {
 
     const bool returnUI =
         true; // Set to false for custom UI, true for default MediaSFU UI
-
-    // State management using ValueNotifier (can be replaced with other state management solutions)
-    final ValueNotifier<MediasfuParameters?> sourceParameters =
-        ValueNotifier(null);
-
-    // void updateSourceParameters(MediasfuParameters? data) {
-    //   sourceParameters.value = data;
-    // }
 
     // =========================================================
     //                CUSTOM ROOM FUNCTIONS (OPTIONAL)
@@ -390,8 +382,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       title: 'MediaSFU Generic',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
+        primarySwatch: Colors.blue),
       home: MediasfuGeneric(options: options),
     );
 

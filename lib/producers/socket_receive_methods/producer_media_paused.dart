@@ -6,18 +6,13 @@ import '../../types/types.dart'
         ReorderStreamsType,
         ReUpdateInterParameters,
         ReUpdateInterType,
-        ReorderStreamsParameters,
-        PrepopulateUserMediaParameters,
         PrepopulateUserMediaOptions,
         ReUpdateInterOptions,
         ReorderStreamsOptions;
 
 /// Defines the parameters required for pausing media of a producer.
 abstract class ProducerMediaPausedParameters
-    implements
-        PrepopulateUserMediaParameters,
-        ReorderStreamsParameters,
-        ReUpdateInterParameters {
+    implements ReUpdateInterParameters {
   final List<String> activeSounds;
   final String meetingDisplayType;
   final bool meetingVideoOptimized;
@@ -78,8 +73,8 @@ class ProducerMediaPausedOptions {
   });
 }
 
-typedef ProducerMediaPausedType = Future<void> Function(
-    ProducerMediaPausedOptions options);
+typedef ProducerMediaPausedType =
+    Future<void> Function(ProducerMediaPausedOptions options);
 
 /// Pauses the media for a producer based on specified parameters.
 ///
@@ -176,9 +171,16 @@ Future<void> producerMediaPaused(ProducerMediaPausedOptions options) async {
   // Update UI based on display type and video optimization settings
   if (meetingDisplayType == 'media' ||
       (meetingDisplayType == 'video' && !meetingVideoOptimized)) {
-    final participant = participants.firstWhere((p) => p.name == options.name,
-        orElse: () => Participant(
-            name: '', islevel: '', videoID: '', audioID: '', muted: false));
+    final participant = participants.firstWhere(
+      (p) => p.name == options.name,
+      orElse: () => Participant(
+        name: '',
+        islevel: '',
+        videoID: '',
+        audioID: '',
+        muted: false,
+      ),
+    );
     final hasVideo = participant.videoID.isNotEmpty;
 
     if (!hasVideo && !(shareScreenStarted || shared)) {
@@ -198,7 +200,12 @@ Future<void> producerMediaPaused(ProducerMediaPausedOptions options) async {
     final participant = participants.firstWhere(
       (p) => p.audioID == options.producerId || p.name == options.name,
       orElse: () => Participant(
-          name: '', islevel: '', videoID: '', audioID: '', muted: false),
+        name: '',
+        islevel: '',
+        videoID: '',
+        audioID: '',
+        muted: false,
+      ),
     );
 
     if (participant.name.isNotEmpty && oldSoundIds.contains(participant.name)) {

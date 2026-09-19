@@ -7,7 +7,6 @@ import '../types/types.dart'
         StopShareScreenType,
         RequestScreenShareType,
         StopShareScreenOptions,
-        StopShareScreenParameters,
         RequestScreenShareOptions,
         RequestScreenShareParameters;
 
@@ -16,7 +15,7 @@ import '../types/types.dart'
 /// Contains properties to track the screen share state, alert functions, whiteboard and breakout room status,
 /// and functions to start or stop screen sharing.
 abstract class CheckScreenShareParameters
-    implements StopShareScreenParameters, RequestScreenShareParameters {
+    implements RequestScreenShareParameters {
   bool get shared;
   bool get whiteboardStarted;
   bool get whiteboardEnded;

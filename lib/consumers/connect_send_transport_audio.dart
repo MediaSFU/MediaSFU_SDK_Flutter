@@ -7,7 +7,6 @@ import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart'
 import '../types/types.dart'
     show
         Participant,
-        PrepopulateUserMediaParameters,
         ShowAlert,
         ResumeSendTransportAudioParameters,
         PrepopulateUserMediaType,
@@ -16,8 +15,7 @@ import '../types/types.dart'
 
 abstract class ConnectSendTransportAudioParameters
     implements
-        ResumeSendTransportAudioParameters,
-        PrepopulateUserMediaParameters {
+        ResumeSendTransportAudioParameters{
   io.Socket? get socket;
   List<Participant> get participants;
   MediaStream? get localStream;
@@ -78,7 +76,8 @@ class ConnectSendTransportAudioOptions {
       {required this.stream,
       required this.parameters,
       this.audioConstraints,
-      this.targetOption = 'all'});
+      this.targetOption = 'all',
+  });
 }
 
 typedef ConnectSendTransportAudioType = Future<void> Function(
@@ -100,7 +99,8 @@ typedef ConnectSendTransportAudioType = Future<void> Function(
 /// });
 /// ```
 void updateMicLevel(
-    Producer? audioProducer, void Function(double level) updateAudioLevel) {
+    Producer? audioProducer, void Function(double level) updateAudioLevel,
+) {
   if (audioProducer == null) {
     return;
   }
@@ -148,7 +148,8 @@ Future<void> connectLocalSendTransportAudio({
       // Update local audio producer and transport
       if (parameters.updateLocalProducerTransport != null) {
         parameters
-            .updateLocalProducerTransport!(parameters.localProducerTransport!);
+            .updateLocalProducerTransport!(parameters.localProducerTransport!,
+        );
       }
     }
   } catch (error) {
@@ -202,7 +203,8 @@ Future<void> connectLocalSendTransportAudio({
 /// - Logs errors to the console if `showAlert` is available in debug mode.
 
 Future<void> connectSendTransportAudio(
-    ConnectSendTransportAudioOptions options) async {
+    ConnectSendTransportAudioOptions options,
+) async {
   try {
     final audioConstraints = options.audioConstraints;
     MediaStream stream = options.stream;
@@ -231,7 +233,8 @@ Future<void> connectSendTransportAudio(
     }
 
     stream = await navigator.mediaDevices
-        .getUserMedia(audioConstraints ?? {'audio': true});
+        .getUserMedia(audioConstraints ?? {'audio': true},
+    );
 
     parameters.updateLocalStreamAudio(stream);
 
@@ -266,7 +269,8 @@ Future<void> connectSendTransportAudio(
     if (parameters.audioProducer == null) {
       Future.delayed(const Duration(seconds: 1), () {
         updateMicLevel(parameters.getUpdatedAllParams().audioProducer,
-            parameters.updateAudioLevel);
+            parameters.updateAudioLevel,
+        );
       });
     } else {
       updateMicLevel(parameters.audioProducer, parameters.updateAudioLevel);
@@ -291,11 +295,13 @@ Future<void> connectSendTransportAudio(
             Future.delayed(const Duration(seconds: 1), () {
               updateMicLevel(
                   parameters.getUpdatedAllParams().localAudioProducer,
-                  parameters.updateAudioLevel);
+                  parameters.updateAudioLevel,
+              );
             });
           } else {
             updateMicLevel(
-                parameters.localAudioProducer, parameters.updateAudioLevel);
+                parameters.localAudioProducer, parameters.updateAudioLevel,
+            );
           }
         }
       } catch (error) {

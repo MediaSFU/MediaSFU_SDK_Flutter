@@ -4,6 +4,8 @@
 # Build outputs
 build/
 example/build/
+.dart_tool/
+example/lib/device_staging_smoke.dart
 
 # Generated documentation (too large for pub.dev, available on GitHub)
 doc/

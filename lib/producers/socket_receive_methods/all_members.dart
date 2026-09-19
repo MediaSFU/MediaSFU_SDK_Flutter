@@ -6,11 +6,9 @@ import '../../types/types.dart'
         Participant,
         Request,
         ReorderStreamsType,
-        ReorderStreamsParameters,
         SleepType,
         ConnectIpsParameters,
         ConnectLocalIpsParameters,
-        OnScreenChangesParameters,
         OnScreenChangesType,
         ConnectIpsType,
         ConnectLocalIpsType,
@@ -37,11 +35,7 @@ typedef UpdateParticipantsAll = void Function(List<Participant>);
 
 /// Defines parameters for managing all members.
 abstract class AllMembersParameters
-    implements
-        OnScreenChangesParameters,
-        ConnectIpsParameters,
-        ReorderStreamsParameters,
-        ConnectLocalIpsParameters {
+    implements ConnectIpsParameters, ConnectLocalIpsParameters {
   // Core properties as abstract getters
   List<Participant> get participantsAll;
   List<Participant> get participants;
@@ -214,19 +208,23 @@ Future<void> allMembers(AllMembersOptions options) async {
 
   params.updateParticipantsAll(
     options.members
-        .map((member) => Participant(
+        .map(
+          (member) => Participant(
             name: member.name,
             isBanned: member.isBanned,
             isSuspended: member.isSuspended,
             audioID: member.audioID,
-            videoID: member.videoID))
+            videoID: member.videoID,
+          ),
+        )
         .toList(),
   );
 
   params.updateParticipants(
     options.members
-        .where((participant) =>
-            !participant.isBanned! && !participant.isSuspended!)
+        .where(
+          (participant) => !participant.isBanned! && !participant.isSuspended!,
+        )
         .toList(),
   );
 
@@ -289,7 +287,8 @@ Future<void> allMembers(AllMembersOptions options) async {
       .toList();
   params.updateRequestList(updatedRequests);
   params.updateTotalReqWait(
-      updatedRequests.length + params.waitingRoomList.length);
+    updatedRequests.length + params.waitingRoomList.length,
+  );
   params.updateCoHost(options.coHost);
   params.updateCoHostResponsibility(options.coHostRes);
 
@@ -313,7 +312,9 @@ Future<void> allMembers(AllMembersOptions options) async {
 }
 
 Future<void> _handleConnections(
-    AllMembersOptions options, AllMembersParameters params) async {
+  AllMembersOptions options,
+  AllMembersParameters params,
+) async {
   if (params.deferScreenReceived && params.screenId.isNotEmpty) {
     params.updateShareScreenStarted(true);
   }

@@ -11,14 +11,13 @@ import '../../types/types.dart'
         CheckScreenShareType,
         Participant,
         ShowAlert,
-        StopShareScreenParameters,
         StopShareScreenType,
         CheckPermissionOptions,
         CheckScreenShareOptions,
         StopShareScreenOptions;
 
 abstract class ClickScreenShareParameters
-    implements CheckScreenShareParameters, StopShareScreenParameters {
+    implements CheckScreenShareParameters {
   // Core properties as abstract getters
   ShowAlert? get showAlert;
   String get roomName;
@@ -63,14 +62,14 @@ abstract class ClickScreenShareParameters
 class ClickScreenShareOptions {
   final ClickScreenShareParameters parameters;
   final BuildContext?
-      context; // Required for desktop platforms to show screen picker
+  context; // Required for desktop platforms to show screen picker
 
   ClickScreenShareOptions({required this.parameters, this.context});
 }
 
 /// Type definition for the clickScreenShare function.
-typedef ClickScreenShareType = Future<void> Function(
-    ClickScreenShareOptions options);
+typedef ClickScreenShareType =
+    Future<void> Function(ClickScreenShareOptions options);
 
 /// Handles the action for the screen button, including starting and stopping screen sharing.
 ///
@@ -262,8 +261,10 @@ Future<void> clickScreenShare(ClickScreenShareOptions options) async {
             'name': member,
             'icon': 'fa-desktop',
           };
-          socket.emit('participantRequest',
-              {'userRequest': userRequest, 'roomName': roomName});
+          socket.emit('participantRequest', {
+            'userRequest': userRequest,
+            'roomName': roomName,
+          });
           break;
         case 2:
           // Disallow screen sharing
