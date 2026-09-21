@@ -1,5 +1,6 @@
 ### 2.3.5
 
+* Declare the validated Linux desktop platform explicitly so pub.dev displays it alongside the existing desktop and mobile targets.
 * Fix consume-socket lifecycle cleanup across room changes and reconnects.
 * Dispose failed consume-room joins instead of leaving untracked sockets alive.
 * Remove disconnected endpoint registrations so the same endpoint can reconnect without a hard refresh.

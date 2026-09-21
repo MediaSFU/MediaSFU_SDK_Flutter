@@ -9,6 +9,15 @@ environment:
   sdk: ">=3.10.0 <4.0.0"
   flutter: ">=3.38.1"
 
+# Keep pub.dev's platform badges aligned with tested SDK integrations.
+# This explicit list replaces pub.dev's inferred platform list.
+platforms:
+  android:
+  ios:
+  linux:
+  macos:
+  windows:
+
 dependencies:
   flutter:
     sdk: flutter
