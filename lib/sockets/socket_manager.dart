@@ -162,10 +162,25 @@ Future<io.Socket> connectSocket(ConnectSocketOptions options) async {
 
   final completer = Completer<io.Socket>();
   Timer? admissionTimer;
+  var settled = false;
+
+  late void Function(dynamic) handleConnectionSuccess;
+  late void Function(dynamic) handleConnectError;
+  late void Function(dynamic) handleSocketError;
+  late void Function(dynamic) handleDisconnectBeforeReady;
+
+  void cleanupAdmissionListeners() {
+    admissionTimer?.cancel();
+    socket.off('connection-success', handleConnectionSuccess);
+    socket.off('connect_error', handleConnectError);
+    socket.off('error', handleSocketError);
+    socket.off('disconnect', handleDisconnectBeforeReady);
+  }
 
   void finishWithError(String stage) {
-    if (completer.isCompleted) return;
-    admissionTimer?.cancel();
+    if (settled) return;
+    settled = true;
+    cleanupAdmissionListeners();
     socket.disconnect();
     completer.completeError(
       Exception('Media socket admission failed at $stage.'),
@@ -175,28 +190,24 @@ Future<io.Socket> connectSocket(ConnectSocketOptions options) async {
   // A raw Socket.IO connection is only transport establishment. The media
   // server emits connection-success after its credential admission finishes;
   // do not expose the socket to callers before that application-level proof.
-  socket.onConnect((_) {
-  });
-
-  socket.on('connection-success', (_) {
-    if (!completer.isCompleted) {
-      admissionTimer?.cancel();
-      completer.complete(socket);
-    }
-  });
+  handleConnectionSuccess = (_) {
+    if (settled) return;
+    settled = true;
+    cleanupAdmissionListeners();
+    completer.complete(socket);
+  };
 
   // Handle connection error
-  socket.onConnectError((_) {
-    finishWithError('transport_connect_error');
-  });
+  handleConnectError = (_) => finishWithError('transport_connect_error');
+  handleSocketError =
+      (_) => finishWithError('socket_error_before_authorization');
+  handleDisconnectBeforeReady =
+      (_) => finishWithError('disconnected_before_authorization');
 
-  socket.onError((_) {
-    finishWithError('socket_error_before_authorization');
-  });
-
-  socket.onDisconnect((_) {
-    finishWithError('disconnected_before_authorization');
-  });
+  socket.on('connection-success', handleConnectionSuccess);
+  socket.on('connect_error', handleConnectError);
+  socket.on('error', handleSocketError);
+  socket.on('disconnect', handleDisconnectBeforeReady);
 
   admissionTimer = Timer(
     const Duration(seconds: 12),

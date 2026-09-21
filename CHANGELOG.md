@@ -1,3 +1,10 @@
+### 2.3.5
+
+* Fix consume-socket lifecycle cleanup across room changes and reconnects.
+* Dispose failed consume-room joins instead of leaving untracked sockets alive.
+* Remove disconnected endpoint registrations so the same endpoint can reconnect without a hard refresh.
+* Remove admission listeners after socket success or failure and retain the 12-second admission timeout.
+
 ### 2.3.4
 
 * Reduce unnecessary startup work for headless and standard room interfaces while preserving existing parameter interfaces.

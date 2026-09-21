@@ -78,16 +78,30 @@ String _normalizeConsumeEndpoint(String ip) =>
     ip.trim().toLowerCase().replaceFirst(RegExp(r'\.$'), '');
 
 bool _hasConsumeEndpoint(
-    List<Map<String, io.Socket>> consumeSockets, String endpoint,
+  List<Map<String, io.Socket>> consumeSockets,
+  String endpoint,
 ) {
-  return consumeSockets.any((socketMap) {
-    if (socketMap.isEmpty) return false;
-    return _normalizeConsumeEndpoint(socketMap.keys.first) == endpoint;
-  });
+  for (var index = consumeSockets.length - 1; index >= 0; index--) {
+    final socketMap = consumeSockets[index];
+    if (socketMap.isEmpty) continue;
+    final ip = socketMap.keys.first;
+    if (_normalizeConsumeEndpoint(ip) != endpoint) continue;
+
+    final socket = socketMap[ip];
+    if (socket != null && socket.connected && socket.id != null) return true;
+
+    // A disconnected entry must not suppress the next room's connection.
+    socket?.clearListeners();
+    socket?.disconnect();
+    consumeSockets.removeAt(index);
+  }
+
+  return false;
 }
 
 Future<void Function(bool)?> _reserveConsumeEndpoint(
-    List<Map<String, io.Socket>> consumeSockets, String ip,
+  List<Map<String, io.Socket>> consumeSockets,
+  String ip,
 ) async {
   final endpoint = _normalizeConsumeEndpoint(ip);
   if (endpoint.isEmpty || endpoint == 'none') return null;
@@ -185,12 +199,14 @@ Future<List<dynamic>> connectIps(ConnectIpsOptions options) async {
     }
 
     for (final ip in options.remIP) {
-      final releaseReservation =
-          await _reserveConsumeEndpoint(consumeSockets, ip,
+      final releaseReservation = await _reserveConsumeEndpoint(
+        consumeSockets,
+        ip,
       );
       if (releaseReservation == null) continue;
 
       var connected = false;
+      io.Socket? remoteSock;
       try {
         // Check if the IP is already connected
         final existingSocket = consumeSockets.firstWhere(
@@ -212,28 +228,29 @@ Future<List<dynamic>> connectIps(ConnectIpsOptions options) async {
           apiToken: options.apiToken,
           link: 'https://$ip.mediasfu.com',
         );
-        io.Socket remoteSock = await connectSocket(
+        final connectedSocket = await connectSocket(
           optionsConnect,
         );
+        remoteSock = connectedSocket;
 
-        if (remoteSock.id != null && remoteSock.id!.isNotEmpty) {
+        if (connectedSocket.id != null && connectedSocket.id!.isNotEmpty) {
           if (!roomRecvIPs.contains(ip)) {
             roomRecvIPs.add(ip);
             updateRoomRecvIPs(roomRecvIPs);
           }
 
           // Event handler for 'new-pipe-producer'
-          remoteSock.on('new-pipe-producer', (data) async {
+          connectedSocket.on('new-pipe-producer', (data) async {
             TranslationMeta? translationMeta;
             if (data['translationMeta'] != null) {
-              translationMeta =
-                  TranslationMeta.fromMap(data['translationMeta'],
+              translationMeta = TranslationMeta.fromMap(
+                data['translationMeta'],
               );
             }
             final optionsNewPipeProducer = NewPipeProducerOptions(
               producerId: data['producerId'],
               islevel: data['islevel'],
-              nsock: remoteSock,
+              nsock: connectedSocket,
               parameters: parameters,
               translationMeta: translationMeta,
             );
@@ -243,7 +260,7 @@ Future<List<dynamic>> connectIps(ConnectIpsOptions options) async {
           });
 
           // Event handler for 'producer-closed'
-          remoteSock.on('producer-closed', (data) async {
+          connectedSocket.on('producer-closed', (data) async {
             final optionsProducerClosed = ProducerClosedOptions(
               remoteProducerId: data['remoteProducerId'],
               parameters: parameters,
@@ -255,7 +272,7 @@ Future<List<dynamic>> connectIps(ConnectIpsOptions options) async {
 
           // Join the consumption room if required
           final optionsJoinConsume = JoinConsumeRoomOptions(
-            remoteSock: remoteSock,
+            remoteSock: connectedSocket,
             apiToken: options.apiToken,
             apiUserName: options.apiUserName,
             parameters: parameters,
@@ -269,13 +286,28 @@ Future<List<dynamic>> connectIps(ConnectIpsOptions options) async {
             final data = ResponseJoinRoom.fromJson(dataJSON);
 
             if (data.rtpCapabilities == null) {
-              return [consumeSockets, roomRecvIPs];
+              throw StateError(
+                'Consume room $ip did not return RTP capabilities.',
+              );
             }
 
             // Add the remote socket to the consumeSockets array
-            consumeSockets.add({ip: remoteSock});
+            consumeSockets.add({ip: connectedSocket});
             updateConsumeSockets(consumeSockets);
             connected = true;
+
+            connectedSocket.onDisconnect((_) {
+              consumeSockets.removeWhere(
+                (socketMap) => identical(socketMap[ip], connectedSocket),
+              );
+              updateConsumeSockets(consumeSockets);
+
+              roomRecvIPs.remove(ip);
+              updateRoomRecvIPs(roomRecvIPs);
+
+              connectedSocket.clearListeners();
+              connectedSocket.disconnect();
+            });
           }
         }
       } catch (error) {
@@ -283,6 +315,10 @@ Future<List<dynamic>> connectIps(ConnectIpsOptions options) async {
           debugPrint('connectIps error with IP $ip: $error');
         }
       } finally {
+        if (!connected && remoteSock != null) {
+          remoteSock.clearListeners();
+          remoteSock.disconnect();
+        }
         releaseReservation(connected);
       }
     }
