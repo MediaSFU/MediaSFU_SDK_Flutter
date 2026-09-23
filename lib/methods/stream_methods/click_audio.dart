@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../consumers/audio_processing_options.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
@@ -92,9 +93,10 @@ abstract class ClickAudioParameters
 
 // Define ClickAudioOptions with parameters of type ClickAudioParameters
 class ClickAudioOptions {
+  final AudioProcessingOptions? audioProcessing;
   final ClickAudioParameters parameters;
 
-  ClickAudioOptions({required this.parameters});
+  ClickAudioOptions({required this.parameters, this.audioProcessing});
 }
 
 // Type definition for the clickAudio function
@@ -327,6 +329,11 @@ Future<void> clickAudio(ClickAudioOptions options) async {
 
         case 0:
           if (audioPaused) {
+            if (options.audioProcessing != null) {
+              await localStream!.getAudioTracks()[0].applyConstraints(
+                options.audioProcessing!.toMap(),
+              );
+            }
             localStream?.getAudioTracks()[0].enabled = true;
             updateAudioAlreadyOn(true);
             final optionsResume = ResumeSendTransportAudioOptions(
@@ -388,10 +395,10 @@ Future<void> clickAudio(ClickAudioOptions options) async {
 
             final mediaConstraints = userDefaultAudioInputDevice.isNotEmpty
                 ? {
-                    'audio': {'deviceId': userDefaultAudioInputDevice},
+                    'audio': {'deviceId': userDefaultAudioInputDevice, ...?options.audioProcessing?.toMap()},
                     'video': false,
                   }
-                : {'audio': true, 'video': false};
+                : {'audio': options.audioProcessing?.toMap() ?? true, 'video': false};
 
             try {
               final stream = await navigator.mediaDevices.getUserMedia(

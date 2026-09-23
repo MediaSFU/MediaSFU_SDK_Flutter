@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'audio_processing_options.dart';
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
 import '../types/types.dart'
     show
@@ -28,11 +29,13 @@ abstract class SwitchUserAudioParameters
 }
 
 class SwitchUserAudioOptions {
+  final AudioProcessingOptions? audioProcessing;
   final SwitchUserAudioParameters parameters;
   final String audioPreference;
   final Map<String, dynamic>? audioConstraints;
 
   SwitchUserAudioOptions({
+    this.audioProcessing,
     required this.parameters,
     required this.audioPreference,
     this.audioConstraints,
@@ -122,6 +125,7 @@ Future<void> switchUserAudio({
     // Define media constraints with the desired audio input device
     final MediaStreamConstraints mediaConstraints = MediaStreamConstraints(
       audio: {
+        ...?options.audioProcessing?.toMap(),
         'optional': [
           {
             'sourceId': audioPreference,

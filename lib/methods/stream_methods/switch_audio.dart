@@ -1,6 +1,8 @@
 import '../../types/types.dart'
     show SwitchUserAudioParameters, SwitchUserAudioType, SwitchUserAudioOptions;
 
+import '../../consumers/audio_processing_options.dart';
+
 abstract class SwitchAudioParameters implements SwitchUserAudioParameters {
   // Core properties as abstract getters
   String get defAudioID;
@@ -22,10 +24,12 @@ abstract class SwitchAudioParameters implements SwitchUserAudioParameters {
 
 /// Options for switching the audio input device.
 class SwitchAudioOptions {
+  final AudioProcessingOptions? audioProcessing;
   final String audioPreference;
   final SwitchAudioParameters parameters;
 
   SwitchAudioOptions({
+    this.audioProcessing,
     required this.audioPreference,
     required this.parameters,
   });
@@ -85,6 +89,7 @@ Future<void> switchAudio(SwitchAudioOptions options) async {
     // Perform the audio switch
     if (defAudioID.isNotEmpty) {
       final optionsSwitch = SwitchUserAudioOptions(
+        audioProcessing: options.audioProcessing,
         parameters: parameters,
         audioPreference: options.audioPreference,
       );

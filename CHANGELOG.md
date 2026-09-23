@@ -1,3 +1,9 @@
+### 2.3.6
+
+* Expose the optional `backendAudioDenoise` room-create policy and preserve it in `MeetingRoomParams` serialization. Omitting it retains the account preset; explicit `enabled: false` remains an opt-out.
+* Keep the lone side-panel video tile fully visible during screen sharing, even when cover/full-display is selected.
+* Preserve the existing consume-transport, audio-processing, and reconnect improvements included in this release candidate.
+
 ### 2.3.5
 
 * Declare the validated Linux desktop platform explicitly so pub.dev displays it alongside the existing desktop and mobile targets.

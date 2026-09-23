@@ -1,6 +1,7 @@
 // ignore_for_file: empty_catches
 
 import 'dart:async';
+import 'transport_ice_recovery.dart';
 import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
@@ -189,7 +190,11 @@ Future<void> signalNewConsumerTransport(
           // Handle connected state
           break;
 
+        case 'disconnected':
         case 'failed':
+          if (await recoverTransportIce(consumerTransport, options.nsock)) break;
+          // Another recovery listener may already have completed cleanup.
+          if (consumerTransport.closed) break;
           // Handle failed state
           await consumerTransport.close();
 

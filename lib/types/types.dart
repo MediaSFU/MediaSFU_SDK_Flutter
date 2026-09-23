@@ -281,11 +281,12 @@ export '../methods/utils/create_room_on_media_sfu.dart';
 
 export '../methods/utils/mediasfu_parameters.dart';
 
-typedef ShowAlert = void Function({
-  required String message,
-  required String type,
-  required int duration,
-});
+typedef ShowAlert =
+    void Function({
+      required String message,
+      required String type,
+      required int duration,
+    });
 
 class Participant {
   String? id;
@@ -333,43 +334,46 @@ class Participant {
   // Factory constructor to create an instance from a Map
   factory Participant.fromMap(Map<String, dynamic> map) {
     return Participant(
-      id: map['id'] as String?,
-      audioID: map['audioID'] as String,
-      videoID: map['videoID'] as String,
-      ScreenID: map['ScreenID'] as String?,
-      ScreenOn: map['ScreenOn'] as bool?,
-      islevel: map['islevel'] as String?,
-      isAdmin: map['isAdmin'] != null ? map['isAdmin'] as bool? : false,
-      isHost: map['isHost'] as bool?,
-      name: map['name'] as String,
-      muted: map['muted'] as bool?,
-      isBanned: map['isBanned'] as bool?,
-      isSuspended:
-          map['isSuspended'] != null ? map['isSuspended'] as bool? : false,
-      useBoard: map['useBoard'] as bool?,
-      breakRoom: map['breakRoom'] as int?,
-      videoOn: map['videoOn'] as bool?,
-      audioOn: map['audioOn'] as bool?,
-    ).._extraProperties.addAll(
-        map
-          ..removeWhere((key, _) => [
-                'id',
-                'audioID',
-                'videoID',
-                'ScreenID',
-                'ScreenOn',
-                'islevel',
-                'isAdmin',
-                'isHost',
-                'name',
-                'muted',
-                'isBanned',
-                'isSuspended',
-                'useBoard',
-                'breakRoom',
-                'videoOn',
-                'audioOn'
-              ].contains(key)),
+        id: map['id'] as String?,
+        audioID: map['audioID'] as String,
+        videoID: map['videoID'] as String,
+        ScreenID: map['ScreenID'] as String?,
+        ScreenOn: map['ScreenOn'] as bool?,
+        islevel: map['islevel'] as String?,
+        isAdmin: map['isAdmin'] != null ? map['isAdmin'] as bool? : false,
+        isHost: map['isHost'] as bool?,
+        name: map['name'] as String,
+        muted: map['muted'] as bool?,
+        isBanned: map['isBanned'] as bool?,
+        isSuspended: map['isSuspended'] != null
+            ? map['isSuspended'] as bool?
+            : false,
+        useBoard: map['useBoard'] as bool?,
+        breakRoom: map['breakRoom'] as int?,
+        videoOn: map['videoOn'] as bool?,
+        audioOn: map['audioOn'] as bool?,
+      )
+      .._extraProperties.addAll(
+        map..removeWhere(
+          (key, _) => [
+            'id',
+            'audioID',
+            'videoID',
+            'ScreenID',
+            'ScreenOn',
+            'islevel',
+            'isAdmin',
+            'isHost',
+            'name',
+            'muted',
+            'isBanned',
+            'isSuspended',
+            'useBoard',
+            'breakRoom',
+            'videoOn',
+            'audioOn',
+          ].contains(key),
+        ),
       );
   }
 
@@ -428,10 +432,12 @@ class Stream {
       id: map['id'] as String?,
       producerId: map['producerId'] as String? ?? '',
       muted: map['muted'] as bool?,
-      stream: map['stream']
-          as MediaStream?, // Ensure correct type or handle if conversion is needed
-      socket_: map['socket_']
-          as Socket?, // Ensure correct type or handle if conversion is needed
+      stream:
+          map['stream']
+              as MediaStream?, // Ensure correct type or handle if conversion is needed
+      socket_:
+          map['socket_']
+              as Socket?, // Ensure correct type or handle if conversion is needed
       name: map['name'] as String?,
       audioID: map['audioID'] as String?,
       videoID: map['videoID'] as String?,
@@ -463,7 +469,7 @@ class Stream {
       'socket_',
       'name',
       'audioID',
-      'videoID'
+      'videoID',
     ];
 
     return predefinedKeys.contains(key) || _extraProperties.containsKey(key);
@@ -587,8 +593,9 @@ class TransportType {
           map['consumer'] as Consumer, // Ensure Consumer parsing if needed
       socket_: map['socket_'] as Socket, // Ensure Socket parsing if needed
       serverConsumerTransportId: map['serverConsumerTransportId'] as String,
-      consumerTransport: map['consumerTransport']
-          as Transport, // Ensure Transport parsing if needed
+      consumerTransport:
+          map['consumerTransport']
+              as Transport, // Ensure Transport parsing if needed
     ).._extraProperties.addAll(map);
   }
 
@@ -788,7 +795,8 @@ class DimensionConstraints {
   factory DimensionConstraints.from(dynamic value) {
     if (value is int) {
       return DimensionConstraints(
-          ideal: value); // If it's a number, use it as `ideal`
+        ideal: value,
+      ); // If it's a number, use it as `ideal`
     } else if (value is Map<String, int?>) {
       return DimensionConstraints(
         ideal: value['ideal'],
@@ -878,7 +886,8 @@ class Message {
   factory Message.fromMap(Map<String, dynamic> map) {
     return Message(
       sender: map['sender'] != null ? map['sender'] as String : '',
-      receivers: map['receivers'] != null &&
+      receivers:
+          map['receivers'] != null &&
               map['receivers'] is List &&
               map['receivers'].isNotEmpty &&
               map['receivers'][0] != null
@@ -1032,8 +1041,9 @@ class UserRecordingParams {
     return UserRecordingParams(
       mainSpecs: MainSpecs.fromMap(map['mainSpecs']),
       dispSpecs: DispSpecs.fromMap(map['dispSpecs']),
-      textSpecs:
-          map['textSpecs'] != null ? TextSpecs.fromMap(map['textSpecs']) : null,
+      textSpecs: map['textSpecs'] != null
+          ? TextSpecs.fromMap(map['textSpecs'])
+          : null,
     );
   }
 
@@ -1103,8 +1113,8 @@ class Poll {
       votes: map['votes'] == null
           ? []
           : (map['votes'] as List)
-              .map((e) => e is int ? e : int.tryParse(e.toString()) ?? 0)
-              .toList(),
+                .map((e) => e is int ? e : int.tryParse(e.toString()) ?? 0)
+                .toList(),
       status: map['status'] != null ? map['status'] as String : 'inactive',
       voters: map['voters'] == null
           ? {}
@@ -1385,12 +1395,17 @@ class BreakoutRoomUpdatedData {
       newRoom: map['newRoom'] as int?,
       members: map['members'] != null
           ? List<Participant>.from(
-              (map['members'] as List).map((x) => Participant.fromMap(x)))
+              (map['members'] as List).map((x) => Participant.fromMap(x)),
+            )
           : null,
       breakoutRooms: map['breakoutRooms'] != null
-          ? List<List<BreakoutParticipant>>.from((map['breakoutRooms'] as List)
-              .map((x) => List<BreakoutParticipant>.from(
-                  (x as List).map((y) => BreakoutParticipant.fromMap(y)))))
+          ? List<List<BreakoutParticipant>>.from(
+              (map['breakoutRooms'] as List).map(
+                (x) => List<BreakoutParticipant>.from(
+                  (x as List).map((y) => BreakoutParticipant.fromMap(y)),
+                ),
+              ),
+            )
           : null,
       status: map['status'] as String?,
     );
@@ -1402,8 +1417,9 @@ class BreakoutRoomUpdatedData {
       'forHost': forHost,
       'newRoom': newRoom,
       'members': members?.map((x) => x.toMap()).toList(),
-      'breakoutRooms':
-          breakoutRooms?.map((x) => x.map((y) => y.toMap()).toList()).toList(),
+      'breakoutRooms': breakoutRooms
+          ?.map((x) => x.map((y) => y.toMap()).toList())
+          .toList(),
       'status': status,
     };
   }
@@ -1446,7 +1462,7 @@ class ProducerOptionsType {
       codecOptions: map['codecOptions'] != null
           ? ProducerCodecOptions(
               // Initialize fields for ProducerCodecOptions here if necessary
-              )
+            )
           : null,
       track: map['track'] as MediaStreamTrack?,
       stream: map['stream'] as MediaStream?,
@@ -1455,14 +1471,15 @@ class ProducerOptionsType {
 
     // Add extra properties excluding known fields
     instance._extraProperties.addAll(
-      Map.from(map)
-        ..removeWhere((key, _) => [
-              'encodings',
-              'codecOptions',
-              'track',
-              'stream',
-              'codec'
-            ].contains(key)),
+      Map.from(map)..removeWhere(
+        (key, _) => [
+          'encodings',
+          'codecOptions',
+          'track',
+          'stream',
+          'codec',
+        ].contains(key),
+      ),
     );
 
     return instance;
@@ -1614,11 +1631,14 @@ class WhiteboardData {
   factory WhiteboardData.fromMap(Map<String, dynamic> map) {
     return WhiteboardData(
       shapes: List<Shapes>.from(
-          (map['shapes'] as List).map((x) => Shapes.fromMap(x))),
+        (map['shapes'] as List).map((x) => Shapes.fromMap(x)),
+      ),
       redoStack: List<Shapes>.from(
-          (map['redoStack'] as List).map((x) => Shapes.fromMap(x))),
+        (map['redoStack'] as List).map((x) => Shapes.fromMap(x)),
+      ),
       undoStack: List<Shapes>.from(
-          (map['undoStack'] as List).map((x) => Shapes.fromMap(x))),
+        (map['undoStack'] as List).map((x) => Shapes.fromMap(x)),
+      ),
       useImageBackground: map['useImageBackground'] as bool,
     );
   }
@@ -1666,35 +1686,49 @@ class SeedData {
       host: map['host'] as String?,
       eventType: map['eventType'] != null
           ? EventType.values.firstWhere(
-              (e) => e.toString().split('.').last == map['eventType'])
+              (e) => e.toString().split('.').last == map['eventType'],
+            )
           : null,
       participants: map['participants'] != null
           ? List<Participant>.from(
-              (map['participants'] as List).map((x) => Participant.fromMap(x)))
+              (map['participants'] as List).map((x) => Participant.fromMap(x)),
+            )
           : null,
       messages: map['messages'] != null
           ? List<Message>.from(
-              (map['messages'] as List).map((x) => Message.fromMap(x)))
+              (map['messages'] as List).map((x) => Message.fromMap(x)),
+            )
           : null,
       polls: map['polls'] != null
           ? List<Poll>.from((map['polls'] as List).map((x) => Poll.fromMap(x)))
           : null,
       breakoutRooms: map['breakoutRooms'] != null
-          ? List<List<BreakoutParticipant>>.from((map['breakoutRooms'] as List)
-              .map((x) => List<BreakoutParticipant>.from(
-                  (x as List).map((y) => BreakoutParticipant.fromMap(y)))))
+          ? List<List<BreakoutParticipant>>.from(
+              (map['breakoutRooms'] as List).map(
+                (x) => List<BreakoutParticipant>.from(
+                  (x as List).map((y) => BreakoutParticipant.fromMap(y)),
+                ),
+              ),
+            )
           : null,
       requests: map['requests'] != null
           ? List<Request>.from(
-              (map['requests'] as List).map((x) => Request.fromMap(x)))
+              (map['requests'] as List).map((x) => Request.fromMap(x)),
+            )
           : null,
       waitingList: map['waitingList'] != null
-          ? List<WaitingRoomParticipant>.from((map['waitingList'] as List)
-              .map((x) => WaitingRoomParticipant.fromMap(x)))
+          ? List<WaitingRoomParticipant>.from(
+              (map['waitingList'] as List).map(
+                (x) => WaitingRoomParticipant.fromMap(x),
+              ),
+            )
           : null,
       whiteboardUsers: map['whiteboardUsers'] != null
-          ? List<WhiteboardUser>.from((map['whiteboardUsers'] as List)
-              .map((x) => WhiteboardUser.fromMap(x)))
+          ? List<WhiteboardUser>.from(
+              (map['whiteboardUsers'] as List).map(
+                (x) => WhiteboardUser.fromMap(x),
+              ),
+            )
           : null,
     );
   }
@@ -1708,8 +1742,9 @@ class SeedData {
       'participants': participants?.map((x) => x.toMap()).toList(),
       'messages': messages?.map((x) => x.toMap()).toList(),
       'polls': polls?.map((x) => x.toMap()).toList(),
-      'breakoutRooms':
-          breakoutRooms?.map((x) => x.map((y) => y.toMap()).toList()).toList(),
+      'breakoutRooms': breakoutRooms
+          ?.map((x) => x.map((y) => y.toMap()).toList())
+          .toList(),
       'requests': requests?.map((x) => x.toMap()).toList(),
       'waitingList': waitingList?.map((x) => x.toMap()).toList(),
       'whiteboardUsers': whiteboardUsers?.map((x) => x.toMap()).toList(),
@@ -1718,6 +1753,9 @@ class SeedData {
 }
 
 class MeetingRoomParams {
+  /// Optional server-side room audio denoising policy. Omit to use the account preset.
+  /// The backend currently accepts {enabled: true, profile: 'arnndn'} or {enabled: false}.
+  final Map<String, dynamic>? backendAudioDenoise;
   final int itemPageLimit;
   final String mediaType; // 'audio' or 'video'
   final bool addCoHost;
@@ -1732,6 +1770,7 @@ class MeetingRoomParams {
   final String chatSetting; // 'allow' or 'disallow'
 
   MeetingRoomParams({
+    this.backendAudioDenoise,
     required this.itemPageLimit,
     required this.mediaType,
     required this.addCoHost,
@@ -1749,6 +1788,9 @@ class MeetingRoomParams {
   // Factory constructor for JSON parsing
   factory MeetingRoomParams.fromJson(Map<String, dynamic> json) {
     return MeetingRoomParams(
+      backendAudioDenoise: json['backendAudioDenoise'] is Map
+          ? Map<String, dynamic>.from(json['backendAudioDenoise'] as Map)
+          : null,
       itemPageLimit: json['itemPageLimit'] as int,
       mediaType: json['mediaType'] as String,
       addCoHost: json['addCoHost'] as bool,
@@ -1767,6 +1809,8 @@ class MeetingRoomParams {
   // Convert MeetingRoomParams to a Map
   Map<String, dynamic> toMap() {
     return {
+      if (backendAudioDenoise != null)
+        'backendAudioDenoise': backendAudioDenoise,
       'itemPageLimit': itemPageLimit,
       'mediaType': mediaType,
       'addCoHost': addCoHost,
@@ -1892,6 +1936,7 @@ class RecordingParams {
 }
 
 class CreateRoomOptions {
+  final Map<String, dynamic>? backendAudioDenoise;
   final String action; // 'create' or 'join'
   final String meetingID;
   final int duration;
@@ -1914,11 +1959,12 @@ class CreateRoomOptions {
   final bool preferPCMA; // Whether to prefer PCMA codec for SIP
   final bool supportTranslation; // Whether to support translation
   final String
-      translationConfigNickName; // Nickname for translation configuration
+  translationConfigNickName; // Nickname for translation configuration
   final bool supportFlexRoom; // Whether to support flex room capacity features
   final bool supportMaxRoom; // Whether to support max room capacity features
 
   CreateRoomOptions({
+    this.backendAudioDenoise,
     required this.action,
     required this.meetingID,
     required this.duration,
@@ -1949,6 +1995,8 @@ class CreateRoomOptions {
   Map<String, dynamic> toMap() {
     return {
       'action': action,
+      if (backendAudioDenoise != null)
+        'backendAudioDenoise': backendAudioDenoise,
       'meetingID': meetingID,
       'duration': duration,
       'capacity': capacity,
@@ -1978,47 +2026,53 @@ class CreateRoomOptions {
   // Factory constructor to create an instance from a Map
   factory CreateRoomOptions.fromMap(Map<String, dynamic> map) {
     return CreateRoomOptions(
-        action: map['action'] as String,
-        meetingID: map['meetingID'] as String,
-        duration: map['duration'] as int,
-        capacity: map['capacity'] as int,
-        userName: map['userName'] as String,
-        scheduledDate: map['scheduledDate'] as int,
-        secureCode: map['secureCode'] as String,
-        eventType: EventType.values.firstWhere(
-            (e) => e.toString().split('.').last == map['eventType']),
-        recordOnly: map['recordOnly'] as bool,
-        eventStatus: map['eventStatus'] as String,
-        startIndex: map['startIndex'] as int,
-        pageSize: map['pageSize'] as int,
-        safeRoom: map['safeRoom'] as bool,
-        autoStartSafeRoom: map['autoStartSafeRoom'] as bool,
-        safeRoomAction: map['safeRoomAction'] as String,
-        dataBuffer: map['dataBuffer'] as bool,
-        bufferType: map['bufferType'] as String,
-        supportSIP: map['supportSIP'] as bool,
-        directionSIP: map['directionSIP'] as String,
-        preferPCMA: map['preferPCMA'] as bool,
-        supportTranslation: map['supportTranslation'] as bool,
-        translationConfigNickName: map['translationConfigNickName'] as String,
-        supportFlexRoom: map['supportFlexRoom'] as bool,
-        supportMaxRoom: map['supportMaxRoom'] as bool);
+      backendAudioDenoise: map['backendAudioDenoise'] == null
+          ? null
+          : Map<String, dynamic>.from(map['backendAudioDenoise'] as Map),
+      action: map['action'] as String,
+      meetingID: map['meetingID'] as String,
+      duration: map['duration'] as int,
+      capacity: map['capacity'] as int,
+      userName: map['userName'] as String,
+      scheduledDate: map['scheduledDate'] as int,
+      secureCode: map['secureCode'] as String,
+      eventType: EventType.values.firstWhere(
+        (e) => e.toString().split('.').last == map['eventType'],
+      ),
+      recordOnly: map['recordOnly'] as bool,
+      eventStatus: map['eventStatus'] as String,
+      startIndex: map['startIndex'] as int,
+      pageSize: map['pageSize'] as int,
+      safeRoom: map['safeRoom'] as bool,
+      autoStartSafeRoom: map['autoStartSafeRoom'] as bool,
+      safeRoomAction: map['safeRoomAction'] as String,
+      dataBuffer: map['dataBuffer'] as bool,
+      bufferType: map['bufferType'] as String,
+      supportSIP: map['supportSIP'] as bool,
+      directionSIP: map['directionSIP'] as String,
+      preferPCMA: map['preferPCMA'] as bool,
+      supportTranslation: map['supportTranslation'] as bool,
+      translationConfigNickName: map['translationConfigNickName'] as String,
+      supportFlexRoom: map['supportFlexRoom'] as bool,
+      supportMaxRoom: map['supportMaxRoom'] as bool,
+    );
   }
 }
 
 class CreateMediaSFURoomOptions {
+  final Map<String, dynamic>? backendAudioDenoise;
   final String action; // 'create' action
   final int duration; // Duration of the meeting in minutes
   final int capacity; // Max number of participants allowed
   final String userName; // Username of the room host
   final int?
-      scheduledDate; // Unix timestamp (in milliseconds) for the scheduled date
+  scheduledDate; // Unix timestamp (in milliseconds) for the scheduled date
   final String? secureCode; // Secure code for the room host
   final EventType? eventType; // Type of event
   final MeetingRoomParams?
-      meetingRoomParams; // Object containing parameters related to the meeting room
+  meetingRoomParams; // Object containing parameters related to the meeting room
   final RecordingParams?
-      recordingParams; // Object containing parameters related to recording
+  recordingParams; // Object containing parameters related to recording
   bool? recordOnly; // Whether the room is for media production only (egress)
   bool? safeRoom; // Whether the room is a safe room
   bool? autoStartSafeRoom; // Automatically start the safe room feature
@@ -2034,6 +2088,7 @@ class CreateMediaSFURoomOptions {
   bool? supportMaxRoom; // Whether to support max room capacity features
 
   CreateMediaSFURoomOptions({
+    this.backendAudioDenoise,
     required this.action,
     required this.duration,
     required this.capacity,
@@ -2061,6 +2116,8 @@ class CreateMediaSFURoomOptions {
   // Convert CreateMediaSFURoomOptions to a Map
   Map<String, dynamic> toMap() {
     return {
+      if (backendAudioDenoise != null)
+        'backendAudioDenoise': backendAudioDenoise,
       'action': action,
       'duration': duration,
       'capacity': capacity,
@@ -2089,56 +2146,56 @@ class CreateMediaSFURoomOptions {
   // Factory constructor to create an instance from a Map
   factory CreateMediaSFURoomOptions.fromMap(Map<String, dynamic> map) {
     return CreateMediaSFURoomOptions(
-        action: map['action'] != null ? map['action'] as String : "",
-        duration: map['duration'] != null ? map['duration'] as int : 0,
-        capacity: map['capacity'] != null ? map['capacity'] as int : 0,
-        userName: map['userName'] != null ? map['userName'] as String : "",
-        scheduledDate:
-            map['scheduledDate'] != null ? map['scheduledDate'] as int : null,
-        secureCode:
-            map['secureCode'] != null ? map['secureCode'] as String : "",
-        eventType: map['eventType'] != null
-            ? EventType.values.firstWhere(
-                (e) => e.toString().split('.').last == map['eventType'])
-            : null,
-        meetingRoomParams: map['meetingRoomParams'] != null
-            ? MeetingRoomParams.fromJson(map['meetingRoomParams'])
-            : null,
-        recordingParams: map['recordingParams'] != null
-            ? RecordingParams.fromJson(map['recordingParams'])
-            : null,
-        recordOnly:
-            map['recordOnly'] != null ? map['recordOnly'] as bool : false,
-        safeRoom: map['safeRoom'] != null ? map['safeRoom'] as bool : false,
-        autoStartSafeRoom: map['autoStartSafeRoom'] != null
-            ? map['autoStartSafeRoom'] as bool
-            : false,
-        safeRoomAction: map['safeRoomAction'] != null
-            ? map['safeRoomAction'] as String
-            : "",
-        dataBuffer:
-            map['dataBuffer'] != null ? map['dataBuffer'] as bool : false,
-        bufferType:
-            map['bufferType'] != null ? map['bufferType'] as String : "",
-        supportSIP:
-            map['supportSIP'] != null ? map['supportSIP'] as bool : false,
-        directionSIP: map['directionSIP'] != null
-            ? map['directionSIP'] as String
-            : "both",
-        preferPCMA:
-            map['preferPCMA'] != null ? map['preferPCMA'] as bool : false,
-        supportTranslation: map['supportTranslation'] != null
-            ? map['supportTranslation'] as bool
-            : false,
-        translationConfigNickName: map['translationConfigNickName'] != null
-            ? map['translationConfigNickName'] as String
-            : "",
-        supportFlexRoom: map['supportFlexRoom'] != null
-            ? map['supportFlexRoom'] as bool
-            : false,
-        supportMaxRoom: map['supportMaxRoom'] != null
-            ? map['supportMaxRoom'] as bool
-            : false);
+      backendAudioDenoise: map['backendAudioDenoise'] == null
+          ? null
+          : Map<String, dynamic>.from(map['backendAudioDenoise'] as Map),
+      action: map['action'] != null ? map['action'] as String : "",
+      duration: map['duration'] != null ? map['duration'] as int : 0,
+      capacity: map['capacity'] != null ? map['capacity'] as int : 0,
+      userName: map['userName'] != null ? map['userName'] as String : "",
+      scheduledDate: map['scheduledDate'] != null
+          ? map['scheduledDate'] as int
+          : null,
+      secureCode: map['secureCode'] != null ? map['secureCode'] as String : "",
+      eventType: map['eventType'] != null
+          ? EventType.values.firstWhere(
+              (e) => e.toString().split('.').last == map['eventType'],
+            )
+          : null,
+      meetingRoomParams: map['meetingRoomParams'] != null
+          ? MeetingRoomParams.fromJson(map['meetingRoomParams'])
+          : null,
+      recordingParams: map['recordingParams'] != null
+          ? RecordingParams.fromJson(map['recordingParams'])
+          : null,
+      recordOnly: map['recordOnly'] != null ? map['recordOnly'] as bool : false,
+      safeRoom: map['safeRoom'] != null ? map['safeRoom'] as bool : false,
+      autoStartSafeRoom: map['autoStartSafeRoom'] != null
+          ? map['autoStartSafeRoom'] as bool
+          : false,
+      safeRoomAction: map['safeRoomAction'] != null
+          ? map['safeRoomAction'] as String
+          : "",
+      dataBuffer: map['dataBuffer'] != null ? map['dataBuffer'] as bool : false,
+      bufferType: map['bufferType'] != null ? map['bufferType'] as String : "",
+      supportSIP: map['supportSIP'] != null ? map['supportSIP'] as bool : false,
+      directionSIP: map['directionSIP'] != null
+          ? map['directionSIP'] as String
+          : "both",
+      preferPCMA: map['preferPCMA'] != null ? map['preferPCMA'] as bool : false,
+      supportTranslation: map['supportTranslation'] != null
+          ? map['supportTranslation'] as bool
+          : false,
+      translationConfigNickName: map['translationConfigNickName'] != null
+          ? map['translationConfigNickName'] as String
+          : "",
+      supportFlexRoom: map['supportFlexRoom'] != null
+          ? map['supportFlexRoom'] as bool
+          : false,
+      supportMaxRoom: map['supportMaxRoom'] != null
+          ? map['supportMaxRoom'] as bool
+          : false,
+    );
   }
 }
 
@@ -2262,17 +2319,17 @@ class ResponseJoinRoom {
 
 class ResponseJoinLocalRoom {
   final RtpCapabilities?
-      rtpCapabilities; // Object containing the RTP capabilities
+  rtpCapabilities; // Object containing the RTP capabilities
   final bool? isHost; // Indicates whether the user joining the room is the host
   final bool? eventStarted; // Indicates whether the event has started
   final bool? isBanned; // Indicates whether the user is banned from the room
   final bool?
-      hostNotJoined; // Indicates whether the host has not joined the room
+  hostNotJoined; // Indicates whether the host has not joined the room
   final MeetingRoomParams?
-      eventRoomParams; // Parameters related to the meeting room
+  eventRoomParams; // Parameters related to the meeting room
   final RecordingParams? recordingParams; // Parameters related to recording
   final String?
-      secureCode; // Secure code (host password) associated with the host of the room
+  secureCode; // Secure code (host password) associated with the host of the room
   final String? mediasfuURL; // Media SFU URL
   final String? apiKey; // API key
   final String? apiUserName; // API username
@@ -2355,13 +2412,17 @@ class AllMembersData {
   factory AllMembersData.fromJson(Map<String, dynamic> json) {
     return AllMembersData(
       members: List<Participant>.from(
-          (json['members'] as List).map((x) => Participant.fromMap(x))),
+        (json['members'] as List).map((x) => Participant.fromMap(x)),
+      ),
       requests: List<Request>.from(
-          (json['requests'] as List).map((x) => Request.fromMap(x))),
+        (json['requests'] as List).map((x) => Request.fromMap(x)),
+      ),
       coHost: json['coHost'] as String?,
       coHostResponsibilities: List<CoHostResponsibility>.from(
-          (json['coHostResponsibilities'] as List)
-              .map((x) => CoHostResponsibility.fromMap(x))),
+        (json['coHostResponsibilities'] as List).map(
+          (x) => CoHostResponsibility.fromMap(x),
+        ),
+      ),
     );
   }
 
@@ -2370,8 +2431,9 @@ class AllMembersData {
       'members': members.map((x) => x.toMap()).toList(),
       'requests': requests.map((x) => x.toMap()).toList(),
       'coHost': coHost,
-      'coHostResponsibilities':
-          coHostResponsibilities.map((x) => x.toMap()).toList(),
+      'coHostResponsibilities': coHostResponsibilities
+          .map((x) => x.toMap())
+          .toList(),
     };
   }
 }
@@ -2392,12 +2454,15 @@ class AllMembersRestData {
   factory AllMembersRestData.fromJson(Map<String, dynamic> json) {
     return AllMembersRestData(
       members: List<Participant>.from(
-          (json['members'] as List).map((x) => Participant.fromMap(x))),
+        (json['members'] as List).map((x) => Participant.fromMap(x)),
+      ),
       settings: Settings.fromList(json['settings']),
       coHost: json['coHost'] as String?,
       coHostResponsibilities: List<CoHostResponsibility>.from(
-          (json['coHostResponsibilities'] as List)
-              .map((x) => CoHostResponsibility.fromMap(x))),
+        (json['coHostResponsibilities'] as List).map(
+          (x) => CoHostResponsibility.fromMap(x),
+        ),
+      ),
     );
   }
 
@@ -2406,8 +2471,9 @@ class AllMembersRestData {
       'members': members.map((x) => x.toMap()).toList(),
       'settings': settings.toMap(),
       'coHost': coHost,
-      'coHostResponsibilities':
-          coHostResponsibilities.map((x) => x.toMap()).toList(),
+      'coHostResponsibilities': coHostResponsibilities
+          .map((x) => x.toMap())
+          .toList(),
     };
   }
 }
@@ -2443,23 +2509,29 @@ class AllWaitingRoomMembersData {
     return AllWaitingRoomMembersData(
       waitingParticipants: json['waitingParticipants'] != null
           ? List<WaitingRoomParticipant>.from(
-              (json['waitingParticipants'] as List)
-                  .map((x) => WaitingRoomParticipant.fromMap(x)))
+              (json['waitingParticipants'] as List).map(
+                (x) => WaitingRoomParticipant.fromMap(x),
+              ),
+            )
           : null,
       waitingParticipantss: json['waitingParticipantss'] != null
           ? List<WaitingRoomParticipant>.from(
-              (json['waitingParticipantss'] as List)
-                  .map((x) => WaitingRoomParticipant.fromMap(x)))
+              (json['waitingParticipantss'] as List).map(
+                (x) => WaitingRoomParticipant.fromMap(x),
+              ),
+            )
           : null,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'waitingParticipants':
-          waitingParticipants?.map((x) => x.toMap()).toList(),
-      'waitingParticipantss':
-          waitingParticipantss?.map((x) => x.toMap()).toList(),
+      'waitingParticipants': waitingParticipants
+          ?.map((x) => x.toMap())
+          .toList(),
+      'waitingParticipantss': waitingParticipantss
+          ?.map((x) => x.toMap())
+          .toList(),
     };
   }
 }
@@ -2495,16 +2567,19 @@ class UpdatedCoHostData {
     return UpdatedCoHostData(
       coHost: json['coHost'] as String,
       coHostResponsibilities: List<CoHostResponsibility>.from(
-          (json['coHostResponsibilities'] as List)
-              .map((x) => CoHostResponsibility.fromMap(x))),
+        (json['coHostResponsibilities'] as List).map(
+          (x) => CoHostResponsibility.fromMap(x),
+        ),
+      ),
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
       'coHost': coHost,
-      'coHostResponsibilities':
-          coHostResponsibilities.map((x) => x.toMap()).toList(),
+      'coHostResponsibilities': coHostResponsibilities
+          .map((x) => x.toMap())
+          .toList(),
     };
   }
 }
@@ -2755,8 +2830,9 @@ class RecordingNoticeData {
   factory RecordingNoticeData.fromJson(Map<String, dynamic> json) {
     return RecordingNoticeData(
       state: json['state'] as String,
-      userRecordingParam:
-          UserRecordingParams.fromMap(json['userRecordingParam']),
+      userRecordingParam: UserRecordingParams.fromMap(
+        json['userRecordingParam'],
+      ),
       pauseCount: json['pauseCount'] as int,
       timeDone: json['timeDone'] as int,
     );
@@ -2963,10 +3039,11 @@ class WhiteboardUpdatedData {
     return WhiteboardUpdatedData(
       status: json['status'] as String,
       whiteboardUsers: List<WhiteboardUser>.from(
-          (json['whiteboardUsers'] as List)
-              .map((x) => WhiteboardUser.fromMap(x))),
+        (json['whiteboardUsers'] as List).map((x) => WhiteboardUser.fromMap(x)),
+      ),
       members: List<Participant>.from(
-          (json['members'] as List).map((x) => Participant.fromMap(x))),
+        (json['members'] as List).map((x) => Participant.fromMap(x)),
+      ),
       whiteboardData: WhiteboardData.fromMap(json['whiteboardData']),
     );
   }
@@ -3026,8 +3103,9 @@ class ConsumeResponse {
       id: map['id'] as String,
       producerId: map['producerId'] as String,
       kind: map['kind'] as String,
-      rtpParameters:
-          RtpParameters.fromMap(map['rtpParameters'] as Map<String, dynamic>),
+      rtpParameters: RtpParameters.fromMap(
+        map['rtpParameters'] as Map<String, dynamic>,
+      ),
       serverConsumerId: map['serverConsumerId'] as String,
     );
   }
@@ -3064,7 +3142,8 @@ class CreateWebRTCTransportResponse {
       id: map['id'] as String,
       dtlsParameters: DtlsParameters.fromMap(map['dtlsParameters']),
       iceCandidates: List<IceCandidate>.from(
-          (map['iceCandidates'] as List).map((x) => IceCandidate.fromMap(x))),
+        (map['iceCandidates'] as List).map((x) => IceCandidate.fromMap(x)),
+      ),
       iceParameters: IceParameters.fromMap(map['iceParameters']),
       error: map['error'] as String?,
     );
@@ -3075,7 +3154,8 @@ class CreateWebRTCTransportResponse {
       id: json['id'] as String,
       dtlsParameters: DtlsParameters.fromMap(json['dtlsParameters']),
       iceCandidates: List<IceCandidate>.from(
-          (json['iceCandidates'] as List).map((x) => IceCandidate.fromMap(x))),
+        (json['iceCandidates'] as List).map((x) => IceCandidate.fromMap(x)),
+      ),
       iceParameters: IceParameters.fromMap(json['iceParameters']),
       error: json['error'] as String?,
     );
@@ -3116,8 +3196,8 @@ class CaptureCanvasStreamOptions {
 }
 
 /// Function type for capturing the canvas stream.
-typedef CaptureCanvasStreamType = Future<void> Function(
-    CaptureCanvasStreamOptions options);
+typedef CaptureCanvasStreamType =
+    Future<void> Function(CaptureCanvasStreamOptions options);
 
 /// Parameters interface for canvas stream capture.
 ///

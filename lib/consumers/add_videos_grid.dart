@@ -34,6 +34,13 @@ import '../types/custom_builders.dart'
 typedef UpdateOtherGridStreams = void Function(List<List<Widget>>);
 typedef UpdateAddAltGrid = void Function(bool);
 
+/// A lone side-panel tile stays fully visible while a screen share is active.
+bool resolveSidePanelForceFullDisplay({
+  required bool forceFullDisplay,
+  required bool screenShareActive,
+  required int itemCount,
+}) => forceFullDisplay && !(screenShareActive && itemCount < 2);
+
 /// A derived ValueListenable that extracts a specific speaker's subtitle from the main map.
 /// This allows video cards to reactively update when their speaker's subtitle changes.
 class _SpeakerSubtitleNotifier extends ValueNotifier<LiveSubtitle?> {
@@ -75,6 +82,8 @@ abstract class AddVideosGridParameters
   bool get keepBackground;
   MediaStream? get virtualStream;
   bool get forceFullDisplay;
+  bool get shared;
+  bool get shareScreenStarted;
   bool get selfViewForceFull;
   String get member;
   List<List<Widget>> get otherGridStreams;
@@ -185,8 +194,8 @@ typedef AddVideosGridType = Future<void> Function(AddVideosGridOptions options);
 Future<void> addVideosGrid(AddVideosGridOptions options) async {
   try {
     // Retrieve updated parameters
-    AddVideosGridParameters parameters =
-        options.parameters.getUpdatedAllParams();
+    AddVideosGridParameters parameters = options.parameters
+        .getUpdatedAllParams();
 
     // Extract all necessary properties from parameters
     final eventType = parameters.eventType;
@@ -198,9 +207,17 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
     final keepBackground = parameters.keepBackground;
     final virtualStream = parameters.virtualStream;
     final forceFullDisplay = parameters.forceFullDisplay;
+    final sidePanelForceFullDisplay = resolveSidePanelForceFullDisplay(
+      forceFullDisplay: forceFullDisplay,
+      screenShareActive: parameters.shared || parameters.shareScreenStarted,
+      itemCount:
+          options.mainGridStreams.length +
+          (options.removeAltGrid ? 0 : options.altGridStreams.length),
+    );
     final member = parameters.member;
-    List<List<Widget>> otherGridStreams =
-        List.from(parameters.otherGridStreams);
+    List<List<Widget>> otherGridStreams = List.from(
+      parameters.otherGridStreams,
+    );
     final updateOtherGridStreams = parameters.updateOtherGridStreams;
     final updateMiniCardsGrid = parameters.updateMiniCardsGrid;
 
@@ -249,15 +266,17 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
 
           // Use custom AudioCard builder if available
           if (customAudioCard != null) {
-            newComponents[0].add(customAudioCard(
-              name: participant.name ?? "",
-              barColor: true, // This maps to the red color
-              textColor: Colors.white,
-              imageSource: "", // You may need to add actual image source
-              roundedImage: 1.0,
-              imageStyle: Colors.transparent,
-              parameters: parameters,
-            ));
+            newComponents[0].add(
+              customAudioCard(
+                name: participant.name ?? "",
+                barColor: true, // This maps to the red color
+                textColor: Colors.white,
+                imageSource: "", // You may need to add actual image source
+                roundedImage: 1.0,
+                imageStyle: Colors.transparent,
+                parameters: parameters,
+              ),
+            );
           } else {
             // Create per-speaker subtitle notifier for audio card
             // Try participant.id first, fall back to name for matching
@@ -268,48 +287,53 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
               liveSubtitles,
               subtitleKey,
             );
-            newComponents[0].add(ModernAudioCard(
+            newComponents[0].add(
+              ModernAudioCard(
                 options: AudioCardOptions(
-              name: participant.name ?? "",
-              barColor: Colors.red,
-              textColor: isDarkModeValue ? Colors.white : Colors.black,
-              customStyle: BoxDecoration(
-                color: Colors.transparent,
-                border: Border.all(
-                  color: eventType != EventType.broadcast
-                      ? (isDarkModeValue ? Colors.white24 : Colors.black)
-                      : Colors.transparent,
-                  width: eventType != EventType.broadcast ? 2.0 : 0.0,
+                  name: participant.name ?? "",
+                  barColor: Colors.red,
+                  textColor: isDarkModeValue ? Colors.white : Colors.black,
+                  customStyle: BoxDecoration(
+                    color: Colors.transparent,
+                    border: Border.all(
+                      color: eventType != EventType.broadcast
+                          ? (isDarkModeValue ? Colors.white24 : Colors.black)
+                          : Colors.transparent,
+                      width: eventType != EventType.broadcast ? 2.0 : 0.0,
+                    ),
+                  ),
+                  controlsPosition: 'topLeft',
+                  infoPosition: 'topRight',
+                  roundedImage: true,
+                  parameters: parameters,
+                  backgroundColor: Colors.transparent,
+                  showControls: eventType != EventType.chat,
+                  participant: actualParticipant,
+                  isDarkMode: isDarkModeValue,
+                  liveSubtitle: audioSubtitleNotifier,
+                  showSubtitles: showSubtitlesOnCards,
+                  showSubtitlesNotifier: showSubtitlesOnCardsNotifier,
                 ),
               ),
-              controlsPosition: 'topLeft',
-              infoPosition: 'topRight',
-              roundedImage: true,
-              parameters: parameters,
-              backgroundColor: Colors.transparent,
-              showControls: eventType != EventType.chat,
-              participant: actualParticipant,
-              isDarkMode: isDarkModeValue,
-              liveSubtitle: audioSubtitleNotifier,
-              showSubtitles: showSubtitlesOnCards,
-              showSubtitlesNotifier: showSubtitlesOnCardsNotifier,
-            )));
+            );
           }
         } else {
           // Use custom MiniCard builder if available
           if (customMiniCard != null) {
-            newComponents[0].add(customMiniCard(
-              initials: participant.name ?? "",
-              fontSize: "20",
-              customStyle: false,
-              name: participant.name ?? "",
-              showVideoIcon: false,
-              showAudioIcon: false,
-              imageSource: "",
-              roundedImage: 1.0,
-              imageStyle: Colors.transparent,
-              parameters: parameters,
-            ));
+            newComponents[0].add(
+              customMiniCard(
+                initials: participant.name ?? "",
+                fontSize: "20",
+                customStyle: false,
+                name: participant.name ?? "",
+                showVideoIcon: false,
+                showAudioIcon: false,
+                imageSource: "",
+                roundedImage: 1.0,
+                imageStyle: Colors.transparent,
+                parameters: parameters,
+              ),
+            );
           } else {
             newComponents[0].add(
               Container(
@@ -325,15 +349,16 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
                 ),
                 child: Center(
                   child: ModernMiniCard(
-                      options: MiniCardOptions(
-                    initials: participant.name ?? "",
-                    fontSize: 20,
-                    size: 80,
-                    isDarkMode: isDarkModeValue,
-                    roundedImage: true,
-                    showBorder: eventType != EventType.broadcast,
-                    showGradientBackground: true,
-                  )),
+                    options: MiniCardOptions(
+                      initials: participant.name ?? "",
+                      fontSize: 20,
+                      size: 80,
+                      isDarkMode: isDarkModeValue,
+                      roundedImage: true,
+                      showBorder: eventType != EventType.broadcast,
+                      showGradientBackground: true,
+                    ),
+                  ),
                 ),
               ),
             );
@@ -349,18 +374,20 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
           if (!videoAlreadyOn) {
             // Use custom MiniCard builder if available
             if (customMiniCard != null) {
-              newComponents[0].add(customMiniCard(
-                initials: name,
-                fontSize: "20",
-                customStyle: false,
-                name: name,
-                showVideoIcon: false,
-                showAudioIcon: false,
-                imageSource: "",
-                roundedImage: 1.0,
-                imageStyle: Colors.transparent,
-                parameters: parameters,
-              ));
+              newComponents[0].add(
+                customMiniCard(
+                  initials: name,
+                  fontSize: "20",
+                  customStyle: false,
+                  name: name,
+                  showVideoIcon: false,
+                  showAudioIcon: false,
+                  imageSource: "",
+                  roundedImage: 1.0,
+                  imageStyle: Colors.transparent,
+                  parameters: parameters,
+                ),
+              );
             } else {
               newComponents[0].add(
                 Container(
@@ -376,15 +403,16 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
                   ),
                   child: Center(
                     child: ModernMiniCard(
-                        options: MiniCardOptions(
-                      initials: name,
-                      fontSize: 20,
-                      size: 80,
-                      isDarkMode: isDarkModeValue,
-                      roundedImage: true,
-                      showBorder: eventType != EventType.broadcast,
-                      showGradientBackground: true,
-                    )),
+                      options: MiniCardOptions(
+                        initials: name,
+                        fontSize: 20,
+                        size: 80,
+                        isDarkMode: isDarkModeValue,
+                        roundedImage: true,
+                        showBorder: eventType != EventType.broadcast,
+                        showGradientBackground: true,
+                      ),
+                    ),
                   ),
                 ),
               );
@@ -407,56 +435,66 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
 
             // Use custom VideoCard builder if available
             if (customVideoCard != null) {
-              newComponents[0].add(customVideoCard(
-                participant: actualParticipant,
-                stream: participant,
-                width: 100.0, // You may need to calculate actual width
-                height: 100.0, // You may need to calculate actual height
-                imageSize: null,
-                doMirror: "true",
-                showControls: false,
-                showInfo: false,
-                name: participant.name ?? '',
-                backgroundColor: Colors.transparent,
-                onVideoPress: null,
-                parameters: parameters,
-              ));
+              newComponents[0].add(
+                customVideoCard(
+                  participant: actualParticipant,
+                  stream: participant,
+                  width: 100.0, // You may need to calculate actual width
+                  height: 100.0, // You may need to calculate actual height
+                  imageSize: null,
+                  doMirror: "true",
+                  showControls: false,
+                  showInfo: false,
+                  name: participant.name ?? '',
+                  backgroundColor: Colors.transparent,
+                  onVideoPress: null,
+                  parameters: parameters,
+                ),
+              );
             } else {
               // For self-view: use selfViewForceFull to override forceFullDisplay
               // If selfViewForceFull is true, show full (forceFullDisplay=false)
               // If selfViewForceFull is false, use normal forceFullDisplay
               final selfViewForceFullDisplay = parameters.selfViewForceFull
                   ? false
-                  : (eventType == EventType.webinar ? false : forceFullDisplay);
+                  : (eventType == EventType.webinar
+                        ? false
+                        : sidePanelForceFullDisplay);
 
               newComponents[0].add(
                 ModernVideoCard(
-                    options: VideoCardOptions(
-                  videoStream: participant.stream,
-                  remoteProducerId: participant.stream?.id ?? '',
-                  eventType: eventType,
-                  forceFullDisplay: selfViewForceFullDisplay,
-                  participant: actualParticipant,
-                  backgroundColor: Colors.transparent,
-                  showControls: false,
-                  showInfo: false,
-                  name: participant.name ?? '',
-                  doMirror: true,
-                  parameters: parameters,
-                  isDarkMode: isDarkModeValue,
-                  showSubtitles: showSubtitlesOnCards,
-                  showSubtitlesNotifier: showSubtitlesOnCardsNotifier,
-                  liveSubtitle: () {
-                    final subtitleKey = actualParticipant.id?.isNotEmpty == true
-                        ? actualParticipant.id!
-                        : actualParticipant.name;
-                    return _SpeakerSubtitleNotifier(liveSubtitles, subtitleKey);
-                  }(),
-                  onToggleSelfViewFit: () {
-                    parameters
-                        .updateSelfViewForceFull(!parameters.selfViewForceFull);
-                  },
-                )),
+                  options: VideoCardOptions(
+                    videoStream: participant.stream,
+                    remoteProducerId: participant.stream?.id ?? '',
+                    eventType: eventType,
+                    forceFullDisplay: selfViewForceFullDisplay,
+                    participant: actualParticipant,
+                    backgroundColor: Colors.transparent,
+                    showControls: false,
+                    showInfo: false,
+                    name: participant.name ?? '',
+                    doMirror: true,
+                    parameters: parameters,
+                    isDarkMode: isDarkModeValue,
+                    showSubtitles: showSubtitlesOnCards,
+                    showSubtitlesNotifier: showSubtitlesOnCardsNotifier,
+                    liveSubtitle: () {
+                      final subtitleKey =
+                          actualParticipant.id?.isNotEmpty == true
+                          ? actualParticipant.id!
+                          : actualParticipant.name;
+                      return _SpeakerSubtitleNotifier(
+                        liveSubtitles,
+                        subtitleKey,
+                      );
+                    }(),
+                    onToggleSelfViewFit: () {
+                      parameters.updateSelfViewForceFull(
+                        !parameters.selfViewForceFull,
+                      );
+                    },
+                  ),
+                ),
               );
             }
           }
@@ -470,45 +508,52 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
           if (participant_.name.isNotEmpty) {
             // Use custom VideoCard builder if available
             if (customVideoCard != null) {
-              newComponents[0].add(customVideoCard(
-                participant: participant_,
-                stream: participant,
-                width: 100.0, // You may need to calculate actual width
-                height: 100.0, // You may need to calculate actual height
-                imageSize: null,
-                doMirror: "false",
-                showControls: eventType != EventType.chat,
-                showInfo: true,
-                name: participant_.name,
-                backgroundColor: Colors.transparent,
-                onVideoPress: null,
-                parameters: parameters,
-              ));
-            } else {
-              newComponents[0].add(ModernVideoCard(
-                options: VideoCardOptions(
-                  videoStream: participant.stream,
-                  remoteProducerId: remoteProducerId,
-                  eventType: eventType,
-                  forceFullDisplay: forceFullDisplay,
+              newComponents[0].add(
+                customVideoCard(
                   participant: participant_,
-                  backgroundColor: Colors.transparent,
+                  stream: participant,
+                  width: 100.0, // You may need to calculate actual width
+                  height: 100.0, // You may need to calculate actual height
+                  imageSize: null,
+                  doMirror: "false",
                   showControls: eventType != EventType.chat,
                   showInfo: true,
                   name: participant_.name,
-                  doMirror: false,
+                  backgroundColor: Colors.transparent,
+                  onVideoPress: null,
                   parameters: parameters,
-                  isDarkMode: isDarkModeValue,
-                  showSubtitles: showSubtitlesOnCards,
-                  showSubtitlesNotifier: showSubtitlesOnCardsNotifier,
-                  liveSubtitle: () {
-                    final subtitleKey = participant_.id?.isNotEmpty == true
-                        ? participant_.id!
-                        : participant_.name;
-                    return _SpeakerSubtitleNotifier(liveSubtitles, subtitleKey);
-                  }(),
                 ),
-              ));
+              );
+            } else {
+              newComponents[0].add(
+                ModernVideoCard(
+                  options: VideoCardOptions(
+                    videoStream: participant.stream,
+                    remoteProducerId: remoteProducerId,
+                    eventType: eventType,
+                    forceFullDisplay: sidePanelForceFullDisplay,
+                    participant: participant_,
+                    backgroundColor: Colors.transparent,
+                    showControls: eventType != EventType.chat,
+                    showInfo: true,
+                    name: participant_.name,
+                    doMirror: false,
+                    parameters: parameters,
+                    isDarkMode: isDarkModeValue,
+                    showSubtitles: showSubtitlesOnCards,
+                    showSubtitlesNotifier: showSubtitlesOnCardsNotifier,
+                    liveSubtitle: () {
+                      final subtitleKey = participant_.id?.isNotEmpty == true
+                          ? participant_.id!
+                          : participant_.name;
+                      return _SpeakerSubtitleNotifier(
+                        liveSubtitles,
+                        subtitleKey,
+                      );
+                    }(),
+                  ),
+                ),
+              );
             }
           }
         }
@@ -518,11 +563,12 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
       if (i == numToAdd - 1) {
         otherGridStreams[0] = List<Widget>.from(newComponents[0]);
         final optionsUpdate = UpdateMiniCardsGridOptions(
-            rows: options.numRows,
-            cols: options.numCols,
-            defal: true,
-            actualRows: options.actualRows,
-            parameters: parameters);
+          rows: options.numRows,
+          cols: options.numCols,
+          defal: true,
+          actualRows: options.actualRows,
+          parameters: parameters,
+        );
         await updateMiniCardsGrid(
           optionsUpdate,
         );
@@ -553,15 +599,17 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
 
             // Use custom AudioCard builder if available
             if (customAudioCard != null) {
-              newComponents[1].add(customAudioCard(
-                name: participant.name ?? "",
-                barColor: true, // This maps to the red color
-                textColor: Colors.white,
-                imageSource: "", // You may need to add actual image source
-                roundedImage: 1.0,
-                imageStyle: Colors.transparent,
-                parameters: parameters,
-              ));
+              newComponents[1].add(
+                customAudioCard(
+                  name: participant.name ?? "",
+                  barColor: true, // This maps to the red color
+                  textColor: Colors.white,
+                  imageSource: "", // You may need to add actual image source
+                  roundedImage: 1.0,
+                  imageStyle: Colors.transparent,
+                  parameters: parameters,
+                ),
+              );
             } else {
               // Create per-speaker subtitle notifier for audio card
               final subtitleKey = actualParticipant.id?.isNotEmpty == true
@@ -573,48 +621,51 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
               );
               newComponents[1].add(
                 ModernAudioCard(
-                    options: AudioCardOptions(
-                  name: participant.name ?? "",
-                  barColor: Colors.red,
-                  textColor: isDarkModeValue ? Colors.white : Colors.black,
-                  customStyle: BoxDecoration(
-                    color: Colors.transparent,
-                    border: Border.all(
-                      color: eventType != EventType.broadcast
-                          ? (isDarkModeValue ? Colors.white24 : Colors.black)
-                          : Colors.transparent,
-                      width: eventType != EventType.broadcast ? 2.0 : 0.0,
+                  options: AudioCardOptions(
+                    name: participant.name ?? "",
+                    barColor: Colors.red,
+                    textColor: isDarkModeValue ? Colors.white : Colors.black,
+                    customStyle: BoxDecoration(
+                      color: Colors.transparent,
+                      border: Border.all(
+                        color: eventType != EventType.broadcast
+                            ? (isDarkModeValue ? Colors.white24 : Colors.black)
+                            : Colors.transparent,
+                        width: eventType != EventType.broadcast ? 2.0 : 0.0,
+                      ),
                     ),
+                    controlsPosition: 'topLeft',
+                    infoPosition: 'topRight',
+                    roundedImage: true,
+                    parameters: parameters,
+                    backgroundColor: Colors.transparent,
+                    showControls: eventType != EventType.chat,
+                    participant: actualParticipant,
+                    isDarkMode: isDarkModeValue,
+                    liveSubtitle: audioSubtitleNotifier2,
+                    showSubtitles: showSubtitlesOnCards,
+                    showSubtitlesNotifier: showSubtitlesOnCardsNotifier,
                   ),
-                  controlsPosition: 'topLeft',
-                  infoPosition: 'topRight',
-                  roundedImage: true,
-                  parameters: parameters,
-                  backgroundColor: Colors.transparent,
-                  showControls: eventType != EventType.chat,
-                  participant: actualParticipant,
-                  isDarkMode: isDarkModeValue,
-                  liveSubtitle: audioSubtitleNotifier2,
-                  showSubtitles: showSubtitlesOnCards,
-                  showSubtitlesNotifier: showSubtitlesOnCardsNotifier,
-                )),
+                ),
               );
             }
           } else {
             // Use custom MiniCard builder if available
             if (customMiniCard != null) {
-              newComponents[1].add(customMiniCard(
-                initials: participant.name ?? "",
-                fontSize: "20",
-                customStyle: false,
-                name: participant.name ?? "",
-                showVideoIcon: false,
-                showAudioIcon: false,
-                imageSource: "",
-                roundedImage: 1.0,
-                imageStyle: Colors.transparent,
-                parameters: parameters,
-              ));
+              newComponents[1].add(
+                customMiniCard(
+                  initials: participant.name ?? "",
+                  fontSize: "20",
+                  customStyle: false,
+                  name: participant.name ?? "",
+                  showVideoIcon: false,
+                  showAudioIcon: false,
+                  imageSource: "",
+                  roundedImage: 1.0,
+                  imageStyle: Colors.transparent,
+                  parameters: parameters,
+                ),
+              );
             } else {
               newComponents[1].add(
                 Container(
@@ -630,15 +681,16 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
                   ),
                   child: Center(
                     child: ModernMiniCard(
-                        options: MiniCardOptions(
-                      initials: participant.name ?? "",
-                      fontSize: 20,
-                      size: 80,
-                      isDarkMode: isDarkModeValue,
-                      roundedImage: true,
-                      showBorder: eventType != EventType.broadcast,
-                      showGradientBackground: true,
-                    )),
+                      options: MiniCardOptions(
+                        initials: participant.name ?? "",
+                        fontSize: 20,
+                        size: 80,
+                        isDarkMode: isDarkModeValue,
+                        roundedImage: true,
+                        showBorder: eventType != EventType.broadcast,
+                        showGradientBackground: true,
+                      ),
+                    ),
                   ),
                 ),
               );
@@ -654,45 +706,51 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
           if (participant_.name.isNotEmpty) {
             // Use custom VideoCard builder if available
             if (customVideoCard != null) {
-              newComponents[1].add(customVideoCard(
-                participant: participant_,
-                stream: participant,
-                width: 100.0, // You may need to calculate actual width
-                height: 100.0, // You may need to calculate actual height
-                imageSize: null,
-                doMirror: "false",
-                showControls: eventType != EventType.chat,
-                showInfo: true,
-                name: participant_.name,
-                backgroundColor: Colors.transparent,
-                onVideoPress: null,
-                parameters: parameters,
-              ));
-            } else {
               newComponents[1].add(
-                ModernVideoCard(
-                    options: VideoCardOptions(
-                  videoStream: participant.stream,
-                  remoteProducerId: remoteProducerId,
-                  eventType: eventType,
-                  forceFullDisplay: forceFullDisplay,
+                customVideoCard(
                   participant: participant_,
-                  backgroundColor: Colors.transparent,
+                  stream: participant,
+                  width: 100.0, // You may need to calculate actual width
+                  height: 100.0, // You may need to calculate actual height
+                  imageSize: null,
+                  doMirror: "false",
                   showControls: eventType != EventType.chat,
                   showInfo: true,
                   name: participant_.name,
-                  doMirror: false,
+                  backgroundColor: Colors.transparent,
+                  onVideoPress: null,
                   parameters: parameters,
-                  isDarkMode: isDarkModeValue,
-                  showSubtitles: showSubtitlesOnCards,
-                  showSubtitlesNotifier: showSubtitlesOnCardsNotifier,
-                  liveSubtitle: () {
-                    final subtitleKey = participant_.id?.isNotEmpty == true
-                        ? participant_.id!
-                        : participant_.name;
-                    return _SpeakerSubtitleNotifier(liveSubtitles, subtitleKey);
-                  }(),
-                )),
+                ),
+              );
+            } else {
+              newComponents[1].add(
+                ModernVideoCard(
+                  options: VideoCardOptions(
+                    videoStream: participant.stream,
+                    remoteProducerId: remoteProducerId,
+                    eventType: eventType,
+                    forceFullDisplay: sidePanelForceFullDisplay,
+                    participant: participant_,
+                    backgroundColor: Colors.transparent,
+                    showControls: eventType != EventType.chat,
+                    showInfo: true,
+                    name: participant_.name,
+                    doMirror: false,
+                    parameters: parameters,
+                    isDarkMode: isDarkModeValue,
+                    showSubtitles: showSubtitlesOnCards,
+                    showSubtitlesNotifier: showSubtitlesOnCardsNotifier,
+                    liveSubtitle: () {
+                      final subtitleKey = participant_.id?.isNotEmpty == true
+                          ? participant_.id!
+                          : participant_.name;
+                      return _SpeakerSubtitleNotifier(
+                        liveSubtitles,
+                        subtitleKey,
+                      );
+                    }(),
+                  ),
+                ),
               );
             }
           }
@@ -709,11 +767,12 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
           // `options.lastRowCols` was already being passed in and ignored.
           await updateMiniCardsGrid(
             UpdateMiniCardsGridOptions(
-                rows: 1,
-                cols: options.lastRowCols,
-                defal: false,
-                actualRows: options.actualRows,
-                parameters: parameters),
+              rows: 1,
+              cols: options.lastRowCols,
+              defal: false,
+              actualRows: options.actualRows,
+              parameters: parameters,
+            ),
           );
           updateOtherGridStreams(otherGridStreams);
           // Restore the main grid's own sizing; the call above wrote the alt
@@ -721,11 +780,12 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
           // left behind.
           await updateMiniCardsGrid(
             UpdateMiniCardsGridOptions(
-                rows: options.numRows,
-                cols: options.numCols,
-                defal: true,
-                actualRows: options.actualRows,
-                parameters: parameters),
+              rows: options.numRows,
+              cols: options.numCols,
+              defal: true,
+              actualRows: options.actualRows,
+              parameters: parameters,
+            ),
           );
         }
       }
@@ -735,11 +795,12 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
       otherGridStreams[1] = <Widget>[]; // Clear the alternate grid
 
       final optionsUpdate = UpdateMiniCardsGridOptions(
-          rows: 0,
-          cols: 0,
-          defal: false,
-          actualRows: options.actualRows,
-          parameters: parameters);
+        rows: 0,
+        cols: 0,
+        defal: false,
+        actualRows: options.actualRows,
+        parameters: parameters,
+      );
       await updateMiniCardsGrid(
         optionsUpdate,
       );

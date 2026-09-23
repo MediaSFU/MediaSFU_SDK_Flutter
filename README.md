@@ -474,6 +474,8 @@ See [HEADLESS_GUIDE.md](./HEADLESS_GUIDE.md) and the [cross-SDK headless guide](
 
 ## Create And Join Rooms Programmatically
 
+To request optional server-side audio denoising for a new room, set `backendAudioDenoise: {'enabled': true}` on `CreateMediaSFURoomOptions`; pass `{'enabled': false}` to opt out, or omit it to use the account preset. `arnndn` is the only supported profile. The backend checks availability and entitlement; Flutter forwards the policy unchanged.
+
 You can call the room helpers directly when your app has its own lobby, schedule screen, or invite flow.
 
 ```dart

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
+import 'transport_ice_recovery.dart';
 import 'dart:async';
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
 import '../types/types.dart'
@@ -178,11 +179,22 @@ Future<void> createLocalSendTransport(
 
         // Monitor the connection state and handle any failures
         localProducerTransport?.on('connectionstatechange', (state) async {
-          if (state == 'failed') {
+          if (state == 'failed' || state == 'disconnected') {
+            if (localProducerTransport != null && localSocket != null &&
+                await recoverTransportIce(localProducerTransport!, localSocket)) return;
             if (kDebugMode) {
               debugPrint("Local transport connection failed.");
             }
-            await localProducerTransport?.close();
+            final failedTransport = localProducerTransport;
+            if (failedTransport == null || failedTransport.closed) return;
+            await failedTransport.close();
+            if (identical(parameters.getUpdatedAllParams().localProducerTransport, failedTransport)) {
+              updateLocalProducerTransport?.call(null);
+              updateLocalTransportCreated?.call(false);
+              updateLocalAudioProducer?.call(null);
+              updateLocalVideoProducer?.call(null);
+              updateLocalScreenProducer?.call(null);
+            }
           }
         });
 
@@ -395,9 +407,24 @@ Future<void> createSendTransport(
               break;
             case 'connected':
               break;
+            case 'disconnected':
             case 'failed':
+              if (producerTransport != null && socket != null &&
+                  await recoverTransportIce(producerTransport!, socket)) break;
               if (kDebugMode) debugPrint("Transport connection failed.");
-              await producerTransport?.close();
+              final failedTransport = producerTransport;
+              if (failedTransport == null || failedTransport.closed) break;
+              await failedTransport.close();
+              if (identical(parameters.getUpdatedAllParams().producerTransport, failedTransport)) {
+                updateProducerTransport(null);
+                updateTransportCreated(false);
+                updateAudioProducer(null);
+                updateVideoProducer(null);
+                updateScreenProducer(null);
+                parameters.updateTransportCreatedAudio(false);
+                parameters.updateAudioAlreadyOn(false);
+                parameters.updateAudioLevel(0);
+              }
               break;
             default:
               break;

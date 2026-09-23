@@ -1,5 +1,6 @@
 // lib/consumers.dart
 library;
+export 'consumers/audio_processing_options.dart';
 
 export 'package:mediasfu_sdk/consumers/stream_success_video.dart'
     show streamSuccessVideo;
