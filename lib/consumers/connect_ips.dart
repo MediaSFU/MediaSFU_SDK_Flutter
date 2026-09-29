@@ -19,7 +19,6 @@ import '../types/types.dart'
         ProducerClosedParameters,
         ProducerClosedType,
         ReorderStreamsType,
-        ResponseJoinRoom,
         TranslationMeta;
 
 /// Parameters interface for connecting IPs and managing socket connections.
@@ -32,7 +31,7 @@ abstract class ConnectIpsParameters
   List<String> get roomRecvIPs;
   void Function(List<String> roomRecvIPs) get updateRoomRecvIPs;
   void Function(List<Map<String, io.Socket>> consumeSockets)
-      get updateConsumeSockets;
+  get updateConsumeSockets;
 
   // mediasfu functions
   ReorderStreamsType get reorderStreams;
@@ -65,8 +64,8 @@ class ConnectIpsOptions {
 }
 
 /// Type definition for the [connectIps] function.
-typedef ConnectIpsType = Future<List<dynamic>> Function(
-    ConnectIpsOptions options);
+typedef ConnectIpsType =
+    Future<List<dynamic>> Function(ConnectIpsOptions options);
 
 // Keep concurrent consume setup serialized per room socket collection. The
 // reservation is released after every attempt so failed connections remain
@@ -278,37 +277,39 @@ Future<List<dynamic>> connectIps(ConnectIpsOptions options) async {
             parameters: parameters,
           );
 
-          final dataJSON = await joinConsumeRoomMethod(
+          final data = await joinConsumeRoomMethod(
             optionsJoinConsume,
           );
 
-          if (dataJSON is Map<String, dynamic>) {
-            final data = ResponseJoinRoom.fromJson(dataJSON);
-
-            if (data.rtpCapabilities == null) {
-              throw StateError(
-                'Consume room $ip did not return RTP capabilities.',
-              );
-            }
-
-            // Add the remote socket to the consumeSockets array
-            consumeSockets.add({ip: connectedSocket});
-            updateConsumeSockets(consumeSockets);
-            connected = true;
-
-            connectedSocket.onDisconnect((_) {
-              consumeSockets.removeWhere(
-                (socketMap) => identical(socketMap[ip], connectedSocket),
-              );
-              updateConsumeSockets(consumeSockets);
-
-              roomRecvIPs.remove(ip);
-              updateRoomRecvIPs(roomRecvIPs);
-
-              connectedSocket.clearListeners();
-              connectedSocket.disconnect();
-            });
+          if (data.rtpCapabilities == null) {
+            throw StateError(
+              'Consume room $ip did not return RTP capabilities.',
+            );
           }
+
+          // joinConsumeRoom returns a typed ResponseJoinRoom, not its raw
+          // acknowledgment map. Keep the socket only after a valid join.
+          consumeSockets.add({ip: connectedSocket});
+          updateConsumeSockets(consumeSockets);
+          connected = true;
+          if (kDebugMode) {
+            debugPrint(
+              'Consume room $ip joined; ${consumeSockets.length} consume socket(s) retained.',
+            );
+          }
+
+          connectedSocket.onDisconnect((_) {
+            consumeSockets.removeWhere(
+              (socketMap) => identical(socketMap[ip], connectedSocket),
+            );
+            updateConsumeSockets(consumeSockets);
+
+            roomRecvIPs.remove(ip);
+            updateRoomRecvIPs(roomRecvIPs);
+
+            connectedSocket.clearListeners();
+            connectedSocket.disconnect();
+          });
         }
       } catch (error) {
         if (kDebugMode) {
@@ -318,6 +319,8 @@ Future<List<dynamic>> connectIps(ConnectIpsOptions options) async {
         if (!connected && remoteSock != null) {
           remoteSock.clearListeners();
           remoteSock.disconnect();
+          roomRecvIPs.remove(ip);
+          updateRoomRecvIPs(roomRecvIPs);
         }
         releaseReservation(connected);
       }

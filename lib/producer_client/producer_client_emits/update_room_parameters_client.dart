@@ -6,6 +6,8 @@ import '../../methods/utils/producer/video_capture_constraints.dart'
     as constraints;
 import '../../methods/utils/producer/h_params.dart' as hostParams_;
 import '../../methods/utils/producer/v_params.dart' as videoParams_;
+import '../../methods/utils/producer/room_video_params.dart'
+    show freshRoomVideoParams;
 import '../../methods/utils/producer/screen_params.dart' as screenParams_;
 import '../../methods/utils/producer/a_params.dart' as audioParams_;
 import '../../types/types.dart'
@@ -136,24 +138,24 @@ abstract class UpdateRoomParametersClientParameters {
   UpdateRecordingAudioSupport get updateRecordingAudioSupport;
   UpdateRecordingAudioPeopleLimit get updateRecordingAudioPeopleLimit;
   UpdateRecordingAudioParticipantsTimeLimit
-      get updateRecordingAudioParticipantsTimeLimit;
+  get updateRecordingAudioParticipantsTimeLimit;
   UpdateRecordingVideoPausesCount get updateRecordingVideoPausesCount;
   UpdateRecordingVideoPausesLimit get updateRecordingVideoPausesLimit;
   UpdateRecordingVideoSupport get updateRecordingVideoSupport;
   UpdateRecordingVideoPeopleLimit get updateRecordingVideoPeopleLimit;
   UpdateRecordingVideoParticipantsTimeLimit
-      get updateRecordingVideoParticipantsTimeLimit;
+  get updateRecordingVideoParticipantsTimeLimit;
   UpdateRecordingAllParticipantsSupport
-      get updateRecordingAllParticipantsSupport;
+  get updateRecordingAllParticipantsSupport;
   UpdateRecordingVideoParticipantsSupport
-      get updateRecordingVideoParticipantsSupport;
+  get updateRecordingVideoParticipantsSupport;
   UpdateRecordingAllParticipantsFullRoomSupport
-      get updateRecordingAllParticipantsFullRoomSupport;
+  get updateRecordingAllParticipantsFullRoomSupport;
   UpdateRecordingVideoParticipantsFullRoomSupport
-      get updateRecordingVideoParticipantsFullRoomSupport;
+  get updateRecordingVideoParticipantsFullRoomSupport;
   UpdateRecordingPreferredOrientation get updateRecordingPreferredOrientation;
   UpdateRecordingSupportForOtherOrientation
-      get updateRecordingSupportForOtherOrientation;
+  get updateRecordingSupportForOtherOrientation;
   UpdateRecordingMultiFormatsSupport get updateRecordingMultiFormatsSupport;
   UpdateRecordingVideoOptions get updateRecordingVideoOptions;
   UpdateRecordingAudioOptions get updateRecordingAudioOptions;
@@ -171,9 +173,10 @@ class UpdateRoomParametersClientOptions {
   });
 }
 
-typedef UpdateRoomParametersClientType = void Function(
-  UpdateRoomParametersClientOptions options,
-);
+typedef UpdateRoomParametersClientType =
+    void Function(
+      UpdateRoomParametersClientOptions options,
+    );
 
 /// Updates the room configuration parameters based on provided options.
 ///
@@ -302,51 +305,68 @@ void updateRoomParametersClient({
 
     final recordingParams = params.roomData.recordingParams;
     params.updateRecordingAudioPausesLimit(
-        recordingParams?.recordingAudioPausesLimit ?? 0);
+      recordingParams?.recordingAudioPausesLimit ?? 0,
+    );
     params.updateRecordingAudioPausesCount(
-        recordingParams?.recordingAudioPausesCount ?? 0);
+      recordingParams?.recordingAudioPausesCount ?? 0,
+    );
     params.updateRecordingAudioSupport(
-        recordingParams?.recordingAudioSupport ?? false);
+      recordingParams?.recordingAudioSupport ?? false,
+    );
     params.updateRecordingAudioPeopleLimit(
-        recordingParams?.recordingAudioPeopleLimit ?? 0);
+      recordingParams?.recordingAudioPeopleLimit ?? 0,
+    );
     params.updateRecordingAudioParticipantsTimeLimit(
-        recordingParams?.recordingAudioParticipantsTimeLimit ?? 0);
+      recordingParams?.recordingAudioParticipantsTimeLimit ?? 0,
+    );
     params.updateRecordingVideoPausesCount(
-        recordingParams?.recordingVideoPausesCount ?? 0);
+      recordingParams?.recordingVideoPausesCount ?? 0,
+    );
     params.updateRecordingVideoPausesLimit(
-        recordingParams?.recordingVideoPausesLimit ?? 0);
+      recordingParams?.recordingVideoPausesLimit ?? 0,
+    );
     params.updateRecordingVideoSupport(
-        recordingParams?.recordingVideoSupport ?? false);
+      recordingParams?.recordingVideoSupport ?? false,
+    );
     params.updateRecordingVideoPeopleLimit(
-        recordingParams?.recordingVideoPeopleLimit ?? 0);
+      recordingParams?.recordingVideoPeopleLimit ?? 0,
+    );
     params.updateRecordingVideoParticipantsTimeLimit(
-        recordingParams?.recordingVideoParticipantsTimeLimit ?? 0);
+      recordingParams?.recordingVideoParticipantsTimeLimit ?? 0,
+    );
     params.updateRecordingAllParticipantsSupport(
-        recordingParams?.recordingAllParticipantsSupport ?? false);
+      recordingParams?.recordingAllParticipantsSupport ?? false,
+    );
     params.updateRecordingVideoParticipantsSupport(
-        recordingParams?.recordingVideoParticipantsSupport ?? false);
+      recordingParams?.recordingVideoParticipantsSupport ?? false,
+    );
     params.updateRecordingAllParticipantsFullRoomSupport(
-        recordingParams?.recordingAllParticipantsFullRoomSupport ?? false);
+      recordingParams?.recordingAllParticipantsFullRoomSupport ?? false,
+    );
     params.updateRecordingVideoParticipantsFullRoomSupport(
-        recordingParams?.recordingVideoParticipantsFullRoomSupport ?? false);
+      recordingParams?.recordingVideoParticipantsFullRoomSupport ?? false,
+    );
     params.updateRecordingPreferredOrientation(
-        recordingParams?.recordingPreferredOrientation ?? '');
+      recordingParams?.recordingPreferredOrientation ?? '',
+    );
     params.updateRecordingSupportForOtherOrientation(
-        recordingParams?.recordingSupportForOtherOrientation ?? false);
+      recordingParams?.recordingSupportForOtherOrientation ?? false,
+    );
     params.updateRecordingMultiFormatsSupport(
-        recordingParams?.recordingMultiFormatsSupport ?? false);
+      recordingParams?.recordingMultiFormatsSupport ?? false,
+    );
 
     final meetingParams = params.roomData.meetingRoomParams;
     params.updateItemPageLimit(meetingParams?.itemPageLimit ?? 0);
     final eventType_ = meetingParams?.type == 'conference'
         ? EventType.conference
         : meetingParams?.type == 'webinar'
-            ? EventType.webinar
-            : meetingParams?.type == 'broadcast'
-                ? EventType.broadcast
-                : meetingParams?.type == 'chat'
-                    ? EventType.chat
-                    : EventType.conference;
+        ? EventType.webinar
+        : meetingParams?.type == 'broadcast'
+        ? EventType.broadcast
+        : meetingParams?.type == 'chat'
+        ? EventType.chat
+        : EventType.conference;
     meetingParams?.type = eventType_;
     params.updateEventType(eventType_);
     if (meetingParams?.type == EventType.chat && params.islevel != '2') {
@@ -367,8 +387,9 @@ void updateRoomParametersClient({
     }
     params.updateAudioSetting(meetingParams?.audioSetting ?? 'allow');
     params.updateVideoSetting(meetingParams?.videoSetting ?? 'allow');
-    params
-        .updateScreenshareSetting(meetingParams?.screenshareSetting ?? 'allow');
+    params.updateScreenshareSetting(
+      meetingParams?.screenshareSetting ?? 'allow',
+    );
     params.updateChatSetting(meetingParams?.chatSetting ?? 'allow');
 
     params.updateAudioOnlyRoom(meetingParams?.mediaType != 'video');
@@ -462,8 +483,10 @@ void updateRoomParametersClient({
       }
     }
 
-    final hParams = hostParams_.hParams;
-    final vParams = videoParams_.vParams;
+    // These presets are shared across rooms. Build fresh encoding lists for
+    // each join/update so HD/FHD multipliers never accumulate on later calls.
+    final hParams = freshRoomVideoParams(hostParams_.hParams);
+    final vParams = freshRoomVideoParams(videoParams_.vParams);
 
     switch (targetResolution) {
       case 'hd':
@@ -488,8 +511,9 @@ void updateRoomParametersClient({
     params.updateFrameRate(frameRate);
     params.updateHParams(hParams);
     params.updateVParams(vParams);
-    params
-        .updateScreenParams(params.screenParams ?? screenParams_.screenParams);
+    params.updateScreenParams(
+      params.screenParams ?? screenParams_.screenParams,
+    );
     params.updateAParams(params.aParams ?? audioParams_.aParams);
   } catch (error) {
     // Print the error along with the stack trace
@@ -510,7 +534,9 @@ void updateRoomParametersClient({
 
 /// Helper function to adjust bitrate for encoding configurations.
 List<RtpEncodingParameters> _updateEncodingBitrates(
-    List encodings, double factor) {
+  List encodings,
+  double factor,
+) {
   return encodings.map((encoding) {
     // If encoding is already an RtpEncodingParameters object
     if (encoding is RtpEncodingParameters) {

@@ -52,8 +52,8 @@ class JoinConsumeRoomOptions {
   });
 }
 
-typedef JoinConsumeRoomType = Future<Map<String, dynamic>> Function(
-    JoinConsumeRoomOptions options);
+typedef JoinConsumeRoomType =
+    Future<ResponseJoinRoom> Function(JoinConsumeRoomOptions options);
 
 /// Joins a consumption room, initiates a media `Device` if necessary, and sets up piped transports for streaming.
 ///
@@ -156,8 +156,9 @@ Future<ResponseJoinRoom> joinConsumeRoom(JoinConsumeRoomOptions options) async {
         final optionsDevice = CreateDeviceClientOptions(
           rtpCapabilities: data.rtpCapabilities,
         );
-        final Device? newDevice =
-            await createDeviceClient(options: optionsDevice);
+        final Device? newDevice = await createDeviceClient(
+          options: optionsDevice,
+        );
 
         // Update the device in the parameters
         parameters.updateDevice(newDevice!);
@@ -181,7 +182,8 @@ Future<ResponseJoinRoom> joinConsumeRoom(JoinConsumeRoomOptions options) async {
           await receiveAllPipedTransports(retryOptions);
         } catch (e) {
           debugPrint(
-              '[joinConsumeRoom] Retry receiveAllPipedTransports error: $e');
+            '[joinConsumeRoom] Retry receiveAllPipedTransports error: $e',
+          );
         }
       });
     }

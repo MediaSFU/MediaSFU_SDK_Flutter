@@ -1,3 +1,9 @@
+### 2.3.7
+
+* Fix remote audio/video reception when a consume-room join returns the typed `ResponseJoinRoom` response. A successful join now retains its consume socket instead of disconnecting it during cleanup.
+* Align the consume-room callback type with its actual response and clear failed endpoint registrations so retries remain possible.
+* Build room video encodings from fresh presets so repeated resolution updates cannot compound bitrate multipliers across calls or rooms.
+
 ### 2.3.6
 
 * Expose the optional `backendAudioDenoise` room-create policy and preserve it in `MeetingRoomParams` serialization. Omitting it retains the account preset; explicit `enabled: false` remains an opt-out.
