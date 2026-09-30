@@ -17,7 +17,7 @@ abstract class ConnectSendTransportVideoParameters {
   void Function(Producer? localVideoProducer)? get updateLocalVideoProducer;
   void Function(Transport? producerTransport) get updateProducerTransport;
   void Function(Transport? localProducerTransport)?
-      get updateLocalProducerTransport;
+  get updateLocalProducerTransport;
   void Function(bool updateMainWindow) get updateUpdateMainWindow;
   void Function(MediaStream? localStreamVideo) get updateLocalStreamVideo;
   void Function(MediaStream? localStream) get updateLocalStream;
@@ -40,8 +40,8 @@ class ConnectSendTransportVideoOptions {
   });
 }
 
-typedef ConnectSendTransportVideoType = Future<void> Function(
-    ConnectSendTransportVideoOptions options);
+typedef ConnectSendTransportVideoType =
+    Future<void> Function(ConnectSendTransportVideoOptions options);
 
 Future<void> connectLocalSendTransportVideo({
   required MediaStream stream,
@@ -133,7 +133,8 @@ Future<void> connectLocalSendTransportVideo({
 /// - Logs any connection errors to the console in debug mode.
 
 Future<void> connectSendTransportVideo(
-    ConnectSendTransportVideoOptions options) async {
+  ConnectSendTransportVideoOptions options,
+) async {
   final ProducerOptionsType videoParams = options.videoParams;
   final ConnectSendTransportVideoParameters parameters = options.parameters;
   final Map<String, dynamic>? videoConstraints = options.videoConstraints;
@@ -158,23 +159,26 @@ Future<void> connectSendTransportVideo(
 
     //close the existing video track
     if (localStream != null) {
-      List<MediaStreamTrack> videoTracks =
-          localStream.getVideoTracks().toList();
+      List<MediaStreamTrack> videoTracks = localStream
+          .getVideoTracks()
+          .toList();
       for (MediaStreamTrack track in videoTracks) {
         await localStream.removeTrack(track);
       }
     }
 
     if (localStreamVideo != null) {
-      List<MediaStreamTrack> videoTracks =
-          localStreamVideo.getVideoTracks().toList();
+      List<MediaStreamTrack> videoTracks = localStreamVideo
+          .getVideoTracks()
+          .toList();
       for (MediaStreamTrack track in videoTracks) {
         await localStreamVideo.removeTrack(track);
       }
     }
 
-    MediaStream stream = await navigator.mediaDevices
-        .getUserMedia(videoConstraints ?? {'video': true});
+    MediaStream stream = await navigator.mediaDevices.getUserMedia(
+      videoConstraints ?? {'video': true},
+    );
 
     //Update the localStreamVideo
     updateLocalStreamVideo(stream);
@@ -200,15 +204,10 @@ Future<void> connectSendTransportVideo(
     var updateUpdateMainWindow = parameters.updateUpdateMainWindow;
 
     List<RtpEncodingParameters> convertToRtpEncodingParametersList(
-        List<dynamic> encodings) {
+      List<dynamic> encodings,
+    ) {
       return encodings.map((encoding) {
-        return RtpEncodingParameters(
-          rid: encoding.rid,
-          maxBitrate: encoding.maxBitrate?.round(),
-          minBitrate: encoding.minBitrate?.round(),
-          scalabilityMode: encoding.scalabilityMode,
-          scaleResolutionDownBy: encoding.scaleResolutionDownBy?.toDouble(),
-        );
+        return RtpEncodingParameters.fromMap(encoding.toMap());
       }).toList();
     }
 
@@ -220,15 +219,26 @@ Future<void> connectSendTransportVideo(
       // ignore: empty_catches
     } catch (e) {}
 
+    // UnifiedPlan parses the first encoding's scalabilityMode when one is
+    // supplied. Keep a single spatial layer and avoid its null assertion for
+    // caller-provided single-stream options that omit this optional field.
+    if (encodingsList.length == 1) {
+      encodingsList.single.scalabilityMode ??= 'L1T3';
+    }
+
     //get the first codec from the first video track
     if (targetOption == 'all' || targetOption == 'remote') {
       producerTransport?.produce(
         track: stream.getVideoTracks().first,
         stream: stream,
-        encodings: encodingsList.length > 1 ? encodingsList : [],
+        // A single encoding still carries bitrate/frame-rate limits.
+        encodings: encodingsList,
         codecOptions: ProducerCodecOptions(
-            videoGoogleStartBitrate:
-                videoParams.codecOptions?.videoGoogleStartBitrate?.round()),
+          videoGoogleStartBitrate: videoParams
+              .codecOptions
+              ?.videoGoogleStartBitrate
+              ?.round(),
+        ),
         codec: videoParams.codec,
         source: 'webcam',
       );
@@ -249,10 +259,13 @@ Future<void> connectSendTransportVideo(
         await connectLocalSendTransportVideo(
           track: stream.getVideoTracks().first,
           stream: stream,
-          encodings: encodingsList.length > 1 ? encodingsList : [],
+          encodings: encodingsList,
           codecOptions: ProducerCodecOptions(
-              videoGoogleStartBitrate:
-                  videoParams.codecOptions?.videoGoogleStartBitrate?.round()),
+            videoGoogleStartBitrate: videoParams
+                .codecOptions
+                ?.videoGoogleStartBitrate
+                ?.round(),
+          ),
           codec: videoParams.codec,
           parameters: parameters,
         );

@@ -2230,6 +2230,8 @@ class JoinMediaSFURoomOptions {
 }
 
 class ResponseJoinRoom {
+  /// Configured room capacity returned by the media server, not member count.
+  final int? capacity;
   final RtpCapabilities? rtpCapabilities;
   final bool? success;
   List<String>? roomRecvIPs;
@@ -2248,6 +2250,7 @@ class ResponseJoinRoom {
   final bool? noAdmin;
 
   ResponseJoinRoom({
+    this.capacity,
     this.rtpCapabilities,
     this.success = false,
     this.roomRecvIPs,
@@ -2268,6 +2271,7 @@ class ResponseJoinRoom {
 
   factory ResponseJoinRoom.fromJson(Map<String, dynamic> json) {
     return ResponseJoinRoom(
+      capacity: int.tryParse('${json['capacity']}'),
       rtpCapabilities: json['rtpCapabilities'] != null
           ? RtpCapabilities.fromMap(json['rtpCapabilities'])
           : null,
@@ -2297,6 +2301,7 @@ class ResponseJoinRoom {
 
   Map<String, dynamic> toMap() {
     return {
+      if (capacity != null) 'capacity': capacity,
       'rtpCapabilities': rtpCapabilities?.toMap(),
       'success': success,
       'roomRecvIPs': roomRecvIPs,
@@ -2318,6 +2323,7 @@ class ResponseJoinRoom {
 }
 
 class ResponseJoinLocalRoom {
+  final int? capacity;
   final RtpCapabilities?
   rtpCapabilities; // Object containing the RTP capabilities
   final bool? isHost; // Indicates whether the user joining the room is the host
@@ -2337,6 +2343,7 @@ class ResponseJoinLocalRoom {
 
   /// Constructor for initializing the ResponseJoinLocalRoom object.
   ResponseJoinLocalRoom({
+    this.capacity,
     this.rtpCapabilities,
     this.isHost,
     this.eventStarted,
@@ -2354,6 +2361,7 @@ class ResponseJoinLocalRoom {
   /// Converts the object to a Map.
   Map<String, dynamic> toMap() {
     return {
+      if (capacity != null) 'capacity': capacity,
       'rtpCapabilities': rtpCapabilities?.toMap(),
       'isHost': isHost,
       'eventStarted': eventStarted,
@@ -2372,6 +2380,7 @@ class ResponseJoinLocalRoom {
   /// Creates a ResponseJoinLocalRoom object from a Map.
   factory ResponseJoinLocalRoom.fromJson(Map<String, dynamic> map) {
     return ResponseJoinLocalRoom(
+      capacity: int.tryParse('${map['capacity']}'),
       rtpCapabilities: map['rtpCapabilities'] != null
           ? RtpCapabilities.fromMap(map['rtpCapabilities'])
           : null,

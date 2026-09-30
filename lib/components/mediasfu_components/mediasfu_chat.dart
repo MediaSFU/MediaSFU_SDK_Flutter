@@ -292,6 +292,13 @@ class MediasfuChatOptions {
   ContainerStyleOptions? containerStyle;
   MediasfuUICustomOverrides? uiOverrides;
 
+  /// Disable camera simulcast in larger rooms; chat/capacity-two rooms always
+  /// use one full-resolution encoding.
+  bool simulcastOff;
+
+  /// Configured capacity hint when the server omits join-response capacity.
+  int? roomCapacity;
+
   MediasfuChatOptions({
     this.preJoinPageWidget,
     this.localLink = '',
@@ -314,6 +321,8 @@ class MediasfuChatOptions {
     this.customComponent,
     this.containerStyle,
     this.uiOverrides,
+    this.simulcastOff = false,
+    this.roomCapacity,
     CustomWorkspaceBuilder? customWorkspaceBuilder,
   }) {
     applyCustomWorkspaceBuilder(customWorkspaceBuilder);
@@ -3918,6 +3927,11 @@ class _MediasfuChatState extends State<MediasfuChat> {
             updateRoomParametersClient(
               options: UpdateRoomParametersClientOptions(
                 parameters: mediasfuParameters,
+                simulcastOff: widget.options.simulcastOff,
+                roomCapacity: widget.options.roomCapacity ??
+                    (widget.options.noUIPreJoinOptionsJoin == null
+                        ? widget.options.noUIPreJoinOptionsCreate?.capacity
+                        : null),
               ),
             );
           } catch (error) {

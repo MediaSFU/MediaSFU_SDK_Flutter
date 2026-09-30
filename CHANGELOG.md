@@ -1,3 +1,11 @@
+### 2.3.8
+
+* Use one full-resolution camera encoding in chat rooms and rooms with configured capacity two; preserve simulcast in larger rooms by default.
+* Add `simulcastOff` to classic and modern generic options for an explicit camera simulcast opt-out, plus a `roomCapacity` hint for older servers.
+* Read optional configured capacity from room-join responses. Server capacity takes precedence over caller hints.
+* Preserve single-encoding bitrate and frame-rate options in both local and remote camera send transports.
+* Keep recording-enabled and non-recording camera bitrate budgets identical; add regression coverage for quality scaling, source-preset isolation, and successive room updates.
+
 ### 2.3.7
 
 * Fix remote audio/video reception when a consume-room join returns the typed `ResponseJoinRoom` response. A successful join now retains its consume socket instead of disconnecting it during cleanup.

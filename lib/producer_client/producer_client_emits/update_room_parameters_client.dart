@@ -7,7 +7,7 @@ import '../../methods/utils/producer/video_capture_constraints.dart'
 import '../../methods/utils/producer/h_params.dart' as hostParams_;
 import '../../methods/utils/producer/v_params.dart' as videoParams_;
 import '../../methods/utils/producer/room_video_params.dart'
-    show freshRoomVideoParams;
+    show roomVideoParams;
 import '../../methods/utils/producer/screen_params.dart' as screenParams_;
 import '../../methods/utils/producer/a_params.dart' as audioParams_;
 import '../../types/types.dart'
@@ -168,8 +168,16 @@ abstract class UpdateRoomParametersClientParameters {
 class UpdateRoomParametersClientOptions {
   final UpdateRoomParametersClientParameters parameters;
 
+  /// Disable camera simulcast even in rooms larger than two people.
+  final bool simulcastOff;
+
+  /// Configured capacity hint for older servers without join-response metadata.
+  final int? roomCapacity;
+
   UpdateRoomParametersClientOptions({
     required this.parameters,
+    this.simulcastOff = false,
+    this.roomCapacity,
   });
 }
 
@@ -358,7 +366,9 @@ void updateRoomParametersClient({
 
     final meetingParams = params.roomData.meetingRoomParams;
     params.updateItemPageLimit(meetingParams?.itemPageLimit ?? 0);
-    final eventType_ = meetingParams?.type == 'conference'
+    final eventType_ = meetingParams?.type is EventType
+        ? meetingParams!.type as EventType
+        : meetingParams?.type == 'conference'
         ? EventType.conference
         : meetingParams?.type == 'webinar'
         ? EventType.webinar
@@ -485,27 +495,23 @@ void updateRoomParametersClient({
 
     // These presets are shared across rooms. Build fresh encoding lists for
     // each join/update so HD/FHD multipliers never accumulate on later calls.
-    final hParams = freshRoomVideoParams(hostParams_.hParams);
-    final vParams = freshRoomVideoParams(videoParams_.vParams);
-
-    switch (targetResolution) {
-      case 'hd':
-        hParams.encodings = _updateEncodingBitrates(hParams.encodings, 4);
-        vParams.encodings = _updateEncodingBitrates(vParams.encodings, 4);
-        break;
-      case 'fhd':
-        hParams.encodings = _updateEncodingBitrates(hParams.encodings, 8);
-        vParams.encodings = _updateEncodingBitrates(vParams.encodings, 8);
-        break;
-      case 'qhd':
-        hParams.encodings = _updateEncodingBitrates(hParams.encodings, 16);
-        vParams.encodings = _updateEncodingBitrates(vParams.encodings, 16);
-        break;
-      case 'QnHD':
-        hParams.encodings = _updateEncodingBitrates(hParams.encodings, 0.25);
-        vParams.encodings = _updateEncodingBitrates(vParams.encodings, 0.25);
-        break;
-    }
+    // Recording does not increase encoder rates. Use the authoritative room
+    // capacity when available, not itemPageLimit or the current member count.
+    final capacity = params.roomData.capacity ?? options.roomCapacity;
+    final hParams = roomVideoParams(
+      hostParams_.hParams,
+      targetResolution: targetResolution,
+      isChat: eventType_ == EventType.chat,
+      capacity: capacity,
+      simulcastOff: options.simulcastOff,
+    );
+    final vParams = roomVideoParams(
+      videoParams_.vParams,
+      targetResolution: targetResolution,
+      isChat: eventType_ == EventType.chat,
+      capacity: capacity,
+      simulcastOff: options.simulcastOff,
+    );
 
     params.updateVidCons(vdCons);
     params.updateFrameRate(frameRate);
@@ -530,44 +536,4 @@ void updateRoomParametersClient({
       );
     } catch (error) {}
   }
-}
-
-/// Helper function to adjust bitrate for encoding configurations.
-List<RtpEncodingParameters> _updateEncodingBitrates(
-  List encodings,
-  double factor,
-) {
-  return encodings.map((encoding) {
-    // If encoding is already an RtpEncodingParameters object
-    if (encoding is RtpEncodingParameters) {
-      return RtpEncodingParameters(
-        rid: encoding.rid,
-        maxBitrate: encoding.maxBitrate != null
-            ? (encoding.maxBitrate! * factor).toInt()
-            : null,
-        minBitrate: encoding.minBitrate != null
-            ? (encoding.minBitrate! * factor).toInt()
-            : null,
-        scalabilityMode: encoding.scalabilityMode,
-        scaleResolutionDownBy: encoding.scaleResolutionDownBy,
-      );
-    }
-
-    // If encoding is a Map, convert it to RtpEncodingParameters
-    final encodingMap = encoding is Map<String, dynamic>
-        ? encoding
-        : Map<String, dynamic>.from(encoding);
-
-    return RtpEncodingParameters(
-      rid: encodingMap['rid'] as String?,
-      maxBitrate: encodingMap['maxBitrate'] != null
-          ? (encodingMap['maxBitrate'] * factor).toInt()
-          : null,
-      minBitrate: encodingMap['minBitrate'] != null
-          ? (encodingMap['minBitrate'] * factor).toInt()
-          : null,
-      scalabilityMode: encodingMap['scalabilityMode'] as String?,
-      scaleResolutionDownBy: encodingMap['scaleResolutionDownBy'] as double?,
-    );
-  }).toList();
 }

@@ -589,6 +589,14 @@ class ModernMediasfuGenericOptions {
   ContainerStyleOptions? containerStyle;
   MediasfuUICustomOverrides? uiOverrides;
 
+  /// Disable camera simulcast in larger rooms. Chat/capacity-two rooms always
+  /// use a single full-resolution encoding, even when this is false.
+  bool simulcastOff;
+
+  /// Configured room capacity hint for older/self-hosted servers. An
+  /// authoritative capacity in the join response takes precedence.
+  int? roomCapacity;
+
   /// Fractions of the viewport represented by the parent room container.
   /// Values below 1 keep an embedded room parent-relative.
   final double containerWidthFraction;
@@ -663,6 +671,8 @@ class ModernMediasfuGenericOptions {
     this.customComponent,
     this.containerStyle,
     this.uiOverrides,
+    this.simulcastOff = false,
+    this.roomCapacity,
     double? containerWidthFraction,
     double? containerHeightFraction,
     this.useFixedLink,
@@ -7858,6 +7868,12 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
             updateRoomParametersClient(
               options: UpdateRoomParametersClientOptions(
                 parameters: mediasfuParameters,
+                simulcastOff: widget.options.simulcastOff,
+                roomCapacity:
+                    widget.options.roomCapacity ??
+                    (widget.options.noUIPreJoinOptionsJoin == null
+                        ? widget.options.noUIPreJoinOptionsCreate?.capacity
+                        : null),
               ),
             );
           } catch (error) {

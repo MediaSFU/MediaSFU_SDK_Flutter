@@ -595,6 +595,8 @@ These options appear across the prebuilt room widgets.
 | `createMediaSFURoom` | `CreateRoomOnMediaSFUType?` | Replace the create-room helper |
 | `joinMediaSFURoom` | `JoinRoomOnMediaSFUType?` | Replace the join-room helper |
 | `useLocalUIMode` | `bool?` | Run the UI without live room connections |
+| `simulcastOff` | `bool` | Disable camera simulcast in larger rooms; defaults to `false` |
+| `roomCapacity` | `int?` | Configured capacity hint for servers without capacity in the join response |
 | `seedData` / `useSeed` | `SeedData?` / `bool?` | Seed demo participant and room data |
 | `customVideoCard` | `VideoCardType?` | Replace video cards |
 | `customAudioCard` | `AudioCardType?` | Replace audio cards |
@@ -605,6 +607,23 @@ These options appear across the prebuilt room widgets.
 | `uiOverrides` | `MediasfuUICustomOverrides?` | Wrap or replace specific SDK widgets/functions |
 
 Modern-only extras include `useFixedLink`, `localAppKey`, `localApiUserName`, `localApiKey`, `localSubUserName`, `initialMeetingId`, `canUsePersonalTranslation`, `personalTranslationUsername`, `userVoiceClones`, `onBack`, and `optimizeVideoRecord`.
+
+### Camera bandwidth policy
+
+Chat rooms and rooms configured for exactly two people use one full-resolution
+camera encoding. Larger rooms retain simulcast unless `simulcastOff: true` is
+provided on `MediasfuGenericOptions` or `ModernMediasfuGenericOptions` (including
+modern headless sessions). Setting it to `false` does not override the two-person
+or chat policy. Recording support does not increase camera encoder bitrates;
+resolution-dependent bitrate budgets still apply. Audio and screen sharing are
+unchanged.
+
+The SDK prefers configured capacity returned by the media server. For older or
+self-hosted servers without that field, pass `roomCapacity: 2` for a two-person
+conference. Headless create sessions also use the create payload's capacity as a
+hint. Never substitute the current participant count or the layout page limit.
+These options apply when camera producer settings are initialized for a session;
+they are not a live toggle for an already-running producer.
 
 Embed a room without letting it claim the complete viewport:
 

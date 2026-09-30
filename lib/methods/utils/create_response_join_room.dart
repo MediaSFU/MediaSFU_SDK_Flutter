@@ -8,8 +8,8 @@ class CreateResponseJoinRoomOptions {
 }
 
 /// Type definition for the function that creates a ResponseJoinRoom.
-typedef CreateResponseJoinRoomType = Future<ResponseJoinRoom> Function(
-    CreateResponseJoinRoomOptions options);
+typedef CreateResponseJoinRoomType =
+    Future<ResponseJoinRoom> Function(CreateResponseJoinRoomOptions options);
 
 /// Creates a ResponseJoinRoom object from a ResponseJoinLocalRoom object.
 ///
@@ -39,10 +39,12 @@ typedef CreateResponseJoinRoomType = Future<ResponseJoinRoom> Function(
 /// print(joinRoom);
 /// ```
 Future<ResponseJoinRoom> createResponseJoinRoom(
-    CreateResponseJoinRoomOptions options) async {
+  CreateResponseJoinRoomOptions options,
+) async {
   final localRoom = options.localRoom;
 
   return ResponseJoinRoom(
+    capacity: localRoom.capacity,
     rtpCapabilities: localRoom.rtpCapabilities,
     success: localRoom.rtpCapabilities != null,
     roomRecvIPs: [], // Placeholder; populate with necessary values
