@@ -1,3 +1,11 @@
+### 2.4.0
+
+* **Screen-share audio (web).** In Chromium desktop browsers a screen share can carry the tab or screen audio: a "Share audio too?" dialog offers **Screen + audio** or **Screen only**, the audio is published as its own track that pauses and stops with the share, and the sharer is never shown as speaking because of it. Every platform plays it, with a "*name* · Screen audio" card listeners can mute. Configure with `MediasfuScreenAudio.mode`, `MediasfuScreenAudio.enabled` and `MediasfuScreenAudio.prompt`; the sharer can mute it with `MediasfuScreenAudio.toggle`. Native apps and media servers without support keep video-only sharing.
+* **Consumer backup preference.** When a busy consuming node has a connected backup, new streams are taken from the backup when it announces them within 1.5 seconds; otherwise from the busy node as before.
+* **Clear connection errors.** `connectSocket` throws `MediaSocketConnectException` with the failure `phase`, `elapsedMs`, the web `online` state, the server's rejection `reason` and `stage`, `retryable` and a ready-to-show `userMessage`. Join pages show that message, refused credentials are not retried in a loop, and network failures no longer count toward the join attempt limit.
+* **Rejoin after a reload, one connection per participant.** The SDK remembers the room credential for a room and name and proves it when registering again, and reuses it if the server still refuses the name. When another tab or device takes over, a dialog says "You joined from another tab or device." and offers **Use this one** (reconnects deliberately); the SDK never rejoins on its own. New exports: `sessionReplaced`, `wasSessionReplaced`, `rememberRejoinCredential`, `readRejoinCredential`, `forgetRejoinCredential`. Needs media servers with participant-rejoin support; older servers behave as before.
+
+
 ### 2.3.8
 
 * Use one full-resolution camera encoding in chat rooms and rooms with configured capacity two; preserve simulcast in larger rooms by default.

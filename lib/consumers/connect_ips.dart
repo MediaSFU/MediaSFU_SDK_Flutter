@@ -2,7 +2,10 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
+import 'screen_audio.dart' show MediasfuScreenAudio;
+import 'consumer_backup_preference.dart' show MediasfuConsumerBackups;
 import '../sockets/socket_manager.dart' show connectSocket;
+import '../sockets/media_socket_errors.dart' show MediaSocketConnectException;
 import './socket_receive_methods/new_pipe_producer.dart' show newPipeProducer;
 import './socket_receive_methods/producer_closed.dart' show producerClosed;
 import './socket_receive_methods/join_consume_room.dart' show joinConsumeRoom;
@@ -75,6 +78,25 @@ final Expando<Map<String, Future<bool>>> _pendingConsumeConnections =
 
 String _normalizeConsumeEndpoint(String ip) =>
     ip.trim().toLowerCase().replaceFirst(RegExp(r'\.$'), '');
+
+/// How long a consume endpoint that refused this room's credentials (`connection-rejected` with a permanent reason)
+/// is skipped. Domain updates call connectIps again and again; without this each would retry the same refusal.
+/// Keyed by the room's socket collection, so another room starts clean.
+const Duration consumeRejectionCooldown = Duration(seconds: 60);
+final Expando<Map<String, DateTime>> _rejectedConsumeEndpoints =
+    Expando<Map<String, DateTime>>('rejectedConsumeEndpoints');
+
+bool _consumeEndpointRecentlyRejected(
+    List<Map<String, io.Socket>> consumeSockets, String endpoint) {
+  final at = _rejectedConsumeEndpoints[consumeSockets]?[endpoint];
+  return at != null && DateTime.now().difference(at) < consumeRejectionCooldown;
+}
+
+void _rememberConsumeEndpointRejection(
+    List<Map<String, io.Socket>> consumeSockets, String endpoint) {
+  final byEndpoint = _rejectedConsumeEndpoints[consumeSockets] ??= <String, DateTime>{};
+  byEndpoint[endpoint] = DateTime.now();
+}
 
 bool _hasConsumeEndpoint(
   List<Map<String, io.Socket>> consumeSockets,
@@ -198,6 +220,10 @@ Future<List<dynamic>> connectIps(ConnectIpsOptions options) async {
     }
 
     for (final ip in options.remIP) {
+      if (_consumeEndpointRecentlyRejected(
+          consumeSockets, _normalizeConsumeEndpoint(ip))) {
+        continue;
+      }
       final releaseReservation = await _reserveConsumeEndpoint(
         consumeSockets,
         ip,
@@ -240,11 +266,19 @@ Future<List<dynamic>> connectIps(ConnectIpsOptions options) async {
 
           // Event handler for 'new-pipe-producer'
           connectedSocket.on('new-pipe-producer', (data) async {
+            // Screen-share audio is tagged by the server; remember it before the consumer resumes.
+            MediasfuScreenAudio.markProducer(data['producerId'], data['mediaTag']);
             TranslationMeta? translationMeta;
             if (data['translationMeta'] != null) {
               translationMeta = TranslationMeta.fromMap(
                 data['translationMeta'],
               );
+            }
+            // A busy node with a connected backup: give the backup's announcement a moment to win.
+            if (translationMeta == null) {
+              final delay = MediasfuConsumerBackups.delayFor(
+                  ip, consumeSockets);
+              if (delay > Duration.zero) await Future.delayed(delay);
             }
             final optionsNewPipeProducer = NewPipeProducerOptions(
               producerId: data['producerId'],
@@ -312,7 +346,12 @@ Future<List<dynamic>> connectIps(ConnectIpsOptions options) async {
           });
         }
       } catch (error) {
-        if (kDebugMode) {
+        if (error is MediaSocketConnectException && !error.retryable) {
+          _rememberConsumeEndpointRejection(
+              consumeSockets, _normalizeConsumeEndpoint(ip));
+          debugPrint(
+              'connectIps: $ip refused this room (${error.reason}); not retrying for ${consumeRejectionCooldown.inSeconds} s. ${error.message}');
+        } else if (kDebugMode) {
           debugPrint('connectIps error with IP $ip: $error');
         }
       } finally {

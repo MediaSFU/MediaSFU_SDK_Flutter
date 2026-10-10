@@ -6,6 +6,8 @@ import '../misc_components/prejoin_page.dart';
 // import 'package:permission_handler/permission_handler.dart'; // handle permissions manually
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'dart:async';
+import '../../methods/utils/check_limits_and_make_request.dart' show checkLimitsAndMakeRequest;
+import '../../producers/socket_receive_methods/session_replaced.dart' show sessionReplaced, SessionReplacedOptions;
 import 'package:flutter/services.dart'; // Import Services for platform-specific services
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 
@@ -4692,6 +4694,40 @@ class _MediasfuConferenceState extends State<MediasfuConference> {
           socketDefault.id != null &&
           socketDefault.id!.isNotEmpty) {
         if (!skipSockets) {
+          // participant-rejoin-v1: a newer connection of this participant took over (another tab or device). Say so and never
+          // rejoin on our own; "Use this one" reconnects with the credentials this connection used.
+          socketDefault.on('session-replaced', (data) async {
+            final rejoinRoom = apiUserName;
+            final rejoinToken = token;
+            final rejoinLink = link.value;
+            final rejoinMember = member.value;
+            await sessionReplaced(SessionReplacedOptions(
+              data: data is Map ? Map<String, dynamic>.from(data) : null,
+              showAlert: showAlert,
+              context: mounted ? context : null,
+              useThisOne: () => checkLimitsAndMakeRequest(
+                apiUserName: rejoinRoom,
+                apiToken: rejoinToken,
+                link: rejoinLink,
+                userName: rejoinMember,
+                parameters: PreJoinPageParameters(
+                  updateIsLoadingModalVisible: updateIsLoadingModalVisible,
+                  updateValidated: updateValidated,
+                  updateApiUserName: updateApiUserName,
+                  updateApiToken: updateApiToken,
+                  updateLink: updateLink,
+                  updateRoomName: updateRoomName,
+                  updateMember: updateMember,
+                  showAlert: showAlert,
+                  connectSocket: connectSocket,
+                  connectLocalSocket: connectLocalSocket,
+                  updateSocket: updateSocket,
+                  updateLocalSocket: updateLocalSocket,
+                ),
+              ),
+            ));
+          });
+
           socketDefault.on('disconnect', (_) async {
             // Handle disconnect event
             try {

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import '../../consumers/consumer_backup_preference.dart' show MediasfuConsumerBackups;
 import '../../types/types.dart'
     show
         ConnectIpsType,
@@ -97,6 +98,8 @@ typedef GetDomainsType = Future<void> Function(GetDomainsOptions options);
 Future<void> getDomains(GetDomainsOptions options) async {
   final updatedParams = options.parameters.getUpdatedAllParams();
   List<String> ipsToConnect = [];
+  // Busy node -> backup map: new streams are preferred from the backup (consumer-backup-v1).
+  MediasfuConsumerBackups.remember(options.altDomains.altDomains);
 
   try {
     // Process each domain and check if IP is already connected

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
+import 'screen_audio.dart' show MediasfuScreenAudio;
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart'
     show Producer;
 
@@ -162,6 +163,9 @@ Future<void> disconnectSendTransportScreen(
     final String roomName = parameters.roomName;
     final void Function(Producer? screenProducer) updateScreenProducer =
         parameters.updateScreenProducer;
+
+    // Screen audio stops with the screen share (the server closes its side on closeScreenProducer).
+    MediasfuScreenAudio.close(socket);
 
     // Close the screen producer and update the state
     if (screenProducer != null) {

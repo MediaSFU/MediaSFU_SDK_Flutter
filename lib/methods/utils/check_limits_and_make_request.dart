@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../types/types.dart'
     show PreJoinPageParameters, ConnectSocketOptions;
+import 'package:flutter/foundation.dart' show debugPrint;
+import '../../sockets/media_socket_errors.dart';
 
 /// **CheckLimitsAndMakeRequestOptions**
 ///
@@ -141,15 +143,26 @@ Future<void> checkLimitsAndMakeRequest({
       duration: 3000,
     );
   } catch (error) {
-    // Handle other errors
-    unsuccessfulAttempts += 1;
-    prefs.setInt('unsuccessfulAttempts', unsuccessfulAttempts);
+    // Say why (rejected credentials, no minutes, offline, unreachable). Only a refusal or an unknown failure counts
+    // toward the attempt limit; a device/network problem is not a credential guess.
+    final networkOnly = error is MediaSocketConnectException &&
+        error.phase != MediaSocketConnectPhase.rejected &&
+        (error.online == false ||
+            error.phase == MediaSocketConnectPhase.beforeOpen);
+    if (error is MediaSocketConnectException) {
+      debugPrint('MediaSFU media socket: ${error.message}');
+    }
+    if (!networkOnly) {
+      unsuccessfulAttempts += 1;
+      prefs.setInt('unsuccessfulAttempts', unsuccessfulAttempts);
+    }
     parameters.updateIsLoadingModalVisible(false);
     parameters.showAlert!(
-      message:
-          "Unable to connect. Please check your credentials and try again.",
+      message: describeMediaSocketError(error,
+          fallback:
+              "Unable to connect. Please check your credentials and try again."),
       type: "danger",
-      duration: 3000,
+      duration: error is MediaSocketConnectException ? 6000 : 3000,
     );
   } finally {
     parameters.updateIsLoadingModalVisible(false);

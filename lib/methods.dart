@@ -97,6 +97,8 @@ export 'package:mediasfu_sdk/methods/utils/check_limits_and_make_request.dart'
     show checkLimitsAndMakeRequest;
 export 'package:mediasfu_sdk/methods/utils/join_room_on_media_sfu.dart'
     show joinRoomOnMediaSFU;
+export 'package:mediasfu_sdk/methods/utils/rejoin_credential_store.dart'
+    show StoredRejoinCredential, rememberRejoinCredential, readRejoinCredential, forgetRejoinCredential;
 export 'package:mediasfu_sdk/methods/utils/create_room_on_media_sfu.dart'
     show createRoomOnMediaSFU;
 

@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../types/types.dart' show CreateMediaSFURoomOptions;
 import 'create_join_room.dart';
 import 'media_sfu_http_response.dart';
+import 'rejoin_credential_store.dart';
 
 class CreateMediaSFUOptions {
   CreateMediaSFURoomOptions payload;
@@ -194,8 +195,17 @@ Future<CreateJoinRoomResult> createRoomOnMediaSFU(
         // Ignore errors
       }
 
+      // participant-rejoin-v1: the host's own credential, so a reload or restart rejoins as the same host.
+      final created = CreateJoinRoomResponse.fromJson(data);
+      await rememberRejoinCredential(
+        roomName: created.roomName,
+        userName: payload.userName,
+        secret: created.secret,
+        link: created.link,
+        publicURL: created.publicURL,
+      );
       return CreateJoinRoomResult(
-        data: CreateJoinRoomResponse.fromJson(data),
+        data: created,
         success: true,
       );
     } else {

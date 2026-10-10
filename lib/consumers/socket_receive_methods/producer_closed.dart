@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/widgets.dart' show Widget, ValueKey;
+import '../screen_audio.dart' show MediasfuScreenAudio;
 import '../../types/types.dart'
     show
         TransportType,
@@ -112,6 +114,22 @@ Future<void> producerClosed(ProducerClosedOptions options) async {
       .where((transportData) => transportData.producerId != remoteProducerId)
       .toList();
   updateConsumerTransports(consumerTransports);
+
+  // Screen-share audio: drop its player and stream; it never took part in the grid or speaker state.
+  if (MediasfuScreenAudio.isScreenAudioProducer(remoteProducerId, parameters.participants)) {
+    MediasfuScreenAudio.forgetProducer(remoteProducerId);
+    try {
+      final dynamic params = parameters;
+      final List<Widget> remaining = List<Widget>.from(params.audioOnlyStreams as List)
+          .where((widget) => widget.key != ValueKey('screen-audio-$remoteProducerId'))
+          .toList();
+      params.updateAudioOnlyStreams(remaining);
+    } catch (_) {}
+    parameters.updateAllAudioStreams(parameters.allAudioStreams
+        .where((stream) => stream.producerId != remoteProducerId)
+        .toList());
+    return;
+  }
 
   // Close and resize video outputs as needed
   final optionsCloseAndResize = CloseAndResizeOptions(

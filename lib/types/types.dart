@@ -2249,6 +2249,9 @@ class ResponseJoinRoom {
   final bool? suspended;
   final bool? noAdmin;
 
+  /// The media server accepts audio shared with a screen share ("screen-audio" producers).
+  final bool? supportsScreenAudio;
+
   ResponseJoinRoom({
     this.capacity,
     this.rtpCapabilities,
@@ -2267,6 +2270,7 @@ class ResponseJoinRoom {
     this.banned,
     this.suspended,
     this.noAdmin,
+    this.supportsScreenAudio,
   });
 
   factory ResponseJoinRoom.fromJson(Map<String, dynamic> json) {
@@ -2296,6 +2300,7 @@ class ResponseJoinRoom {
       banned: json['banned'] as bool?,
       suspended: json['suspended'] as bool?,
       noAdmin: json['noAdmin'] as bool?,
+      supportsScreenAudio: json['supportsScreenAudio'] == true,
     );
   }
 
@@ -2318,6 +2323,7 @@ class ResponseJoinRoom {
       'banned': banned,
       'suspended': suspended,
       'noAdmin': noAdmin,
+      if (supportsScreenAudio != null) 'supportsScreenAudio': supportsScreenAudio,
     };
   }
 }

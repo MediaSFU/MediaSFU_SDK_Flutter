@@ -3,6 +3,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
+import 'screen_audio.dart' show MediasfuScreenAudio;
 import '../types/types.dart'
     show
         ShowAlert,
@@ -234,6 +235,19 @@ Future<void> streamSuccessScreen(
 
       // Alert the socket that you are sharing the screen
       socket!.emit('startScreenShare');
+
+      // Share the screen's audio too, when the browser captured it and the server supports it.
+      try {
+        MediasfuScreenAudio.publish(
+          stream: stream,
+          transport: parameters.getUpdatedAllParams().producerTransport,
+          socket: socket,
+        );
+      } catch (error) {
+        if (kDebugMode) {
+          debugPrint('Screen audio not shared: $error');
+        }
+      }
     } catch (error) {
       showAlert?.call(
         message: 'Error sharing screen: $error',

@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 
 import 'create_join_room.dart';
 import 'media_sfu_http_response.dart';
+import 'rejoin_credential_store.dart';
 import '../../types/types.dart' show JoinMediaSFURoomOptions;
 
 class JoinMediaSFUOptions {
@@ -99,6 +100,11 @@ Future<CreateJoinRoomResult> joinRoomOnMediaSFU(
     }
 
     Map<String, dynamic> payloadJson = payload.toMap();
+    // participant-rejoin-v1: prove this app is the same participant with the credential it last received for this room and name.
+    final stored = await readRejoinCredential(payload.meetingID, payload.userName);
+    if (stored != null && payloadJson['rejoinSecret'] == null) {
+      payloadJson['rejoinSecret'] = stored.secret;
+    }
 
     // Prepare the request
     final response = await http.post(
@@ -121,12 +127,36 @@ Future<CreateJoinRoomResult> joinRoomOnMediaSFU(
           success: false,
         );
       }
+      final joined = CreateJoinRoomResponse.fromJson(data);
+      await rememberRejoinCredential(
+        roomName: joined.roomName,
+        userName: payload.userName,
+        secret: joined.secret,
+        link: joined.link,
+        publicURL: joined.publicURL,
+      );
       return CreateJoinRoomResult(
-        data: CreateJoinRoomResponse.fromJson(data),
+        data: joined,
         success: true,
       );
     } else {
       final errorData = decodeMediaSfuJsonObject(response.body);
+      // participant-rejoin-v1: the server still refuses the name (an older server, or the proof was not accepted). The stored
+      // credential stays valid for the same participant, so reuse it; a revoked one is refused when connecting.
+      if (stored != null &&
+          RegExp('already taken', caseSensitive: false).hasMatch((errorData?['error'] ?? '').toString())) {
+        return CreateJoinRoomResult(
+          data: CreateJoinRoomResponse(
+            message: 'Room joined successfully',
+            roomName: stored.roomName,
+            publicURL: stored.publicURL.isNotEmpty ? stored.publicURL : stored.link,
+            link: stored.link,
+            secret: stored.secret,
+            success: true,
+          ),
+          success: true,
+        );
+      }
       return CreateJoinRoomResult(
         data: errorData != null
             ? CreateJoinRoomError.fromJson(errorData)

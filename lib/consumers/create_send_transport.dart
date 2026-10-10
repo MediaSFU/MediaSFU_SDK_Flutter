@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'transport_ice_recovery.dart';
+import 'screen_audio.dart' show MediasfuScreenAudio, kScreenAudioSource;
 import 'dart:async';
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
 import '../types/types.dart'
@@ -119,6 +120,11 @@ Future<void> createLocalSendTransport(
 
         //producer callback function for local transport
         void producerCallbackFunction(Producer producer) {
+          if (producer.source == kScreenAudioSource) {
+            // Screen audio is never the microphone.
+            MediasfuScreenAudio.rememberProducer(localSocket, producer);
+            return;
+          }
           producer.kind == 'video' && producer.source == 'screen'
               ? updateLocalScreenProducer!(producer)
               : producer.kind == 'audio'
@@ -345,6 +351,11 @@ Future<void> createSendTransport(
 
         //producer callback function
         void producerCallbackFunction(Producer producer) {
+          if (producer.source == kScreenAudioSource) {
+            // Screen audio is never the microphone.
+            MediasfuScreenAudio.rememberProducer(socket, producer);
+            return;
+          }
           producer.kind == 'video' && producer.source == 'screen'
               ? updateScreenProducer(producer)
               : producer.kind == 'audio'

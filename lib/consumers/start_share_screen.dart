@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'screen_audio.dart' show MediasfuScreenAudio;
 // ignore: implementation_imports
 import 'package:flutter_webrtc/src/native/desktop_capturer_impl.dart'
     show DesktopCapturerNative, DesktopCapturerSourceNative;
@@ -641,7 +642,14 @@ Future<void> startShareScreen(StartShareScreenOptions options) async {
           });
         }
       } else if (kIsWeb) {
-        // Web uses standard getDisplayMedia
+        // Web uses standard getDisplayMedia. With screen audio supported by the server and the browser, the user
+        // chooses "Screen + audio" or "Screen only" first (MediasfuScreenAudio.mode); cancel aborts the share.
+        final shareAudio = await MediasfuScreenAudio.resolveShareAudio(
+            parameters.socket, options.context);
+        if (shareAudio == null) {
+          updateShared(false);
+          return;
+        }
         stream = await navigator.mediaDevices.getDisplayMedia({
           'video': {
             'cursor': 'always',
@@ -649,7 +657,9 @@ Future<void> startShareScreen(StartShareScreenOptions options) async {
             'height': targetHeight,
             'frameRate': 30
           },
-          'audio': false
+          'audio': shareAudio
+              ? Map<String, dynamic>.from(MediasfuScreenAudio.audioConstraints)
+              : false,
         });
       } else if (Platform.isIOS) {
         // iOS uses ReplayKit via flutter_webrtc's native getDisplayMedia.

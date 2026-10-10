@@ -9,6 +9,9 @@ import '../methods/utils/mini_audio_player/mini_audio_player.dart'
     show MiniAudioPlayerType;
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart'
     show Consumer;
+import 'screen_audio.dart' show MediasfuScreenAudio;
+import '../methods/utils/screen_audio_player/screen_audio_player.dart'
+    show ScreenAudioPlayer;
 import '../components/display_components/mini_audio.dart'
     show MiniAudio, MiniAudioOptions;
 import '../components/display_components/simple_audio_player.dart'
@@ -365,6 +368,24 @@ Future<void> consumerResume(ConsumerResumeOptions options) async {
             return;
           }
         }
+      }
+
+      // Screen-share audio: play it with its own card, never as the sharer's voice (no name, speaker or grid state).
+      if (MediasfuScreenAudio.isScreenAudioProducer(remoteProducerId, participants)) {
+        audioOnlyStreams.removeWhere(
+            (widget) => widget.key == ValueKey('screen-audio-$remoteProducerId'));
+        audioOnlyStreams.add(ScreenAudioPlayer(
+          key: ValueKey('screen-audio-$remoteProducerId'),
+          stream: stream,
+          remoteProducerId: remoteProducerId,
+          consumer: consumer,
+          ownerName: MediasfuScreenAudio.ownerName(remoteProducerId, participants),
+        ));
+        updateAudioOnlyStreams(audioOnlyStreams);
+        allAudioStreams.removeWhere((item) => item.producerId == remoteProducerId);
+        allAudioStreams.add(Stream(producerId: remoteProducerId, stream: stream));
+        updateAllAudioStreams(allAudioStreams);
+        return;
       }
 
       // ----- Handling Audio Resumption -----

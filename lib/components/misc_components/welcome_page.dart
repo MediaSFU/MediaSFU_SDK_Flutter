@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import '../../types/types.dart'
     show ShowAlert, ConnectSocketType, ConnectSocketOptions;
+import '../../sockets/media_socket_errors.dart' show describeMediaSocketError;
 
 class WelcomePageOptions {
   final String imgSrc;
@@ -665,7 +666,8 @@ class _WelcomePageState extends State<WelcomePage> {
         );
       } else {
         widget.options.showAlert!(
-          message: 'Unable to connect. ${error.toString()}',
+          message: describeMediaSocketError(error,
+              fallback: 'Unable to connect. ${error.toString()}'),
           type: 'danger',
           duration: 3000,
         );

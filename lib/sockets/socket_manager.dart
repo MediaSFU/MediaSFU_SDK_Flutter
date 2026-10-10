@@ -1,6 +1,9 @@
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'dart:async';
 import '../../types/types.dart' show MeetingRoomParams, RecordingParams;
+import 'media_socket_errors.dart';
+
+export 'media_socket_errors.dart';
 
 /// Validates the provided API key or token.
 /// Returns `true` if the API key or token is valid, otherwise throws an exception.
@@ -107,7 +110,10 @@ typedef ConnectLocalSocketType = Future<ResponseLocalConnection> Function(
 /// Connects to a media socket with the specified options.
 /// Validates the API key or token and initiates a socket connection.
 ///
-/// Throws an exception if inputs are invalid or if connection fails.
+/// Throws an exception if inputs are invalid. A failed connection throws a [MediaSocketConnectException]: its `phase`
+/// says where it stopped (before the transport opened, after, rejected by the server, timeout), `reason`/`stage`
+/// carry the server's `connection-rejected` verdict, `elapsedMs`/`online` help tell a network problem from a
+/// refusal, `retryable` is false when the same credentials cannot succeed, and `userMessage` is ready for an alert.
 ///
 /// Example usage:
 /// ```dart
@@ -163,11 +169,17 @@ Future<io.Socket> connectSocket(ConnectSocketOptions options) async {
   final completer = Completer<io.Socket>();
   Timer? admissionTimer;
   var settled = false;
+  final startedAt = DateTime.now();
+  var transportOpened = false;
+  String? rejectionReason;
+  String? rejectionStage;
 
   late void Function(dynamic) handleConnectionSuccess;
   late void Function(dynamic) handleConnectError;
   late void Function(dynamic) handleSocketError;
   late void Function(dynamic) handleDisconnectBeforeReady;
+  late void Function(dynamic) handleTransportOpen;
+  late void Function(dynamic) handleConnectionRejected;
 
   void cleanupAdmissionListeners() {
     admissionTimer?.cancel();
@@ -175,16 +187,30 @@ Future<io.Socket> connectSocket(ConnectSocketOptions options) async {
     socket.off('connect_error', handleConnectError);
     socket.off('error', handleSocketError);
     socket.off('disconnect', handleDisconnectBeforeReady);
+    socket.off('connect', handleTransportOpen);
+    socket.off('connection-rejected', handleConnectionRejected);
   }
 
-  void finishWithError(String stage) {
+  String? describeTransportError(dynamic error) {
+    if (error == null) return null;
+    final text = error is Map ? (error['message'] ?? error).toString() : error.toString();
+    return text.length > 200 ? text.substring(0, 200) : text;
+  }
+
+  void finishWithError(MediaSocketConnectPhase phase, [dynamic error]) {
     if (settled) return;
     settled = true;
     cleanupAdmissionListeners();
     socket.disconnect();
-    completer.completeError(
-      Exception('Media socket admission failed at $stage.'),
-    );
+    completer.completeError(MediaSocketConnectException(
+      phase: rejectionReason != null ? MediaSocketConnectPhase.rejected : phase,
+      reason: rejectionReason,
+      stage: rejectionStage,
+      elapsedMs: DateTime.now().difference(startedAt).inMilliseconds,
+      online: currentOnlineState(),
+      transportError: describeTransportError(error),
+      link: options.link,
+    ));
   }
 
   // A raw Socket.IO connection is only transport establishment. The media
@@ -198,20 +224,38 @@ Future<io.Socket> connectSocket(ConnectSocketOptions options) async {
   };
 
   // Handle connection error
-  handleConnectError = (_) => finishWithError('transport_connect_error');
-  handleSocketError =
-      (_) => finishWithError('socket_error_before_authorization');
+  handleConnectError = (error) => finishWithError(
+      transportOpened
+          ? MediaSocketConnectPhase.afterOpen
+          : MediaSocketConnectPhase.beforeOpen,
+      error);
+  handleSocketError = (error) => finishWithError(
+      transportOpened
+          ? MediaSocketConnectPhase.afterOpen
+          : MediaSocketConnectPhase.beforeOpen,
+      error);
   handleDisconnectBeforeReady =
-      (_) => finishWithError('disconnected_before_authorization');
+      (reason) => finishWithError(MediaSocketConnectPhase.afterOpen, reason);
+  handleTransportOpen = (_) => transportOpened = true;
+  // Media admission v2: the node says why before it closes the handshake. A refusal is final for these credentials,
+  // so it is reported as such and never retried as a network error.
+  handleConnectionRejected = (payload) {
+    final data = payload is Map ? payload : const {};
+    rejectionReason = normalizeRejectionReason(data['reason']);
+    rejectionStage = data['stage'] is String ? data['stage'] as String : null;
+    finishWithError(MediaSocketConnectPhase.rejected);
+  };
 
   socket.on('connection-success', handleConnectionSuccess);
   socket.on('connect_error', handleConnectError);
   socket.on('error', handleSocketError);
   socket.on('disconnect', handleDisconnectBeforeReady);
+  socket.on('connect', handleTransportOpen);
+  socket.on('connection-rejected', handleConnectionRejected);
 
   admissionTimer = Timer(
     const Duration(seconds: 12),
-    () => finishWithError('application_authorization_timeout'),
+    () => finishWithError(MediaSocketConnectPhase.timeout),
   );
   socket.connect();
 
@@ -265,6 +309,9 @@ Future<ResponseLocalConnection> connectLocalSocket(
   // });
 
   final completer = Completer<ResponseLocalConnection>();
+  final startedAt = DateTime.now();
+  var transportOpened = false;
+  socket.onConnect((_) => transportOpened = true);
 
   // Handle connection success
   socket.on('connection-success', (data) {
@@ -279,8 +326,15 @@ Future<ResponseLocalConnection> connectLocalSocket(
   // Handle connection error
   socket.onConnectError((error) {
     if (!completer.isCompleted) {
-      completer.completeError(
-          Exception('Error connecting to local media socket: $error'));
+      completer.completeError(MediaSocketConnectException(
+        phase: transportOpened
+            ? MediaSocketConnectPhase.afterOpen
+            : MediaSocketConnectPhase.beforeOpen,
+        elapsedMs: DateTime.now().difference(startedAt).inMilliseconds,
+        online: currentOnlineState(),
+        transportError: error?.toString(),
+        link: options.link,
+      ));
     }
   });
 

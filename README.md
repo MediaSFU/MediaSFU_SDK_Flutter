@@ -763,6 +763,8 @@ ShareButtonOptions(
 | Broadcasts | `MediasfuBroadcast` |
 | Chat rooms | `MediasfuChat`, messages modal, message methods |
 | Screen sharing | screen-share methods, screen producer helpers, screenboard components |
+| Screen-share audio | automatic on web (Chromium desktop): asks "Share audio too?", plays for every listener with a "*name* · Screen audio" card; configure with `MediasfuScreenAudio.mode` (`ask`, `always`, `never`), `MediasfuScreenAudio.prompt`, `MediasfuScreenAudio.toggle` |
+| Connection errors | `connectSocket` throws `MediaSocketConnectException` with `phase`, `elapsedMs`, `online`, the server's rejection `reason`/`stage`, `retryable` and a ready-to-show `userMessage` |
 | Recording | recording modal and recording methods |
 | Polls | poll modal and poll methods |
 | Breakout rooms | breakout room modal and launch methods |
@@ -780,6 +782,10 @@ ShareButtonOptions(
 | Symptom | Check |
 | --- | --- |
 | Pre-join shows credential errors | `apiUserName` must not be a placeholder and `apiKey` must be a valid 64-character key |
+| "The room did not accept these credentials…" | The media server refused the room credentials (`invalid-credentials`). A second join with the same name issues a new secret, so join again through your backend. The SDK does not retry this automatically |
+| "…has no meeting minutes left" | The room's account has no meeting minutes available; top up in the MediaSFU dashboard |
+| "Could not reach the media server…" / "You appear to be offline…" | The connection never opened: check the network, DNS, firewall or proxy. `MediaSocketConnectException.phase` and `online` tell these apart from a refusal |
+| Screen share has no sound | Display audio is captured on web in Chromium desktop browsers only; native apps and Firefox/Safari share video only. Choose **Screen + audio** and keep the browser's "Share audio" box ticked |
 | Camera or microphone does not open | Native platform permissions, HTTPS on web, and OS privacy settings |
 | Web works locally but not in production | HTTPS, browser permission prompts, CORS for self-hosted APIs, and TURN/STUN reachability |
 | Self-hosted create/join fails | Verify `localLink`, `/createRoom`, `/joinRoom`, TLS, CORS, and backend auth headers |

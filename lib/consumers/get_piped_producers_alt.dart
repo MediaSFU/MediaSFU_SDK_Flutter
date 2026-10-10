@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
+import 'screen_audio.dart' show MediasfuScreenAudio;
 import 'start_consuming_translation.dart'
     show
         startConsumingTranslation,
@@ -111,6 +112,7 @@ Future<void> getPipedProducersAlt(
               remoteProducerId = id;
             } else if (id is Map<String, dynamic>) {
               remoteProducerId = id['id'];
+              MediasfuScreenAudio.markProducer(remoteProducerId, id['mediaTag']);
               if (id['translationMeta'] != null) {
                 translationMeta =
                     TranslationMeta.fromMap(id['translationMeta'],

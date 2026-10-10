@@ -16,6 +16,7 @@ import '../core/theme/mediasfu_spacing.dart';
 import '../core/theme/mediasfu_typography.dart';
 import '../core/widgets/glassmorphic_container.dart';
 import '../core/widgets/gradient_card.dart';
+import '../../sockets/media_socket_errors.dart' show describeMediaSocketError;
 
 /// Rate limit constants (copied from original)
 const int _maxAttempts = 20;
@@ -251,7 +252,8 @@ class _ModernWelcomePageState extends State<ModernWelcomePage>
         );
       } else {
         widget.options.showAlert!(
-          message: 'Unable to connect. ${error.toString()}',
+          message: describeMediaSocketError(error,
+              fallback: 'Unable to connect. ${error.toString()}'),
           type: 'danger',
           duration: 3000,
         );

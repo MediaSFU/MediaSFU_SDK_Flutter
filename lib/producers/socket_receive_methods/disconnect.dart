@@ -1,5 +1,6 @@
 import 'dart:async';
 import '../../types/types.dart' show ShowAlert;
+import 'session_replaced.dart' show wasSessionReplaced;
 
 /// Options for disconnecting the user from the session.
 class DisconnectOptions {
@@ -34,6 +35,8 @@ typedef DisconnectType = void Function(DisconnectOptions options);
 /// ));
 /// ```
 void disconnect(DisconnectOptions options) {
+  // participant-rejoin-v1: another tab or device took over; sessionReplaced already explained it and offers "Use this one".
+  if (wasSessionReplaced()) return;
   if (options.onWeb &&
       options.redirectURL != null &&
       options.redirectURL!.isNotEmpty) {

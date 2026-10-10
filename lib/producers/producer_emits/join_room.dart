@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../../../types/types.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'dart:async';
+import '../../consumers/screen_audio.dart' show MediasfuScreenAudio;
 
 /// Validates if a string is alphanumeric.
 bool _validateAlphanumeric(String value) {
@@ -159,6 +160,10 @@ Future<ResponseJoinRoom> _emitJoinRoom(
   ], ack: (data) {
     try {
       if (data['rtpCapabilities'] == null) {
+        // participant-rejoin-v1: a newer connection of this participant holds the room (another tab or device).
+        if (data['sessionReplaced'] == true) {
+          throw Exception('You joined from another tab or device.');
+        }
         if (data['banned'] == true) {
           throw Exception('User is banned.');
         }
@@ -169,7 +174,10 @@ Future<ResponseJoinRoom> _emitJoinRoom(
           throw Exception('Host has not joined the room yet.');
         }
       }
-      completer.complete(ResponseJoinRoom.fromJson(data));
+      final response = ResponseJoinRoom.fromJson(data);
+      MediasfuScreenAudio.rememberSupport(
+          socket, response.supportsScreenAudio == true);
+      completer.complete(response);
     } catch (error) {
       completer.completeError(error);
     }

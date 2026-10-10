@@ -60,3 +60,5 @@ export 'package:mediasfu_sdk/producers/socket_receive_methods/all_members_rest.d
 export 'package:mediasfu_sdk/producers/socket_receive_methods/disconnect.dart'
     show disconnect;
 export 'package:mediasfu_sdk/producers/socket_receive_methods/translation_receive_methods.dart';
+export 'package:mediasfu_sdk/producers/socket_receive_methods/session_replaced.dart'
+    show sessionReplaced, SessionReplacedOptions, SessionReplacedType, sessionReplacedMessage, wasSessionReplaced;
