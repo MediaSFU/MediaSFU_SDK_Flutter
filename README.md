@@ -777,6 +777,17 @@ ShareButtonOptions(
 | SIP / telephony-ready rooms | `CreateMediaSFURoomOptions.supportSIP`, `directionSIP`, `preferPCMA` |
 | AI notes and agents | configure from the MediaSFU dashboard/docs, then use room/runtime features in the SDK |
 
+## Rejoining after a restart, and a second device
+
+Reopening the app, or a brief network drop, rejoins as the same participant: same name, same role, and the host stays
+host. The SDK remembers the room credential for each room and name (shared preferences) and proves it when the user joins
+again. If the same person joins from another device or tab, the newest connection takes over and the older one shows
+"You joined from another tab or device." with **Use this one**, which reconnects deliberately.
+
+If your backend registers participants itself (`POST /v1/rooms` with `action: "join"`), keep the `secret` returned for
+each room and user, and send it back as `rejoinSecret` when that user joins again. A refusal with
+`code: "name-in-use-live"` means the person is still connected elsewhere and no matching credential was sent.
+
 ## Troubleshooting
 
 | Symptom | Check |

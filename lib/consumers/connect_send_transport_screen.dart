@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'send_transport_guard.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
 import '../types/types.dart' show ProducerOptionsType;
@@ -155,7 +156,9 @@ Future<void> connectSendTransportScreen(
         orElse: () => device.rtpCapabilities.codecs.first);
 
     // Produce screen share video using the transport and codec
-    if (targetOption == 'remote' || targetOption == 'all') {
+    // A screen produce already in flight on this transport would make a second producer: skip ours.
+    if ((targetOption == 'remote' || targetOption == 'all') &&
+        SendTransportGuard.beginProduce(producerTransport, 'screen')) {
       producerTransport!.produce(
         track: stream.getVideoTracks()[0],
         stream: stream,

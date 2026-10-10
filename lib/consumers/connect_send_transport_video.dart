@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'send_transport_guard.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
 import '../../types/types.dart' show ProducerOptionsType;
@@ -227,7 +228,9 @@ Future<void> connectSendTransportVideo(
     }
 
     //get the first codec from the first video track
-    if (targetOption == 'all' || targetOption == 'remote') {
+    // A camera produce already in flight on this transport would make a second producer: skip ours.
+    if ((targetOption == 'all' || targetOption == 'remote') &&
+        SendTransportGuard.beginProduce(producerTransport, 'webcam')) {
       producerTransport?.produce(
         track: stream.getVideoTracks().first,
         stream: stream,

@@ -2,6 +2,7 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'dart:async';
 import '../../types/types.dart' show MeetingRoomParams, RecordingParams;
 import 'media_socket_errors.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 
 export 'media_socket_errors.dart';
 
@@ -130,6 +131,56 @@ typedef ConnectLocalSocketType = Future<ResponseLocalConnection> Function(
 ///   print("Failed to connect to socket: $error");
 /// }
 /// ```
+// A permanent refusal (invalid credentials, invalid request, no meeting minutes) is remembered for the same link and
+// credentials, so an app that calls connectSocket again in a loop gets the same answer at once instead of opening one
+// more connection each time (one app made ~110 in 4 minutes after its room ended, Oct 2026). Kept for 10 minutes
+// (60 s for meeting-minutes-unavailable); a success forgets it; clearRefusedMediaCredentials() forgets everything.
+class _RefusedMediaCredential {
+  final MediaSocketConnectException error;
+  final DateTime until;
+  _RefusedMediaCredential(this.error, this.until);
+}
+
+final Map<String, _RefusedMediaCredential> _refusedMediaCredentials = {};
+
+/// Forgets every remembered media-server refusal (for example after the user changed rooms or credentials).
+void clearRefusedMediaCredentials() => _refusedMediaCredentials.clear();
+
+String _refusalKey(ConnectSocketOptions options) =>
+    '${options.link}|${options.apiUserName}|${options.apiToken ?? ''}|${options.apiKey ?? ''}';
+
+void _rememberRefusal(String key, MediaSocketConnectException error) {
+  if (error.retryable) return;
+  final hold = error.reason == 'meeting-minutes-unavailable'
+      ? const Duration(seconds: 60)
+      : const Duration(minutes: 10);
+  _refusedMediaCredentials[key] = _RefusedMediaCredential(error, DateTime.now().add(hold));
+}
+
+// After the handshake Socket.IO reconnects on its own when the transport drops. A media node that refuses such a
+// reconnect for good would be retried as long as the app runs, so a permanent refusal closes the socket instead.
+void _stopReconnectingWhenRefused(io.Socket socket, String key, String link) {
+  late void Function(dynamic) onRejected;
+  onRejected = (payload) {
+    final data = payload is Map ? payload : const {};
+    final error = MediaSocketConnectException(
+      phase: MediaSocketConnectPhase.rejected,
+      reason: normalizeRejectionReason(data['reason']),
+      stage: data['stage'] is String ? data['stage'] as String : null,
+      elapsedMs: 0,
+      link: link,
+    );
+    if (error.retryable) return;
+    socket.off('connection-rejected', onRejected);
+    _rememberRefusal(key, error);
+    debugPrint('MediaSFU media socket: reconnect refused (${error.reason}); not retrying.');
+    try {
+      socket.disconnect();
+    } catch (_) {}
+  };
+  socket.on('connection-rejected', onRejected);
+}
+
 Future<io.Socket> connectSocket(ConnectSocketOptions options) async {
   // Input validation
   if (options.apiUserName.isEmpty) throw Exception('API username required.');
@@ -138,6 +189,13 @@ Future<io.Socket> connectSocket(ConnectSocketOptions options) async {
     throw Exception('API key or token required.');
   }
   if (options.link.isEmpty) throw Exception('Socket link required.');
+
+  final refusalKey = _refusalKey(options);
+  final remembered = _refusedMediaCredentials[refusalKey];
+  if (remembered != null) {
+    if (DateTime.now().isBefore(remembered.until)) throw remembered.error;
+    _refusedMediaCredentials.remove(refusalKey);
+  }
 
   // Validate API key or token format
   bool useKey = false;
@@ -202,7 +260,7 @@ Future<io.Socket> connectSocket(ConnectSocketOptions options) async {
     settled = true;
     cleanupAdmissionListeners();
     socket.disconnect();
-    completer.completeError(MediaSocketConnectException(
+    final failure = MediaSocketConnectException(
       phase: rejectionReason != null ? MediaSocketConnectPhase.rejected : phase,
       reason: rejectionReason,
       stage: rejectionStage,
@@ -210,7 +268,9 @@ Future<io.Socket> connectSocket(ConnectSocketOptions options) async {
       online: currentOnlineState(),
       transportError: describeTransportError(error),
       link: options.link,
-    ));
+    );
+    _rememberRefusal(refusalKey, failure);
+    completer.completeError(failure);
   }
 
   // A raw Socket.IO connection is only transport establishment. The media
@@ -220,6 +280,8 @@ Future<io.Socket> connectSocket(ConnectSocketOptions options) async {
     if (settled) return;
     settled = true;
     cleanupAdmissionListeners();
+    _refusedMediaCredentials.remove(refusalKey);
+    _stopReconnectingWhenRefused(socket, refusalKey, options.link);
     completer.complete(socket);
   };
 

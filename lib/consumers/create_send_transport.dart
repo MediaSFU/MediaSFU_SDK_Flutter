@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'transport_ice_recovery.dart';
 import 'screen_audio.dart' show MediasfuScreenAudio, kScreenAudioSource;
+import 'send_transport_guard.dart';
 import 'dart:async';
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
 import '../types/types.dart'
@@ -298,8 +299,77 @@ Future<void> createLocalSendTransport(
 /// ### Notes:
 /// - This function relies on socket-based communication with the server to manage transport creation and media production.
 /// - Specific callback functions for updating producers (audio, video, screen) allow flexible media handling.
+/// - One creation runs per socket at a time. A call that arrives while another is in flight waits for it and then
+///   produces its own media on that transport, so the server never sees two producer transports for one socket.
 
 Future<void> createSendTransport(
+  CreateSendTransportOptions options,
+) async {
+  try {
+    final parameters = options.parameters;
+    final current = parameters.getUpdatedAllParams();
+    final socket = current.socket;
+    final pending = SendTransportGuard.pendingCreation(socket);
+
+    // Checked and claimed synchronously, so two callers in the same tick cannot both create.
+    if (pending == null && !_hasOpenSendTransport(current)) {
+      await SendTransportGuard.trackCreation(
+          socket, () => _createSendTransportNow(options));
+      return;
+    }
+
+    if (pending != null) {
+      try {
+        await pending;
+      } catch (_) {}
+    }
+    final latest = parameters.getUpdatedAllParams();
+    if (!_hasOpenSendTransport(latest)) {
+      // The creation this caller waited for failed or the transport closed: start again (still one at a time).
+      if (pending != null) await createSendTransport(options);
+      return;
+    }
+    if (_isAlreadySending(latest, options.option)) return;
+
+    await latest.connectSendTransport(
+      ConnectSendTransportOptions(
+        targetOption: 'all',
+        option: options.option,
+        parameters: latest,
+        audioConstraints: options.audioConstraints,
+        videoConstraints: options.videoConstraints,
+      ),
+    );
+  } catch (error) {
+    if (kDebugMode) {
+      debugPrint('MediaSFU - Error creating send transport: $error');
+    }
+  }
+}
+
+bool _hasOpenSendTransport(CreateSendTransportParameters params) =>
+    params.transportCreated &&
+    params.producerTransport != null &&
+    !params.producerTransport!.closed;
+
+bool _isOpenProducer(Producer? producer) =>
+    producer != null && !producer.closed;
+
+bool _isAlreadySending(CreateSendTransportParameters params, String option) {
+  switch (option) {
+    case 'audio':
+      return _isOpenProducer(params.audioProducer);
+    case 'video':
+      return _isOpenProducer(params.videoProducer);
+    case 'screen':
+      return _isOpenProducer(params.screenProducer);
+    default:
+      return _isOpenProducer(params.audioProducer) &&
+          _isOpenProducer(params.videoProducer);
+  }
+}
+
+Future<void> _createSendTransportNow(
   CreateSendTransportOptions options,
 ) async {
   try {
@@ -334,12 +404,15 @@ Future<void> createSendTransport(
       }
     }
 
-    // Emit 'createWebRtcTransport' event to the server
+    // Emit 'createWebRtcTransport' event to the server. The creation counts as finished once the acknowledgement has
+    // been handled, so concurrent callers (see createSendTransport) wait for the transport instead of creating another.
     Completer<Map<String, dynamic>> producerCompleter = Completer();
+    final done = Completer<void>();
     socket!.emitWithAck(
       'createWebRtcTransport',
       {'consumer': false, 'islevel': islevel},
       ack: (response) async {
+       try {
         if (response['error'] != null) {
           producerCompleter.completeError(response['error']);
         } else {
@@ -351,6 +424,8 @@ Future<void> createSendTransport(
 
         //producer callback function
         void producerCallbackFunction(Producer producer) {
+          // This source's produce has finished; a later produce of it may start.
+          SendTransportGuard.finishProduce(producerTransport, producer.source);
           if (producer.source == kScreenAudioSource) {
             // Screen audio is never the microphone.
             MediasfuScreenAudio.rememberProducer(socket, producer);
@@ -462,8 +537,13 @@ Future<void> createSendTransport(
             debugPrint("Error in transport creation: $error");
           }
         }
+       } finally {
+        if (!done.isCompleted) done.complete();
+       }
       },
     );
+    // Without an acknowledgement (server gone), release waiting callers after a while.
+    await done.future.timeout(const Duration(seconds: 15), onTimeout: () {});
   } catch (error) {
     if (kDebugMode) {
       debugPrint('MediaSFU - Error creating send transport: $error');

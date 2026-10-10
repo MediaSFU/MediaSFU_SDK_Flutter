@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'send_transport_guard.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
@@ -257,7 +258,9 @@ Future<void> connectSendTransportAudio(
 
     // Connect the send transport for audio by producing audio data
     //get the first codec from the first video track
-    if (targetOption == 'all' || targetOption == 'remote') {
+    // A microphone produce already in flight on this transport would make a second producer: skip ours.
+    if ((targetOption == 'all' || targetOption == 'remote') &&
+        SendTransportGuard.beginProduce(parameters.producerTransport, 'mic')) {
       parameters.producerTransport!.produce(
         track: stream.getAudioTracks().first,
         stream: stream,
