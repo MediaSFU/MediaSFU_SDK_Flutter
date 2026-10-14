@@ -145,7 +145,6 @@ Future<void> clickAudio(ClickAudioOptions options) async {
     bool hasAudioPermission = parameters.hasAudioPermission;
     bool audioPaused = parameters.audioPaused;
     bool audioAlreadyOn = parameters.audioAlreadyOn;
-    final bool audioOnlyRoom = parameters.audioOnlyRoom;
     final bool recordStarted = parameters.recordStarted;
     final bool recordResumed = parameters.recordResumed;
     final bool recordPaused = parameters.recordPaused;
@@ -193,14 +192,8 @@ Future<void> clickAudio(ClickAudioOptions options) async {
         parameters.disconnectSendTransportAudio;
     final resumeSendTransportAudio = parameters.resumeSendTransportAudio;
 
-    if (audioOnlyRoom) {
-      showAlert?.call(
-        message: "You cannot turn on your camera in an audio-only event.",
-        type: "danger",
-        duration: 3000,
-      );
-      return;
-    }
+    // Audio-only rooms exist for the microphone, so audioOnlyRoom never blocks it here (it only blocks cameras, in
+    // clickVideo / switchUserVideo). An early return copied from the camera path used to leave everyone muted.
 
     if (audioAlreadyOn) {
       // Check and alert before turning off

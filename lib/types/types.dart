@@ -331,6 +331,12 @@ class Participant {
   dynamic operator [](String key) => _extraProperties[key];
   void operator []=(String key, dynamic value) => _extraProperties[key] = value;
 
+  /// Readable name for labels (up to 80 characters) when the server sent one; [name] stays the member identity.
+  String? get displayName => _extraProperties['displayName'] as String?;
+
+  /// The name to show people: [displayName] when present, otherwise [name].
+  String get label => (displayName?.trim().isNotEmpty ?? false) ? displayName!.trim() : name;
+
   // Factory constructor to create an instance from a Map
   factory Participant.fromMap(Map<String, dynamic> map) {
     return Participant(
@@ -2086,6 +2092,13 @@ class CreateMediaSFURoomOptions {
   String? translationConfigNickName; // Nickname for translation configuration
   bool? supportFlexRoom; // Whether to support flex room capacity features
   bool? supportMaxRoom; // Whether to support max room capacity features
+  /// Preferred media continent: 'asia', 'europe', 'us' or 'general'. Best-effort unless [regionStrict] is true.
+  String? region;
+  /// With a continent [region], place media only there; the create fails (HTTP 503, code 'region-unavailable')
+  /// instead of falling back. Older servers refuse it with 'region-strict-unsupported'.
+  bool? regionStrict;
+  /// Turn the room's waiting room on: participants wait until the host admits them.
+  bool? waitRoom;
 
   CreateMediaSFURoomOptions({
     this.backendAudioDenoise,
@@ -2111,6 +2124,9 @@ class CreateMediaSFURoomOptions {
     this.translationConfigNickName = "",
     this.supportFlexRoom = false,
     this.supportMaxRoom = false,
+    this.region,
+    this.regionStrict,
+    this.waitRoom,
   });
 
   // Convert CreateMediaSFURoomOptions to a Map
@@ -2140,6 +2156,9 @@ class CreateMediaSFURoomOptions {
       'translationConfigNickName': translationConfigNickName,
       'supportFlexRoom': supportFlexRoom,
       'supportMaxRoom': supportMaxRoom,
+      if (region != null) 'region': region,
+      if (regionStrict != null) 'regionStrict': regionStrict,
+      if (waitRoom != null) 'waitRoom': waitRoom,
     };
   }
 
@@ -2195,6 +2214,9 @@ class CreateMediaSFURoomOptions {
       supportMaxRoom: map['supportMaxRoom'] != null
           ? map['supportMaxRoom'] as bool
           : false,
+      region: map['region'] as String?,
+      regionStrict: map['regionStrict'] as bool?,
+      waitRoom: map['waitRoom'] as bool?,
     );
   }
 }

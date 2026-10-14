@@ -18,6 +18,9 @@ import '../core/widgets/premium_widgets.dart';
 import '../core/theme/mediasfu_borders.dart';
 import '../core/theme/mediasfu_typography.dart';
 
+/// Below this row width the mute/message/remove buttons collapse into a menu.
+const double _compactRowWidth = 300;
+
 /// Configuration options for ModernParticipantList
 class ModernParticipantListOptions {
   final List<Participant> participants;
@@ -184,56 +187,68 @@ class _ModernParticipantListItemState extends State<_ModernParticipantListItem>
         horizontal: MediasfuSpacing.md,
         vertical: MediasfuSpacing.sm,
       ),
-      child: Row(
-        children: [
-          // Avatar with status
-          _buildAvatar(isDark, isHost, isMuted),
-          const SizedBox(width: MediasfuSpacing.md),
-
-          // Name and status
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        widget.participant.name,
-                        style: TextStyle(
-                          fontSize: MediasfuTypography.sizeTitleSmall,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : Colors.black87,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (isHost) ...[
-                      const SizedBox(width: MediasfuSpacing.xs),
-                      _buildHostBadge(),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 2),
-                _buildStatusRow(isDark, isMuted),
-              ],
-            ),
-          ),
-
-          // Action buttons
-          if (!widget.options.isBroadcast) ...[
-            _buildActionButtons(isDark),
-          ] else ...[
-            _buildRemoveButton(isDark),
-          ],
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) =>
+            _buildRow(isDark, isHost, isMuted, constraints.maxWidth),
       ),
     );
   }
 
+  Widget _buildRow(bool isDark, bool isHost, bool isMuted, double width) {
+    // The desktop sidebar can be as narrow as 280px; three 38px action buttons
+    // there leave the name almost no room, so narrow rows use one menu instead.
+    final compact = width < _compactRowWidth;
+    return Row(
+      children: [
+        // Avatar with status
+        _buildAvatar(isDark, isHost, isMuted),
+        const SizedBox(width: MediasfuSpacing.md),
+
+        // Name and status
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      widget.participant.label,
+                      style: TextStyle(
+                        fontSize: MediasfuTypography.sizeTitleSmall,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (isHost) ...[
+                    const SizedBox(width: MediasfuSpacing.xs),
+                    _buildHostBadge(),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 2),
+              _buildStatusRow(isDark, isMuted),
+            ],
+          ),
+        ),
+
+        // Action buttons
+        if (widget.options.isBroadcast) ...[
+          _buildRemoveButton(isDark),
+        ] else if (compact) ...[
+          _buildActionMenu(isDark),
+        ] else ...[
+          _buildActionButtons(isDark),
+        ],
+      ],
+    );
+  }
+
   Widget _buildAvatar(bool isDark, bool isHost, bool isMuted) {
-    final initials = widget.participant.name.isNotEmpty
-        ? widget.participant.name.substring(0, 1).toUpperCase()
+    final initials = widget.participant.label.isNotEmpty
+        ? widget.participant.label.substring(0, 1).toUpperCase()
         : '?';
 
     return Stack(
@@ -338,14 +353,66 @@ class _ModernParticipantListItemState extends State<_ModernParticipantListItem>
               : MediasfuColors.success.withOpacity(0.7),
         ),
         const SizedBox(width: 4),
-        Text(
-          isMuted ? 'Muted' : 'Speaking',
-          style: TextStyle(
-            fontSize: MediasfuTypography.sizeBodySmall,
-            color: (isDark ? Colors.white : Colors.black).withOpacity(0.5),
+        Flexible(
+          child: Text(
+            isMuted ? 'Muted' : 'Speaking',
+            style: TextStyle(
+              fontSize: MediasfuTypography.sizeBodySmall,
+              color: (isDark ? Colors.white : Colors.black).withOpacity(0.5),
+            ),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
+    );
+  }
+
+  void _toggleMute() {
+    widget.options.onMuteParticipants(
+      MuteParticipantsOptions(
+        participant: widget.participant,
+        socket: widget.options.socket,
+        coHostResponsibility: widget.options.coHostResponsibility,
+        member: widget.options.member,
+        islevel: widget.options.islevel,
+        showAlert: widget.options.showAlert,
+        coHost: widget.options.coHost,
+        roomName: widget.options.roomName,
+      ),
+    );
+  }
+
+  void _sendMessage() {
+    widget.options.onMessageParticipants(
+      MessageParticipantsOptions(
+        participant: widget.participant,
+        coHostResponsibility: widget.options.coHostResponsibility,
+        member: widget.options.member,
+        islevel: widget.options.islevel,
+        showAlert: widget.options.showAlert,
+        coHost: widget.options.coHost,
+        updateIsMessagesModalVisible:
+            widget.options.updateIsMessagesModalVisible,
+        updateDirectMessageDetails: widget.options.updateDirectMessageDetails,
+        updateStartDirectMessage: widget.options.updateStartDirectMessage,
+      ),
+    );
+  }
+
+  void _remove() {
+    widget.options.onRemoveParticipants(
+      RemoveParticipantsOptions(
+        participant: widget.participant,
+        socket: widget.options.socket,
+        coHostResponsibility: widget.options.coHostResponsibility,
+        member: widget.options.member,
+        islevel: widget.options.islevel,
+        showAlert: widget.options.showAlert,
+        coHost: widget.options.coHost,
+        roomName: widget.options.roomName,
+        participants: widget.options.participants,
+        updateParticipants: widget.options.updateParticipants,
+      ),
     );
   }
 
@@ -360,20 +427,9 @@ class _ModernParticipantListItemState extends State<_ModernParticipantListItem>
           color: MediasfuColors.primary,
           isDark: isDark,
           tooltip: isMuted
-              ? 'Unmute ${widget.participant.name} - Allow them to speak'
-              : 'Mute ${widget.participant.name} - Disable their microphone',
-          onPressed: () => widget.options.onMuteParticipants(
-            MuteParticipantsOptions(
-              participant: widget.participant,
-              socket: widget.options.socket,
-              coHostResponsibility: widget.options.coHostResponsibility,
-              member: widget.options.member,
-              islevel: widget.options.islevel,
-              showAlert: widget.options.showAlert,
-              coHost: widget.options.coHost,
-              roomName: widget.options.roomName,
-            ),
-          ),
+              ? 'Unmute ${widget.participant.label} - Allow them to speak'
+              : 'Mute ${widget.participant.label} - Disable their microphone',
+          onPressed: _toggleMute,
         ),
         const SizedBox(width: MediasfuSpacing.xs),
         _buildIconButton(
@@ -381,46 +437,75 @@ class _ModernParticipantListItemState extends State<_ModernParticipantListItem>
           color: MediasfuColors.secondary,
           isDark: isDark,
           tooltip:
-              'Send message to ${widget.participant.name} - Start a private chat',
-          onPressed: () => widget.options.onMessageParticipants(
-            MessageParticipantsOptions(
-              participant: widget.participant,
-              coHostResponsibility: widget.options.coHostResponsibility,
-              member: widget.options.member,
-              islevel: widget.options.islevel,
-              showAlert: widget.options.showAlert,
-              coHost: widget.options.coHost,
-              updateIsMessagesModalVisible:
-                  widget.options.updateIsMessagesModalVisible,
-              updateDirectMessageDetails:
-                  widget.options.updateDirectMessageDetails,
-              updateStartDirectMessage: widget.options.updateStartDirectMessage,
-            ),
-          ),
+              'Send message to ${widget.participant.label} - Start a private chat',
+          onPressed: _sendMessage,
         ),
         const SizedBox(width: MediasfuSpacing.xs),
-        _buildIconButton(
-          icon: Icons.person_remove_rounded,
-          color: MediasfuColors.danger,
-          isDark: isDark,
-          tooltip:
-              'Remove ${widget.participant.name} from meeting - They will be disconnected',
-          onPressed: () => widget.options.onRemoveParticipants(
-            RemoveParticipantsOptions(
-              participant: widget.participant,
-              socket: widget.options.socket,
-              coHostResponsibility: widget.options.coHostResponsibility,
-              member: widget.options.member,
-              islevel: widget.options.islevel,
-              showAlert: widget.options.showAlert,
-              coHost: widget.options.coHost,
-              roomName: widget.options.roomName,
-              participants: widget.options.participants,
-              updateParticipants: widget.options.updateParticipants,
-            ),
-          ),
+        _buildRemoveButton(isDark),
+      ],
+    );
+  }
+
+  /// The same three actions as [_buildActionButtons], behind one button.
+  Widget _buildActionMenu(bool isDark) {
+    final isMuted = widget.participant.muted ?? true;
+    final textColor = isDark ? Colors.white : Colors.black87;
+
+    PopupMenuItem<VoidCallback> item(
+      VoidCallback action,
+      IconData icon,
+      Color color,
+      String text,
+    ) {
+      return PopupMenuItem<VoidCallback>(
+        value: action,
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(width: MediasfuSpacing.sm),
+            Text(text, style: TextStyle(color: textColor)),
+          ],
+        ),
+      );
+    }
+
+    return PopupMenuButton<VoidCallback>(
+      tooltip: 'Actions for ${widget.participant.label}',
+      color: MediasfuColors.themedSurface(darkMode: isDark, elevation: 2),
+      onSelected: (action) => action(),
+      itemBuilder: (context) => [
+        item(
+          _toggleMute,
+          isMuted ? Icons.mic_off_rounded : Icons.mic_rounded,
+          MediasfuColors.primary,
+          isMuted ? 'Unmute' : 'Mute',
+        ),
+        item(
+          _sendMessage,
+          Icons.message_rounded,
+          MediasfuColors.secondary,
+          'Message',
+        ),
+        item(
+          _remove,
+          Icons.person_remove_rounded,
+          MediasfuColors.danger,
+          'Remove',
         ),
       ],
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: (isDark ? Colors.white : Colors.black).withOpacity(0.06),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          Icons.more_horiz_rounded,
+          size: 20,
+          color: textColor.withOpacity(0.8),
+        ),
+      ),
     );
   }
 
@@ -430,21 +515,8 @@ class _ModernParticipantListItemState extends State<_ModernParticipantListItem>
       color: MediasfuColors.danger,
       isDark: isDark,
       tooltip:
-          'Remove ${widget.participant.name} from meeting - They will be disconnected',
-      onPressed: () => widget.options.onRemoveParticipants(
-        RemoveParticipantsOptions(
-          participant: widget.participant,
-          socket: widget.options.socket,
-          coHostResponsibility: widget.options.coHostResponsibility,
-          member: widget.options.member,
-          islevel: widget.options.islevel,
-          showAlert: widget.options.showAlert,
-          coHost: widget.options.coHost,
-          roomName: widget.options.roomName,
-          participants: widget.options.participants,
-          updateParticipants: widget.options.updateParticipants,
-        ),
-      ),
+          'Remove ${widget.participant.label} from meeting - They will be disconnected',
+      onPressed: _remove,
     );
   }
 
@@ -590,7 +662,7 @@ class _ModernParticipantListOthersItem extends StatelessWidget {
                   children: [
                     Flexible(
                       child: Text(
-                        participant.name,
+                        participant.label,
                         style: TextStyle(
                           fontSize: MediasfuTypography.sizeTitleSmall,
                           fontWeight: FontWeight.w600,

@@ -1056,7 +1056,7 @@ class _VideoCardState extends State<VideoCard> with TickerProviderStateMixin {
       padding: padding,
       decoration: decoration,
       child: Text(
-        widget.options.participant.name,
+        widget.options.participant.label,
         style: textStyle,
       ),
     );

@@ -23,7 +23,31 @@ Build video meetings, webinars, broadcasts, live streams, and collaborative room
 
 <p align="center"><a href="https://mediasfu.com/storybook/?path=/story/mediasfu-components-modern-mediasfu-generic--default">Open the live ModernMediasfuGeneric preview →</a></p>
 
-[Quick start](#quick-start-prebuilt-room) · [Try the sandbox](https://www.mediasfu.com/sandbox) · [Flutter guide](https://www.mediasfu.com/docs/sdks/flutter/) · [API reference](https://www.mediasfu.com/api/flutter/) · [Self-host with MediaSFU Open](https://github.com/MediaSFU/MediaSFUOpen)
+[Quick start](#quick-start-prebuilt-room) · [Try the sandbox](https://www.mediasfu.com/sandbox) · [Flutter guide](https://www.mediasfu.com/docs/sdks/flutter/) · [API reference](https://www.mediasfu.com/docs/api/flutter/) · [Self-host with MediaSFU Open](https://github.com/MediaSFU/MediaSFUOpen)
+
+## At A Glance
+
+| | |
+| --- | --- |
+| Install | `flutter pub add mediasfu_sdk` |
+| Import | `import 'package:mediasfu_sdk/mediasfu_sdk.dart';` |
+| Complete room UI in one widget | `ModernMediasfuGeneric` ([quick start](#quick-start-prebuilt-room)) |
+| Your own UI on the same runtime | `returnUI: false` ([headless mode](#headless-mode)) |
+| Backend | MediaSFU Cloud (API key) or self-hosted [MediaSFU Open](https://github.com/MediaSFU/MediaSFUOpen) (`localLink`) |
+| Platforms | Android, iOS, web, macOS, Windows, Linux |
+| Pricing | Published per-stream rates, for example audio $0.10 and 320×180 video $0.375 per 1,000 minutes of one stream to one viewer. See [pricing](https://www.mediasfu.com/pricing) |
+| License | MIT |
+
+## What's New In 2.4.2
+
+- **Waiting rooms for API rooms:** a guest joining a room that uses a waiting room waits until the host lets them in, then joins by itself.
+- **Readable names:** cards, participant lists and join notices show a member's display name when the room has one.
+- **Audio-only rooms:** participants can unmute in rooms created as audio-only.
+- **New create options:** `region`, `regionStrict` and `waitRoom`.
+
+Waiting rooms for API rooms and `regionStrict` take effect once your MediaSFU server supports them; older servers ignore the new options.
+
+See the [changelog](CHANGELOG.md) for every release.
 
 ## Why Product Teams Choose MediaSFU
 
@@ -56,11 +80,13 @@ For the complete implementation guide, see [README_DETAILED.md](./README_DETAILE
 
 ## Table Of Contents
 
+- [At A Glance](#at-a-glance)
+- [What's New In 2.4.2](#whats-new-in-242)
 - [Why Product Teams Choose MediaSFU](#why-product-teams-choose-mediasfu)
 - [Choose The Right Starting Point](#choose-the-right-starting-point)
 - [Install](#install)
-- [Backend Model](#backend-model)
 - [Quick Start: Prebuilt Room](#quick-start-prebuilt-room)
+- [Backend Model](#backend-model)
 - [Try The UI Without A Live Room](#try-the-ui-without-a-live-room)
 - [Choose A Room Widget](#choose-a-room-widget)
 - [Headless Mode](#headless-mode)
@@ -71,6 +97,7 @@ For the complete implementation guide, see [README_DETAILED.md](./README_DETAILE
 - [Customization](#customization)
 - [Feature Map](#feature-map)
 - [Troubleshooting](#troubleshooting)
+- [For AI Coding Assistants](#for-ai-coding-assistants)
 - [Resources And Support](#resources-and-support)
 
 ## Install
@@ -102,6 +129,46 @@ google_mlkit_selfie_segmentation: ^0.10.0
 web: ^1.1.1
 dart_webrtc: ^1.8.1
 ```
+
+## Quick Start: Prebuilt Room
+
+This is the fastest working path for MediaSFU Cloud. Get your API username and key from the [MediaSFU developer dashboard](https://www.mediasfu.com/dashboard?mode=regular), or use the [self-hosted path](#self-hosted-mediasfu-open) instead.
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:mediasfu_sdk/mediasfu_sdk.dart';
+
+void main() => runApp(const MyApp());
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: ModernMediasfuGeneric(
+        options: ModernMediasfuGenericOptions(
+          credentials: Credentials(
+            apiUserName: 'your-api-username',
+            apiKey: 'your-64-character-api-key',
+          ),
+        ),
+      ),
+    );
+  }
+}
+```
+
+Run it:
+
+```bash
+flutter run
+```
+
+This is for development. Before you ship, keep your API key on your server and route room creation through it (see [Backend Model](#backend-model)).
+
+The default `ModernMediasfuGeneric` flow shows the pre-join page, lets the user create or join a room, then renders the meeting experience with media controls, chat, participants, recording controls, polls, whiteboard, and related modals.
 
 ## Backend Model
 
@@ -181,44 +248,6 @@ final room = ModernMediasfuGeneric(
 ```
 
 Your backend must authenticate the app user, validate and allowlist the payload, enforce room/role/duration/capacity policy, rate-limit requests, replace the placeholders with server-only credentials, call MediaSFU, and return only the authorized room result. Never let either callback fall back to the default client credential path. Use the [REST API Sandbox](https://mediasfu.com/sandbox) for GET/POST experiments, create credentials at [API Keys](https://mediasfu.com/api-keys), and read the room API contract in the [Developer Console guide](https://mediasfu.com/documentation).
-
-## Quick Start: Prebuilt Room
-
-This is the fastest working path for MediaSFU Cloud. Get your API username and key from the [MediaSFU developer dashboard](https://www.mediasfu.com/dashboard?mode=regular), or use the [self-hosted path](#self-hosted-mediasfu-open) instead.
-
-```dart
-import 'package:flutter/material.dart';
-import 'package:mediasfu_sdk/mediasfu_sdk.dart';
-
-void main() => runApp(const MyApp());
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: ModernMediasfuGeneric(
-        options: ModernMediasfuGenericOptions(
-          credentials: Credentials(
-            apiUserName: 'your-api-username',
-            apiKey: 'your-64-character-api-key',
-          ),
-        ),
-      ),
-    );
-  }
-}
-```
-
-Run it:
-
-```bash
-flutter run
-```
-
-The default `ModernMediasfuGeneric` flow shows the pre-join page, lets the user create or join a room, then renders the meeting experience with media controls, chat, participants, recording controls, polls, whiteboard, and related modals.
 
 ## Try The UI Without A Live Room
 
@@ -788,6 +817,10 @@ If your backend registers participants itself (`POST /v1/rooms` with `action: "j
 each room and user, and send it back as `rejoinSecret` when that user joins again. A refusal with
 `code: "name-in-use-live"` means the person is still connected elsewhere and no matching credential was sent.
 
+## Host Leave And Rejoin
+
+The host exit modal now offers **Leave room** and **End for everyone**. Programmatic callers can keep the room active with `ConfirmExitOptions(..., endRoomOnHostExit: false)` or `leaveRoom(parameters, endRoomOnHostExit: false)`. The default remains `true`.
+
 ## Troubleshooting
 
 | Symptom | Check |
@@ -806,6 +839,18 @@ each room and user, and send it back as `rejoinSecret` when that user joins agai
 | Font Awesome compile error with `Icon(FontAwesomeIcons.xmark)` | Use `FaIcon(FontAwesomeIcons.xmark)` with `font_awesome_flutter` v11 |
 | Analyzer reports only info-level lints | The package may still build; clean those lints separately if your CI treats infos as fatal |
 
+## For AI Coding Assistants
+
+Use these facts when generating code with `mediasfu_sdk`:
+
+- Package `mediasfu_sdk`; import `package:mediasfu_sdk/mediasfu_sdk.dart`.
+- New apps: `ModernMediasfuGeneric(options: ModernMediasfuGenericOptions(credentials: Credentials(apiUserName: ..., apiKey: ...)))` renders the pre-join page and the full room.
+- A backend is always required: MediaSFU Cloud credentials, or `localLink` for MediaSFU Open. There is no offline mode except `useLocalUIMode` with seed data for UI work.
+- Production apps must not ship a reusable API key: inject `createMediaSFURoom` and `joinMediaSFURoom` that call your backend (see [Backend Model](#backend-model)).
+- Custom UI: `returnUI: false` plus `updateSourceParameters`; read state and call helpers from `MediasfuParameters`.
+- Room member names (`userName`) are 2–10 letters or digits, starting with a letter. Send a readable `displayName` (up to 80 characters) when your backend creates or joins rooms; the SDK shows it in labels.
+- Exact classes and signatures: [API reference](https://www.mediasfu.com/docs/api/flutter/). Platform-wide summary for LLM tools: [mediasfu.com/llms.txt](https://www.mediasfu.com/llms.txt).
+
 ## Resources And Support
 
 Use the shortest path for the question you have:
@@ -815,7 +860,7 @@ Use the shortest path for the question you have:
 | Flutter setup and concepts | [Flutter SDK guide](https://www.mediasfu.com/docs/sdks/flutter/) |
 | Copy-and-run first integration | [Quick start guide](https://www.mediasfu.com/docs/usage/quickstart/) |
 | Fully custom Flutter UI | [Headless guide](https://www.mediasfu.com/docs/usage/headless/) |
-| Exact classes and signatures | [Generated Flutter API reference](https://www.mediasfu.com/api/flutter/) |
+| Exact classes and signatures | [Generated Flutter API reference](https://www.mediasfu.com/docs/api/flutter/) |
 | What changed in each release | [Changelog](CHANGELOG.md) |
 | Browse all developer material | [MediaSFU docs portal](https://www.mediasfu.com/docs/) |
 | Developer console and API configuration | [Developer console guide](https://www.mediasfu.com/documentation/) |
@@ -857,9 +902,5 @@ For faster help, include the `mediasfu_sdk` version, Flutter target, chosen room
 | JavaScript | [mediasfu.com/javascript](https://www.mediasfu.com/javascript) |
 
 ## License
-
-### Host leave and rejoin
-
-The host exit modal now offers **Leave room** and **End for everyone**. Programmatic callers can keep the room active with `ConfirmExitOptions(..., endRoomOnHostExit: false)` or `leaveRoom(parameters, endRoomOnHostExit: false)`. The default remains `true`.
 
 MIT. See [LICENSE](./LICENSE).

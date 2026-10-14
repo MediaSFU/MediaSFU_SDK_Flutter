@@ -8750,6 +8750,11 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
               personJoined(
                 PersonJoinedOptions(
                   name: data['name'],
+                  displayName: (data['displayName'] as String?) ??
+                      participants.value
+                          .where((p) => p.name == data['name'])
+                          .firstOrNull
+                          ?.displayName,
                   showAlert: showAlert,
                 ),
               );
@@ -10659,17 +10664,14 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
                                       child: ValueListenableBuilder<ComponentSizes>(
                                         valueListenable: componentSizes,
                                         builder: (context, componentSizes, child) {
-                                          // Calculate containerWidthFraction to account for sidebar
-                                          final sidebarWidthFraction =
-                                              sidebarWidth > 0
-                                              ? (screenWidth - sidebarWidth) /
-                                                    screenWidth
-                                              : 1.0;
+                                          // MainScreenComponent measures its own constraints, and this
+                                          // Expanded already excludes the sidebar. Scaling the fraction
+                                          // by the sidebar share as well shrank the stage twice and left
+                                          // an empty gap beside an open sidebar.
                                           final containerWidthFraction =
                                               widget
                                                   .options
-                                                  .containerWidthFraction *
-                                              sidebarWidthFraction;
+                                                  .containerWidthFraction;
 
                                           return _mainScreenBuilder(
                                             context,

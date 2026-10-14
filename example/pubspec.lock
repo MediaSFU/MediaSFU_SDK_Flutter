@@ -598,7 +598,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "2.4.0"
+    version: "2.4.2"
   meta:
     dependency: transitive
     description:

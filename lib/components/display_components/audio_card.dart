@@ -959,7 +959,7 @@ class _AudioCardState extends State<AudioCard> with TickerProviderStateMixin {
   Widget _buildMiniCard() {
     return MiniCard(
       options: MiniCardOptions(
-        initials: widget.options.name.isNotEmpty ? widget.options.name : '',
+        initials: widget.options.participant.label.isNotEmpty ? widget.options.participant.label : widget.options.name,
         fontSize: 24,
         imageSource: widget.options.imageSource,
         roundedImage: widget.options.roundedImage,

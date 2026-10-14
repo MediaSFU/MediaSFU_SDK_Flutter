@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'create_join_room.dart';
 import 'media_sfu_http_response.dart';
 import 'rejoin_credential_store.dart';
+import 'wait_for_room_admission.dart';
 import '../../types/types.dart' show JoinMediaSFURoomOptions;
 
 class JoinMediaSFUOptions {
@@ -126,6 +127,29 @@ Future<CreateJoinRoomResult> joinRoomOnMediaSFU(
           ),
           success: false,
         );
+      }
+      // wait-room-api-v1: the room has a waiting room; wait here until the host decides, then continue the normal join.
+      if (data['waiting'] == true && data['secret'] is String) {
+        final admission = await waitForRoomAdmission(
+          roomName: (data['roomName'] ?? payload.meetingID).toString(),
+          userName: (data['userName'] ?? payload.userName).toString(),
+          secret: data['secret'] as String,
+          apiUserName: apiUserName,
+          apiKey: apiKey,
+          endpoint: endpoint,
+        );
+        if (admission.status != WaitingRoomStatus.admitted || admission.link == null) {
+          return CreateJoinRoomResult(
+            data: CreateJoinRoomError(error: admission.error ?? waitingRoomDeclinedMessage),
+            success: false,
+          );
+        }
+        data['roomName'] = admission.roomName;
+        data['secret'] = admission.secret;
+        data['link'] = admission.link;
+        data['publicURL'] = admission.publicURL ?? '';
+        data['message'] = 'Room joined successfully';
+        data['success'] = true;
       }
       final joined = CreateJoinRoomResponse.fromJson(data);
       await rememberRejoinCredential(

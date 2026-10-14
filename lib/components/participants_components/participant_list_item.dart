@@ -117,8 +117,8 @@ class ParticipantListItem extends StatelessWidget {
               flex: 4,
               child: Text(
                 options.participant.islevel == '2'
-                    ? '${options.participant.name} (host)'
-                    : options.participant.name,
+                    ? '${options.participant.label} (host)'
+                    : options.participant.label,
                 style:
                     const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),

@@ -1,3 +1,11 @@
+### 2.4.2
+
+* **Unmute in audio-only rooms.** The microphone could not be turned on in rooms created with `mediaType: "audio"` (it showed a camera message). Audio-only rooms now only block cameras.
+* **Readable names.** Video and audio cards, participant lists and the join notice show a member's `displayName` when the room has one, falling back to the member name. New `Participant.displayName` and `Participant.label` getters.
+* **Waiting rooms for API rooms.** When a room uses a waiting room, a guest joining through the SDK now waits until the host lets them in and then joins by itself; a declined guest or an ended room gets a clear message. No integrator work; progress is published for custom screens (`addWaitingRoomListener`, `cancelWaitingRoom()`).
+* New room-create options: `region` (`asia`, `europe`, `us`, `general`), `regionStrict` (refuse instead of placing the room in another region) and `waitRoom`. Servers that do not support them ignore them.
+* **Modern room with a side panel open.** On desktop the video area now fills the space beside an open panel (participants, chat and others); it was shrunk twice and left an empty gap. In the participants panel, narrow rows show mute, message and remove in one menu so names stay readable.
+
 ### 2.4.1
 
 * **One send transport per connection.** Concurrent callers reuse the transport being created, and simultaneous produces of the same kind share one producer. Fixes devices that sent silence after a quick rejoin or device switch.

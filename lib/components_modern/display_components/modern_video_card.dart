@@ -297,7 +297,7 @@ class _ModernVideoCardState extends State<ModernVideoCard>
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          widget.options.participant.name,
+          widget.options.participant.label,
           style: TextStyle(
             color: Colors.white,
             fontSize: MediasfuTypography.sizeBodySmall,

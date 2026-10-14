@@ -334,8 +334,8 @@ class _ModernAudioCardState extends State<ModernAudioCard>
                 child: ClipOval(
                   child: ModernMiniCard(
                     options: MiniCardOptions(
-                      initials: widget.options.name.isNotEmpty
-                          ? widget.options.name
+                      initials: widget.options.participant.label.isNotEmpty
+                          ? widget.options.participant.label
                           : '?',
                       fontSize: MediasfuTypography.sizeTitleLarge,
                       imageSource: widget.options.imageSource,
@@ -461,7 +461,7 @@ class _ModernAudioCardState extends State<ModernAudioCard>
             ),
           Flexible(
             child: Text(
-              widget.options.participant.name,
+              widget.options.participant.label,
               style: TextStyle(
                 color:
                     isDark ? widget.options.textColor : const Color(0xFF1F2937),

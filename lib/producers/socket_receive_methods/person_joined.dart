@@ -3,10 +3,14 @@ import '../../types/types.dart' show ShowAlert;
 /// Options for handling the event when a person joins.
 class PersonJoinedOptions {
   final String name;
+
+  /// Readable name to show instead of [name], when known.
+  final String? displayName;
   final ShowAlert? showAlert;
 
   PersonJoinedOptions({
     required this.name,
+    this.displayName,
     this.showAlert,
   });
 }
@@ -29,7 +33,7 @@ typedef PersonJoinedType = void Function(PersonJoinedOptions options);
 /// ```
 void personJoined(PersonJoinedOptions options) {
   options.showAlert?.call(
-    message: '${options.name} has joined the event.',
+    message: '${(options.displayName?.trim().isNotEmpty ?? false) ? options.displayName!.trim() : options.name} has joined the event.',
     type: 'success',
     duration: 3000,
   );

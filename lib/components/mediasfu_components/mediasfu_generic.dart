@@ -6254,6 +6254,11 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
               personJoined(
                 PersonJoinedOptions(
                   name: data['name'],
+                  displayName: (data['displayName'] as String?) ??
+                      participants.value
+                          .where((p) => p.name == data['name'])
+                          .firstOrNull
+                          ?.displayName,
                   showAlert: showAlert,
                 ),
               );

@@ -44,7 +44,7 @@ class ParticipantListOthersItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final participant = options.participant;
-    String displayName = participant.name;
+    String displayName = participant.label;
 
     // Determine display name with role
     if (participant.islevel == '2') {

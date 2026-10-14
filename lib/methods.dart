@@ -99,6 +99,10 @@ export 'package:mediasfu_sdk/methods/utils/join_room_on_media_sfu.dart'
     show joinRoomOnMediaSFU;
 export 'package:mediasfu_sdk/methods/utils/rejoin_credential_store.dart'
     show StoredRejoinCredential, rememberRejoinCredential, readRejoinCredential, forgetRejoinCredential;
+export 'package:mediasfu_sdk/methods/utils/wait_for_room_admission.dart'
+    show waitForRoomAdmission, WaitingRoomStatus, WaitingRoomAdmission, WaitingRoomStatusListener,
+        addWaitingRoomListener, removeWaitingRoomListener, cancelWaitingRoom,
+        waitingRoomMessage, waitingRoomDeclinedMessage;
 export 'package:mediasfu_sdk/methods/utils/create_room_on_media_sfu.dart'
     show createRoomOnMediaSFU;
 
