@@ -34,7 +34,7 @@ enum LanguageRegion {
   centralAsia,
   constructed,
   special,
-  other
+  other,
 }
 
 /// Language metadata with display names and additional info
@@ -247,7 +247,8 @@ class TranslationLanguageEntry {
       nickname: map['nickname'] as String?,
       voiceConfig: map['voiceConfig'] != null
           ? TranslationVoiceConfig.fromMap(
-              map['voiceConfig'] as Map<String, dynamic>)
+              map['voiceConfig'] as Map<String, dynamic>,
+            )
           : null,
     );
   }
@@ -306,508 +307,605 @@ const List<String> supportedLanguageCodes = [
 const Map<String, LanguageMetadata> languageMetadata = {
   // Major World Languages
   'en': LanguageMetadata(
-      name: 'English',
-      nativeName: 'English',
-      region: LanguageRegion.global,
-      ttsSupport: TTSSupport.excellent),
+    name: 'English',
+    nativeName: 'English',
+    region: LanguageRegion.global,
+    ttsSupport: TTSSupport.excellent,
+  ),
   'es': LanguageMetadata(
-      name: 'Spanish',
-      nativeName: 'Español',
-      region: LanguageRegion.global,
-      ttsSupport: TTSSupport.excellent),
+    name: 'Spanish',
+    nativeName: 'Español',
+    region: LanguageRegion.global,
+    ttsSupport: TTSSupport.excellent,
+  ),
   'fr': LanguageMetadata(
-      name: 'French',
-      nativeName: 'Français',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.excellent),
+    name: 'French',
+    nativeName: 'Français',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.excellent,
+  ),
   'de': LanguageMetadata(
-      name: 'German',
-      nativeName: 'Deutsch',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.excellent),
+    name: 'German',
+    nativeName: 'Deutsch',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.excellent,
+  ),
   'it': LanguageMetadata(
-      name: 'Italian',
-      nativeName: 'Italiano',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.excellent),
+    name: 'Italian',
+    nativeName: 'Italiano',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.excellent,
+  ),
   'pt': LanguageMetadata(
-      name: 'Portuguese',
-      nativeName: 'Português',
-      region: LanguageRegion.global,
-      ttsSupport: TTSSupport.excellent),
+    name: 'Portuguese',
+    nativeName: 'Português',
+    region: LanguageRegion.global,
+    ttsSupport: TTSSupport.excellent,
+  ),
   'ru': LanguageMetadata(
-      name: 'Russian',
-      nativeName: 'Русский',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.excellent),
+    name: 'Russian',
+    nativeName: 'Русский',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.excellent,
+  ),
   'zh': LanguageMetadata(
-      name: 'Chinese',
-      nativeName: '中文',
-      region: LanguageRegion.asia,
-      ttsSupport: TTSSupport.excellent),
+    name: 'Chinese',
+    nativeName: '中文',
+    region: LanguageRegion.asia,
+    ttsSupport: TTSSupport.excellent,
+  ),
   'ja': LanguageMetadata(
-      name: 'Japanese',
-      nativeName: '日本語',
-      region: LanguageRegion.asia,
-      ttsSupport: TTSSupport.excellent),
+    name: 'Japanese',
+    nativeName: '日本語',
+    region: LanguageRegion.asia,
+    ttsSupport: TTSSupport.excellent,
+  ),
   'ko': LanguageMetadata(
-      name: 'Korean',
-      nativeName: '한국어',
-      region: LanguageRegion.asia,
-      ttsSupport: TTSSupport.excellent),
+    name: 'Korean',
+    nativeName: '한국어',
+    region: LanguageRegion.asia,
+    ttsSupport: TTSSupport.excellent,
+  ),
   'ar': LanguageMetadata(
-      name: 'Arabic',
-      nativeName: 'العربية',
-      region: LanguageRegion.mena,
-      ttsSupport: TTSSupport.excellent),
+    name: 'Arabic',
+    nativeName: 'العربية',
+    region: LanguageRegion.mena,
+    ttsSupport: TTSSupport.excellent,
+  ),
 
   // South Asian Languages
   'hi': LanguageMetadata(
-      name: 'Hindi',
-      nativeName: 'हिन्दी',
-      region: LanguageRegion.southAsia,
-      ttsSupport: TTSSupport.good),
+    name: 'Hindi',
+    nativeName: 'हिन्दी',
+    region: LanguageRegion.southAsia,
+    ttsSupport: TTSSupport.good,
+  ),
   'bn': LanguageMetadata(
-      name: 'Bengali',
-      nativeName: 'বাংলা',
-      region: LanguageRegion.southAsia,
-      ttsSupport: TTSSupport.good),
+    name: 'Bengali',
+    nativeName: 'বাংলা',
+    region: LanguageRegion.southAsia,
+    ttsSupport: TTSSupport.good,
+  ),
   'pa': LanguageMetadata(
-      name: 'Punjabi',
-      nativeName: 'ਪੰਜਾਬੀ',
-      region: LanguageRegion.southAsia,
-      ttsSupport: TTSSupport.moderate),
+    name: 'Punjabi',
+    nativeName: 'ਪੰਜਾਬੀ',
+    region: LanguageRegion.southAsia,
+    ttsSupport: TTSSupport.moderate,
+  ),
   'te': LanguageMetadata(
-      name: 'Telugu',
-      nativeName: 'తెలుగు',
-      region: LanguageRegion.southAsia,
-      ttsSupport: TTSSupport.good),
+    name: 'Telugu',
+    nativeName: 'తెలుగు',
+    region: LanguageRegion.southAsia,
+    ttsSupport: TTSSupport.good,
+  ),
   'mr': LanguageMetadata(
-      name: 'Marathi',
-      nativeName: 'मराठी',
-      region: LanguageRegion.southAsia,
-      ttsSupport: TTSSupport.good),
+    name: 'Marathi',
+    nativeName: 'मराठी',
+    region: LanguageRegion.southAsia,
+    ttsSupport: TTSSupport.good,
+  ),
   'ta': LanguageMetadata(
-      name: 'Tamil',
-      nativeName: 'தமிழ்',
-      region: LanguageRegion.southAsia,
-      ttsSupport: TTSSupport.good),
+    name: 'Tamil',
+    nativeName: 'தமிழ்',
+    region: LanguageRegion.southAsia,
+    ttsSupport: TTSSupport.good,
+  ),
   'ur': LanguageMetadata(
-      name: 'Urdu',
-      nativeName: 'اردو',
-      region: LanguageRegion.southAsia,
-      ttsSupport: TTSSupport.good),
+    name: 'Urdu',
+    nativeName: 'اردو',
+    region: LanguageRegion.southAsia,
+    ttsSupport: TTSSupport.good,
+  ),
   'gu': LanguageMetadata(
-      name: 'Gujarati',
-      nativeName: 'ગુજરાતી',
-      region: LanguageRegion.southAsia,
-      ttsSupport: TTSSupport.moderate),
+    name: 'Gujarati',
+    nativeName: 'ગુજરાતી',
+    region: LanguageRegion.southAsia,
+    ttsSupport: TTSSupport.moderate,
+  ),
   'kn': LanguageMetadata(
-      name: 'Kannada',
-      nativeName: 'ಕನ್ನಡ',
-      region: LanguageRegion.southAsia,
-      ttsSupport: TTSSupport.moderate),
+    name: 'Kannada',
+    nativeName: 'ಕನ್ನಡ',
+    region: LanguageRegion.southAsia,
+    ttsSupport: TTSSupport.moderate,
+  ),
   'ml': LanguageMetadata(
-      name: 'Malayalam',
-      nativeName: 'മലയാളം',
-      region: LanguageRegion.southAsia,
-      ttsSupport: TTSSupport.moderate),
+    name: 'Malayalam',
+    nativeName: 'മലയാളം',
+    region: LanguageRegion.southAsia,
+    ttsSupport: TTSSupport.moderate,
+  ),
   'ne': LanguageMetadata(
-      name: 'Nepali',
-      nativeName: 'नेपाली',
-      region: LanguageRegion.southAsia,
-      ttsSupport: TTSSupport.limited),
+    name: 'Nepali',
+    nativeName: 'नेपाली',
+    region: LanguageRegion.southAsia,
+    ttsSupport: TTSSupport.limited,
+  ),
   'si': LanguageMetadata(
-      name: 'Sinhala',
-      nativeName: 'සිංහල',
-      region: LanguageRegion.southAsia,
-      ttsSupport: TTSSupport.limited),
+    name: 'Sinhala',
+    nativeName: 'සිංහල',
+    region: LanguageRegion.southAsia,
+    ttsSupport: TTSSupport.limited,
+  ),
 
   // European Languages
   'nl': LanguageMetadata(
-      name: 'Dutch',
-      nativeName: 'Nederlands',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.excellent),
+    name: 'Dutch',
+    nativeName: 'Nederlands',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.excellent,
+  ),
   'pl': LanguageMetadata(
-      name: 'Polish',
-      nativeName: 'Polski',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.excellent),
+    name: 'Polish',
+    nativeName: 'Polski',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.excellent,
+  ),
   'tr': LanguageMetadata(
-      name: 'Turkish',
-      nativeName: 'Türkçe',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.excellent),
+    name: 'Turkish',
+    nativeName: 'Türkçe',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.excellent,
+  ),
   'cs': LanguageMetadata(
-      name: 'Czech',
-      nativeName: 'Čeština',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.good),
+    name: 'Czech',
+    nativeName: 'Čeština',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.good,
+  ),
   'el': LanguageMetadata(
-      name: 'Greek',
-      nativeName: 'Ελληνικά',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.good),
+    name: 'Greek',
+    nativeName: 'Ελληνικά',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.good,
+  ),
   'hu': LanguageMetadata(
-      name: 'Hungarian',
-      nativeName: 'Magyar',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.good),
+    name: 'Hungarian',
+    nativeName: 'Magyar',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.good,
+  ),
   'ro': LanguageMetadata(
-      name: 'Romanian',
-      nativeName: 'Română',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.good),
+    name: 'Romanian',
+    nativeName: 'Română',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.good,
+  ),
   'sv': LanguageMetadata(
-      name: 'Swedish',
-      nativeName: 'Svenska',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.excellent),
+    name: 'Swedish',
+    nativeName: 'Svenska',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.excellent,
+  ),
   'da': LanguageMetadata(
-      name: 'Danish',
-      nativeName: 'Dansk',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.good),
+    name: 'Danish',
+    nativeName: 'Dansk',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.good,
+  ),
   'fi': LanguageMetadata(
-      name: 'Finnish',
-      nativeName: 'Suomi',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.good),
+    name: 'Finnish',
+    nativeName: 'Suomi',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.good,
+  ),
   'no': LanguageMetadata(
-      name: 'Norwegian',
-      nativeName: 'Norsk',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.good),
+    name: 'Norwegian',
+    nativeName: 'Norsk',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.good,
+  ),
   'sk': LanguageMetadata(
-      name: 'Slovak',
-      nativeName: 'Slovenčina',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.moderate),
+    name: 'Slovak',
+    nativeName: 'Slovenčina',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.moderate,
+  ),
   'uk': LanguageMetadata(
-      name: 'Ukrainian',
-      nativeName: 'Українська',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.good),
+    name: 'Ukrainian',
+    nativeName: 'Українська',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.good,
+  ),
   'bg': LanguageMetadata(
-      name: 'Bulgarian',
-      nativeName: 'Български',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.moderate),
+    name: 'Bulgarian',
+    nativeName: 'Български',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.moderate,
+  ),
   'hr': LanguageMetadata(
-      name: 'Croatian',
-      nativeName: 'Hrvatski',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.moderate),
+    name: 'Croatian',
+    nativeName: 'Hrvatski',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.moderate,
+  ),
   'et': LanguageMetadata(
-      name: 'Estonian',
-      nativeName: 'Eesti',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.moderate),
+    name: 'Estonian',
+    nativeName: 'Eesti',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.moderate,
+  ),
   'lt': LanguageMetadata(
-      name: 'Lithuanian',
-      nativeName: 'Lietuvių',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.moderate),
+    name: 'Lithuanian',
+    nativeName: 'Lietuvių',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.moderate,
+  ),
   'lv': LanguageMetadata(
-      name: 'Latvian',
-      nativeName: 'Latviešu',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.moderate),
+    name: 'Latvian',
+    nativeName: 'Latviešu',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.moderate,
+  ),
   'sl': LanguageMetadata(
-      name: 'Slovenian',
-      nativeName: 'Slovenščina',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.moderate),
+    name: 'Slovenian',
+    nativeName: 'Slovenščina',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.moderate,
+  ),
   'sr': LanguageMetadata(
-      name: 'Serbian',
-      nativeName: 'Српски',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.moderate),
+    name: 'Serbian',
+    nativeName: 'Српски',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.moderate,
+  ),
   'bs': LanguageMetadata(
-      name: 'Bosnian',
-      nativeName: 'Bosanski',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.limited),
+    name: 'Bosnian',
+    nativeName: 'Bosanski',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.limited,
+  ),
   'mk': LanguageMetadata(
-      name: 'Macedonian',
-      nativeName: 'Македонски',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.limited),
+    name: 'Macedonian',
+    nativeName: 'Македонски',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.limited,
+  ),
   'is': LanguageMetadata(
-      name: 'Icelandic',
-      nativeName: 'Íslenska',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.moderate),
+    name: 'Icelandic',
+    nativeName: 'Íslenska',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.moderate,
+  ),
   'ga': LanguageMetadata(
-      name: 'Irish',
-      nativeName: 'Gaeilge',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.limited),
+    name: 'Irish',
+    nativeName: 'Gaeilge',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.limited,
+  ),
   'cy': LanguageMetadata(
-      name: 'Welsh',
-      nativeName: 'Cymraeg',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.moderate),
+    name: 'Welsh',
+    nativeName: 'Cymraeg',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.moderate,
+  ),
   'mt': LanguageMetadata(
-      name: 'Maltese',
-      nativeName: 'Malti',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.limited),
+    name: 'Maltese',
+    nativeName: 'Malti',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.limited,
+  ),
   'lb': LanguageMetadata(
-      name: 'Luxembourgish',
-      nativeName: 'Lëtzebuergesch',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.limited),
+    name: 'Luxembourgish',
+    nativeName: 'Lëtzebuergesch',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.limited,
+  ),
   'sq': LanguageMetadata(
-      name: 'Albanian',
-      nativeName: 'Shqip',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.limited),
+    name: 'Albanian',
+    nativeName: 'Shqip',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.limited,
+  ),
   'be': LanguageMetadata(
-      name: 'Belarusian',
-      nativeName: 'Беларуская',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.limited),
+    name: 'Belarusian',
+    nativeName: 'Беларуская',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.limited,
+  ),
 
   // Middle Eastern Languages
   'he': LanguageMetadata(
-      name: 'Hebrew',
-      nativeName: 'עברית',
-      region: LanguageRegion.mena,
-      ttsSupport: TTSSupport.good),
+    name: 'Hebrew',
+    nativeName: 'עברית',
+    region: LanguageRegion.mena,
+    ttsSupport: TTSSupport.good,
+  ),
   'fa': LanguageMetadata(
-      name: 'Persian',
-      nativeName: 'فارسی',
-      region: LanguageRegion.mena,
-      ttsSupport: TTSSupport.moderate),
+    name: 'Persian',
+    nativeName: 'فارسی',
+    region: LanguageRegion.mena,
+    ttsSupport: TTSSupport.moderate,
+  ),
   'ps': LanguageMetadata(
-      name: 'Pashto',
-      nativeName: 'پښتو',
-      region: LanguageRegion.mena,
-      ttsSupport: TTSSupport.limited),
+    name: 'Pashto',
+    nativeName: 'پښتو',
+    region: LanguageRegion.mena,
+    ttsSupport: TTSSupport.limited,
+  ),
   'ku': LanguageMetadata(
-      name: 'Kurdish',
-      nativeName: 'Kurdî',
-      region: LanguageRegion.mena,
-      ttsSupport: TTSSupport.limited),
+    name: 'Kurdish',
+    nativeName: 'Kurdî',
+    region: LanguageRegion.mena,
+    ttsSupport: TTSSupport.limited,
+  ),
 
   // Southeast Asian Languages
   'vi': LanguageMetadata(
-      name: 'Vietnamese',
-      nativeName: 'Tiếng Việt',
-      region: LanguageRegion.asia,
-      ttsSupport: TTSSupport.good),
+    name: 'Vietnamese',
+    nativeName: 'Tiếng Việt',
+    region: LanguageRegion.asia,
+    ttsSupport: TTSSupport.good,
+  ),
   'th': LanguageMetadata(
-      name: 'Thai',
-      nativeName: 'ไทย',
-      region: LanguageRegion.asia,
-      ttsSupport: TTSSupport.good),
+    name: 'Thai',
+    nativeName: 'ไทย',
+    region: LanguageRegion.asia,
+    ttsSupport: TTSSupport.good,
+  ),
   'id': LanguageMetadata(
-      name: 'Indonesian',
-      nativeName: 'Bahasa Indonesia',
-      region: LanguageRegion.asia,
-      ttsSupport: TTSSupport.good),
+    name: 'Indonesian',
+    nativeName: 'Bahasa Indonesia',
+    region: LanguageRegion.asia,
+    ttsSupport: TTSSupport.good,
+  ),
   'ms': LanguageMetadata(
-      name: 'Malay',
-      nativeName: 'Bahasa Melayu',
-      region: LanguageRegion.asia,
-      ttsSupport: TTSSupport.good),
+    name: 'Malay',
+    nativeName: 'Bahasa Melayu',
+    region: LanguageRegion.asia,
+    ttsSupport: TTSSupport.good,
+  ),
   'tl': LanguageMetadata(
-      name: 'Filipino',
-      nativeName: 'Tagalog',
-      region: LanguageRegion.asia,
-      ttsSupport: TTSSupport.moderate),
+    name: 'Filipino',
+    nativeName: 'Tagalog',
+    region: LanguageRegion.asia,
+    ttsSupport: TTSSupport.moderate,
+  ),
   'km': LanguageMetadata(
-      name: 'Khmer',
-      nativeName: 'ខ្មែរ',
-      region: LanguageRegion.asia,
-      ttsSupport: TTSSupport.limited),
+    name: 'Khmer',
+    nativeName: 'ខ្មែរ',
+    region: LanguageRegion.asia,
+    ttsSupport: TTSSupport.limited,
+  ),
   'lo': LanguageMetadata(
-      name: 'Lao',
-      nativeName: 'ລາວ',
-      region: LanguageRegion.asia,
-      ttsSupport: TTSSupport.limited),
+    name: 'Lao',
+    nativeName: 'ລາວ',
+    region: LanguageRegion.asia,
+    ttsSupport: TTSSupport.limited,
+  ),
   'my': LanguageMetadata(
-      name: 'Burmese',
-      nativeName: 'မြန်မာစာ',
-      region: LanguageRegion.asia,
-      ttsSupport: TTSSupport.limited),
+    name: 'Burmese',
+    nativeName: 'မြန်မာစာ',
+    region: LanguageRegion.asia,
+    ttsSupport: TTSSupport.limited,
+  ),
 
   // African Languages
   'sw': LanguageMetadata(
-      name: 'Swahili',
-      nativeName: 'Kiswahili',
-      region: LanguageRegion.africa,
-      ttsSupport: TTSSupport.moderate),
+    name: 'Swahili',
+    nativeName: 'Kiswahili',
+    region: LanguageRegion.africa,
+    ttsSupport: TTSSupport.moderate,
+  ),
   'yo': LanguageMetadata(
-      name: 'Yoruba',
-      nativeName: 'Yorùbá',
-      region: LanguageRegion.africa,
-      ttsSupport: TTSSupport.limited),
+    name: 'Yoruba',
+    nativeName: 'Yorùbá',
+    region: LanguageRegion.africa,
+    ttsSupport: TTSSupport.limited,
+  ),
   'ig': LanguageMetadata(
-      name: 'Igbo',
-      nativeName: 'Igbo',
-      region: LanguageRegion.africa,
-      ttsSupport: TTSSupport.limited),
+    name: 'Igbo',
+    nativeName: 'Igbo',
+    region: LanguageRegion.africa,
+    ttsSupport: TTSSupport.limited,
+  ),
   'ha': LanguageMetadata(
-      name: 'Hausa',
-      nativeName: 'Hausa',
-      region: LanguageRegion.africa,
-      ttsSupport: TTSSupport.limited),
+    name: 'Hausa',
+    nativeName: 'Hausa',
+    region: LanguageRegion.africa,
+    ttsSupport: TTSSupport.limited,
+  ),
   'zu': LanguageMetadata(
-      name: 'Zulu',
-      nativeName: 'isiZulu',
-      region: LanguageRegion.africa,
-      ttsSupport: TTSSupport.moderate),
+    name: 'Zulu',
+    nativeName: 'isiZulu',
+    region: LanguageRegion.africa,
+    ttsSupport: TTSSupport.moderate,
+  ),
   'xh': LanguageMetadata(
-      name: 'Xhosa',
-      nativeName: 'isiXhosa',
-      region: LanguageRegion.africa,
-      ttsSupport: TTSSupport.limited),
+    name: 'Xhosa',
+    nativeName: 'isiXhosa',
+    region: LanguageRegion.africa,
+    ttsSupport: TTSSupport.limited,
+  ),
   'af': LanguageMetadata(
-      name: 'Afrikaans',
-      nativeName: 'Afrikaans',
-      region: LanguageRegion.africa,
-      ttsSupport: TTSSupport.good),
+    name: 'Afrikaans',
+    nativeName: 'Afrikaans',
+    region: LanguageRegion.africa,
+    ttsSupport: TTSSupport.good,
+  ),
   'st': LanguageMetadata(
-      name: 'Sesotho',
-      nativeName: 'Sesotho',
-      region: LanguageRegion.africa,
-      ttsSupport: TTSSupport.limited),
+    name: 'Sesotho',
+    nativeName: 'Sesotho',
+    region: LanguageRegion.africa,
+    ttsSupport: TTSSupport.limited,
+  ),
   'tn': LanguageMetadata(
-      name: 'Setswana',
-      nativeName: 'Setswana',
-      region: LanguageRegion.africa,
-      ttsSupport: TTSSupport.limited),
+    name: 'Setswana',
+    nativeName: 'Setswana',
+    region: LanguageRegion.africa,
+    ttsSupport: TTSSupport.limited,
+  ),
   'sn': LanguageMetadata(
-      name: 'Shona',
-      nativeName: 'chiShona',
-      region: LanguageRegion.africa,
-      ttsSupport: TTSSupport.limited),
+    name: 'Shona',
+    nativeName: 'chiShona',
+    region: LanguageRegion.africa,
+    ttsSupport: TTSSupport.limited,
+  ),
   'am': LanguageMetadata(
-      name: 'Amharic',
-      nativeName: 'አማርኛ',
-      region: LanguageRegion.africa,
-      ttsSupport: TTSSupport.moderate),
+    name: 'Amharic',
+    nativeName: 'አማርኛ',
+    region: LanguageRegion.africa,
+    ttsSupport: TTSSupport.moderate,
+  ),
   'so': LanguageMetadata(
-      name: 'Somali',
-      nativeName: 'Soomaali',
-      region: LanguageRegion.africa,
-      ttsSupport: TTSSupport.limited),
+    name: 'Somali',
+    nativeName: 'Soomaali',
+    region: LanguageRegion.africa,
+    ttsSupport: TTSSupport.limited,
+  ),
   'rw': LanguageMetadata(
-      name: 'Kinyarwanda',
-      nativeName: 'Ikinyarwanda',
-      region: LanguageRegion.africa,
-      ttsSupport: TTSSupport.limited),
+    name: 'Kinyarwanda',
+    nativeName: 'Ikinyarwanda',
+    region: LanguageRegion.africa,
+    ttsSupport: TTSSupport.limited,
+  ),
   'mg': LanguageMetadata(
-      name: 'Malagasy',
-      nativeName: 'Malagasy',
-      region: LanguageRegion.africa,
-      ttsSupport: TTSSupport.limited),
+    name: 'Malagasy',
+    nativeName: 'Malagasy',
+    region: LanguageRegion.africa,
+    ttsSupport: TTSSupport.limited,
+  ),
   'ny': LanguageMetadata(
-      name: 'Chichewa',
-      nativeName: 'Chichewa',
-      region: LanguageRegion.africa,
-      ttsSupport: TTSSupport.limited),
+    name: 'Chichewa',
+    nativeName: 'Chichewa',
+    region: LanguageRegion.africa,
+    ttsSupport: TTSSupport.limited,
+  ),
   'ee': LanguageMetadata(
-      name: 'Ewe',
-      nativeName: 'Eʋegbe',
-      region: LanguageRegion.africa,
-      ttsSupport: TTSSupport.limited),
+    name: 'Ewe',
+    nativeName: 'Eʋegbe',
+    region: LanguageRegion.africa,
+    ttsSupport: TTSSupport.limited,
+  ),
   'tw': LanguageMetadata(
-      name: 'Twi',
-      nativeName: 'Twi',
-      region: LanguageRegion.africa,
-      ttsSupport: TTSSupport.limited),
+    name: 'Twi',
+    nativeName: 'Twi',
+    region: LanguageRegion.africa,
+    ttsSupport: TTSSupport.limited,
+  ),
   'gaa': LanguageMetadata(
-      name: 'Ga',
-      nativeName: 'Gã',
-      region: LanguageRegion.africa,
-      ttsSupport: TTSSupport.limited),
+    name: 'Ga',
+    nativeName: 'Gã',
+    region: LanguageRegion.africa,
+    ttsSupport: TTSSupport.limited,
+  ),
 
   // Caucasian Languages
   'ka': LanguageMetadata(
-      name: 'Georgian',
-      nativeName: 'ქართული',
-      region: LanguageRegion.caucasus,
-      ttsSupport: TTSSupport.moderate),
+    name: 'Georgian',
+    nativeName: 'ქართული',
+    region: LanguageRegion.caucasus,
+    ttsSupport: TTSSupport.moderate,
+  ),
   'hy': LanguageMetadata(
-      name: 'Armenian',
-      nativeName: 'Հdelays',
-      region: LanguageRegion.caucasus,
-      ttsSupport: TTSSupport.moderate),
+    name: 'Armenian',
+    nativeName: 'Հdelays',
+    region: LanguageRegion.caucasus,
+    ttsSupport: TTSSupport.moderate,
+  ),
   'az': LanguageMetadata(
-      name: 'Azerbaijani',
-      nativeName: 'Azərbaycanca',
-      region: LanguageRegion.caucasus,
-      ttsSupport: TTSSupport.moderate),
+    name: 'Azerbaijani',
+    nativeName: 'Azərbaycanca',
+    region: LanguageRegion.caucasus,
+    ttsSupport: TTSSupport.moderate,
+  ),
 
   // Regional European Languages
   'eu': LanguageMetadata(
-      name: 'Basque',
-      nativeName: 'Euskara',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.limited),
+    name: 'Basque',
+    nativeName: 'Euskara',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.limited,
+  ),
   'gl': LanguageMetadata(
-      name: 'Galician',
-      nativeName: 'Galego',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.moderate),
+    name: 'Galician',
+    nativeName: 'Galego',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.moderate,
+  ),
   'ca': LanguageMetadata(
-      name: 'Catalan',
-      nativeName: 'Català',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.good),
+    name: 'Catalan',
+    nativeName: 'Català',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.good,
+  ),
   'la': LanguageMetadata(
-      name: 'Latin',
-      nativeName: 'Latina',
-      region: LanguageRegion.europe,
-      ttsSupport: TTSSupport.limited),
+    name: 'Latin',
+    nativeName: 'Latina',
+    region: LanguageRegion.europe,
+    ttsSupport: TTSSupport.limited,
+  ),
   'eo': LanguageMetadata(
-      name: 'Esperanto',
-      nativeName: 'Esperanto',
-      region: LanguageRegion.constructed,
-      ttsSupport: TTSSupport.limited),
+    name: 'Esperanto',
+    nativeName: 'Esperanto',
+    region: LanguageRegion.constructed,
+    ttsSupport: TTSSupport.limited,
+  ),
 
   // Central Asian
   'kk': LanguageMetadata(
-      name: 'Kazakh',
-      nativeName: 'Қазақша',
-      region: LanguageRegion.centralAsia,
-      ttsSupport: TTSSupport.moderate),
+    name: 'Kazakh',
+    nativeName: 'Қазақша',
+    region: LanguageRegion.centralAsia,
+    ttsSupport: TTSSupport.moderate,
+  ),
   'uz': LanguageMetadata(
-      name: 'Uzbek',
-      nativeName: "O'zbek",
-      region: LanguageRegion.centralAsia,
-      ttsSupport: TTSSupport.moderate),
+    name: 'Uzbek',
+    nativeName: "O'zbek",
+    region: LanguageRegion.centralAsia,
+    ttsSupport: TTSSupport.moderate,
+  ),
   'tg': LanguageMetadata(
-      name: 'Tajik',
-      nativeName: 'Тоҷикӣ',
-      region: LanguageRegion.centralAsia,
-      ttsSupport: TTSSupport.limited),
+    name: 'Tajik',
+    nativeName: 'Тоҷикӣ',
+    region: LanguageRegion.centralAsia,
+    ttsSupport: TTSSupport.limited,
+  ),
   'ky': LanguageMetadata(
-      name: 'Kyrgyz',
-      nativeName: 'Кыргызча',
-      region: LanguageRegion.centralAsia,
-      ttsSupport: TTSSupport.limited),
+    name: 'Kyrgyz',
+    nativeName: 'Кыргызча',
+    region: LanguageRegion.centralAsia,
+    ttsSupport: TTSSupport.limited,
+  ),
   'tk': LanguageMetadata(
-      name: 'Turkmen',
-      nativeName: 'Türkmen',
-      region: LanguageRegion.centralAsia,
-      ttsSupport: TTSSupport.limited),
+    name: 'Turkmen',
+    nativeName: 'Türkmen',
+    region: LanguageRegion.centralAsia,
+    ttsSupport: TTSSupport.limited,
+  ),
   'mn': LanguageMetadata(
-      name: 'Mongolian',
-      nativeName: 'Монгол',
-      region: LanguageRegion.centralAsia,
-      ttsSupport: TTSSupport.moderate),
+    name: 'Mongolian',
+    nativeName: 'Монгол',
+    region: LanguageRegion.centralAsia,
+    ttsSupport: TTSSupport.moderate,
+  ),
 
   // Special
   'auto': LanguageMetadata(
-      name: 'Auto-detect',
-      nativeName: 'Auto',
-      region: LanguageRegion.special,
-      ttsSupport: TTSSupport.notApplicable),
+    name: 'Auto-detect',
+    nativeName: 'Auto',
+    region: LanguageRegion.special,
+    ttsSupport: TTSSupport.notApplicable,
+  ),
 };
 
 // ============================================================================
@@ -944,7 +1042,10 @@ enum TTSProvider {
   rime,
   kokoro,
   gemini,
-  assemblyai
+  fish,
+  sarvam,
+  xai,
+  assemblyai,
 }
 
 // ============================================================================
@@ -962,8 +1063,10 @@ bool isLanguageSupported(String code) {
 bool isValidLanguageCode(String code) {
   if (code.isEmpty) return false;
   final trimmed = code.trim().toLowerCase();
-  return RegExp(r'^[a-z]{2,3}(-[a-z]{2,4})?$', caseSensitive: false)
-      .hasMatch(trimmed);
+  return RegExp(
+    r'^[a-z]{2,3}(-[a-z]{2,4})?$',
+    caseSensitive: false,
+  ).hasMatch(trimmed);
 }
 
 /// Normalize a language code to ISO 639-1 (2-letter) format
@@ -998,8 +1101,9 @@ String getLanguageNativeName(String code) {
 
 /// Get all supported languages as list of LanguageOption
 List<LanguageOption> getSupportedLanguages({String displayLocale = 'en'}) {
-  final languages =
-      supportedLanguageCodes.where((code) => code != 'auto').map((code) {
+  final languages = supportedLanguageCodes.where((code) => code != 'auto').map((
+    code,
+  ) {
     final metadata = languageMetadata[code];
     return LanguageOption(
       code: code,
@@ -1036,8 +1140,9 @@ String? getDefaultVoice(
   String provider = 'deepgram',
 }) {
   final normalized = normalizeLanguageCode(langCode);
-  final effectiveGender =
-      gender == VoiceGender.neutral ? VoiceGender.female : gender;
+  final effectiveGender = gender == VoiceGender.neutral
+      ? VoiceGender.female
+      : gender;
   final genderKey = effectiveGender == VoiceGender.male ? 'male' : 'female';
 
   // Multilingual providers (not language-specific)
@@ -1064,9 +1169,8 @@ String? getDefaultVoice(
     return genderVoices?.isNotEmpty == true ? genderVoices![0] : null;
   }
 
-  // Default fallback to Deepgram
-  final voices = deepgramVoices[genderKey] ?? deepgramVoices['female'];
-  return voices?.isNotEmpty == true ? voices![0]['id'] : null;
+  // Server-discovered/unknown providers have no invented local default.
+  return null;
 }
 
 /// Get the default voice gender for a language
@@ -1079,75 +1183,156 @@ VoiceGender getDefaultVoiceGender(String langCode) {
 // SOCKET-BASED VOICE FETCHING
 // ============================================================================
 
-/// Result from socket voice fetch
+/// Versioned provider-authoritative catalogue (voice-catalogue-v1).
 class SocketVoiceResponse {
   final String provider;
   final String language;
   final Map<String, List<VoiceOption>> voices;
   final String? error;
+  final String status;
+  final String? model;
+  final int schemaVersion;
+  final bool truncated;
 
   SocketVoiceResponse({
     required this.provider,
     required this.language,
     required this.voices,
     this.error,
+    this.status = 'available',
+    this.model,
+    this.schemaVersion = 1,
+    this.truncated = false,
   });
 }
 
-/// Fetch voices via socket connection (keeps API keys server-side)
+Map<String, List<VoiceOption>> emptyVoiceCatalogue() => {
+  'male': <VoiceOption>[],
+  'female': <VoiceOption>[],
+  'neutral': <VoiceOption>[],
+};
+
+/// Invalid responses never authorize a guessed provider or static voice ID.
+SocketVoiceResponse parseVoiceCatalogue(dynamic response, String language) {
+  SocketVoiceResponse unavailable() => SocketVoiceResponse(
+    provider: '',
+    language: language,
+    voices: emptyVoiceCatalogue(),
+    status: 'unavailable',
+    error: 'Voice catalogue unavailable',
+  );
+  if (response is! Map ||
+      response['voices'] is! Map ||
+      (response['schemaVersion'] != null && response['schemaVersion'] != 1) ||
+      response['provider'] is! String ||
+      (response['provider'] as String).trim().isEmpty)
+    return unavailable();
+  final provider = (response['provider'] as String).trim().toLowerCase();
+  final resultLanguage = response['language'] is String
+      ? response['language'] as String
+      : language;
+  final voices = emptyVoiceCatalogue();
+  final seen = <String>{};
+  for (final gender in VoiceGender.values) {
+    final items = (response['voices'] as Map)[gender.name];
+    if (items is! List) continue;
+    for (final item in items) {
+      final dynamic id = item is String
+          ? item
+          : item is Map
+          ? item['id']
+          : null;
+      if (id is! String || id.trim().isEmpty || !seen.add(id)) continue;
+      final suppliedGender = item is Map ? item['gender'] : null;
+      final actualGender =
+          VoiceGender.values
+              .where((v) => v.name == suppliedGender)
+              .firstOrNull ??
+          gender;
+      final dynamic suppliedName = item is Map ? item['name'] : null;
+      voices[actualGender.name]!.add(
+        VoiceOption(
+          id: id,
+          name: suppliedName is String && suppliedName.isNotEmpty
+              ? suppliedName
+              : id,
+          gender: actualGender,
+          provider: provider,
+          language: resultLanguage,
+        ),
+      );
+    }
+  }
+  final hasError =
+      response['error'] != null &&
+      response['error'] != false &&
+      response['error'] != '';
+  final count = voices.values.fold<int>(0, (sum, items) => sum + items.length);
+  return SocketVoiceResponse(
+    provider: provider,
+    language: resultLanguage,
+    voices: hasError ? emptyVoiceCatalogue() : voices,
+    status: hasError
+        ? 'unavailable'
+        : response['status'] is String
+        ? response['status'] as String
+        : count > 0
+        ? 'available'
+        : 'empty',
+    error: hasError ? 'Voice catalogue unavailable' : null,
+    model: response['model'] is String ? response['model'] as String : null,
+    schemaVersion: response['schemaVersion'] is int
+        ? response['schemaVersion'] as int
+        : 1,
+    truncated: response['truncated'] == true,
+  );
+}
+
+/// Optional named arguments preserve existing callers; room-aware callers must
+/// include their joined room. Provider is only a compatibility hint, not authority.
 Future<SocketVoiceResponse> fetchVoicesViaSocket(
   io.Socket socket,
   String provider,
-  String language,
-) async {
+  String language, {
+  String? roomName,
+  Duration requestTimeout = const Duration(seconds: 20),
+}) async {
   final completer = Completer<SocketVoiceResponse>();
+  Timer? timer;
+  void finish(SocketVoiceResponse response) {
+    if (completer.isCompleted) return;
+    timer?.cancel();
+    completer.complete(response);
+  }
 
-  // Set timeout
-  final timeout = Timer(const Duration(seconds: 5), () {
-    if (!completer.isCompleted) {
-      // Return static voices as fallback
-      completer.complete(SocketVoiceResponse(
-        provider: provider,
-        language: language,
-        voices: getAvailableVoices(language, provider: provider),
-        error: 'Request timed out, using static voices',
-      ));
-    }
-  });
-
-  socket.emitWithAck('translation:getVoices', {
-    'provider': provider,
-    'language': language,
-  }, ack: (response) {
-    timeout.cancel();
-    if (!completer.isCompleted) {
-      if (response is Map<String, dynamic>) {
-        final maleVoices = (response['voices']?['male'] as List?)
-                ?.map((v) => VoiceOption.fromMap(v as Map<String, dynamic>))
-                .toList() ??
-            [];
-        final femaleVoices = (response['voices']?['female'] as List?)
-                ?.map((v) => VoiceOption.fromMap(v as Map<String, dynamic>))
-                .toList() ??
-            [];
-
-        completer.complete(SocketVoiceResponse(
-          provider: response['provider'] as String? ?? provider,
-          language: response['language'] as String? ?? language,
-          voices: {'male': maleVoices, 'female': femaleVoices},
-          error: response['error'] as String?,
-        ));
-      } else {
-        completer.complete(SocketVoiceResponse(
-          provider: provider,
-          language: language,
-          voices: getAvailableVoices(language, provider: provider),
-          error: 'Invalid response format',
-        ));
-      }
-    }
-  });
-
+  SocketVoiceResponse unavailable() => SocketVoiceResponse(
+    provider: '',
+    language: language,
+    voices: emptyVoiceCatalogue(),
+    status: 'unavailable',
+    error: 'Voice catalogue unavailable',
+  );
+  timer = Timer(requestTimeout, () => finish(unavailable()));
+  try {
+    socket.emitWithAck(
+      'translation:getVoices',
+      {
+        'provider': provider,
+        'language': language,
+        if (roomName != null && roomName.isNotEmpty) 'roomName': roomName,
+      },
+      ack: (dynamic response) {
+        if (completer.isCompleted) return;
+        try {
+          finish(parseVoiceCatalogue(response, language));
+        } catch (_) {
+          finish(unavailable());
+        }
+      },
+    );
+  } catch (_) {
+    finish(unavailable());
+  }
   return completer.future;
 }
 
@@ -1164,21 +1349,27 @@ Future<List<LanguageOption>> fetchLanguagesViaSocket(
     }
   });
 
-  socket.emitWithAck('translation:getLanguages', {
-    'displayLocale': displayLocale,
-  }, ack: (response) {
-    timeout.cancel();
-    if (!completer.isCompleted) {
-      if (response is Map<String, dynamic> && response['languages'] is List) {
-        final languages = (response['languages'] as List)
-            .map((l) => LanguageOption.fromMap(l as Map<String, dynamic>))
-            .toList();
-        completer.complete(languages);
-      } else {
-        completer.complete(getSupportedLanguages(displayLocale: displayLocale));
+  socket.emitWithAck(
+    'translation:getLanguages',
+    {
+      'displayLocale': displayLocale,
+    },
+    ack: (response) {
+      timeout.cancel();
+      if (!completer.isCompleted) {
+        if (response is Map<String, dynamic> && response['languages'] is List) {
+          final languages = (response['languages'] as List)
+              .map((l) => LanguageOption.fromMap(l as Map<String, dynamic>))
+              .toList();
+          completer.complete(languages);
+        } else {
+          completer.complete(
+            getSupportedLanguages(displayLocale: displayLocale),
+          );
+        }
       }
-    }
-  });
+    },
+  );
 
   return completer.future;
 }
@@ -1197,13 +1388,15 @@ Map<String, List<VoiceOption>> getAvailableVoices(
 
     List<VoiceOption> toOptions(List<String>? ids, VoiceGender gender) {
       return ids
-              ?.map((id) => VoiceOption(
-                    id: id,
-                    name: id,
-                    gender: gender,
-                    provider: 'azure',
-                    language: normalized,
-                  ))
+              ?.map(
+                (id) => VoiceOption(
+                  id: id,
+                  name: id,
+                  gender: gender,
+                  provider: 'azure',
+                  language: normalized,
+                ),
+              )
               .toList() ??
           [];
     }
@@ -1223,15 +1416,20 @@ Map<String, List<VoiceOption>> getAvailableVoices(
 
 Map<String, List<VoiceOption>> _getStaticVoices(String provider) {
   List<VoiceOption> mapToVoiceOptions(
-      List<Map<String, String>>? items, VoiceGender gender, String prov) {
+    List<Map<String, String>>? items,
+    VoiceGender gender,
+    String prov,
+  ) {
     return items
-            ?.map((v) => VoiceOption(
-                  id: v['id'] ?? '',
-                  name: v['name'] ?? '',
-                  gender: gender,
-                  provider: prov,
-                  language: 'en',
-                ))
+            ?.map(
+              (v) => VoiceOption(
+                id: v['id'] ?? '',
+                name: v['name'] ?? '',
+                gender: gender,
+                provider: prov,
+                language: 'en',
+              ),
+            )
             .toList() ??
         [];
   }
@@ -1240,31 +1438,44 @@ Map<String, List<VoiceOption>> _getStaticVoices(String provider) {
     case 'deepgram':
       return {
         'male': mapToVoiceOptions(
-            deepgramVoices['male'], VoiceGender.male, provider),
+          deepgramVoices['male'],
+          VoiceGender.male,
+          provider,
+        ),
         'female': mapToVoiceOptions(
-            deepgramVoices['female'], VoiceGender.female, provider),
+          deepgramVoices['female'],
+          VoiceGender.female,
+          provider,
+        ),
       };
     case 'openai':
       return {
-        'male':
-            mapToVoiceOptions(openAIVoices['male'], VoiceGender.male, provider),
+        'male': mapToVoiceOptions(
+          openAIVoices['male'],
+          VoiceGender.male,
+          provider,
+        ),
         'female': mapToVoiceOptions(
-            openAIVoices['female'], VoiceGender.female, provider),
+          openAIVoices['female'],
+          VoiceGender.female,
+          provider,
+        ),
       };
     case 'elevenlabs':
       return {
         'male': mapToVoiceOptions(
-            elevenLabsVoices['male'], VoiceGender.male, provider),
+          elevenLabsVoices['male'],
+          VoiceGender.male,
+          provider,
+        ),
         'female': mapToVoiceOptions(
-            elevenLabsVoices['female'], VoiceGender.female, provider),
+          elevenLabsVoices['female'],
+          VoiceGender.female,
+          provider,
+        ),
       };
     default:
-      return {
-        'male': mapToVoiceOptions(
-            deepgramVoices['male'], VoiceGender.male, provider),
-        'female': mapToVoiceOptions(
-            deepgramVoices['female'], VoiceGender.female, provider),
-      };
+      return emptyVoiceCatalogue();
   }
 }
 

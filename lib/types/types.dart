@@ -432,6 +432,12 @@ class Stream {
   dynamic operator [](String key) => _extraProperties[key];
   void operator []=(String key, dynamic value) => _extraProperties[key] = value;
 
+  /// Readable name for labels when the server sent one (kept from the participant map); [name] stays the identity.
+  String? get displayName => _extraProperties['displayName'] as String?;
+
+  /// The name to show people: [displayName] when present, otherwise [name].
+  String get label => (displayName?.trim().isNotEmpty ?? false) ? displayName!.trim() : (name ?? '');
+
   // Factory constructor to create an instance from a Map
   factory Stream.fromMap(Map<String, dynamic> map) {
     return Stream(

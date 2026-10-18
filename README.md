@@ -38,8 +38,10 @@ Build video meetings, webinars, broadcasts, live streams, and collaborative room
 | Pricing | Published per-stream rates, for example audio $0.10 and 320×180 video $0.375 per 1,000 minutes of one stream to one viewer. See [pricing](https://www.mediasfu.com/pricing) |
 | License | MIT |
 
-## What's New In 2.4.2
+## What's New In 2.4.3
 
+- **Readable names everywhere:** camera-off tiles now show a member's display name too, so a room creator who set one no longer appears as their user name.
+- **Voice catalogue parity:** room-aware voice discovery for live translation, with Fish, Sarvam and xAI voices.
 - **Waiting rooms for API rooms:** a guest joining a room that uses a waiting room waits until the host lets them in, then joins by itself.
 - **Readable names:** cards, participant lists and join notices show a member's display name when the room has one.
 - **Audio-only rooms:** participants can unmute in rooms created as audio-only.
@@ -81,7 +83,7 @@ For the complete implementation guide, see [README_DETAILED.md](./README_DETAILE
 ## Table Of Contents
 
 - [At A Glance](#at-a-glance)
-- [What's New In 2.4.2](#whats-new-in-242)
+- [What's New In 2.4.3](#whats-new-in-243)
 - [Why Product Teams Choose MediaSFU](#why-product-teams-choose-mediasfu)
 - [Choose The Right Starting Point](#choose-the-right-starting-point)
 - [Install](#install)

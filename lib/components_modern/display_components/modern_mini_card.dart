@@ -313,14 +313,17 @@ class _ModernMiniCardState extends State<ModernMiniCard>
     );
   }
 
+  /// Display names can be up to 80 characters; keep the tile readable: up to 12 characters, cut at a word when possible.
+  static String _fitTileLabel(String label) {
+    if (label.length <= 12) return label;
+    final cut = label.lastIndexOf(' ', 12);
+    return '${(cut >= 4 ? label.substring(0, cut) : label.substring(0, 11)).trimRight()}…';
+  }
+
   Widget _buildInitials(BuildContext context) {
     final options = widget.options;
 
-    // Get the full name or truncate to 10 characters max
-    String displayInitials = options.initials.trim();
-    if (displayInitials.length > 10) {
-      displayInitials = displayInitials.substring(0, 10);
-    }
+    final displayInitials = _fitTileLabel(options.initials.trim());
 
     final initialsContainer = Container(
       padding: options.initialsPadding,

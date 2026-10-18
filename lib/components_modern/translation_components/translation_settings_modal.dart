@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
@@ -138,8 +139,8 @@ class TranslationRoomConfig {
       spokenLanguageMode: _parseLanguageMode(map['spokenLanguageMode']),
       allowedSpokenLanguages: map['allowedSpokenLanguages'] != null
           ? (map['allowedSpokenLanguages'] as List)
-              .map((e) => LanguageEntry.fromMap(e))
-              .toList()
+                .map((e) => LanguageEntry.fromMap(e))
+                .toList()
           : null,
       blockedSpokenLanguages: map['blockedSpokenLanguages'] != null
           ? List<String>.from(map['blockedSpokenLanguages'])
@@ -147,8 +148,8 @@ class TranslationRoomConfig {
       listenLanguageMode: _parseLanguageMode(map['listenLanguageMode']),
       allowedListenLanguages: map['allowedListenLanguages'] != null
           ? (map['allowedListenLanguages'] as List)
-              .map((e) => LanguageEntry.fromMap(e))
-              .toList()
+                .map((e) => LanguageEntry.fromMap(e))
+                .toList()
           : null,
       blockedListenLanguages: map['blockedListenLanguages'] != null
           ? List<String>.from(map['blockedListenLanguages'])
@@ -190,7 +191,7 @@ class TranslationSettingsModalOptions {
   final Map<String, dynamic>? speakerTranslationStates;
   final Set<String>? translationSubscriptions;
   final Function(ListenerTranslationPreferences)
-      updateListenerTranslationPreferences;
+  updateListenerTranslationPreferences;
   final Function(Map<String, String>) updateListenerTranslationOverrides;
   final Function(Map<String, TranslationMeta>) updateTranslationProducerMap;
   final Function(Map<String, dynamic>) updateSpeakerTranslationStates;
@@ -383,8 +384,9 @@ class _LanguageDropdownState extends State<LanguageDropdown> {
               borderRadius: BorderRadius.circular(MediasfuBorders.md),
               boxShadow: [
                 BoxShadow(
-                  color:
-                      Colors.black.withOpacity(widget.isDarkMode ? 0.3 : 0.1),
+                  color: Colors.black.withOpacity(
+                    widget.isDarkMode ? 0.3 : 0.1,
+                  ),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -398,7 +400,8 @@ class _LanguageDropdownState extends State<LanguageDropdown> {
                     _buildOption(
                       'speakerOutput',
                       "Speaker's Output (Default)",
-                      isSelected: widget.value == 'speakerOutput' ||
+                      isSelected:
+                          widget.value == 'speakerOutput' ||
                           widget.value == null,
                     ),
                   if (widget.includeOriginal)
@@ -439,8 +442,12 @@ class _LanguageDropdownState extends State<LanguageDropdown> {
     );
   }
 
-  Widget _buildOption(String value, String label,
-      {bool isSelected = false, FaIconData? icon}) {
+  Widget _buildOption(
+    String value,
+    String label, {
+    bool isSelected = false,
+    FaIconData? icon,
+  }) {
     return InkWell(
       onTap: () {
         widget.onChange(value);
@@ -455,8 +462,8 @@ class _LanguageDropdownState extends State<LanguageDropdown> {
         ),
         color: isSelected
             ? (widget.isDarkMode
-                ? MediasfuColors.primaryDark
-                : MediasfuColors.primary)
+                  ? MediasfuColors.primaryDark
+                  : MediasfuColors.primary)
             : Colors.transparent,
         child: Row(
           children: [
@@ -467,8 +474,8 @@ class _LanguageDropdownState extends State<LanguageDropdown> {
                 color: isSelected
                     ? Colors.white
                     : (widget.isDarkMode
-                        ? MediasfuColors.textPrimaryDark
-                        : MediasfuColors.textPrimary),
+                          ? MediasfuColors.textPrimaryDark
+                          : MediasfuColors.textPrimary),
               ),
               const SizedBox(width: 8),
             ],
@@ -478,8 +485,8 @@ class _LanguageDropdownState extends State<LanguageDropdown> {
                 color: isSelected
                     ? Colors.white
                     : (widget.isDarkMode
-                        ? MediasfuColors.textPrimaryDark
-                        : MediasfuColors.textPrimary),
+                          ? MediasfuColors.textPrimaryDark
+                          : MediasfuColors.textPrimary),
                 fontSize: MediasfuTypography.bodyMedium.fontSize,
               ),
             ),
@@ -677,7 +684,8 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
         (c) => c['isDefault'] == true,
         orElse: () => _fetchedClones.first,
       );
-      final cloneId = defaultClone['providerVoiceId']?.toString() ??
+      final cloneId =
+          defaultClone['providerVoiceId']?.toString() ??
           defaultClone['voiceId']?.toString() ??
           defaultClone['id']?.toString() ??
           '';
@@ -693,12 +701,16 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
     if (widget.options.translationConfig?.translationVoiceConfig?.ttsNickName !=
         null) {
       _selectedTTSProvider = widget
-          .options.translationConfig!.translationVoiceConfig!.ttsNickName!;
+          .options
+          .translationConfig!
+          .translationVoiceConfig!
+          .ttsNickName!;
     }
   }
 
   @override
   void dispose() {
+    _voiceRequestGeneration++;
     _cooldownTimer?.cancel();
     super.dispose();
   }
@@ -731,64 +743,120 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
     });
   }
 
-  Future<void> _fetchVoices() async {
-    if (!_voicesFetched &&
-        widget.options.socket != null &&
-        widget.options.roomName.isNotEmpty) {
-      setState(() => _voicesLoading = true);
+  // voice-catalogue-v1: bind each response to the room/config/output context.
+  int _voiceRequestGeneration = 0;
+  String _voiceCatalogueStatus = 'loading';
+  String get _voiceLanguage {
+    final output = _localDefaultOutputLang;
+    return output != null && isValidLanguageCode(output)
+        ? output
+        : _localSpokenLanguage.isNotEmpty
+        ? _localSpokenLanguage
+        : 'en';
+  }
 
-      try {
-        // Fetch voices
-        final voicesFuture = fetchVoicesViaSocket(
-          widget.options.socket!,
-          _selectedTTSProvider,
-          _localSpokenLanguage.isNotEmpty ? _localSpokenLanguage : 'en',
-        );
-
-        // Fetch languages
-        final languagesFuture = fetchLanguagesViaSocket(
-          widget.options.socket!,
-          displayLocale: 'en',
-        );
-
-        final results = await Future.wait([
-          voicesFuture,
-          languagesFuture,
-        ]);
-
-        final voiceResponse = results[0] as SocketVoiceResponse;
-        final languages = results[1] as List<LanguageOption>;
-
-        if (mounted) {
-          setState(() {
-            _availableVoices = voiceResponse.voices;
-
-            if (voiceResponse.provider.isNotEmpty &&
-                voiceResponse.provider != _selectedTTSProvider) {
-              _selectedTTSProvider = voiceResponse.provider;
-            }
-
-            if (languages.isNotEmpty) {
-              _dynamicLanguages = languages;
-            }
-
-            _voicesFetched = true;
-            _voicesLoading = false;
-          });
-        }
-      } catch (_) {
-        if (mounted) {
-          setState(() {
-            _voicesLoading = false;
-            // Fallback to static voices
-            _availableVoices = getAvailableVoices(
-              _localSpokenLanguage.isNotEmpty ? _localSpokenLanguage : 'en',
-              provider: _selectedTTSProvider,
-            );
-            _voicesFetched = true;
-          });
-        }
+  void _changeVoiceLanguage(String value, {bool output = false}) {
+    setState(() {
+      if (output) {
+        _localDefaultOutputLang = value;
+      } else {
+        _localSpokenLanguage = value;
       }
+      _voicesFetched = false;
+      _selectedVoiceId = null;
+      _availableVoices = null;
+      _voiceRequestGeneration++;
+    });
+    _fetchVoices();
+  }
+
+  String _voiceConfigContext(TranslationSettingsModalOptions options) =>
+      jsonEncode({
+        'tts': options.translationConfig?.translationVoiceConfig?.ttsNickName,
+        'params': options.translationConfig?.translationVoiceConfig?.ttsParams,
+      });
+
+  @override
+  void didUpdateWidget(covariant TranslationSettingsModal oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.options.roomName != widget.options.roomName ||
+        oldWidget.options.socket != widget.options.socket ||
+        _voiceConfigContext(oldWidget.options) !=
+            _voiceConfigContext(widget.options) ||
+        (!oldWidget.options.isVisible && widget.options.isVisible)) {
+      if (oldWidget.options.roomName != widget.options.roomName ||
+          oldWidget.options.socket != widget.options.socket) {
+        _voiceCloneConfig = null;
+        _voiceSelectionMode = VoiceSelectionMode.basic;
+        _initializeState();
+      }
+      _voiceRequestGeneration++;
+      _selectedVoiceId = null;
+      _availableVoices = null;
+      _voicesFetched = false;
+      _selectedTTSProvider =
+          widget
+              .options
+              .translationConfig
+              ?.translationVoiceConfig
+              ?.ttsNickName ??
+          '';
+      _fetchVoices();
+    }
+  }
+
+  Future<void> _fetchVoices({bool force = false}) async {
+    if (_voicesFetched && !force) return;
+    final socket = widget.options.socket;
+    final room = widget.options.roomName;
+    final language = _voiceLanguage;
+    final generation = ++_voiceRequestGeneration;
+    if (socket == null || room.isEmpty) {
+      setState(() {
+        _availableVoices = emptyVoiceCatalogue();
+        _selectedVoiceId = null;
+        _voicesLoading = false;
+        _voiceCatalogueStatus = 'unavailable';
+      });
+      return;
+    }
+    setState(() {
+      _voicesLoading = true;
+      _selectedVoiceId = null;
+      _availableVoices = null;
+      _voiceCatalogueStatus = 'loading';
+    });
+    final response = await fetchVoicesViaSocket(
+      socket,
+      _selectedTTSProvider,
+      language,
+      roomName: room,
+    );
+    if (!mounted ||
+        generation != _voiceRequestGeneration ||
+        room != widget.options.roomName ||
+        language != _voiceLanguage)
+      return;
+    setState(() {
+      _availableVoices = response.voices;
+      _selectedTTSProvider = response.provider;
+      _voiceCatalogueStatus = response.status;
+      _voicesFetched = true;
+      _voicesLoading = false;
+    });
+    // Language discovery is independent and must not hold up a valid catalogue.
+    try {
+      final languages = await fetchLanguagesViaSocket(
+        socket,
+        displayLocale: 'en',
+      );
+      if (mounted &&
+          generation == _voiceRequestGeneration &&
+          languages.isNotEmpty) {
+        setState(() => _dynamicLanguages = languages);
+      }
+    } catch (_) {
+      /* Preserve the independently accepted voice response. */
     }
   }
 
@@ -847,16 +915,36 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
   }
 
   Future<void> _handleApply() async {
+    if (_voiceSelectionMode == VoiceSelectionMode.advanced &&
+        _selectedVoiceId != null &&
+        (_voicesLoading ||
+            !(_availableVoices?.values
+                    .expand((v) => v)
+                    .any(
+                      (voice) =>
+                          voice.id == _selectedVoiceId &&
+                          voice.provider == _selectedTTSProvider,
+                    ) ??
+                false))) {
+      widget.options.showAlert?.call(
+        message: 'Select a current voice for this language.',
+        type: 'danger',
+        duration: 3000,
+      );
+      return;
+    }
     final now = DateTime.now().millisecondsSinceEpoch;
     final spokenChanged =
         _localSpokenLanguage != widget.options.mySpokenLanguage ||
-            _localSpokenEnabled != widget.options.mySpokenLanguageEnabled ||
-            _localDefaultOutputLang != widget.options.myDefaultOutputLanguage;
+        _localSpokenEnabled != widget.options.mySpokenLanguageEnabled ||
+        _localDefaultOutputLang != widget.options.myDefaultOutputLanguage;
 
     final listenChanged = !_perSpeakerMode
         ? _localDefaultListen != widget.options.myDefaultListenLanguage
         : !_areMapsEqual(
-            _localListenPrefs, widget.options.listenPreferences ?? {});
+            _localListenPrefs,
+            widget.options.listenPreferences ?? {},
+          );
 
     // Rate limiting checks
     if (spokenChanged && _lastSpokenChange > 0) {
@@ -917,8 +1005,9 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
 
         widget.options.updateMySpokenLanguage?.call(_localSpokenLanguage);
         if (_localDefaultOutputLang != null) {
-          widget.options.updateMyDefaultOutputLanguage
-              ?.call(_localDefaultOutputLang!);
+          widget.options.updateMyDefaultOutputLanguage?.call(
+            _localDefaultOutputLang!,
+          );
         }
         widget.options.updateMySpokenLanguageEnabled?.call(_localSpokenEnabled);
         _lastSpokenChange = now;
@@ -932,8 +1021,9 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
             'roomName': widget.options.roomName,
             'language': _localDefaultListen,
           });
-          widget.options.updateMyDefaultListenLanguage
-              ?.call(_localDefaultListen);
+          widget.options.updateMyDefaultListenLanguage?.call(
+            _localDefaultListen,
+          );
           widget.options.updateListenPreferences?.call({});
           _lastListenChange = now;
           setState(() => _listenCooldown = 30);
@@ -1142,9 +1232,15 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
       child: Row(
         children: [
           _buildTabButton(
-              'speaking', FontAwesomeIcons.microphone, 'My Voice Output'),
+            'speaking',
+            FontAwesomeIcons.microphone,
+            'My Voice Output',
+          ),
           _buildTabButton(
-              'listening', FontAwesomeIcons.headphones, 'Listen To'),
+            'listening',
+            FontAwesomeIcons.headphones,
+            'Listen To',
+          ),
         ],
       ),
     );
@@ -1160,15 +1256,15 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
           decoration: BoxDecoration(
             color: isActive
                 ? (widget.isDarkMode
-                    ? MediasfuColors.primaryDark.withOpacity(0.2)
-                    : MediasfuColors.primary.withOpacity(0.1))
+                      ? MediasfuColors.primaryDark.withOpacity(0.2)
+                      : MediasfuColors.primary.withOpacity(0.1))
                 : Colors.transparent,
             border: Border(
               bottom: BorderSide(
                 color: isActive
                     ? (widget.isDarkMode
-                        ? MediasfuColors.primaryDark
-                        : MediasfuColors.primary)
+                          ? MediasfuColors.primaryDark
+                          : MediasfuColors.primary)
                     : Colors.transparent,
                 width: 2,
               ),
@@ -1182,11 +1278,11 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
                 size: 16,
                 color: isActive
                     ? (widget.isDarkMode
-                        ? MediasfuColors.primaryDark
-                        : MediasfuColors.primary)
+                          ? MediasfuColors.primaryDark
+                          : MediasfuColors.primary)
                     : (widget.isDarkMode
-                        ? MediasfuColors.textMutedDark
-                        : MediasfuColors.textMuted),
+                          ? MediasfuColors.textMutedDark
+                          : MediasfuColors.textMuted),
               ),
               SizedBox(width: MediasfuSpacing.sm),
               Text(
@@ -1194,11 +1290,11 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
                 style: TextStyle(
                   color: isActive
                       ? (widget.isDarkMode
-                          ? MediasfuColors.primaryDark
-                          : MediasfuColors.primary)
+                            ? MediasfuColors.primaryDark
+                            : MediasfuColors.primary)
                       : (widget.isDarkMode
-                          ? MediasfuColors.textMutedDark
-                          : MediasfuColors.textMuted),
+                            ? MediasfuColors.textMutedDark
+                            : MediasfuColors.textMuted),
                   fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                 ),
               ),
@@ -1238,8 +1334,11 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
             ),
             child: Row(
               children: [
-                FaIcon(FontAwesomeIcons.clock,
-                    size: 14, color: MediasfuColors.warning),
+                FaIcon(
+                  FontAwesomeIcons.clock,
+                  size: 14,
+                  color: MediasfuColors.warning,
+                ),
                 SizedBox(width: MediasfuSpacing.sm),
                 Text(
                   'Wait ${_spokenCooldown}s before changing spoken language',
@@ -1263,12 +1362,12 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
         SizedBox(height: MediasfuSpacing.sm),
         LanguageDropdown(
           value: _localSpokenLanguage,
-          onChange: (val) => setState(() => _localSpokenLanguage = val),
+          onChange: (val) => _changeVoiceLanguage(val),
           languages: _availableSpokenLanguages,
           isDarkMode: widget.isDarkMode,
           includeAuto:
               widget.options.translationConfig?.autoDetectSpokenLanguage ??
-                  false,
+              false,
         ),
         SizedBox(height: MediasfuSpacing.lg),
         Container(
@@ -1364,7 +1463,7 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
           SizedBox(height: MediasfuSpacing.sm),
           LanguageDropdown(
             value: _localDefaultOutputLang,
-            onChange: (val) => setState(() => _localDefaultOutputLang = val),
+            onChange: (val) => _changeVoiceLanguage(val, output: true),
             languages: _availableSpokenLanguages
                 .where((l) => l.code != _localSpokenLanguage)
                 .toList(),
@@ -1460,11 +1559,11 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
           decoration: BoxDecoration(
             color: isSelected
                 ? (widget.isDarkMode
-                    ? MediasfuColors.primaryDark
-                    : MediasfuColors.primary)
+                      ? MediasfuColors.primaryDark
+                      : MediasfuColors.primary)
                 : (widget.isDarkMode
-                    ? Colors.white.withOpacity(0.08)
-                    : Colors.black.withOpacity(0.05)),
+                      ? Colors.white.withOpacity(0.08)
+                      : Colors.black.withOpacity(0.05)),
             borderRadius: BorderRadius.circular(MediasfuBorders.sm),
           ),
           child: Text(
@@ -1474,8 +1573,8 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
               color: isSelected
                   ? Colors.white
                   : (widget.isDarkMode
-                      ? MediasfuColors.textMutedDark
-                      : MediasfuColors.textMuted),
+                        ? MediasfuColors.textMutedDark
+                        : MediasfuColors.textMuted),
               fontSize: MediasfuTypography.bodySmall.fontSize,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
             ),
@@ -1525,19 +1624,19 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
           decoration: BoxDecoration(
             color: isSelected
                 ? (widget.isDarkMode
-                    ? MediasfuColors.primaryDark.withOpacity(0.3)
-                    : MediasfuColors.primary.withOpacity(0.15))
+                      ? MediasfuColors.primaryDark.withOpacity(0.3)
+                      : MediasfuColors.primary.withOpacity(0.15))
                 : (widget.isDarkMode
-                    ? Colors.white.withOpacity(0.05)
-                    : Colors.black.withOpacity(0.03)),
+                      ? Colors.white.withOpacity(0.05)
+                      : Colors.black.withOpacity(0.03)),
             border: Border.all(
               color: isSelected
                   ? (widget.isDarkMode
-                      ? MediasfuColors.primaryDark
-                      : MediasfuColors.primary)
+                        ? MediasfuColors.primaryDark
+                        : MediasfuColors.primary)
                   : (widget.isDarkMode
-                      ? Colors.white.withOpacity(0.1)
-                      : Colors.black.withOpacity(0.1)),
+                        ? Colors.white.withOpacity(0.1)
+                        : Colors.black.withOpacity(0.1)),
               width: isSelected ? 2 : 1,
             ),
             borderRadius: BorderRadius.circular(MediasfuBorders.md),
@@ -1546,7 +1645,9 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
             children: [
               Text(
                 label.split(' ')[0],
-                style: const TextStyle(fontSize: MediasfuTypography.sizeTitleLarge),
+                style: const TextStyle(
+                  fontSize: MediasfuTypography.sizeTitleLarge,
+                ),
               ),
               SizedBox(height: MediasfuSpacing.xs),
               Text(
@@ -1571,101 +1672,64 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
   }
 
   Widget _buildAdvancedVoiceSettings() {
-    if (_voicesLoading) {
-      return Center(
-        child: Padding(
-          padding: EdgeInsets.all(MediasfuSpacing.md),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-              SizedBox(width: MediasfuSpacing.sm),
-              Text(
-                'Loading voices...',
-                style: TextStyle(
-                  color: widget.isDarkMode
-                      ? MediasfuColors.textMutedDark
-                      : MediasfuColors.textMuted,
+    if (_voicesLoading) return const Center(child: CircularProgressIndicator());
+    final count =
+        _availableVoices?.values.fold<int>(
+          0,
+          (sum, voices) => sum + voices.length,
+        ) ??
+        0;
+    if (count == 0) {
+      return Column(
+        children: [
+          Text(
+            'Voice catalogue $_voiceCatalogueStatus. Automatic voice identity may vary.',
+          ),
+          TextButton(
+            onPressed: () => _fetchVoices(force: true),
+            child: const Text('Retry voices'),
+          ),
+        ],
+      );
+    }
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: 280),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Select a voice for consistent translated speech.'),
+            for (final group in ['female', 'male', 'neutral'])
+              if (_availableVoices![group]?.isNotEmpty ?? false) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    group == 'neutral'
+                        ? 'Neutral / unspecified voices'
+                        : '$group voices',
+                  ),
                 ),
-              ),
-            ],
-          ),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _availableVoices![group]!
+                      .map(_buildVoiceChip)
+                      .toList(),
+                ),
+              ],
+          ],
         ),
-      );
-    }
-
-    if (_availableVoices == null) {
-      return Center(
-        child: Padding(
-          padding: EdgeInsets.all(MediasfuSpacing.md),
-          child: Text(
-            'No voices available',
-            style: TextStyle(
-              color: widget.isDarkMode
-                  ? MediasfuColors.textMutedDark
-                  : MediasfuColors.textMuted,
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (_availableVoices!['female']?.isNotEmpty ?? false) ...[
-          Text(
-            '👩 Female Voices',
-            style: TextStyle(
-              fontSize: MediasfuTypography.sizeBodySmall,
-              color: widget.isDarkMode
-                  ? MediasfuColors.textMutedDark
-                  : MediasfuColors.textMuted,
-            ),
-          ),
-          SizedBox(height: MediasfuSpacing.xs),
-          Wrap(
-            spacing: MediasfuSpacing.xs,
-            runSpacing: MediasfuSpacing.xs,
-            children: _availableVoices!['female']!
-                .take(6)
-                .map((v) => _buildVoiceChip(v))
-                .toList(),
-          ),
-          SizedBox(height: MediasfuSpacing.md),
-        ],
-        if (_availableVoices!['male']?.isNotEmpty ?? false) ...[
-          Text(
-            '👨 Male Voices',
-            style: TextStyle(
-              fontSize: MediasfuTypography.sizeBodySmall,
-              color: widget.isDarkMode
-                  ? MediasfuColors.textMutedDark
-                  : MediasfuColors.textMuted,
-            ),
-          ),
-          SizedBox(height: MediasfuSpacing.xs),
-          Wrap(
-            spacing: MediasfuSpacing.xs,
-            runSpacing: MediasfuSpacing.xs,
-            children: _availableVoices!['male']!
-                .take(6)
-                .map((v) => _buildVoiceChip(v))
-                .toList(),
-          ),
-        ],
-      ],
+      ),
     );
   }
 
   Widget _buildVoiceChip(VoiceOption voice) {
     final isSelected = _selectedVoiceId == voice.id;
     return InkWell(
-      onTap: () => setState(() => _selectedVoiceId = voice.id),
+      onTap: () => setState(() {
+        _selectedVoiceId = voice.id;
+        _selectedTTSProvider = voice.provider;
+      }),
       child: Container(
         padding: EdgeInsets.symmetric(
           horizontal: MediasfuSpacing.sm,
@@ -1674,11 +1738,11 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
         decoration: BoxDecoration(
           color: isSelected
               ? (widget.isDarkMode
-                  ? MediasfuColors.primaryDark
-                  : MediasfuColors.primary)
+                    ? MediasfuColors.primaryDark
+                    : MediasfuColors.primary)
               : (widget.isDarkMode
-                  ? Colors.white.withOpacity(0.08)
-                  : Colors.black.withOpacity(0.05)),
+                    ? Colors.white.withOpacity(0.08)
+                    : Colors.black.withOpacity(0.05)),
           borderRadius: BorderRadius.circular(MediasfuBorders.sm),
         ),
         child: Text(
@@ -1687,8 +1751,8 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
             color: isSelected
                 ? Colors.white
                 : (widget.isDarkMode
-                    ? MediasfuColors.textPrimaryDark
-                    : MediasfuColors.textPrimary),
+                      ? MediasfuColors.textPrimaryDark
+                      : MediasfuColors.textPrimary),
             fontSize: MediasfuTypography.bodySmall.fontSize,
           ),
         ),
@@ -1712,11 +1776,13 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
           ),
           child: Row(
             children: [
-              FaIcon(FontAwesomeIcons.circleInfo,
-                  size: 14,
-                  color: widget.isDarkMode
-                      ? const Color(0xFF60A5FA)
-                      : const Color(0xFF2563EB)),
+              FaIcon(
+                FontAwesomeIcons.circleInfo,
+                size: 14,
+                color: widget.isDarkMode
+                    ? const Color(0xFF60A5FA)
+                    : const Color(0xFF2563EB),
+              ),
               SizedBox(width: MediasfuSpacing.sm),
               Expanded(
                 child: Text(
@@ -1749,7 +1815,8 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
             spacing: MediasfuSpacing.sm,
             runSpacing: MediasfuSpacing.sm,
             children: _fetchedClones.map((clone) {
-              final cloneId = clone['providerVoiceId']?.toString() ??
+              final cloneId =
+                  clone['providerVoiceId']?.toString() ??
                   clone['voiceId']?.toString() ??
                   clone['id']?.toString() ??
                   '';
@@ -1781,19 +1848,19 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? (widget.isDarkMode
-                            ? MediasfuColors.primaryDark
-                            : MediasfuColors.primary)
+                              ? MediasfuColors.primaryDark
+                              : MediasfuColors.primary)
                         : (widget.isDarkMode
-                            ? Colors.white.withOpacity(0.08)
-                            : Colors.black.withOpacity(0.05)),
+                              ? Colors.white.withOpacity(0.08)
+                              : Colors.black.withOpacity(0.05)),
                     border: Border.all(
                       color: isSelected
                           ? (widget.isDarkMode
-                              ? MediasfuColors.primaryDark
-                              : MediasfuColors.primary)
+                                ? MediasfuColors.primaryDark
+                                : MediasfuColors.primary)
                           : (widget.isDarkMode
-                              ? Colors.white.withOpacity(0.1)
-                              : Colors.black.withOpacity(0.1)),
+                                ? Colors.white.withOpacity(0.1)
+                                : Colors.black.withOpacity(0.1)),
                       width: isSelected ? 2 : 1,
                     ),
                     borderRadius: BorderRadius.circular(MediasfuBorders.md),
@@ -1803,7 +1870,9 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
                     children: [
                       Text(
                         '🎤',
-                        style: const TextStyle(fontSize: MediasfuTypography.sizeTitleSmall),
+                        style: const TextStyle(
+                          fontSize: MediasfuTypography.sizeTitleSmall,
+                        ),
                       ),
                       SizedBox(width: MediasfuSpacing.xs),
                       Column(
@@ -1815,8 +1884,8 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
                               color: isSelected
                                   ? Colors.white
                                   : (widget.isDarkMode
-                                      ? MediasfuColors.textPrimaryDark
-                                      : MediasfuColors.textPrimary),
+                                        ? MediasfuColors.textPrimaryDark
+                                        : MediasfuColors.textPrimary),
                               fontSize: MediasfuTypography.bodySmall.fontSize,
                               fontWeight: FontWeight.w600,
                             ),
@@ -1827,8 +1896,8 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
                               color: isSelected
                                   ? Colors.white.withOpacity(0.7)
                                   : (widget.isDarkMode
-                                      ? MediasfuColors.textMutedDark
-                                      : MediasfuColors.textMuted),
+                                        ? MediasfuColors.textMutedDark
+                                        : MediasfuColors.textMuted),
                               fontSize: MediasfuTypography.sizeMicro,
                             ),
                           ),
@@ -1836,13 +1905,19 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
                       ),
                       if (isDefault) ...[
                         SizedBox(width: MediasfuSpacing.xs),
-                        FaIcon(FontAwesomeIcons.star,
-                            size: 10, color: MediasfuColors.warning),
+                        FaIcon(
+                          FontAwesomeIcons.star,
+                          size: 10,
+                          color: MediasfuColors.warning,
+                        ),
                       ],
                       if (isSelected) ...[
                         SizedBox(width: MediasfuSpacing.xs),
-                        FaIcon(FontAwesomeIcons.check,
-                            size: 12, color: Colors.white),
+                        FaIcon(
+                          FontAwesomeIcons.check,
+                          size: 12,
+                          color: Colors.white,
+                        ),
                       ],
                     ],
                   ),
@@ -1868,7 +1943,9 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
               children: [
                 Text(
                   '🎤',
-                  style: const TextStyle(fontSize: MediasfuTypography.sizeDisplay),
+                  style: const TextStyle(
+                    fontSize: MediasfuTypography.sizeDisplay,
+                  ),
                 ),
                 SizedBox(height: MediasfuSpacing.sm),
                 Text(
@@ -2004,10 +2081,13 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
                 ),
                 items: const [
                   DropdownMenuItem(
-                      value: 'cartesia',
-                      child: Text('Cartesia (System Default)')),
+                    value: 'cartesia',
+                    child: Text('Cartesia (System Default)'),
+                  ),
                   DropdownMenuItem(
-                      value: 'elevenlabs', child: Text('ElevenLabs')),
+                    value: 'elevenlabs',
+                    child: Text('ElevenLabs'),
+                  ),
                   DropdownMenuItem(value: 'playht', child: Text('PlayHT')),
                 ],
                 onChanged: (v) {
@@ -2171,8 +2251,9 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
                   _voiceCloneConfig = VoiceCloneConfig(
                     provider: _cloneProvider,
                     voiceId: _cloneVoiceId.trim(),
-                    stability:
-                        _cloneProvider == 'elevenlabs' ? _cloneStability : null,
+                    stability: _cloneProvider == 'elevenlabs'
+                        ? _cloneStability
+                        : null,
                     similarity: _cloneProvider == 'elevenlabs'
                         ? _cloneSimilarity
                         : null,
@@ -2226,8 +2307,11 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
             ),
             child: Row(
               children: [
-                FaIcon(FontAwesomeIcons.check,
-                    size: 12, color: MediasfuColors.success),
+                FaIcon(
+                  FontAwesomeIcons.check,
+                  size: 12,
+                  color: MediasfuColors.success,
+                ),
                 SizedBox(width: MediasfuSpacing.sm),
                 Expanded(
                   child: Text(
@@ -2274,8 +2358,11 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
             ),
             child: Row(
               children: [
-                FaIcon(FontAwesomeIcons.clock,
-                    size: 14, color: MediasfuColors.warning),
+                FaIcon(
+                  FontAwesomeIcons.clock,
+                  size: 14,
+                  color: MediasfuColors.warning,
+                ),
                 SizedBox(width: MediasfuSpacing.sm),
                 Text(
                   'Wait ${_listenCooldown}s before changing listen language',
@@ -2291,12 +2378,18 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
           children: [
             Expanded(
               child: _buildModeButton(
-                  false, FontAwesomeIcons.users, 'Same for All'),
+                false,
+                FontAwesomeIcons.users,
+                'Same for All',
+              ),
             ),
             SizedBox(width: MediasfuSpacing.sm),
             Expanded(
               child: _buildModeButton(
-                  true, FontAwesomeIcons.sliders, 'Per Speaker'),
+                true,
+                FontAwesomeIcons.sliders,
+                'Per Speaker',
+              ),
             ),
           ],
         ),
@@ -2313,10 +2406,13 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
           ),
           SizedBox(height: MediasfuSpacing.sm),
           LanguageDropdown(
-            value: _localDefaultListen ??
+            value:
+                _localDefaultListen ??
                 (widget.options.islevel == '2' ? 'original' : 'speakerOutput'),
-            onChange: (lang) => setState(() => _localDefaultListen =
-                (lang == 'original' || lang == 'speakerOutput') ? null : lang),
+            onChange: (lang) => setState(
+              () => _localDefaultListen =
+                  (lang == 'original' || lang == 'speakerOutput') ? null : lang,
+            ),
             languages: _availableListenLanguages,
             isDarkMode: widget.isDarkMode,
             includeOriginal: widget.options.islevel == '2',
@@ -2349,22 +2445,24 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
               ),
             )
           else
-            ..._otherParticipants.map((p) => SpeakerLanguageRow(
-                  speaker: p,
-                  selectedLanguage: _localListenPrefs[p.name],
-                  onChange: (speakerId, lang) {
-                    setState(() {
-                      if (lang == 'original' || lang == 'speakerOutput') {
-                        _localListenPrefs.remove(speakerId);
-                      } else {
-                        _localListenPrefs[speakerId] = lang;
-                      }
-                    });
-                  },
-                  availableLanguages: _availableListenLanguages,
-                  isDarkMode: widget.isDarkMode,
-                  isHost: widget.options.islevel == '2',
-                )),
+            ..._otherParticipants.map(
+              (p) => SpeakerLanguageRow(
+                speaker: p,
+                selectedLanguage: _localListenPrefs[p.name],
+                onChange: (speakerId, lang) {
+                  setState(() {
+                    if (lang == 'original' || lang == 'speakerOutput') {
+                      _localListenPrefs.remove(speakerId);
+                    } else {
+                      _localListenPrefs[speakerId] = lang;
+                    }
+                  });
+                },
+                availableLanguages: _availableListenLanguages,
+                isDarkMode: widget.isDarkMode,
+                isHost: widget.options.islevel == '2',
+              ),
+            ),
         ],
 
         // Live Subtitles Toggle
@@ -2398,11 +2496,11 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
             size: 20,
             color: _localShowSubtitles
                 ? (widget.isDarkMode
-                    ? MediasfuColors.accentDark
-                    : MediasfuColors.accent)
+                      ? MediasfuColors.accentDark
+                      : MediasfuColors.accent)
                 : (widget.isDarkMode
-                    ? MediasfuColors.textMutedDark
-                    : MediasfuColors.textMuted),
+                      ? MediasfuColors.textMutedDark
+                      : MediasfuColors.textMuted),
           ),
           SizedBox(width: MediasfuSpacing.md),
           Expanded(
@@ -2441,14 +2539,17 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
             activeColor: widget.isDarkMode
                 ? MediasfuColors.accentDark
                 : MediasfuColors.accent,
-            activeTrackColor: (widget.isDarkMode
-                    ? MediasfuColors.accentDark
-                    : MediasfuColors.accent)
-                .withOpacity(0.5),
-            inactiveThumbColor:
-                widget.isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600,
-            inactiveTrackColor:
-                widget.isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300,
+            activeTrackColor:
+                (widget.isDarkMode
+                        ? MediasfuColors.accentDark
+                        : MediasfuColors.accent)
+                    .withOpacity(0.5),
+            inactiveThumbColor: widget.isDarkMode
+                ? Colors.grey.shade400
+                : Colors.grey.shade600,
+            inactiveTrackColor: widget.isDarkMode
+                ? Colors.grey.shade700
+                : Colors.grey.shade300,
           ),
         ],
       ),
@@ -2464,11 +2565,11 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
         decoration: BoxDecoration(
           color: isSelected
               ? (widget.isDarkMode
-                  ? MediasfuColors.primaryDark
-                  : MediasfuColors.primary)
+                    ? MediasfuColors.primaryDark
+                    : MediasfuColors.primary)
               : (widget.isDarkMode
-                  ? MediasfuColors.surfaceElevatedDark
-                  : MediasfuColors.surfaceElevated),
+                    ? MediasfuColors.surfaceElevatedDark
+                    : MediasfuColors.surfaceElevated),
           borderRadius: BorderRadius.circular(MediasfuBorders.md),
         ),
         child: Row(
@@ -2480,8 +2581,8 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
               color: isSelected
                   ? Colors.white
                   : (widget.isDarkMode
-                      ? MediasfuColors.textPrimaryDark
-                      : MediasfuColors.textPrimary),
+                        ? MediasfuColors.textPrimaryDark
+                        : MediasfuColors.textPrimary),
             ),
             SizedBox(width: MediasfuSpacing.sm),
             Text(
@@ -2490,8 +2591,8 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
                 color: isSelected
                     ? Colors.white
                     : (widget.isDarkMode
-                        ? MediasfuColors.textPrimaryDark
-                        : MediasfuColors.textPrimary),
+                          ? MediasfuColors.textPrimaryDark
+                          : MediasfuColors.textPrimary),
               ),
             ),
           ],

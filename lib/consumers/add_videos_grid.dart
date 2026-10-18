@@ -322,7 +322,7 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
           if (customMiniCard != null) {
             newComponents[0].add(
               customMiniCard(
-                initials: participant.name ?? "",
+                initials: participant.label,
                 fontSize: "20",
                 customStyle: false,
                 name: participant.name ?? "",
@@ -350,7 +350,7 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
                 child: Center(
                   child: ModernMiniCard(
                     options: MiniCardOptions(
-                      initials: participant.name ?? "",
+                      initials: participant.label,
                       fontSize: 20,
                       size: 80,
                       isDarkMode: isDarkModeValue,
@@ -654,7 +654,7 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
             if (customMiniCard != null) {
               newComponents[1].add(
                 customMiniCard(
-                  initials: participant.name ?? "",
+                  initials: participant.label,
                   fontSize: "20",
                   customStyle: false,
                   name: participant.name ?? "",
@@ -682,7 +682,7 @@ Future<void> addVideosGrid(AddVideosGridOptions options) async {
                   child: Center(
                     child: ModernMiniCard(
                       options: MiniCardOptions(
-                        initials: participant.name ?? "",
+                        initials: participant.label,
                         fontSize: 20,
                         size: 80,
                         isDarkMode: isDarkModeValue,

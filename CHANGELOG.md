@@ -1,3 +1,14 @@
+### 2.4.3
+
+* **Readable names on camera-off tiles.** Grid tiles for members with no camera or microphone (mini cards) now show the member's `displayName`, like video and audio cards already do, falling back to the member name. A room creator who set a display name no longer appears to others as their user name.
+
+Voice catalogue parity:
+
+- Room-aware, provider-authoritative voice discovery with bounded timeout and safe empty/error results.
+- Fish/Sarvam/xAI provider types, neutral catalogue voices and version/model/status metadata.
+- Picker stale-context protection, exact selected-ID/provider submission and scrollable full returned lists.
+- Offline socket/parser and rendered-picker regression coverage. Publication/device acceptance tracked separately.
+
 ### 2.4.2
 
 * **Unmute in audio-only rooms.** The microphone could not be turned on in rooms created with `mediaType: "audio"` (it showed a camera message). Audio-only rooms now only block cameras.
