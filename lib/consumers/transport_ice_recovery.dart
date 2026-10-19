@@ -27,6 +27,9 @@ Future<bool> _recover(Transport transport, io.Socket socket) async {
   if (!current()) return false;
   if (transport.connectionState == 'connected') return true;
   for (var attempt = 0; attempt < 2 && current(); attempt++) {
+    // Connectivity can return during backoff. Keep already-issued ICE
+    // acknowledgements below, but do not start another restart when healthy.
+    if (transport.connectionState == 'connected') return true;
     try {
       final ack = Completer<dynamic>();
       socket.emitWithAck('transport-restart-ice',
@@ -49,6 +52,7 @@ Future<bool> _recover(Transport transport, io.Socket socket) async {
       }
     } catch (_) {
       if (!current()) return false;
+      if (transport.connectionState == 'connected') return true;
     }
     if (attempt == 0 && current()) {
       await Future<void>.delayed(const Duration(milliseconds: 2100));

@@ -1,3 +1,8 @@
+### 2.4.4
+
+* Avoid redundant ICE restart requests when connectivity returns during retry backoff.
+* Allow an explicit microphone retry to capture again after its paused producer or send transport has closed. Existing mute, permission and host restrictions are preserved.
+
 ### 2.4.3
 
 * **Readable names on camera-off tiles.** Grid tiles for members with no camera or microphone (mini cards) now show the member's `displayName`, like video and audio cards already do, falling back to the member name. A room creator who set a display name no longer appears to others as their user name.

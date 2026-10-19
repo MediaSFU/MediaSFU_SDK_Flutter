@@ -321,6 +321,24 @@ Future<void> clickAudio(ClickAudioOptions options) async {
           break;
 
         case 0:
+          // Terminal transport closure can leave the old paused-producer mode.
+          // Only this explicit, permitted click may acquire a replacement mic.
+          final activeTransport = parameters.producerTransport;
+          final transportUnavailable =
+              activeTransport == null || activeTransport.closed;
+          if (audioPaused &&
+              (parameters.audioProducer == null ||
+                  parameters.audioProducer!.closed ||
+                  transportUnavailable)) {
+            audioPaused = false;
+            updateAudioPaused(false);
+            parameters.updateAudioProducer(null);
+            updateTransportCreatedAudio(false);
+            if (transportUnavailable) {
+              parameters.updateProducerTransport(null);
+              updateTransportCreated(false);
+            }
+          }
           if (audioPaused) {
             if (options.audioProcessing != null) {
               await localStream!.getAudioTracks()[0].applyConstraints(
