@@ -171,6 +171,7 @@ class UpdateRoomParametersClientOptions {
   /// Disable camera simulcast even in rooms larger than two people.
   final bool simulcastOff;
 
+
   /// Configured capacity hint for older servers without join-response metadata.
   final int? roomCapacity;
 

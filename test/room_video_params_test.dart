@@ -108,7 +108,7 @@ void main() {
         isChat: false,
         capacity: 8,
       ).encodings.last.maxBitrate,
-      3200000,
+      1800000,
     );
   });
 
@@ -125,7 +125,7 @@ void main() {
       isChat: false,
       simulcastOff: true,
     );
-    expect(single.encodings.single.maxBitrate, 800000);
+    expect(single.encodings.single.maxBitrate, 450000);
     expect(single.encodings.single.maxFramerate, 15);
   });
 
@@ -215,6 +215,63 @@ void main() {
     _update(params, capacityHint: 8);
     expect(params.video!.encodings, hasLength(1));
     expect(params.failures, isEmpty);
+  });
+
+  // Camera bitrate per tier (Oct 2026), set by MediaSFU: not an app option.
+  // Top layers must match the media server tables
+  // (DSFU2/mediasoup/incomingBitrateCap.cjs): participant 800k / host 960k base.
+  const tops = {
+    'QnHD': [100000, 120000],
+    'sd': [450000, 540000],
+    'hd': [1800000, 2160000],
+    'fhd': [2400000, 2880000],
+    'qhd': [8000000, 9600000],
+  };
+  tops.forEach((resolution, top) {
+    test('camera top layers at $resolution', () {
+      for (final capacity in [8, 2]) {
+        final params = _RoomParameters(
+          capacity: capacity,
+          resolution: resolution,
+        );
+        _update(params);
+        expect(params.failures, isEmpty);
+        expect(params.video!.encodings, hasLength(capacity == 2 ? 1 : 3));
+        expect(params.video!.encodings.last.maxBitrate, top[0]);
+        expect(params.host!.encodings.last.maxBitrate, top[1]);
+        if (capacity == 2) continue;
+        final factor = cameraBitrateFactor(resolution);
+        expect(
+          params.video!.encodings.first.maxBitrate,
+          (vParams.encodings.first.maxBitrate! * factor).toInt(),
+        );
+      }
+    });
+  });
+
+  test('unknown tiers scale like SD', () {
+    expect(cameraBitrateFactor('unknown'), cameraBitrateFactor('sd'));
+    expect(
+      roomVideoParams(
+        vParams,
+        targetResolution: 'sd',
+        isChat: false,
+      ).encodings.last.maxBitrate,
+      450000,
+    );
+  });
+
+  test('start bitrate shrinks with the ladder and never grows', () {
+    int? start(String resolution) => roomVideoParams(
+      vParams,
+      targetResolution: resolution,
+      isChat: false,
+    ).codecOptions!.videoGoogleStartBitrate;
+    expect(start('sd'), 180);
+    expect(start('QnHD'), 40);
+    expect(start('hd'), 320);
+    expect(vParams.codecOptions!.videoGoogleStartBitrate, 320);
+    expect(vParams.encodings.last.maxBitrate, 800000);
   });
 }
 

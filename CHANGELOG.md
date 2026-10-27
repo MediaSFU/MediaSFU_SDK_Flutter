@@ -1,3 +1,8 @@
+### 2.5.0
+
+* **Leaner camera bitrates.** Rooms now use camera bitrates sized for webcam content at each tier's frame rate (HD 2.25×, FHD 3× the SD ladder instead of 4× and 8×). This lowers bandwidth and holds up better on weak links.
+* **Smarter language pickers.** The translation settings modal groups listener languages by measured quality (natural voice, captions with a basic voice, captions only) and marks speaker languages as supported, beta or not offered. Ratings follow the room's preset, or a custom `{ stt, llm, tts }` stack passed as `languageCapabilityStack`. The ratings and helpers are in `translation_language_capabilities.dart`.
+
 ### 2.4.4
 
 * Avoid redundant ICE restart requests when connectivity returns during retry backoff.

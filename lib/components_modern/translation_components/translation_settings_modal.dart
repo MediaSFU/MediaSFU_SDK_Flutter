@@ -57,6 +57,12 @@ class TranslationVoiceConfig {
   final String? sttNickName;
   final String? llmNickName;
   final String? ttsNickName;
+
+  /// STT used for a speaker whose language the main STT cannot transcribe
+  final String? sttLanguageFallbackNickName;
+
+  /// TTS used for a language the routed voice has no native voice for
+  final String? ttsLanguageFallbackNickName;
   final Map<String, dynamic>? sttParams;
   final Map<String, dynamic>? llmParams;
   final Map<String, dynamic>? ttsParams;
@@ -65,6 +71,8 @@ class TranslationVoiceConfig {
     this.sttNickName,
     this.llmNickName,
     this.ttsNickName,
+    this.sttLanguageFallbackNickName,
+    this.ttsLanguageFallbackNickName,
     this.sttParams,
     this.llmParams,
     this.ttsParams,
@@ -75,6 +83,10 @@ class TranslationVoiceConfig {
       sttNickName: map['sttNickName'],
       llmNickName: map['llmNickName'],
       ttsNickName: map['ttsNickName'],
+      sttLanguageFallbackNickName:
+          map['sttLanguageFallbackNickName'],
+      ttsLanguageFallbackNickName:
+          map['ttsLanguageFallbackNickName'],
       sttParams: map['sttParams'],
       llmParams: map['llmParams'],
       ttsParams: map['ttsParams'],
@@ -118,6 +130,10 @@ class TranslationRoomConfig {
   final bool? allowListenLanguageChange;
   final TranslationVoiceConfig? translationVoiceConfig;
 
+  /// Provider stack the room translates with, used to rate languages in the
+  /// pickers (system preset when null).
+  final LanguageCapabilityStack? languageCapabilityStack;
+
   TranslationRoomConfig({
     required this.supportTranslation,
     required this.spokenLanguageMode,
@@ -131,6 +147,7 @@ class TranslationRoomConfig {
     this.allowSpokenLanguageChange,
     this.allowListenLanguageChange,
     this.translationVoiceConfig,
+    this.languageCapabilityStack,
   });
 
   factory TranslationRoomConfig.fromMap(Map<String, dynamic> map) {
@@ -161,7 +178,25 @@ class TranslationRoomConfig {
       translationVoiceConfig: map['translationVoiceConfig'] != null
           ? TranslationVoiceConfig.fromMap(map['translationVoiceConfig'])
           : null,
+      languageCapabilityStack: _parseCapabilityStack(
+        map['languageCapabilityStack'],
+      ),
     );
+  }
+
+  /// Accepts a preset name ('system', 'demo') or a `{stt, llm, tts}` map.
+  static LanguageCapabilityStack? _parseCapabilityStack(dynamic value) {
+    if (value is String && value.isNotEmpty) {
+      return LanguageCapabilityStack.fromPreset(value);
+    }
+    if (value is Map) {
+      return LanguageCapabilityStack.custom(
+        stt: value['stt']?.toString() ?? '',
+        llm: value['llm']?.toString() ?? '',
+        tts: value['tts']?.toString() ?? '',
+      );
+    }
+    return null;
   }
 
   static LanguageMode _parseLanguageMode(String? mode) {
@@ -227,6 +262,12 @@ class TranslationSettingsModalOptions {
   /// Render mode: modal (overlay) or sidebar (inline, no backdrop/rounded corners).
   final ModalRenderMode renderMode;
 
+  /// Provider stack used to rate languages in the pickers: a managed preset
+  /// or a custom `{stt, llm, tts}` stack. Overrides
+  /// `translationConfig.languageCapabilityStack`; system preset when neither
+  /// is set.
+  final LanguageCapabilityStack? languageCapabilityStack;
+
   TranslationSettingsModalOptions({
     required this.isVisible,
     required this.onClose,
@@ -262,6 +303,7 @@ class TranslationSettingsModalOptions {
     this.isPersonalTranslation = false,
     this.userVoiceClones,
     this.renderMode = ModalRenderMode.modal,
+    this.languageCapabilityStack,
   });
 }
 
@@ -280,6 +322,16 @@ class LanguageDropdown extends StatefulWidget {
   final bool includeAuto;
   final bool includeSpeakerOutput;
 
+  /// Grouped languages, rendered instead of [languages] when provided. The
+  /// captions preview group sits behind a "Show more languages" toggle.
+  final List<ListenerLanguageGroup<LanguageOption>>? languageGroups;
+
+  /// Codes listed with a "(beta)" suffix.
+  final Set<String> betaLanguageCodes;
+
+  /// Short helper text shown under the Auto-Detect option.
+  final String? autoDetectHint;
+
   const LanguageDropdown({
     super.key,
     this.value,
@@ -291,6 +343,9 @@ class LanguageDropdown extends StatefulWidget {
     this.includeOriginal = false,
     this.includeAuto = false,
     this.includeSpeakerOutput = false,
+    this.languageGroups,
+    this.betaLanguageCodes = const {},
+    this.autoDetectHint,
   });
 
   @override
@@ -299,6 +354,13 @@ class LanguageDropdown extends StatefulWidget {
 
 class _LanguageDropdownState extends State<LanguageDropdown> {
   bool _isOpen = false;
+  bool _showMore = false;
+
+  static bool _isCollapsed(ListenerLanguageGroup<LanguageOption> group) =>
+      group.group == ListenerGroup.captionsPreview;
+
+  String _languageLabel(String code, String name) =>
+      widget.betaLanguageCodes.contains(code) ? '$name (beta)' : name;
 
   String get _selectedLabel {
     if (widget.value == 'speakerOutput') return "Speaker's Output";
@@ -308,7 +370,93 @@ class _LanguageDropdownState extends State<LanguageDropdown> {
     if (widget.value == null) return widget.placeholder;
     if (widget.value == 'original') return 'Raw Microphone Audio';
     if (widget.value == 'auto') return 'Auto-Detect';
-    return getLanguageName(widget.value!);
+    return _languageLabel(widget.value!, getLanguageName(widget.value!));
+  }
+
+  List<Widget> _buildLanguageOptions() {
+    final groups = widget.languageGroups;
+    if (groups == null) {
+      return widget.languages
+          .map(
+            (lang) => _buildOption(
+              lang.code,
+              _languageLabel(lang.code, lang.name),
+              isSelected: widget.value == lang.code,
+            ),
+          )
+          .toList();
+    }
+
+    final hasCollapsedGroups = groups.any(
+      (g) => _isCollapsed(g) && g.languages.isNotEmpty,
+    );
+    // Keep a collapsed group open when it holds the current selection.
+    final expanded =
+        _showMore ||
+        groups.any(
+          (g) =>
+              _isCollapsed(g) && g.languages.any((l) => l.code == widget.value),
+        );
+    final mutedColor = widget.isDarkMode
+        ? MediasfuColors.textMutedDark
+        : MediasfuColors.textMuted;
+
+    return [
+      for (final group in groups)
+        if (group.languages.isNotEmpty &&
+            (!_isCollapsed(group) || expanded)) ...[
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: MediasfuSpacing.md,
+              vertical: MediasfuSpacing.xs,
+            ),
+            child: Text.rich(
+              TextSpan(
+                text: group.label,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+                children: [
+                  if (group.note.isNotEmpty)
+                    TextSpan(
+                      text: ' · ${group.note}',
+                      style: const TextStyle(fontWeight: FontWeight.w400),
+                    ),
+                ],
+              ),
+              style: TextStyle(
+                color: mutedColor,
+                fontSize: MediasfuTypography.bodySmall.fontSize,
+              ),
+            ),
+          ),
+          ...group.languages.map(
+            (lang) => _buildOption(
+              lang.code,
+              _languageLabel(lang.code, lang.name),
+              isSelected: widget.value == lang.code,
+            ),
+          ),
+        ],
+      if (hasCollapsedGroups)
+        InkWell(
+          onTap: () => setState(() => _showMore = !expanded),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: MediasfuSpacing.md,
+              vertical: MediasfuSpacing.sm,
+            ),
+            child: Text(
+              expanded ? 'Show fewer languages' : 'Show more languages',
+              style: TextStyle(
+                color: widget.isDarkMode
+                    ? MediasfuColors.primaryDark
+                    : MediasfuColors.primary,
+                fontSize: MediasfuTypography.bodySmall.fontSize,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+    ];
   }
 
   @override
@@ -417,23 +565,38 @@ class _LanguageDropdownState extends State<LanguageDropdown> {
                       isSelected: widget.value == 'auto',
                       icon: FontAwesomeIcons.wandMagicSparkles,
                     ),
+                  if (widget.includeAuto && widget.autoDetectHint != null)
+                    Padding(
+                      padding: EdgeInsets.only(
+                        left: MediasfuSpacing.md,
+                        right: MediasfuSpacing.md,
+                        bottom: MediasfuSpacing.xs,
+                      ),
+                      child: Text(
+                        widget.autoDetectHint!,
+                        style: TextStyle(
+                          color: widget.isDarkMode
+                              ? MediasfuColors.textMutedDark
+                              : MediasfuColors.textMuted,
+                          fontSize: MediasfuTypography.bodySmall.fontSize,
+                        ),
+                      ),
+                    ),
                   if ((widget.includeSpeakerOutput ||
                           widget.includeOriginal ||
                           widget.includeAuto) &&
-                      widget.languages.isNotEmpty)
+                      (widget.languageGroups != null
+                          ? widget.languageGroups!.any(
+                              (g) => g.languages.isNotEmpty,
+                            )
+                          : widget.languages.isNotEmpty))
                     Divider(
                       height: 1,
                       color: widget.isDarkMode
                           ? MediasfuColors.glassBorder(darkMode: true)
                           : MediasfuColors.divider,
                     ),
-                  ...widget.languages.map(
-                    (lang) => _buildOption(
-                      lang.code,
-                      lang.name,
-                      isSelected: widget.value == lang.code,
-                    ),
-                  ),
+                  ..._buildLanguageOptions(),
                 ],
               ),
             ),
@@ -505,6 +668,10 @@ class SpeakerLanguageRow extends StatelessWidget {
   final bool isDarkMode;
   final bool isHost;
 
+  /// Grouped listener languages; shown instead of [availableLanguages] when
+  /// provided.
+  final List<ListenerLanguageGroup<LanguageOption>>? languageGroups;
+
   const SpeakerLanguageRow({
     super.key,
     required this.speaker,
@@ -513,6 +680,7 @@ class SpeakerLanguageRow extends StatelessWidget {
     required this.availableLanguages,
     this.isDarkMode = true,
     this.isHost = false,
+    this.languageGroups,
   });
 
   @override
@@ -561,6 +729,7 @@ class SpeakerLanguageRow extends StatelessWidget {
                   selectedLanguage ?? (isHost ? 'original' : 'speakerOutput'),
               onChange: (lang) => onChange(speaker.name, lang),
               languages: availableLanguages,
+              languageGroups: languageGroups,
               isDarkMode: isDarkMode,
               includeOriginal: isHost,
               includeSpeakerOutput: true,
@@ -898,6 +1067,49 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
     }
 
     return base;
+  }
+
+  /// Provider stack used to rate languages ('system' unless the app or room
+  /// says otherwise).
+  LanguageCapabilityStack get _capabilityStack =>
+      widget.options.languageCapabilityStack ??
+      widget.options.translationConfig?.languageCapabilityStack ??
+      const LanguageCapabilityStack.system();
+
+  /// Speaker list: languages that transcribe well; basic support is beta.
+  /// Falls back to the room's list if the rating would leave nothing to pick.
+  List<MapEntry<LanguageOption, SpeakerListing>> get _speakerLanguageEntries {
+    final available = _availableSpokenLanguages;
+    final listed = filterSpeakerLanguages<LanguageOption>(
+      available,
+      (l) => l.code,
+      _capabilityStack,
+    );
+    if (listed.isNotEmpty || available.isEmpty) return listed;
+    return available.map((l) => MapEntry(l, SpeakerListing.yes)).toList();
+  }
+
+  /// Listener groups: natural voice, captions + basic voice, captions only,
+  /// with preview behind "Show more languages". Null when nothing groups, so
+  /// the dropdown falls back to the flat list.
+  List<ListenerLanguageGroup<LanguageOption>>? _listenerGroupsFor(
+    List<LanguageOption> languages,
+  ) {
+    final groups = groupListenerLanguages<LanguageOption>(
+      languages,
+      (l) => l.code,
+      _capabilityStack,
+    );
+    return groups.isNotEmpty ? groups : null;
+  }
+
+  String get _autoDetectHint {
+    final examples = autoDetectLanguages
+        .take(4)
+        .map((code) => getLanguageName(code))
+        .join(', ');
+    return 'Reliable for ${autoDetectLanguages.length} languages, including '
+        '$examples. For other languages, choose yours for accurate translation.';
   }
 
   List<Participant> get _otherParticipants {
@@ -1306,6 +1518,12 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
   }
 
   Widget _buildSpeakingTab() {
+    final speakerEntries = _speakerLanguageEntries;
+    final outputLanguages = _availableSpokenLanguages
+        .where((l) => l.code != _localSpokenLanguage)
+        .toList();
+    final includeAuto =
+        widget.options.translationConfig?.autoDetectSpokenLanguage ?? false;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1363,12 +1581,28 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
         LanguageDropdown(
           value: _localSpokenLanguage,
           onChange: (val) => _changeVoiceLanguage(val),
-          languages: _availableSpokenLanguages,
+          languages: speakerEntries.map((e) => e.key).toList(),
+          betaLanguageCodes: {
+            for (final e in speakerEntries)
+              if (e.value == SpeakerListing.beta) e.key.code,
+          },
           isDarkMode: widget.isDarkMode,
-          includeAuto:
-              widget.options.translationConfig?.autoDetectSpokenLanguage ??
-              false,
+          includeAuto: includeAuto,
+          autoDetectHint: _autoDetectHint,
         ),
+        if (includeAuto && _localSpokenLanguage == 'auto')
+          Padding(
+            padding: EdgeInsets.only(top: MediasfuSpacing.xs),
+            child: Text(
+              _autoDetectHint,
+              style: TextStyle(
+                color: widget.isDarkMode
+                    ? MediasfuColors.textMutedDark
+                    : MediasfuColors.textMuted,
+                fontSize: MediasfuTypography.bodySmall.fontSize,
+              ),
+            ),
+          ),
         SizedBox(height: MediasfuSpacing.lg),
         Container(
           padding: EdgeInsets.all(MediasfuSpacing.md),
@@ -1464,9 +1698,10 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
           LanguageDropdown(
             value: _localDefaultOutputLang,
             onChange: (val) => _changeVoiceLanguage(val, output: true),
-            languages: _availableSpokenLanguages
-                .where((l) => l.code != _localSpokenLanguage)
-                .toList(),
+            languages: outputLanguages,
+            // Output language (what everyone hears) follows the listener
+            // grouping.
+            languageGroups: _listenerGroupsFor(outputLanguages),
             isDarkMode: widget.isDarkMode,
             placeholder: 'No translation (speak in my original language)',
           ),
@@ -2330,6 +2565,8 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
   }
 
   Widget _buildListeningTab() {
+    final listenLanguages = _availableListenLanguages;
+    final listenGroups = _listenerGroupsFor(listenLanguages);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2413,7 +2650,8 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
               () => _localDefaultListen =
                   (lang == 'original' || lang == 'speakerOutput') ? null : lang,
             ),
-            languages: _availableListenLanguages,
+            languages: listenLanguages,
+            languageGroups: listenGroups,
             isDarkMode: widget.isDarkMode,
             includeOriginal: widget.options.islevel == '2',
             includeSpeakerOutput: true,
@@ -2458,7 +2696,8 @@ class _TranslationSettingsModalState extends State<TranslationSettingsModal> {
                     }
                   });
                 },
-                availableLanguages: _availableListenLanguages,
+                availableLanguages: listenLanguages,
+                languageGroups: listenGroups,
                 isDarkMode: widget.isDarkMode,
                 isHost: widget.options.islevel == '2',
               ),

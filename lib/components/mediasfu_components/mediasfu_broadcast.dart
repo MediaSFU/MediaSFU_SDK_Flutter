@@ -329,6 +329,7 @@ class MediasfuBroadcastOptions {
   /// use one full-resolution encoding.
   bool simulcastOff;
 
+
   /// Configured capacity hint when the server omits join-response capacity.
   int? roomCapacity;
 

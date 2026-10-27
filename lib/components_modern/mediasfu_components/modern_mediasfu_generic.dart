@@ -595,6 +595,7 @@ class ModernMediasfuGenericOptions {
   /// use a single full-resolution encoding, even when this is false.
   bool simulcastOff;
 
+
   /// Configured room capacity hint for older/self-hosted servers. An
   /// authoritative capacity in the join response takes precedence.
   int? roomCapacity;

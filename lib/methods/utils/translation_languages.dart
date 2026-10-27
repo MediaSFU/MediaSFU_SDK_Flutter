@@ -12,6 +12,9 @@ library;
 import 'dart:async';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
+// Measured per-language capabilities (speak / captions / voice) for language pickers.
+export 'translation_language_capabilities.dart';
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -146,6 +149,12 @@ class TranslationVoiceConfig {
   final String? llmNickName;
   final String? ttsNickName;
 
+  /// STT used for a speaker whose language the main STT cannot transcribe
+  final String? sttLanguageFallbackNickName;
+
+  /// TTS used for a language the routed voice has no native voice for
+  final String? ttsLanguageFallbackNickName;
+
   /// Pipeline params (provider-specific settings)
   final Map<String, dynamic>? sttParams;
   final Map<String, dynamic>? llmParams;
@@ -158,6 +167,8 @@ class TranslationVoiceConfig {
     this.sttNickName,
     this.llmNickName,
     this.ttsNickName,
+    this.sttLanguageFallbackNickName,
+    this.ttsLanguageFallbackNickName,
     this.sttParams,
     this.llmParams,
     this.ttsParams,
@@ -175,6 +186,10 @@ class TranslationVoiceConfig {
       sttNickName: map['sttNickName'] as String?,
       llmNickName: map['llmNickName'] as String?,
       ttsNickName: map['ttsNickName'] as String?,
+      sttLanguageFallbackNickName:
+          map['sttLanguageFallbackNickName'] as String?,
+      ttsLanguageFallbackNickName:
+          map['ttsLanguageFallbackNickName'] as String?,
       sttParams: map['sttParams'] as Map<String, dynamic>?,
       llmParams: map['llmParams'] as Map<String, dynamic>?,
       ttsParams: map['ttsParams'] as Map<String, dynamic>?,
@@ -189,6 +204,10 @@ class TranslationVoiceConfig {
       if (sttNickName != null) 'sttNickName': sttNickName,
       if (llmNickName != null) 'llmNickName': llmNickName,
       if (ttsNickName != null) 'ttsNickName': ttsNickName,
+      if (sttLanguageFallbackNickName != null)
+        'sttLanguageFallbackNickName': sttLanguageFallbackNickName,
+      if (ttsLanguageFallbackNickName != null)
+        'ttsLanguageFallbackNickName': ttsLanguageFallbackNickName,
       if (sttParams != null) 'sttParams': sttParams,
       if (llmParams != null) 'llmParams': llmParams,
       if (ttsParams != null) 'ttsParams': ttsParams,
@@ -352,13 +371,13 @@ const Map<String, LanguageMetadata> languageMetadata = {
     name: 'Chinese',
     nativeName: '中文',
     region: LanguageRegion.asia,
-    ttsSupport: TTSSupport.excellent,
+    ttsSupport: TTSSupport.good,
   ),
   'ja': LanguageMetadata(
     name: 'Japanese',
     nativeName: '日本語',
     region: LanguageRegion.asia,
-    ttsSupport: TTSSupport.excellent,
+    ttsSupport: TTSSupport.good,
   ),
   'ko': LanguageMetadata(
     name: 'Korean',
@@ -378,37 +397,37 @@ const Map<String, LanguageMetadata> languageMetadata = {
     name: 'Hindi',
     nativeName: 'हिन्दी',
     region: LanguageRegion.southAsia,
-    ttsSupport: TTSSupport.good,
+    ttsSupport: TTSSupport.excellent,
   ),
   'bn': LanguageMetadata(
     name: 'Bengali',
     nativeName: 'বাংলা',
     region: LanguageRegion.southAsia,
-    ttsSupport: TTSSupport.good,
+    ttsSupport: TTSSupport.excellent,
   ),
   'pa': LanguageMetadata(
     name: 'Punjabi',
     nativeName: 'ਪੰਜਾਬੀ',
     region: LanguageRegion.southAsia,
-    ttsSupport: TTSSupport.moderate,
+    ttsSupport: TTSSupport.excellent,
   ),
   'te': LanguageMetadata(
     name: 'Telugu',
     nativeName: 'తెలుగు',
     region: LanguageRegion.southAsia,
-    ttsSupport: TTSSupport.good,
+    ttsSupport: TTSSupport.excellent,
   ),
   'mr': LanguageMetadata(
     name: 'Marathi',
     nativeName: 'मराठी',
     region: LanguageRegion.southAsia,
-    ttsSupport: TTSSupport.good,
+    ttsSupport: TTSSupport.excellent,
   ),
   'ta': LanguageMetadata(
     name: 'Tamil',
     nativeName: 'தமிழ்',
     region: LanguageRegion.southAsia,
-    ttsSupport: TTSSupport.good,
+    ttsSupport: TTSSupport.moderate,
   ),
   'ur': LanguageMetadata(
     name: 'Urdu',
@@ -420,13 +439,13 @@ const Map<String, LanguageMetadata> languageMetadata = {
     name: 'Gujarati',
     nativeName: 'ગુજરાતી',
     region: LanguageRegion.southAsia,
-    ttsSupport: TTSSupport.moderate,
+    ttsSupport: TTSSupport.excellent,
   ),
   'kn': LanguageMetadata(
     name: 'Kannada',
     nativeName: 'ಕನ್ನಡ',
     region: LanguageRegion.southAsia,
-    ttsSupport: TTSSupport.moderate,
+    ttsSupport: TTSSupport.excellent,
   ),
   'ml': LanguageMetadata(
     name: 'Malayalam',
@@ -470,25 +489,25 @@ const Map<String, LanguageMetadata> languageMetadata = {
     name: 'Czech',
     nativeName: 'Čeština',
     region: LanguageRegion.europe,
-    ttsSupport: TTSSupport.good,
+    ttsSupport: TTSSupport.excellent,
   ),
   'el': LanguageMetadata(
     name: 'Greek',
     nativeName: 'Ελληνικά',
     region: LanguageRegion.europe,
-    ttsSupport: TTSSupport.good,
+    ttsSupport: TTSSupport.excellent,
   ),
   'hu': LanguageMetadata(
     name: 'Hungarian',
     nativeName: 'Magyar',
     region: LanguageRegion.europe,
-    ttsSupport: TTSSupport.good,
+    ttsSupport: TTSSupport.excellent,
   ),
   'ro': LanguageMetadata(
     name: 'Romanian',
     nativeName: 'Română',
     region: LanguageRegion.europe,
-    ttsSupport: TTSSupport.good,
+    ttsSupport: TTSSupport.moderate,
   ),
   'sv': LanguageMetadata(
     name: 'Swedish',
@@ -500,13 +519,13 @@ const Map<String, LanguageMetadata> languageMetadata = {
     name: 'Danish',
     nativeName: 'Dansk',
     region: LanguageRegion.europe,
-    ttsSupport: TTSSupport.good,
+    ttsSupport: TTSSupport.excellent,
   ),
   'fi': LanguageMetadata(
     name: 'Finnish',
     nativeName: 'Suomi',
     region: LanguageRegion.europe,
-    ttsSupport: TTSSupport.good,
+    ttsSupport: TTSSupport.excellent,
   ),
   'no': LanguageMetadata(
     name: 'Norwegian',
@@ -518,13 +537,13 @@ const Map<String, LanguageMetadata> languageMetadata = {
     name: 'Slovak',
     nativeName: 'Slovenčina',
     region: LanguageRegion.europe,
-    ttsSupport: TTSSupport.moderate,
+    ttsSupport: TTSSupport.excellent,
   ),
   'uk': LanguageMetadata(
     name: 'Ukrainian',
     nativeName: 'Українська',
     region: LanguageRegion.europe,
-    ttsSupport: TTSSupport.good,
+    ttsSupport: TTSSupport.limited,
   ),
   'bg': LanguageMetadata(
     name: 'Bulgarian',
@@ -536,13 +555,13 @@ const Map<String, LanguageMetadata> languageMetadata = {
     name: 'Croatian',
     nativeName: 'Hrvatski',
     region: LanguageRegion.europe,
-    ttsSupport: TTSSupport.moderate,
+    ttsSupport: TTSSupport.excellent,
   ),
   'et': LanguageMetadata(
     name: 'Estonian',
     nativeName: 'Eesti',
     region: LanguageRegion.europe,
-    ttsSupport: TTSSupport.moderate,
+    ttsSupport: TTSSupport.excellent,
   ),
   'lt': LanguageMetadata(
     name: 'Lithuanian',
@@ -554,7 +573,7 @@ const Map<String, LanguageMetadata> languageMetadata = {
     name: 'Latvian',
     nativeName: 'Latviešu',
     region: LanguageRegion.europe,
-    ttsSupport: TTSSupport.moderate,
+    ttsSupport: TTSSupport.excellent,
   ),
   'sl': LanguageMetadata(
     name: 'Slovenian',
@@ -566,13 +585,13 @@ const Map<String, LanguageMetadata> languageMetadata = {
     name: 'Serbian',
     nativeName: 'Српски',
     region: LanguageRegion.europe,
-    ttsSupport: TTSSupport.moderate,
+    ttsSupport: TTSSupport.excellent,
   ),
   'bs': LanguageMetadata(
     name: 'Bosnian',
     nativeName: 'Bosanski',
     region: LanguageRegion.europe,
-    ttsSupport: TTSSupport.limited,
+    ttsSupport: TTSSupport.moderate,
   ),
   'mk': LanguageMetadata(
     name: 'Macedonian',
@@ -584,7 +603,7 @@ const Map<String, LanguageMetadata> languageMetadata = {
     name: 'Icelandic',
     nativeName: 'Íslenska',
     region: LanguageRegion.europe,
-    ttsSupport: TTSSupport.moderate,
+    ttsSupport: TTSSupport.limited,
   ),
   'ga': LanguageMetadata(
     name: 'Irish',
@@ -614,13 +633,13 @@ const Map<String, LanguageMetadata> languageMetadata = {
     name: 'Albanian',
     nativeName: 'Shqip',
     region: LanguageRegion.europe,
-    ttsSupport: TTSSupport.limited,
+    ttsSupport: TTSSupport.moderate,
   ),
   'be': LanguageMetadata(
     name: 'Belarusian',
     nativeName: 'Беларуская',
     region: LanguageRegion.europe,
-    ttsSupport: TTSSupport.limited,
+    ttsSupport: TTSSupport.moderate,
   ),
 
   // Middle Eastern Languages
@@ -628,19 +647,19 @@ const Map<String, LanguageMetadata> languageMetadata = {
     name: 'Hebrew',
     nativeName: 'עברית',
     region: LanguageRegion.mena,
-    ttsSupport: TTSSupport.good,
+    ttsSupport: TTSSupport.moderate,
   ),
   'fa': LanguageMetadata(
     name: 'Persian',
     nativeName: 'فارسی',
     region: LanguageRegion.mena,
-    ttsSupport: TTSSupport.moderate,
+    ttsSupport: TTSSupport.excellent,
   ),
   'ps': LanguageMetadata(
     name: 'Pashto',
     nativeName: 'پښتو',
     region: LanguageRegion.mena,
-    ttsSupport: TTSSupport.limited,
+    ttsSupport: TTSSupport.moderate,
   ),
   'ku': LanguageMetadata(
     name: 'Kurdish',
@@ -654,31 +673,31 @@ const Map<String, LanguageMetadata> languageMetadata = {
     name: 'Vietnamese',
     nativeName: 'Tiếng Việt',
     region: LanguageRegion.asia,
-    ttsSupport: TTSSupport.good,
+    ttsSupport: TTSSupport.limited,
   ),
   'th': LanguageMetadata(
     name: 'Thai',
     nativeName: 'ไทย',
     region: LanguageRegion.asia,
-    ttsSupport: TTSSupport.good,
+    ttsSupport: TTSSupport.excellent,
   ),
   'id': LanguageMetadata(
     name: 'Indonesian',
     nativeName: 'Bahasa Indonesia',
     region: LanguageRegion.asia,
-    ttsSupport: TTSSupport.good,
+    ttsSupport: TTSSupport.excellent,
   ),
   'ms': LanguageMetadata(
     name: 'Malay',
     nativeName: 'Bahasa Melayu',
     region: LanguageRegion.asia,
-    ttsSupport: TTSSupport.good,
+    ttsSupport: TTSSupport.excellent,
   ),
   'tl': LanguageMetadata(
     name: 'Filipino',
     nativeName: 'Tagalog',
     region: LanguageRegion.asia,
-    ttsSupport: TTSSupport.moderate,
+    ttsSupport: TTSSupport.good,
   ),
   'km': LanguageMetadata(
     name: 'Khmer',
@@ -704,13 +723,13 @@ const Map<String, LanguageMetadata> languageMetadata = {
     name: 'Swahili',
     nativeName: 'Kiswahili',
     region: LanguageRegion.africa,
-    ttsSupport: TTSSupport.moderate,
+    ttsSupport: TTSSupport.good,
   ),
   'yo': LanguageMetadata(
     name: 'Yoruba',
     nativeName: 'Yorùbá',
     region: LanguageRegion.africa,
-    ttsSupport: TTSSupport.limited,
+    ttsSupport: TTSSupport.moderate,
   ),
   'ig': LanguageMetadata(
     name: 'Igbo',
@@ -728,7 +747,7 @@ const Map<String, LanguageMetadata> languageMetadata = {
     name: 'Zulu',
     nativeName: 'isiZulu',
     region: LanguageRegion.africa,
-    ttsSupport: TTSSupport.moderate,
+    ttsSupport: TTSSupport.limited,
   ),
   'xh': LanguageMetadata(
     name: 'Xhosa',
@@ -740,31 +759,31 @@ const Map<String, LanguageMetadata> languageMetadata = {
     name: 'Afrikaans',
     nativeName: 'Afrikaans',
     region: LanguageRegion.africa,
-    ttsSupport: TTSSupport.good,
+    ttsSupport: TTSSupport.moderate,
   ),
   'st': LanguageMetadata(
     name: 'Sesotho',
     nativeName: 'Sesotho',
     region: LanguageRegion.africa,
-    ttsSupport: TTSSupport.limited,
+    ttsSupport: TTSSupport.unknown,
   ),
   'tn': LanguageMetadata(
     name: 'Setswana',
     nativeName: 'Setswana',
     region: LanguageRegion.africa,
-    ttsSupport: TTSSupport.limited,
+    ttsSupport: TTSSupport.unknown,
   ),
   'sn': LanguageMetadata(
     name: 'Shona',
     nativeName: 'chiShona',
     region: LanguageRegion.africa,
-    ttsSupport: TTSSupport.limited,
+    ttsSupport: TTSSupport.moderate,
   ),
   'am': LanguageMetadata(
     name: 'Amharic',
     nativeName: 'አማርኛ',
     region: LanguageRegion.africa,
-    ttsSupport: TTSSupport.moderate,
+    ttsSupport: TTSSupport.unknown,
   ),
   'so': LanguageMetadata(
     name: 'Somali',
@@ -794,19 +813,19 @@ const Map<String, LanguageMetadata> languageMetadata = {
     name: 'Ewe',
     nativeName: 'Eʋegbe',
     region: LanguageRegion.africa,
-    ttsSupport: TTSSupport.limited,
+    ttsSupport: TTSSupport.unknown,
   ),
   'tw': LanguageMetadata(
     name: 'Twi',
     nativeName: 'Twi',
     region: LanguageRegion.africa,
-    ttsSupport: TTSSupport.limited,
+    ttsSupport: TTSSupport.unknown,
   ),
   'gaa': LanguageMetadata(
     name: 'Ga',
     nativeName: 'Gã',
     region: LanguageRegion.africa,
-    ttsSupport: TTSSupport.limited,
+    ttsSupport: TTSSupport.unknown,
   ),
 
   // Caucasian Languages
@@ -818,7 +837,7 @@ const Map<String, LanguageMetadata> languageMetadata = {
   ),
   'hy': LanguageMetadata(
     name: 'Armenian',
-    nativeName: 'Հdelays',
+    nativeName: 'Հայերեն',
     region: LanguageRegion.caucasus,
     ttsSupport: TTSSupport.moderate,
   ),
@@ -834,7 +853,7 @@ const Map<String, LanguageMetadata> languageMetadata = {
     name: 'Basque',
     nativeName: 'Euskara',
     region: LanguageRegion.europe,
-    ttsSupport: TTSSupport.limited,
+    ttsSupport: TTSSupport.moderate,
   ),
   'gl': LanguageMetadata(
     name: 'Galician',
@@ -846,13 +865,13 @@ const Map<String, LanguageMetadata> languageMetadata = {
     name: 'Catalan',
     nativeName: 'Català',
     region: LanguageRegion.europe,
-    ttsSupport: TTSSupport.good,
+    ttsSupport: TTSSupport.excellent,
   ),
   'la': LanguageMetadata(
     name: 'Latin',
     nativeName: 'Latina',
     region: LanguageRegion.europe,
-    ttsSupport: TTSSupport.limited,
+    ttsSupport: TTSSupport.moderate,
   ),
   'eo': LanguageMetadata(
     name: 'Esperanto',
@@ -872,7 +891,7 @@ const Map<String, LanguageMetadata> languageMetadata = {
     name: 'Uzbek',
     nativeName: "O'zbek",
     region: LanguageRegion.centralAsia,
-    ttsSupport: TTSSupport.moderate,
+    ttsSupport: TTSSupport.limited,
   ),
   'tg': LanguageMetadata(
     name: 'Tajik',
