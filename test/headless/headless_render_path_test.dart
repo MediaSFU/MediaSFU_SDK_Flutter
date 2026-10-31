@@ -17,6 +17,7 @@ void main() {
       classicSource,
       contains(
         "if (widget.options.returnUI == false) {\n"
+        '      if (!validated) return _headlessPreJoin();\n'
         '      return const SizedBox.shrink();',
       ),
     );
@@ -62,6 +63,72 @@ void main() {
     await tester.pump();
 
     expect(find.byType(ModernMediasfuGeneric), findsOneWidget);
+    expect(find.byType(MainContainerComponent), findsNothing);
+  });
+
+  // Headless mode has no UI to reach the pre-join page, so the engine must
+  // still mount it until the room is validated: it is the only caller of the
+  // room callbacks. Without it a backend-proxied headless room never joins.
+  final placeholders = Credentials(
+    apiUserName: 'client00',
+    apiKey: '0000000000000000000000000000000000000000000000000000000000000000',
+  );
+  JoinMediaSFURoomOptions join() => JoinMediaSFURoomOptions(
+        action: 'join',
+        meetingID: 's1234567',
+        userName: 'host12',
+      );
+  Future<CreateJoinRoomResult> refuse(void Function() count) async {
+    count();
+    return CreateJoinRoomResult(
+      success: false,
+      data: CreateJoinRoomError(error: 'stopped in test'),
+    );
+  }
+
+  testWidgets('classic headless engine runs the join callback', (
+    tester,
+  ) async {
+    var joins = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediasfuGeneric(
+          options: MediasfuGenericOptions(
+            returnUI: false,
+            credentials: placeholders,
+            noUIPreJoinOptionsJoin: join(),
+            joinMediaSFURoom: (_) => refuse(() => joins++),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(joins, 1);
+    expect(find.byType(MainContainerComponent), findsNothing);
+  });
+
+  testWidgets('modern headless engine runs the join callback', (
+    tester,
+  ) async {
+    var joins = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ModernMediasfuGeneric(
+          options: ModernMediasfuGenericOptions(
+            returnUI: false,
+            credentials: placeholders,
+            noUIPreJoinOptionsJoin: join(),
+            joinMediaSFURoom: (_) => refuse(() => joins++),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(joins, 1);
     expect(find.byType(MainContainerComponent), findsNothing);
   });
 }

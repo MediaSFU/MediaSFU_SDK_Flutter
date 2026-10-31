@@ -1,3 +1,7 @@
+### 2.5.1
+
+* Fixed headless rooms (`returnUI: false`) not joining.
+
 ### 2.5.0
 
 * **Leaner camera bitrates.** Rooms now use camera bitrates sized for webcam content at each tier's frame rate (HD 2.25×, FHD 3× the SD ladder instead of 4× and 8×). This lowers bandwidth and holds up better on weak links.

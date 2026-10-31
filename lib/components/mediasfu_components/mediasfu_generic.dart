@@ -8462,14 +8462,29 @@ class _MediasfuGenericState extends State<MediasfuGeneric> {
     );
   }
 
+  /// Headless pre-join: the same credentials rule as the standard UI. With no
+  /// credentials there is nothing to join with, so nothing is mounted.
+  Widget _headlessPreJoin() {
+    final credentials = widget.options.credentials;
+    if (credentials == null || credentials.apiKey.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    // Headless skips buildEventRoom, where the UI builders are hydrated.
+    _hydrateUiBuilders();
+    return renderpreJoinPageWidget() ?? const SizedBox.shrink();
+  }
+
   Widget _buildRoomInterface() {
     // If a custom component is provided, use it instead of the default interface
     if (widget.options.customComponent != null) {
       return widget.options.customComponent!(parameters: mediasfuParameters);
     }
 
-    // Engine-only mounts do not build the SDK room UI.
+    // Engine-only mounts do not build the SDK room UI. Until the room is
+    // validated, keep only the pre-join page mounted: it renders nothing
+    // headless, but it runs noUIPreJoinOptions and the room callbacks.
     if (widget.options.returnUI == false) {
+      if (!validated) return _headlessPreJoin();
       return const SizedBox.shrink();
     }
 

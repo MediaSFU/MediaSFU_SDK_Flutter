@@ -11727,6 +11727,18 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
     );
   }
 
+  /// Headless pre-join: the same credentials rule as the standard UI. With no
+  /// credentials there is nothing to join with, so nothing is mounted.
+  Widget _headlessPreJoin() {
+    final credentials = widget.options.credentials;
+    if (credentials == null || credentials.apiKey.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    // Headless skips buildEventRoom, where the UI builders are hydrated.
+    _hydrateUiBuilders();
+    return renderpreJoinPageWidget() ?? const SizedBox.shrink();
+  }
+
   Widget _buildRoomInterface({bool forceStandardUi = false}) {
     // If a custom component is provided, use it instead of the default interface
     if (!forceStandardUi && widget.options.customComponent != null) {
@@ -11738,6 +11750,10 @@ class _ModernMediasfuGenericState extends State<ModernMediasfuGeneric> {
       // the complete modern room tree and is intentionally large; compiling it
       // in Android debug/JIT mode was pure overhead for headless consumers and
       // could push memory-constrained debug sessions into a Dart VM OOM.
+      // Until the room is validated, keep only the pre-join page mounted: it
+      // renders nothing headless, but it is what runs noUIPreJoinOptions and
+      // the createMediaSFURoom/joinMediaSFURoom callbacks (React parity).
+      if (!validated) return _headlessPreJoin();
       return const SizedBox.shrink();
     }
 
