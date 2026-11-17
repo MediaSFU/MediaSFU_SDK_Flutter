@@ -1,3 +1,9 @@
+### 2.5.2
+
+* **Calls connect on networks that block media ports.** When the media server offers a TURN relay, a transport that is still not connected a few seconds after ICE starts restarts ICE once through the relay, so participants behind corporate firewalls, hotel Wi-Fi or VPNs can join. Servers that offer the relay up front have it applied when the transport is created. The relay and its timing are chosen by the server; nothing changes for apps or servers without a relay.
+* **Clear message instead of a silent call.** If a call still cannot connect through the network, participants see one message asking them to try another network or turn off their VPN, then rejoin.
+* **Dropped connections recover again.** When a send or receive transport disconnects or fails, the SDK now restarts ICE as intended, and closes and resets the transport if the restart does not succeed. The state check never matched the mediasoup client's event payload, so this recovery did not run before.
+
 ### 2.5.1
 
 * Fixed headless rooms (`returnUI: false`) not joining.

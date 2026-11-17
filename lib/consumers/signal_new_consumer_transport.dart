@@ -2,6 +2,7 @@
 
 import 'dart:async';
 import 'transport_ice_recovery.dart';
+import 'relay_fallback.dart';
 import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:mediasfu_mediasoup_client/mediasfu_mediasoup_client.dart';
@@ -119,6 +120,8 @@ Future<void> signalNewConsumerTransport(
 
     // Emit createWebRtcTransport event to signal a new consumer
     Completer<Map<String, dynamic>> completer = Completer();
+    // turn-relay-v1: TURN credentials, when the server offers them, come beside params.
+    var relayOffer = const IceRelayOffer();
 
     options.nsock.emitWithAck(
         "createWebRtcTransport", {"consumer": true, "islevel": options.islevel},
@@ -127,6 +130,7 @@ Future<void> signalNewConsumerTransport(
         completer.completeError(response['params']['error'] ?? 'Unknown error',
           );
       } else {
+        relayOffer = IceRelayOffer.fromAck(response);
         completer.complete(response['params']);
       }
     },
@@ -155,7 +159,8 @@ Future<void> signalNewConsumerTransport(
       );
     }
 
-    consumerTransport = device!.createRecvTransportFromMap(webrtcTransportMap,
+    consumerTransport = createRecvTransportWithRelay(
+        device!, webrtcTransportMap, relayOffer,
         consumerCallback: consumerCallbackFunction,
     );
     // Handle 'connect' event for the consumer transport
@@ -179,9 +184,16 @@ Future<void> signalNewConsumerTransport(
       }
     });
 
+    // turn-relay-v1: relay restart if ICE stays stuck (registered first; recovery handles disconnected/failed).
+    attachRelayFallback(consumerTransport, options.nsock, relayOffer,
+        direction: 'recv',
+        onBlocked: () => showNetworkBlocked(
+            options.nsock, liveShowAlert(options.parameters)));
+
     // Listen for connection state change
     consumerTransport.on('connectionstatechange', (state) async {
-      switch (state) {
+      final s = state is Map ? '${state['connectionState']}' : '$state';
+      switch (s) {
         case 'connecting':
           // Handle connecting state
           break;

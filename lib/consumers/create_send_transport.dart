@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'transport_ice_recovery.dart';
+import 'relay_fallback.dart';
 import 'screen_audio.dart' show MediasfuScreenAudio, kScreenAudioSource;
 import 'send_transport_guard.dart';
 import 'dart:async';
@@ -118,6 +119,8 @@ Future<void> createLocalSendTransport(
 
         Map<String, dynamic> webrtcTransportMap =
             await producerCompleter.future;
+        // turn-relay-v1: TURN credentials, when the server offers them, come beside params.
+        final relayOffer = IceRelayOffer.fromAck(response);
 
         //producer callback function for local transport
         void producerCallbackFunction(Producer producer) {
@@ -140,10 +143,14 @@ Future<void> createLocalSendTransport(
         device = parameters.getCurrentParams().device;
         if (device == null) return;
 
+        Transport? createdLocalTransport;
         try {
           // Create a WebRTC send transport for local transport
-          localProducerTransport = device!.createSendTransportFromMap(
+          localProducerTransport = createdLocalTransport =
+              createSendTransportWithRelay(
+            device!,
             webrtcTransportMap,
+            relayOffer,
             producerCallback: producerCallbackFunction,
           );
         } catch (error) {
@@ -184,9 +191,19 @@ Future<void> createLocalSendTransport(
           }
         });
 
+        // turn-relay-v1: relay restart if ICE stays stuck (registered first; recovery handles disconnected/failed).
+        final relaySocket = localSocket;
+        if (createdLocalTransport != null && relaySocket != null) {
+          attachRelayFallback(createdLocalTransport, relaySocket, relayOffer,
+              direction: 'send',
+              onBlocked: () =>
+                  showNetworkBlocked(relaySocket, liveShowAlert(parameters)));
+        }
+
         // Monitor the connection state and handle any failures
         localProducerTransport?.on('connectionstatechange', (state) async {
-          if (state == 'failed' || state == 'disconnected') {
+          final s = state is Map ? '${state['connectionState']}' : '$state';
+          if (s == 'failed' || s == 'disconnected') {
             if (localProducerTransport != null && localSocket != null &&
                 await recoverTransportIce(localProducerTransport!, localSocket)) return;
             if (kDebugMode) {
@@ -421,6 +438,8 @@ Future<void> _createSendTransportNow(
 
         Map<String, dynamic> webrtcTransportMap =
             await producerCompleter.future;
+        // turn-relay-v1: TURN credentials, when the server offers them, come beside params.
+        final relayOffer = IceRelayOffer.fromAck(response);
 
         //producer callback function
         void producerCallbackFunction(Producer producer) {
@@ -444,10 +463,13 @@ Future<void> _createSendTransportNow(
         device = parameters.getCurrentParams().device;
         if (device == null) return;
 
+        Transport? createdTransport;
         try {
           // Create a WebRTC send transport
-          producerTransport = device!.createSendTransportFromMap(
+          producerTransport = createdTransport = createSendTransportWithRelay(
+            device!,
             webrtcTransportMap,
+            relayOffer,
             producerCallback: producerCallbackFunction,
           );
         } catch (error) {
@@ -486,9 +508,19 @@ Future<void> _createSendTransportNow(
           }
         });
 
+        // turn-relay-v1: relay restart if ICE stays stuck (registered first; recovery handles disconnected/failed).
+        final relaySocket = socket;
+        if (createdTransport != null && relaySocket != null) {
+          attachRelayFallback(createdTransport, relaySocket, relayOffer,
+              direction: 'send',
+              onBlocked: () =>
+                  showNetworkBlocked(relaySocket, liveShowAlert(parameters)));
+        }
+
         // Monitor the connection state and handle any failures
         producerTransport?.on('connectionstatechange', (state) async {
-          switch (state) {
+          final s = state is Map ? '${state['connectionState']}' : '$state';
+          switch (s) {
             case 'connecting':
               break;
             case 'connected':
